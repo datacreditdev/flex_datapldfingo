@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="400" height="464" 
+	title="Privilegios de perfil" creationComplete="init()" creationPolicy="all" showCloseButton="true" 
+	close="cerrar()">	
+
+	<mx:Script>
+	<![CDATA[
+		import Data.CheckTreeRenderer;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.collections.XMLListCollection;
+		import mx.controls.Alert;
+		import mx.events.CloseEvent;
+		import mx.events.FlexEvent;
+		import mx.events.TreeEvent;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+				
+		[Bindable]
+		private var dpPermisos:XML = new XML();
+		[Bindable]
+		public var dpAsignados:XML = new XML();
+		[Bindable]
+		public var codPerfil:String;
+		
+		public var band:Boolean;
+		private var titulo:String;
+		private var du:Utils;
+		private var global:Globales;
+		private var ws:WebService = new WebService();
+		
+		private function cargaPermisos():void{
+			var Params:Array = new Array();
+			ws = du.initWs(ws);
+			du.sCursor();
+			du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
+				dpPermisos = new XML(evt.result.toString());
+				du.rCursor();
+				du.closeWs(ws);		
+				actualiza();											
+			});
+			Params[0] = codPerfil;
+			ws.ESLoginMethods.send(9,Params);
+		}
+		
+		private function cerrar():void{		
+			var event:CloseEvent = new CloseEvent('CloseEvent',true);
+			dispatchEvent(event);						
+		}
+			
+		private function actualiza():void{
+			trPermisos.dataProvider = dpPermisos;
+		}
+			
+		private function confirmaEnvio():void{
+			if(band)
+				Alert.show("¿Desea guardar las modificaciones realizadas?",titulo, 3, null, guardaPermisos, du.iQuest, 4);
+			else
+				cerrar();
+		}
+			
+        private function guardaPermisos(evt:CloseEvent):void{
+			if(evt.detail == Alert.NO)
+				return;
+				
+			var mod:String = "";
+			var opc:String = "";
+			var estatus:String = "";
+			var perfil:Array = new Array();
+			var xList:XMLList = dpPermisos.descendants().(@state != @aState && @type == 'N');
+
+  	 		for (var x:uint=0; x < xList.length(); x++){
+      			mod += xList[x].@name + "|";
+      			opc += xList[x].@id + "|";
+      			estatus += xList[x].@state + "|";   
+   			}
+			
+			if(xList.length() > 0){
+				mod = mod.substr(0,mod.length-1);
+				opc = opc.substr(0,opc.length-1);
+				estatus = estatus.substr(0,estatus.length-1);
+					
+				ws = du.initWs(ws);
+				du.sCursor();
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
+					var res:String = evt.result.toString();
+					du.rCursor();
+					du.closeWs(ws);
+					
+					if(res.substr(0,1) == "1"){
+						Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+						cerrar();
+					}
+					else
+						Alert.show(res,titulo,4,null,null,global.iAlert);
+				});
+				var Params:Array = new Array();
+				Params[0] = codPerfil;
+				Params[1] = mod;
+				Params[2] = opc;
+				Params[3] = estatus;				
+				ws.ES_Admin_Perfiles.send(5,Params);
+			}
+			else
+				cerrar();
+		}
+		
+		private function init():void{
+			du = new Utils();
+			global = new Globales();
+			titulo = "Privilegios por Perfil";
+			band = false;
+			cargaPermisos();
+		}
+		]]>
+	</mx:Script>
+	<mx:Label x="10" y="10" text="Perfil:" fontWeight="bold"/>
+	<mx:Label x="75" y="400" id="lblIdPerfil" visible="false"/>
+	<mx:Text x="56" y="10" width="326" id="txtPerfil" fontWeight="bold"/>
+	<mx:Button x="262" y="396" label="Guardar" width="120" id="btnGuardar" click="confirmaEnvio()"/>
+	<mx:Tree id="trPermisos" itemRenderer="Data.CheckTreeRenderer" labelField="@label" showRoot="false"
+	height="350" width="300" verticalScrollPolicy="auto" x="56" y="38" change="{band = true}"/>
+</mx:TitleWindow>

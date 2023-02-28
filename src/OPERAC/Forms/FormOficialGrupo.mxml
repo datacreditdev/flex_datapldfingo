@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="300">
+<mx:DataGrid id="dgPersonal" x="120" y="33" width="245" visible="false" showHeaders="false" alpha="0.7" itemClick="selecciona()" keyDown="presDGPersonal(event)">
+	<mx:columns>
+		<mx:DataGridColumn dataField="nombre"/>
+	</mx:columns>
+</mx:DataGrid>
+	<mx:Metadata>
+		[Event(name="enviarOficialGrupo", type="Data.EventGrupo")]
+	</mx:Metadata>
+	
+	<mx:Validator id="promotorV" source="{txtPromotor}" property="text" 
+	invalid="{txtPromotor.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Promotor Requerido"/>
+	
+	<mx:Validator id="recuperadorV" source="{txtRecuperador}" property="text" 
+	invalid="{txtRecuperador.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Recuperador Requerido"/>
+
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import Data.Globales;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import Data.DatosGrupo;
+			import Data.EventGrupo;
+			import mx.managers.CursorManager;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.events.*;
+			
+			private var _xmlPersonal:XML =  new XML();
+			[Bindable]
+			private var dpPersonal:XMLList;
+			
+			public var Arr:ArrayCollection = new ArrayCollection();
+			public var datos:DatosGrupo = new DatosGrupo();
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var texto:String;
+			public var tipoAccion:int;
+			private var global:Globales;
+						
+			public function buscaPromotor(event:Event):void{
+				if(TextInput(event.currentTarget).text != ''){	
+					dgPersonal.selectedIndex = -1;
+					texto = TextInput(event.currentTarget).text;					
+					Arr.filterFunction = filtraPersonal;
+					Arr.refresh();
+					if (Arr.length > 0){
+						dgPersonal.validateNow();
+						dgPersonal.scrollToIndex(0);
+						dgPersonal.selectedIndex = 0;
+						dgPersonal.y = 33;
+						dgPersonal.visible = true;
+						this.setChildIndex(dgPersonal,this.numChildren - 1);	
+					}
+					else
+						dgPersonal.visible = false;									
+				}
+				else{
+					Arr.filterFunction = null;
+					Arr.refresh();
+					dgPersonal.visible = false;
+				}
+			}		
+			
+			public function buscaRecuperador(event:Event):void{
+				if(TextInput(event.currentTarget).text != '')
+				{	
+					dgPersonal.selectedIndex = -1;
+					texto = TextInput(event.currentTarget).text;					
+					Arr.filterFunction = filtraPersonal;
+					Arr.refresh();
+					if (Arr.length > 0){
+						dgPersonal.validateNow();
+						dgPersonal.scrollToIndex(0);
+						dgPersonal.selectedIndex = 0;
+						dgPersonal.y = 68;
+						dgPersonal.visible = true;
+						this.setChildIndex(dgPersonal,this.numChildren - 1);	
+					}
+					else
+						dgPersonal.visible = false;									
+				}
+				else{
+					Arr.filterFunction = null;
+					Arr.refresh();
+					dgPersonal.visible = false;
+				}
+			}		
+						
+			public function cargaPersonal():void{
+				initConexion();
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlPersonal = new XML(evt.result.toString());
+					
+					if (_xmlPersonal.elements().length() > 0){
+						formateaPersonal();
+						dgPersonal.dataProvider = Arr;
+					}		
+					du.rCursor();
+					du.closeWs(wsMS);
+				});
+				wsMS.getPromotor.send(Application.application.SUC_ID);
+			}			
+						
+			public function enviarOficialGrupo(formData:DatosGrupo):void{
+				var invalidArray:Array = Validator.validateAll([promotorV, recuperadorV]);
+				if(invalidArray.length == 0){	
+					formData.cdgPr = datos.cdgPr;
+					formData.promotor = txtPromotor.text;
+					formData.cdgRec = datos.cdgRec;
+					formData.recuperador = txtRecuperador.text;
+					formData.guardaOficial = true;
+				}
+				else{
+					formData.guardaOficial = false;
+				}
+				var event:EventGrupo = new EventGrupo("enviarOficialGrupo", formData);
+				dispatchEvent(event);
+			}
+			
+			private function filtraCaptura(item:Object):Boolean{
+				var isMatch:Boolean = false
+				if(texto.toLowerCase().search(item.nombre.toLowerCase()) != -1)
+					isMatch = true 
+				return isMatch; 
+			}
+			
+			private function filtraPersonal(item:Object):Boolean{
+				var isMatch:Boolean = false
+				if(item.nombre.toString().substr(0, texto.length).toLowerCase() == texto.toLowerCase())
+					isMatch = true 
+				return isMatch; 	
+			}
+
+			public function formateaPersonal():void{
+				var i:int;
+				var cont:int = _xmlPersonal.elements().length();
+				
+				Arr.filterFunction = null;
+				Arr.refresh();
+				Arr.removeAll();
+				Arr.refresh();
+				
+				for (i = 0; i < cont; i++)
+				{
+					var oItem:Object = new Object();
+					oItem.nombre = _xmlPersonal.Table[i].NOMBREC;
+					oItem.codigo = _xmlPersonal.Table[i].CODIGO;
+					Arr.addItem(oItem);
+				}
+			}
+			
+			public function init(info:DatosGrupo, tipoAccion:int):void{
+				this.tipoAccion = tipoAccion;
+				global = new Globales();
+				du = new Utils();
+				
+				if (info != null){
+					datos.cdgPr = info.cdgPr;
+					txtPromotor.text = info.promotor;
+					datos.cdgRec = info.cdgRec;
+					txtRecuperador.text = info.recuperador;
+					Application.application.SUC_ID = info.cdgCoord;
+					if(Application.application.SUC_ID != null)
+						cargaPersonal();				
+				}
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+
+			public function presPersonal(event:KeyboardEvent):void{
+				if(event.keyCode == Keyboard.DOWN){
+					dgPersonal.setFocus();
+				}	
+			}
+
+			public function presDGPersonal(event:KeyboardEvent):void{
+				if(event.keyCode == Keyboard.ENTER){
+					if(dgPersonal.y == 33){
+						selecciona();
+						txtPromotor.setFocus();
+					}
+					else if(dgPersonal.y == 68){
+						selecciona();
+						txtRecuperador.setFocus();
+					}
+				}	
+			}
+			
+			public function selecciona():void{
+				if(dgPersonal.selectedIndex >= 0){
+					var indice:int = dgPersonal.selectedIndex;
+					if(dgPersonal.y == 33){
+						if (datos.cdgPr != Arr[indice].codigo){
+							txtPromotor.text = Arr[indice].nombre;
+							datos.cdgPr = Arr[indice].codigo;
+						}
+						else
+							txtPromotor.text = Arr[indice].nombre;
+					}
+					else if(dgPersonal.y == 68){
+						if (datos.cdgRec != Arr[indice].codigo){
+							txtRecuperador.text = Arr[indice].nombre;
+							datos.cdgRec = Arr[indice].codigo;
+						}
+						else
+							txtRecuperador.text = Arr[indice].nombre;
+					}
+					dgPersonal.visible = false;
+				}
+			}
+			
+			public function verificaPromotor():void{
+				if (dgPersonal.selectedIndex < 0){
+					dgPersonal.visible = false;
+					texto = txtPromotor.text;
+					Arr.filterFunction = filtraCaptura;
+					Arr.refresh();
+					if (Arr.length == 0){
+						txtPromotor.text = "";
+						datos.cdgPr = "";
+					}
+					Arr.filterFunction = null;
+					Arr.refresh();
+				}
+			}
+			
+			public function verificaRecuperador():void{
+				if (dgPersonal.selectedIndex < 0){
+					dgPersonal.visible = false;
+					texto = txtRecuperador.text;
+					Arr.filterFunction = filtraCaptura;
+					Arr.refresh();
+					if (Arr.length == 0)
+					{
+						txtRecuperador.text = "";
+						datos.cdgRec = "";
+					}
+					Arr.filterFunction = null;
+					Arr.refresh();
+				}	
+			}
+			
+	]]>
+	</mx:Script>
+	<mx:FormItem label="Asesor:" id="promotor" width="302"  x="63" y="10">
+		<mx:TextInput id="txtPromotor" width="235" change="buscaPromotor(event)" enter="selecciona()" focusOut="verificaPromotor()" 
+			restrict="A-Z;a-z;Ñ;ñ; " keyDown="presPersonal(event)"/>
+	</mx:FormItem>
+	<mx:FormItem label="Recuperador:" id="recuperador" width="330" x="35" y="44">
+		<mx:TextInput id="txtRecuperador" width="235" change="buscaRecuperador(event)" enter="selecciona()" focusOut="verificaRecuperador()" 
+			restrict="A-Z;a-z;Ñ;ñ; " keyDown="presPersonal(event)"/>	
+	</mx:FormItem>
+</mx:Canvas>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="620" height="408" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:control="CONTROL.*" xmlns:Data="Data.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var titulo:String;
+			public var rep:String;
+			private var du:Utils;
+			private var global:Globales;
+		
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				dgE.loadDGInExcel(dgReporte,null,titulo);		
+			}
+		
+			private function generar(event:Event):void{	
+				if(comAcredCiclo.valida() == true){
+					var codigo:String = comAcredCiclo.txtAcred.text;
+					var ciclo:String = comAcredCiclo.txtCiclo.text;
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						dgReporte.dataProvider = null;
+						btnExportar.enabled = false;
+						lblTotal.text = "";
+						
+						var cont:Number = _xmlRep.elements().length()
+														
+						if(_xmlRep.elements().length() > 0){
+							dgReporte.dataProvider = _xmlRep.Table;
+							btnExportar.enabled = true;
+							lblTotal.text = cont.toString() + " Registro(s)"; 
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							lblTotal.text = "";
+						}
+					});
+					wsMS.getRepSeguimientoMovs.send(codigo, ciclo);	
+				}
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				rep = "0";
+				titulo = "Seguimiento de Movimientos";
+				comAcredCiclo.init("0",titulo);
+				comAcredCiclo.addEventListener("enviar",generar);
+				comAcredCiclo.addEventListener("limpiar",limpiar);
+			}		
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			private function limpiar(event:Event):void{
+				dgReporte.dataProvider = null;
+				lblTotal.text = "";
+				btnExportar.enabled = false;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:DataGrid id="dgReporte" x="18.45" y="182" width="580" visible="true" height="187" horizontalScrollPolicy="auto">
+		<mx:columns>
+			<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCLNS" width="90"/>
+			<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMCLNS" width="180"/>
+			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="55"/>
+			<mx:DataGridColumn headerText="FECHA" dataField="FECHA" width="90"/>
+			<mx:DataGridColumn headerText="MONTO" dataField="MONTO" width="90"/>
+			<mx:DataGridColumn headerText="PAGADO CAPITAL" dataField="CAPITAL" width="120"/>
+			<mx:DataGridColumn headerText="PAGADO INTERES" dataField="INTERES" width="120"/>
+			<mx:DataGridColumn headerText="PAGADO RECARGOS" dataField="RECARGOS" width="120"/>
+			<mx:DataGridColumn headerText="CUENTA" dataField="CDGCB" width="90"/>							
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnExportar" x="495.45" y="146" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Label id="lblTotal" x="18.45" y="377" width="500" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+	<control:FiltroAcredCiclo id="comAcredCiclo"/>
+</mx:Canvas>

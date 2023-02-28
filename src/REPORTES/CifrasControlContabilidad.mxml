@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="740" height="370" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	xmlns:Data="Data.*" xmlns:control="CONTROL.*">
+	
+	<!--Componente de Cifras Control del area de Contabilidad-->
+	<mx:Script>
+		<![CDATA[
+			import Data.DataGridExporter;
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;		
+			import mx.managers.PopUpManager;
+			import mx.formatters.NumberFormatter;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;
+			
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsRep:WebService;
+			public var du:Utils;
+			public var titulo:String;
+			public var fecha:String;
+			private var global:Globales;
+						
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo + " del " + fecha);		
+			}			
+						
+			public function generar(event:Event):void{
+				if(comFiltroFecha.valida() == true){
+					fecha = comFiltroFecha.dtfFecha.text;
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsRep);
+						
+						dgReporte.dataProvider = null;
+						btnExportar.enabled = false;
+						lblTotal.text = "";
+						
+						var cont:Number = _xmlRep.elements().length()
+														
+						if(_xmlRep.elements().length() > 0){
+							dgReporte.dataProvider = _xmlRep.Table;
+							btnExportar.enabled = true;
+							lblTotal.text = cont.toString() + " Registro(s)"; 
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							lblTotal.text = "";
+						}
+					});
+					wsRep.getRepCifrasControl.send(fecha);	
+				}
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Cifras Control Contables";
+				comFiltroFecha.init("0", titulo.toUpperCase(), "01/08/2009", global.formatoFecha(Application.application._Current_Fecha));
+				comFiltroFecha.addEventListener("enviar",generar);
+				comFiltroFecha.addEventListener("limpiar",limpiar);
+			}		
+			
+			public function initConexion():void{				
+				wsRep = new WebService();			
+				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsRep.loadWSDL();
+			}	
+			
+			public function limpiar(event:Event):void{
+				dgReporte.dataProvider = null;
+				lblTotal.text = "";
+				btnExportar.enabled = false;
+			}
+		]]>
+	</mx:Script>
+	
+	<control:FiltroFecha id="comFiltroFecha" x="10"/>
+	<Data:RowColorDataGrid id="dgReporte" sortableColumns="true" x="18.45" y="155" width="700.05" 
+		visible="true" height="176">
+		<Data:columns>
+			<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="220"/>
+			<mx:DataGridColumn headerText="TIPO" dataField="TIPOPOLIZA" width="60"/>
+			<mx:DataGridColumn headerText="NUM. POLIZA" dataField="NUMPOLIZA" width="90"/>
+			<mx:DataGridColumn headerText="MOVIMIENTOS" dataField="REGISTROS" width="110"/>
+			<mx:DataGridColumn headerText="IMPORTE CARGOS" dataField="SUM_CARGOS" width="120"/>
+			<mx:DataGridColumn headerText="IMPORTE ABONOS" dataField="SUM_ABONOS" width="120"/>
+		</Data:columns>
+	</Data:RowColorDataGrid>
+	<mx:Button id="btnExportar" x="615.5" y="123" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Label id="lblTotal" x="18.45" y="339" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+</mx:Canvas>

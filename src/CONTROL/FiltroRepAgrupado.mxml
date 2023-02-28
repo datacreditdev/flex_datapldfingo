@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="292" height="384" backgroundAlpha="1.0" backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;	
+			import mx.validators.Validator;	
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlReg:XML =  new XML();
+			private var _xmlCoord:XMLList =  new XMLList();
+			private var _xmlAsesor:XML =  new XML();
+			
+			public var regObj:ArrayCollection = new ArrayCollection();
+			public var coordObj:ArrayCollection = new ArrayCollection();
+			public var asesorObj:ArrayCollection = new ArrayCollection();
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var rep:String;
+			private var global:Globales;
+			
+			public function agregaInicial(codigo:String, texto:String):Object{
+				var oItem:Object = new Object();
+				oItem.codigo = codigo;	
+				oItem.nombre = texto;
+				return oItem;
+			}		
+			
+			public function cargaAsesor():void{
+				initConexion();
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlAsesor = new XML(evt.result.toString());
+						
+					du.rCursor();
+					du.closeWs(wsMS);	
+						
+					asesorObj.removeAll();
+					asesorObj.refresh();
+					asesorObj.addItem(agregaInicial("000000", "--Todos--"))	
+						
+					if(_xmlAsesor.elements().length() > 0)
+						formateaAsesor();
+					if(_xmlAsesor.elements().length() == 1){
+						cboAsesor.selectedIndex = 1;
+						cboAsesor.enabled = false;
+					}
+				});
+				wsMS.getPromotor.send(cboCoord.selectedItem.codigo);
+			}		
+			
+			public function cargaCoord():void{
+				//initConexion();
+				//du.sCursor();
+						
+				//du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					//_xmlCoord = new XML(evt.result.toString());
+					_xmlCoord = Application.application._xmlCoord.Table.(CDGRG.toString().toLowerCase() == cboRegion.selectedItem.codigo.toString().toLowerCase());
+					
+					//du.rCursor();
+					//du.closeWs(wsMS);
+						
+					coordObj.removeAll();
+					coordObj.refresh();	
+					coordObj.addItem(agregaInicial("000", "--Todas--"))
+					asesorObj.removeAll();
+					asesorObj.refresh();
+					asesorObj.addItem(agregaInicial("000000", "--Todos--"))
+					
+					cboCoord.enabled = true;	
+					//if(_xmlCoord.length() > 0)
+					//{
+						formateaCoord();
+					//}
+					if(_xmlCoord.length() == 1){
+						cboCoord.selectedIndex = 1;
+						cboCoord.enabled = false;
+						rdbCoord.enabled = false;
+						cargaAsesor();
+					}
+				//});
+				//wsMS.getCoordRegUsu.send(Application.application.U_ID, cboRegion.selectedItem.codigo);
+			}			
+						
+			public function cargaRegion():void{ 				  
+				//initConexion();
+				//du.sCursor();
+						
+				//du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					//_xmlReg = new XML(evt.result.toString());
+					_xmlReg = Application.application._xmlReg;
+						
+					//du.rCursor();
+					//du.closeWs(wsMS);
+					
+					//if(_xmlReg.elements().length() > 0)
+						formateaRegion();
+					if(_xmlReg.elements().length() == 1){
+						cboRegion.selectedIndex = 1;
+						cboRegion.enabled = false;
+						rdbRegion.enabled = false;
+					}
+					cargaCoord();
+				//});
+				//wsMS.getRegionUsuario.send(Application.application.U_ID);
+			}				
+					
+			public function formateaAsesor():void{
+				var i:int;
+				var cont:int = _xmlAsesor.elements().length();
+				var oItem:Object;
+				
+				for(i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlAsesor.Table[i].CODIGO;
+					oItem.nombre = _xmlAsesor.Table[i].NOMBREC;
+					asesorObj.addItem(oItem);
+				}
+			}			
+						
+			public function formateaCoord():void{
+				var i:int;
+				var cont:int = _xmlCoord.length();
+				var oItem:Object;
+				
+				for(i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlCoord.CODIGO[i].toString();
+					oItem.nombre = _xmlCoord.NOMBRE[i].toString();
+					coordObj.addItem(oItem);
+				}
+			}			
+			
+			public function formateaRegion():void{
+				var i:int;
+				var cont:int = _xmlReg.elements().length();
+				var oItem:Object;
+				
+				for(i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlReg.Table[i].CODIGO;
+					oItem.nombre = _xmlReg.Table[i].NOMBRE;
+					regObj.addItem(oItem);
+				}
+			}	
+			
+			public function generar():void{
+				if (valida() == true){					
+					var consulta:String;
+					var id:String = "&id=" + rep;
+					var fecha:String = "&fecha=" + global.formatoFechaSep(dtfFecha.selectedDate, "-");
+					var niv:String = "&nivel=" + nivel.selectedValue.toString();
+					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var nomUsuario:String = "&nomUsuario=" + Application.application.NOM_U_ID;
+					var region:String = "&region=" + cboRegion.selectedItem.codigo;
+					var coord:String = "&coord=" + cboCoord.selectedItem.codigo;
+					var asesor:String = "&asesor=" + cboAsesor.selectedItem.codigo;
+					
+					if(currentState == null)
+						consulta = global.urlPdf + id + fecha + niv + usuario + nomUsuario + region + coord + asesor;					
+					Application.application.muestraPdf(consulta);
+					//Alert.show(consulta);
+				}			
+			}
+						
+			public function init(rep:String, titulo:String, estado:String):void{
+				this.rep = rep;
+				lblTitulo.text = titulo;
+				currentState = estado;
+				limpiar();
+			}		
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				cboRegion.enabled = true;
+				cboCoord.enabled = true;
+				cboAsesor.enabled = true;
+				regObj.removeAll();
+				regObj.refresh();
+				regObj.addItem(agregaInicial("000", "--Todas--"));
+				cboRegion.dataProvider = regObj;		
+				cboCoord.dataProvider = coordObj;
+				cboAsesor.dataProvider = asesorObj;
+				cargaRegion();		
+				//coordObj.removeAll();
+				//coordObj.refresh();
+				//coordObj.addItem(agregaInicial("000", "--Todas--"));
+				//asesorObj.removeAll();
+				//asesorObj.refresh();
+				//asesorObj.addItem(agregaInicial("000000", "--Todos--"));
+				fec = Application.application._Current_Fecha;
+				if(currentState == null)
+					dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				nivel.selectedValue = 2;
+			}
+				
+			public function valida():Boolean{
+				if(dtfFecha.text == "" && currentState == null){
+					Alert.show("Seleccione la fecha límite del reporte.","Reporte",4,null,null,global.iAlert);
+					return false;
+				}
+				if(nivel.selection == null){
+					Alert.show("Seleccione el nivel de detalle del reporte.","Reporte",4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas x="18" y="300" width="264" height="37" styleName="canvasMod" id="canvas3">
+		<mx:RadioButtonGroup id="nivel"/>
+		<mx:RadioButton id="rdbRegion" x="19.5" y="5" label="Región" groupName="nivel" value="0"/>
+		<mx:RadioButton id="rdbCoord" x="84.5" y="5" label="Sucursal" groupName="nivel" value="1"/>
+		<mx:RadioButton id="rdbAsesor" x="181.5" y="5" label="Asesor" groupName="nivel" value="2"/>	
+	</mx:Canvas>
+	<mx:Label x="18" y="281" text="Nivel de detalle" id="label3"/>
+	<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="264.05" height="165.5" styleName="canvasMod" id="canvas2">
+		<mx:ComboBox id="cboRegion" x="10" y="27.5" labelField="nombre" change="cargaCoord()" width="170"></mx:ComboBox>
+		<mx:ComboBox id="cboCoord" x="10" y="80" labelField="nombre" change="cargaAsesor()" width="170"></mx:ComboBox>
+		<mx:ComboBox id="cboAsesor" x="10" y="129.5" labelField="nombre" width="242.05"></mx:ComboBox>
+		<mx:Label x="10" y="112" text="Asesor" width="61.75" height="20"/>
+		<mx:Label x="10" y="10" text="Región" width="61.75" height="20"/>
+		<mx:Label x="10" y="59.5" text="Sucursal" width="81" height="23"/>
+	</mx:Canvas>
+	<mx:Canvas x="18" y="236" width="264" height="37" styleName="canvasMod" id="canvas1">
+		<mx:DateField id="dtfFecha" x="111.5" y="5" width="111"/>
+		<mx:Label x="39.5" y="6" text="Fecha límite:" id="label1"/>
+	</mx:Canvas>
+	<mx:Button x="71.25" y="349" label="Generar" click="generar()" id="button1"/>
+	<mx:Button x="149.75" y="349" label="Limpiar" width="71" height="24" click="limpiar()" id="button2"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25" id="label2"/>
+</mx:Canvas>

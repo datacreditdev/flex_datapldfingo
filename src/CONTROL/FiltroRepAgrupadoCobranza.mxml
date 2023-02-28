@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" backgroundAlpha="1.0" backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()">
+	<mx:states>
+		<mx:State name="asesor">
+			<mx:SetProperty target="{rdbSupervisor}" name="x" value="10.25"/>
+			<mx:SetProperty target="{rdbCoord}" name="x" value="95.75"/>
+			<mx:AddChild relativeTo="{canvas3}" position="lastChild">
+				<mx:RadioButton x="192.75" y="5" id="rdbAsesor" label="Asesor" groupName="nivel" value="2"/>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.events.IndexChangedEvent;
+			import mx.collections.ArrayCollection;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;	
+			import mx.validators.Validator;	
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+		
+			[Bindable]
+			private var _xmlCoord:XMLList =  new XMLList();
+			[Bindable]
+			private var _xmlSup:XML =  new XML();
+			
+			public var coordObj:ArrayCollection = new ArrayCollection();
+			public var supObj:ArrayCollection = new ArrayCollection();
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var rep:String;
+			private var global:Globales;
+			
+			public function agregaInicial(codigo:String, texto:String):Object{
+				var oItem:Object = new Object();
+				oItem.codigo = codigo;	
+				oItem.nombre = texto;
+				return oItem;
+			}		
+			
+			public function cargaSupervisor(coord:String):void{	
+				if(coord == ""){
+					initConexion();
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlSup = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+								
+						supObj.removeAll();
+						supObj.refresh();
+						supObj.addItem(agregaInicial("000000", "--Todos--"))	
+						formateaSupervisor();
+					});
+					wsMS.getSupervisor.send();
+				}			
+				if(coord != ""){
+					var i:int;
+					var cont:int = supObj.length;
+					for(i = 0; i < cont; i++){
+						if(supObj[i].codigo.toString() == coord)
+							cboSupervisor.selectedIndex = i;
+					}
+				}
+			}		
+			
+			public function cargaCoord(sup:String):void{
+				//initConexion();
+				//du.sCursor();
+						
+				//du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					//_xmlCoord = new XML(evt.result.toString());
+					if(sup == "" || sup == "000000")
+						_xmlCoord = XMLList(Application.application._xmlCoord.Table);
+					else
+						_xmlCoord = Application.application._xmlCoord.Table.(child("TELEFONO").toString().toLowerCase() == cboSupervisor.selectedItem.codigo.toString().toLowerCase());
+					
+					
+					//du.rCursor();
+					//du.closeWs(wsMS);
+					coordObj.removeAll();
+					coordObj.refresh();	
+					coordObj.addItem(agregaInicial("000", "--Todas--"))
+					
+					cboCoord.enabled = true;	
+					if(_xmlCoord.length() > 0)
+						formateaCoord();
+				//});
+				//wsMS.getCoordRegUsu.send(Application.application.U_ID, cboRegion.selectedItem.codigo);
+			}			
+			
+			public function exportar():void{
+				switch(rep){
+					case "16":
+						var myClass:Class = flash.utils.getDefinitionByName("REPORTES.AnalisisdeCobranzaDet") as Class;	
+						var myComponent:* = new myClass();
+						Application.application.MainWindow.removeAllChildren();		
+						Application.application.MainWindow.addChild(myComponent);
+						myComponent.init(lblTitulo.text, rep, dtfFecha.text, nivel.selectedValue.toString(), Application.application.U_ID,
+										 cboCoord.selectedItem.codigo, "000000", cboSupervisor.selectedItem.codigo, tipoCart.selectedValue.toString());				
+						break;
+				}
+			}				
+					
+			public function formateaSupervisor():void{
+				var i:int;
+				var cont:int = _xmlSup.elements().length();
+				var oItem:Object;
+				
+				for(i = 0; i < cont; i++)
+				{
+					oItem = new Object();
+					oItem.codigo = _xmlSup.Table[i].CODIGO;
+					oItem.nombre = _xmlSup.Table[i].NOMBREC;
+					supObj.addItem(oItem);
+				}
+			}			
+						
+			public function formateaCoord():void{
+				var i:int;
+				var cont:int = _xmlCoord.length();
+				var oItem:Object;
+				
+				for(i = 0; i < cont; i++)
+				{
+					oItem = new Object();
+					oItem.codigo = _xmlCoord.CODIGO[i].toString();
+					oItem.nombre = _xmlCoord.NOMBRE[i].toString();
+					coordObj.addItem(oItem);
+				}
+			}			
+			
+			public function generar():void{
+				if (valida() == true){					
+					var consulta:String;
+					var id:String = "&id=" + rep;
+					var fecha:String = "&fecha=" + global.formatoFechaSep(dtfFecha.selectedDate, "-");
+					var niv:String = "&nivel=" + nivel.selectedValue.toString();
+					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var nomUsuario:String = "&nomUsuario=" + Application.application.NOM_U_ID;
+					var coord:String = "&coord=" + cboCoord.selectedItem.codigo;
+					var asesor:String = "&asesor=000000";
+					var supervisor:String = "&supervisor=" + cboSupervisor.selectedItem.codigo;
+					var cartera:String = "&tipoCart=" + tipoCart.selectedValue.toString(); 
+					
+					//if(currentState == null)
+					consulta = global.urlPdf + id + fecha + niv + cartera + usuario + nomUsuario + coord + asesor + supervisor;					
+					Application.application.muestraPdf(consulta);
+					//Alert.show(consulta);
+				}			
+			}
+						
+			public function init(rep:String, titulo:String, estado:String, exporta:Boolean):void{
+				this.rep = rep;
+				lblTitulo.text = titulo;
+				currentState = estado;
+				limpiar();
+				if (exporta == false)
+					this.removeChild(btnExportar);
+			}		
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				cboCoord.enabled = true;
+				cboSupervisor.enabled = true;
+				cargaSupervisor("");
+				cargaCoord("");		
+//				supObj.removeAll();
+//				supObj.refresh();
+//				supObj.addItem(agregaInicial("000000", "--Todos--"));
+				cboSupervisor.dataProvider = supObj;
+/* 				coordObj.removeAll();
+				coordObj.refresh();
+				coordObj.addItem(agregaInicial("000", "--Todas--")); */
+				cboCoord.dataProvider = coordObj;
+				fec = Application.application._Current_Fecha;
+				if(currentState == null)
+					dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				if(currentState == 'asesor')
+					dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				nivel.selectedValue = 0;
+			}
+				
+			public function selCoord():void{
+				if(cboCoord.selectedItem.codigo.toString() != "000"){
+					var xmlListCoord:XMLList = Application.application._xmlCoord.Table.(CODIGO.toString().toLowerCase() == cboCoord.selectedItem.codigo.toString().toLowerCase());
+					var coord:String = xmlListCoord.TELEFONO[0].toString();
+					cargaSupervisor(coord);
+				}
+			}	
+			
+			public function selSupervisor():void{
+				cargaCoord(cboSupervisor.selectedItem.codigo);
+			}
+				
+			public function valida():Boolean{
+				if(nivel.selection == null){
+					Alert.show("Seleccione el nivel de detalle del reporte.","Reporte",4,null,null,global.iAlert);
+					return false;
+				}
+				if(tipoCart.selection == null){
+					Alert.show("Seleccione el tipo de cartera del reporte.","Reporte",4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Label x="18" y="222" text="Tipo de Cartera" id="label0"/>
+	<mx:Canvas x="18" y="241" width="264" height="61" styleName="canvasMod" id="canvas4">
+		<mx:RadioButtonGroup id="tipoCart"/>
+		<mx:RadioButton x="151" y="31" label="Todas" height="23" width="65" groupName="tipoCart" value="0" selected="true"/>
+		<mx:RadioButton x="10" y="5" label="Cartera Vigente" height="23" width="108" groupName="tipoCart" value="1"/>
+		<mx:RadioButton x="151" y="5" label="Cartera Judicial" height="23" width="101" groupName="tipoCart" value="2"/>
+		<mx:RadioButton x="10" y="31" label="Cartera Extra Judicial" height="23" width="133" groupName="tipoCart" value="3"/>
+	</mx:Canvas>
+	<mx:Label x="18" y="305" text="Nivel de detalle" id="label3"/>
+	<mx:Canvas x="18" y="324" width="264" height="37" styleName="canvasMod" id="canvas3">
+		<mx:RadioButtonGroup id="nivel"/>
+		<mx:RadioButton id="rdbSupervisor" x="30.25" y="5" label="Supervisor" groupName="nivel" value="0"/>
+		<mx:RadioButton id="rdbCoord" x="143.75" y="5" label="Sucursal" groupName="nivel" value="1"/>
+	</mx:Canvas>
+	<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="264.05" height="120.5" styleName="canvasMod" id="canvas2">
+		<mx:ComboBox id="cboCoord" x="10" y="80" labelField="nombre" change="selCoord()" width="170"></mx:ComboBox>
+		<mx:ComboBox id="cboSupervisor" x="10" y="27.5" labelField="nombre" change="selSupervisor()" width="242.05"></mx:ComboBox>
+		<mx:Label x="10" y="10" text="Supervisor" width="61.75" height="20"/>
+		<mx:Label x="10" y="59.5" text="Sucursal" width="81" height="23"/>
+	</mx:Canvas>
+	<mx:Button x="63.25" y="371" label="Generar" click="generar()" id="btnGenerar"/>
+	<mx:Button x="157.75" y="371" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	<mx:Button x="109" y="405" label="Exportar" width="74" id="btnExportar" click="exportar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25" id="lblCriterios"/>
+	<mx:Canvas x="18" y="182" width="264" height="37" styleName="canvasMod" id="canvas1">
+		<mx:DateField id="dtfFecha" x="111.5" y="5" width="111"/>
+		<mx:Label x="39.5" y="6" text="Fecha límite:" id="lblFecha"/>
+	</mx:Canvas>
+</mx:Canvas>

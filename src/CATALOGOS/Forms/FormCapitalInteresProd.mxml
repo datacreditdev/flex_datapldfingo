@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580" height="230">
+	
+	<mx:Metadata>
+		[Event(name="enviarDatosProd", type="Data.EventProd")]
+	</mx:Metadata>
+	
+	<mx:Validator id="multPerV" source="{txtMultCap}" property="text" 
+	triggerEvent="" requiredFieldError="Multiplo de Capital Requerido"/>	
+
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;		
+			import Data.DatosProd;
+			import Data.EventProd;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.controls.Alert;
+			import mx.effects.*;
+			import mx.events.EffectEvent;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.core.Application;
+			import mx.validators.Validator;
+			
+			public var datos:DatosProd = new DatosProd();
+			
+			public var global:Globales;	
+			public var wsMS:WebService;	
+			public var tipoAccion:int;
+			public var du:Utils;
+			
+			private function activaContCap():void{
+				if(pagoCapital.selectedValue == "P")
+					cnvPerCapital.enabled = true;
+				else{
+					cnvPerCapital.enabled = false;
+					perCapital.selection = null;
+					txtMultCap.text = "";
+				}
+			}
+			
+			public function enviarDatosProd(formData:DatosProd):void{
+				if(valida()){
+					formData.perPagoCap = pagoCapital.selectedValue.toString();
+					formData.perCapital = perCapital.selectedValue != null ? perCapital.selectedValue.toString(): "";
+					formData.multPerCap = Number(txtMultCap.text);
+					
+					//Indicador de edicion de los pagos de Capital
+					if(chkPagoCap.selected == true)
+						formData.fijaPagoCap = "S";
+					else if(chkPagoCap.selected == false)
+						formData.fijaPagoCap = "N";
+					
+					//variable que almacena informacion sobre la capitalizacion de interes	
+					formData.capInt = cboCapInt.selectedItem.id;
+							
+					formData.guardaCapInt = true;
+				}
+				else
+					formData.guardaCapInt = false;
+				
+				var event:EventProd = new EventProd("enviarDatosProd", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(info:DatosProd, tipoAccion:int):void{
+				var item:Array = new Array;
+				var capObj:ArrayCollection = new ArrayCollection;
+				var oItem:Object;
+				global = new Globales();
+				du = new Utils();
+				this.tipoAccion = tipoAccion;
+				
+				//Segmento de Codigo utilizado para llenar el combo de Capitalizacion de Interes
+				oItem = new Object();
+				oItem.id = "";	
+				oItem.desc = "No";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "1";	
+				oItem.desc = "Si";
+				item.push(oItem);
+				
+				capObj = new ArrayCollection(item);
+				cboCapInt.dataProvider = capObj;
+				
+				if (info != null){
+					datos = info;
+					
+					pagoCapital.selectedValue = info.perPagoCap; 
+					perCapital.selectedValue = info.perCapital;
+					txtMultCap.text = info.multPerCap.toString();
+					activaContCap();
+					
+					//Indicador de edicion de los pagos de Capital
+					if(info.fijaPagoCap == "S")
+						chkPagoCap.selected = true;
+					else if(info.fijaPagoCap == "N")
+						chkPagoCap.selected = false;
+						
+					for(var i:int = 0; i < capObj.length; i++){
+						if(capObj[i].id == info.capInt){
+							cboCapInt.selectedIndex = i;
+							break;
+						}
+					}																			
+				}		
+			}	
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function valida():Boolean{
+				var invalidArray:Array = Validator.validateAll([multPerV]);
+				
+				if(pagoCapital.selectedValue == "P"){
+					if(perCapital.selectedValue == null)
+						return false;
+					if(invalidArray.length > 0)
+						return false;	
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Label x="90" y="15" text="Periodicidad de Capital"/>
+	<mx:Canvas x="90" y="34" width="400" height="180" styleName="canvasMod">
+		<mx:Canvas id="cnvPagoCap" x="14" y="29" width="172" height="90" styleName="canvasMod">
+			<mx:RadioButtonGroup id="pagoCapital" itemClick="activaContCap()"/>
+			<mx:RadioButton id="rdbPerCap" x="15" y="4" label="Periódico" groupName="pagoCapital" value="P" selected="true"/>
+			<mx:RadioButton id="rdbManCap" x="15" y="30" label="Manual" groupName="pagoCapital" value="M" width="68"/>
+			<mx:RadioButton id="rdbFinalCap" x="94.5" y="4" label="Final" groupName="pagoCapital" value="F" width="55.5"/>
+			<mx:CheckBox id="chkPagoCap" x="22.5" y="56" label="No Permitir modificar"/>
+		</mx:Canvas>
+		<mx:Label x="14" y="10" text="Pago Capital"/>
+		<mx:Label x="194" y="10" text="Periodicidad"/>
+		<mx:Canvas id="cnvPerCapital" x="194" y="29" width="190" height="90" styleName="canvasMod">
+			<mx:RadioButtonGroup id="perCapital"/>
+			<mx:RadioButton id="rdbSemCap" x="10" y="4" label="Semanal" groupName="perCapital" value="S"/>
+			<mx:RadioButton id="rdbQuinCap" x="10" y="30" label="Quincenal" groupName="perCapital" value="Q"/>
+			<mx:RadioButton id="rdbCatCap" x="106" y="4" label="Catorcenal" groupName="perCapital" value="C"/>
+			<mx:RadioButton id="rdbMensCap" x="106" y="30" label="Mensual" groupName="perCapital" value="M"/>
+			<mx:Label x="5" y="60" text="Múltiplo de la periodicidad:"/>
+			<mx:TextInput id="txtMultCap" x="143" y="58" width="40" restrict="0-9" maxChars="2"/>
+		</mx:Canvas>
+		<mx:Canvas x="99" y="127" width="200" height="40" styleName="canvasMod">
+			<mx:Label x="19.5" y="10" text="Capitaliza Interes:"/>
+			<mx:ComboBox id="cboCapInt" labelField="desc" x="117.5" y="7" width="55"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

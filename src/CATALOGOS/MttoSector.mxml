@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="420" height="170" xmlns:Data="Data.*">
+	
+	<mx:Validator id="codigoV" source="{txtCodigo}" property="text" 
+	invalid="{txtCodigo.setFocus()}" triggerEvent="" requiredFieldError="Giro Requerido"/>
+	
+	<mx:Validator id="nombreV" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Nombre Requerido"/>
+		
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosSector;
+		import Data.EventSector;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		
+		[Bindable]
+		private var info:DatosSector;
+		[Bindable]
+		private var _xmlSec:XML =  new XML();
+		
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var wsCat:WebService;
+		public var tipoAccion:int;
+		public var titulo:String;
+		private var global:Globales;
+		private var du:Utils;
+		private var vResult:ValidationResultEvent;
+		
+		public function cargaInfoSector(tipo:int, codigo:String):void{
+			var params:Array = new Array;
+			wsCat = new WebService;
+			tipoAccion = tipo; 
+			this.title = "Edición";
+			//Datos de la Linea de Credito
+			info.codigo = codigo;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlSec = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if (_xmlSec.elements().length() > 0){
+					llenaRegistros();
+				} 	
+			});
+			params[0] = codigo;
+			wsCat.getInfoRegistro.send(34, params);
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			var invalidArray:Array = Validator.validateAll([codigoV, nombreV]);
+				
+			if(invalidArray.length == 0){	
+				var i:int;
+				info.codigo = txtCodigo.text;
+				info.nombre = txtNombre.text;
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+			
+		public function guardaSector():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionSector);
+			wsMS.setAccionSector.send(tipoAccion, info.codigo, info.nombre, Application.application.U_ID);	
+		}
+	
+		public function init(tipo:int, codigo:String = null):void{
+			global = new Globales(); 
+			du = new Utils();
+			info = new DatosSector();
+			titulo = "Mantenimiento de Sector";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			if(tipo == 1)
+		 		registraInfoSector(tipo); 
+		 	else if(tipo == 2){
+		 		cargaInfoSector(tipo, codigo);
+		 	}
+				
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+			var i:int;
+			txtCodigo.setFocus();
+			
+			txtCodigo.text = info.codigo;
+			txtNombre.text = _xmlSec.Table[0].NOMBRE;
+		}
+			
+		public function registraInfoSector(tipo:int):void{
+			tipoAccion = tipo;
+			this.title = "Nuevo";
+			
+			txtCodigo.setFocus();	
+		}
+		
+		private function setAccionSector(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionSector);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validaDatosSector(event:EventSector):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			if (info.guarda == true)
+				guardaSector();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+				
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	<mx:Button id="btnAceptar" x="164" y="98" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="212" y="98" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	<mx:Canvas x="20.5" y="10" width="375" height="80" styleName="canvasMod">
+		<mx:Label id="lblNombre" x="18" y="41" text="Nombre:"/>
+		<mx:Label id="lblCodigo" x="23" y="11" text="Sector:"/>
+		<mx:TextInput id="txtCodigo" x="71" y="10" width="50"/>
+		<mx:TextInput id="txtNombre" x="71" y="40" width="292" maxChars="200"/>
+	</mx:Canvas>
+</mx:TitleWindow>

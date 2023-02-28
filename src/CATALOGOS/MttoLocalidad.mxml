@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" 
+	width="490" height="346" creationPolicy="all" xmlns:Forms="CATALOGOS.Forms.*">
+	
+	<mx:Script>
+	<![CDATA[
+		import mx.collections.ArrayCollection;
+		import mx.managers.PopUpManager;
+		import Data.EventLoc;
+		import Data.DatosLoc;
+		import mx.controls.Alert;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import Data.Utils;
+		import Data.Globales;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.events.ResultEvent;
+		import mx.core.Application;
+		
+		[Bindable]
+		private var info:DatosLoc;
+		private var _xmlLoc:XML =  new XML();
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var du:Utils;
+		
+		public function cargaInfoLoc(cdgLoc:String):void{
+			tipoAccion = 2; 
+			this.title = "Edición";
+			
+			initConexion();
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlLoc = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsMS);
+					
+				if (_xmlLoc.elements().length() > 0){
+					llenaRegistros();
+				} 	
+			});
+			wsMS.getInfoLoc.send(txtCdgEntFed.text, txtCdgMunic.text, cdgLoc);
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			info = new DatosLoc();
+				
+			formDatosLoc.enviarDatosLoc(info);
+			validaFinal();
+		}
+		
+		public function guardaLoc():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionLoc);
+			wsMS.setAccionLoc.send(tipoAccion, txtCdgEntFed.text, txtCdgMunic.text, info.codigo, 
+								   info.localidad, info.areaTel, info.tipo); 			
+		}
+	
+		public function init(cdgEntFed:String, entFed:String, cdgMunic:String, munic:String):void{
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Mantenimiento de Localidades";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			txtCdgEntFed.text = cdgEntFed;
+			txtEntFed.text = entFed;
+			txtCdgMunic.text = cdgMunic;
+			txtMunic.text = munic;
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+			info = new DatosLoc();
+			//Datos de la localidad
+			info.codigo = _xmlLoc.Table[0].CODIGO;
+			info.localidad = _xmlLoc.Table[0].NOMBRE;
+			info.areaTel = _xmlLoc.Table[0].CDGTEL;
+			info.tipo = _xmlLoc.Table[0].TIPO;
+			
+			formDatosLoc.init(info);
+		}
+		
+		public function validaDatosLoc(event:EventLoc):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			if (info.guarda == true)
+				guardaLoc();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		public function registraInfoLoc():void{
+			tipoAccion = 1;
+			this.title = "Nuevo";
+			info = null;
+			formDatosLoc.init(info);
+		}
+		
+		private function setAccionLoc(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionLoc);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+	]]>
+	</mx:Script>
+	<mx:Canvas x="13" y="10" width="464" height="76" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblEntFed" x="25.5" y="12" text="Entidad Federativa:"/>
+		<mx:TextInput id="txtCdgEntFed" editable="false" x="130.5" y="10" width="58"/>
+		<mx:TextInput id="txtEntFed" editable="false" x="196.5" y="10" width="240"/>
+		<mx:Label id="lblMunic" x="70.5" y="40" text="Municipio:"/>
+		<mx:TextInput id="txtCdgMunic" editable="false" x="130.5" y="38" width="58"/>
+		<mx:TextInput id="txtMunic" editable="false" x="196.5" y="38" width="240" height="24"/>
+	</mx:Canvas>
+	<mx:Canvas x="13" y="94" width="464" height="172" styleName="canvasMod">
+		<Forms:FormDatosLoc id="formDatosLoc" x="10" y="10" width="442" height="150"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="389" y="274" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="437" y="274" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

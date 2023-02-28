@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" backgroundAlpha="0.0" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+			
+	<mx:Script>
+		<![CDATA[			
+			import mx.managers.PopUpManager;			
+			
+			private function cancelar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function init(msj:String = null):void{
+				lblCarga.text = msj;
+			}	
+		]]>
+	</mx:Script>
+	<mx:Label y="{height/2}" fontWeight="bold" color="#000000" id="lblCarga" textAlign="center"/>
+</mx:Canvas>

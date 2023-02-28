@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="620" height="574" 
+	layout="absolute" showCloseButton="true" close="cerrar()" xmlns:Data="Data.*">
+	<mx:states>
+		<mx:State name="datos">
+			<mx:SetProperty target="{lblEtAcred}" name="text" value="Funcionario:"/>
+			<mx:SetProperty target="{lblEtAcred}" name="x" value="103.15"/>
+			<mx:RemoveChild target="{txtCodAcred}"/>
+			<mx:AddChild relativeTo="{canvas2}" position="lastChild">
+				<mx:TextInput id="txtCodFunc" x="176.15" y="74" width="60" editable="false"/>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	
+	<!--Componente de Dictamen de Alertas-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;	
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;	
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;  
+			            
+			public var wsMS:WebService;	
+			public var du:Utils;
+			public var titulo:String;
+			public var tipo:String;
+			private var global:Globales;
+			private var vResult:ValidationResultEvent;
+
+			private var tipoObj:ArrayCollection = new ArrayCollection();
+
+			private var _xmlInfo:XML = new XML();
+			private var _xmlTipo:XML = new XML();
+			private var alta:String;
+			private var sec:String;
+		
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+								
+			public function enviar():void{
+				if(valida() == true){
+					var tipo:String;
+					var codFunc:String;
+					var reportado:String;
+					var justifica:String;
+					
+					if(currentState == "datos")
+						codFunc = txtCodFunc.text;
+					
+					tipo = cboTipo.selectedItem.codigo;
+					reportado = dictamen.selectedValue.toString();
+					justifica = txtJustDict.text;	
+					
+					initConexion();
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						var res:String = evt.result.toString();
+					
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						if(res.substr(0,1) == "1"){
+							cerrar();
+						}
+						else
+							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);	
+					});
+					wsMS.setProcesaAlerta.send(alta, sec, tipo, codFunc, reportado, justifica, Application.application.U_ID);
+				}
+			}
+			
+			private function formateaTipo():void{
+				var oItem:Object;
+				var i:int;
+				var cont:int = _xmlTipo.elements().length();
+				var item:Array = new Array;
+				
+				tipoObj.removeAll();
+				tipoObj.refresh();
+				
+				oItem = new Object();
+				oItem.codigo = "0";
+				oItem.desc = "--Seleccionar--";
+				item.push(oItem);	
+				
+				for(i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlTipo.Table[i].CODIGO;
+					oItem.desc = _xmlTipo.Table[i].DESCRIPCION;
+					item.push(oItem);	
+				}
+				tipoObj = new ArrayCollection(item);		
+			}
+			
+			public function init(alta:String, sec:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				titulo = "Dictamen de Alertas";
+				this.title = titulo;
+				
+				this.alta = alta;
+				this.sec = sec;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlTipo = new XML(evt.result.toString());
+				
+					du.rCursor();
+					du.closeWs(wsCat);
+							
+					if(_xmlTipo.elements().length() > 0){
+						formateaTipo();
+						cboTipo.dataProvider = tipoObj;
+						
+						du.initWsCat(wsCat);
+						du.sCursor();
+						
+						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+							_xmlInfo = new XML(evt.result.toString());
+						
+							du.rCursor();
+							du.closeWs(wsCat);
+								
+							if(_xmlInfo.elements().length() > 0)
+								llenaRegistros();
+							else
+								Alert.show("No se encontró información del registro consultado.",titulo,4,null,null,global.iAlert);
+						});
+						params[0] = alta;
+						params[1] = sec;
+						wsCat.getInfoRegistro.send(29, params);
+					}
+					else{
+						Alert.show("Error de Carga de Datos.",titulo,4,null,null,global.iAlert);
+					}
+				});
+				//Obtiene informacion de los tipos de Alertas de PLD
+				wsCat.getCatalogoGral.send(36);	
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function llenaRegistros():void{
+				if(_xmlInfo.Table[0].CDGCL.toString() != ""){
+					txtCodAcred.text = _xmlInfo.Table[0].CDGCL;
+					txtNombre.text = _xmlInfo.Table[0].NOMCL;	 
+				}
+				else{
+					currentState = 'datos';
+					txtCodFunc.text = _xmlInfo.Table[0].CDGPE;
+					txtNombre.text = _xmlInfo.Table[0].NOMPE;
+				}
+				txtFecha.text = _xmlInfo.Table[0].FALTA;
+				txtDesc.text = _xmlInfo.Table[0].DESCRIPCION;
+				dictamen.selectedValue = _xmlInfo.Table[0].REPORTADO;
+				txtJustDict.text = _xmlInfo.Table[0].JUSTIFICA;
+				
+				for(var i:int = 0; i < tipoObj.length; i++){
+					if(tipoObj[i].codigo.toString() == _xmlInfo.Table[0].CDGAL){
+						cboTipo.selectedIndex = i;
+						break;
+					}
+				}
+			}
+			
+			private function valida():Boolean{
+				if(dictamen.selectedValue == null){
+					Alert.show("Debe seleccionar la determinación del dictamen.",titulo,4,null,null,global.iAlert);	
+					return false;
+				}
+				if(txtJustDict.text == ""){
+					Alert.show("Debe capturar la justificación del dictamen.",titulo,4,null,null,global.iAlert);	
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:NumberValidator id="numVal" property="text" precision="2"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator="," required="false"/>
+	<mx:Button id="btnAceptar" x="453" y="496" icon="@Embed(source='assets/button_ok.png')" enabled="true" toolTip="Aceptar" width="80" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="541" y="496" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:Canvas x="15" y="10" width="590" height="110" styleName="canvasMod" id="canvas2">
+		<mx:Label id="lblEtAcred" x="107.15" y="76" text="Acreditado:" textAlign="right"/>
+		<mx:Label id="lblEtNombre" x="245.25" y="76" text="Nombre:" width="54" textAlign="right"/>
+		<mx:Label id="lblEtFecha" x="130.15" y="11" text="Fecha:" textAlign="right"/>
+		<mx:TextInput id="txtFecha" x="176.15" y="10" width="80.1" editable="false"/>
+		<mx:TextInput id="txtCodAcred" x="176.15" y="74" width="60" editable="false"/>
+		<mx:TextInput id="txtNombre" x="307.25" y="74" width="230.5" editable="false"/>
+		<mx:Label id="lblEtTipo" x="78.15" y="45" text="Origen Recursos:" textAlign="right"/>
+		<Data:CustomComboBox id="cboTipo" labelField="desc" x="176.15" y="42" width="300.1"/>
+	</mx:Canvas>
+	<mx:Canvas id="cnvDetalle" width="590" height="360" styleName="canvasMod" visible="true" enabled="true" x="15" y="128">
+		<mx:Label id="lblJustDict" x="25.5" y="210" text="Justificación de Dictamen" textAlign="right"/>
+		<mx:TextArea id="txtDesc" x="25.5" y="30" width="537" height="110" editable="false" verticalScrollPolicy="auto"/>
+		<mx:TextArea id="txtJustDict" x="25.5" y="229" width="537" height="110" verticalScrollPolicy="auto"/>
+		<mx:Label id="lblDesc" x="25.5" y="10" text="Descripción" textAlign="right"/>
+		<mx:Canvas x="153.75" y="167" width="280.4" height="35" styleName="canvasMod" id="canvas1">
+			<mx:RadioButtonGroup id="dictamen"/>
+			<mx:RadioButton x="41.2" y="5" label="No Reportado" groupName="dictamen" value="N"/>
+			<mx:RadioButton x="163.2" y="5" label="Reportado" groupName="dictamen" value="S"/>
+		</mx:Canvas>
+		<mx:Label id="lblDictamen" x="153.75" y="148" text="Dictamen" textAlign="right"/>
+	</mx:Canvas>
+</mx:TitleWindow>

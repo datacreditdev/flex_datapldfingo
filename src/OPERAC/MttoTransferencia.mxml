@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="560" 
+	height="389" creationPolicy="all" xmlns:Forms="OPERAC.Forms.*">
+	<mx:Script>
+	<![CDATA[
+		import Data.DatosDispersion;
+		import Data.EventDispersion;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.managers.PopUpManager;		
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		
+		[Bindable]
+		private var info:DatosDispersion;
+		
+		private var global:Globales;
+		private var du:Utils;
+		private var wsMS:WebService;	
+		public var titulo:String;
+		public var cdgAcred:String;
+		public var ciclo:String;
+		public var tipoAccion:int;
+		
+		public function cerrar():void{
+			PopUpManager.removePopUp(this);
+		}
+	
+		public function enviar():void{
+			info = new DatosDispersion();		
+			formDatosTrans.enviaTransferencia(info);
+			validaFinal()
+		}
+		
+		private function guardaDispersion():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionDispersion);
+			wsMS.setAccionDispersion.send(tipoAccion, cdgAcred, ciclo, cdgAcred, "I", info.cdgMetodo, info.cdgBanco, 
+										  info.cuenta, info.concepto, info.monto, info.fecha, info.cdgMotivo, 
+										  info.cdgCuenta, info.reportado, Application.application.U_ID); 			
+		}
+	
+		public function init(cdgAcred:String, acred:String, ciclo:String, monto:Number, fecha:String):void{
+			global = new Globales();
+			du = new Utils();
+			titulo = "Registro de Transferencia";
+			this.title = titulo;
+			this.cdgAcred = cdgAcred;
+			this.ciclo = ciclo;
+			txtCdgAcred.text = cdgAcred;
+			txtAcreditado.text = acred;
+			formDatosTrans.txtCuenta.setFocus();
+			formDatosTrans.txtMonto.text = monto.toString();
+			formDatosTrans.dtfFecha.text = fecha;
+			tipoAccion = 1;
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function validaFinal():void{
+			if (info.guarda)
+				guardaDispersion();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		private function setAccionDispersion(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionDispersion);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+				cerrar();
+			}
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+	]]>
+	</mx:Script>
+	<mx:Canvas x="13" y="10" width="534" height="50" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblCliente" x="51" y="11" text="Acreditado:"/>
+		<mx:TextInput id="txtCdgAcred" editable="false" x="120" y="10" width="58"/>
+		<mx:TextInput id="txtAcreditado" editable="false" x="186" y="10" width="300"/>
+	</mx:Canvas>
+	<mx:Button id="btnCancelar" x="506" y="311" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="458" y="311" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Canvas styleName="canvasMod" width="534" height="235" y="68" x="13">
+		<Forms:FormDatosTransferencia id="formDatosTrans" x="10" width="512" height="220" y="5"/>
+	</mx:Canvas>
+</mx:TitleWindow>

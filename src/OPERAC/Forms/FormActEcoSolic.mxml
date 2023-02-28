@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="700" height="200" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
+	</mx:Metadata>
+	
+	<mx:NumberValidator id="proyV" source="{cboProyecto}" property="selectedIndex" 
+	invalid="{cboProyecto.setFocus()}" minValue="1" triggerEvent="" lowerThanMinError="Proyecto Requerido"/>
+		
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import Data.Globales;
+			import Data.Utils;
+			import OPERAC.MttoProyecto;
+			import mx.controls.Alert;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.effects.easing.Elastic;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.validators.Validator;
+			
+			[Bindable]
+			private var _xmlProy:XML =  new XML();
+			
+			public var proyObj:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosSolic = new DatosSolic();
+			
+			public var wsMS:WebService;	
+			public var tipoAccion:int;
+			public var cdgAcred:String;
+			public var acred:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function actualizaProy(event:Event):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();		
+				
+				cboProyecto.dataProvider = null;
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlProy = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlProy.elements().length() > 0){
+						formateaProy();
+						cboProyecto.dataProvider = proyObj;
+					} 		
+				});
+				params[0] = cdgAcred;
+				wsCat.getInfoAcred.send(5, params);
+			}
+			
+			public function desactivaControles():void{
+				cnvCont.enabled = false;
+			}
+			
+			public function enviarDatosSolic(formData:DatosSolic):void{
+				var invalidArray:Array = Validator.validateAll([proyV]);
+				
+				//if(invalidArray.length == 0){	
+					formData.cdgProy = cboProyecto.selectedItem.codigo;
+					formData.emplGenH = Number(txtEGHombres.text);
+					formData.emplGenM = Number(txtEGMujeres.text);
+					formData.emplSostH = Number(txtESHombres.text);
+					formData.emplSostM = Number(txtESMujeres.text);
+					formData.guardaActEco = true;
+				/*}
+				else
+					formData.guardaActEco = false;*/
+					
+				var event:EventSolic = new EventSolic("enviarDatosSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			public function formateaProy():void{
+				var cont:int = _xmlProy.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				proyObj.removeAll();	
+				proyObj.refresh();
+					
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlProy.Table[i].PROYECTO;
+					oItem.nombre = _xmlProy.Table[i].NOMBRE;
+					oItem.desc = _xmlProy.Table[i].PROYECTO + " " + _xmlProy.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				proyObj = new ArrayCollection(item);
+			}
+			
+			public function init(cdgAcred:String, acred:String, info:DatosSolic, tipoAccion:int, estatus:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				this.tipoAccion = tipoAccion;
+				this.cdgAcred = cdgAcred;
+				this.acred = acred;
+				global = new Globales();
+				du = new Utils();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();		
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlProy = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlProy.elements().length() > 0){
+						formateaProy();
+						cboProyecto.dataProvider = proyObj;
+					}
+					
+					if (info != null){
+						datos = info;
+						
+						if(info.situacion == 'A' || info.situacion == 'R' || estatus == "evaluacion")
+							desactivaControles();
+						
+						txtEGHombres.text = info.emplGenH.toString();
+						txtEGMujeres.text = info.emplGenM.toString();
+						txtESHombres.text = info.emplSostH.toString();
+						txtESMujeres.text = info.emplSostM.toString();
+						
+						for(var j:int = 0; j < proyObj.length; j++){
+							if(proyObj[j].codigo.toString() == info.cdgProy){
+								cboProyecto.selectedIndex = j;
+								break;
+							}	
+						}
+					}	
+				});
+				params[0] = cdgAcred;
+				wsCat.getInfoAcred.send(5, params);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function mostrarFormProy():void{
+				var fecha:String;
+				var oItem:Object;
+				
+				oItem = new Object();
+				oItem.codigo = "";
+				proyObj.addItem(oItem);
+				
+				//Permite seleccionar el control padre del objeto contenedor para centrar el formulario al desplegarlo
+			 	var obj:DisplayObject = this.parentApplication.parent;
+				
+				var comMttoProy:MttoProyecto = new MttoProyecto();
+				comMttoProy = MttoProyecto(PopUpManager.createPopUp(obj,MttoProyecto,true)); 
+				comMttoProy.currentState = "individual";
+				comMttoProy.addEventListener(Event.REMOVED_FROM_STAGE, actualizaProy);
+				PopUpManager.centerPopUp(comMttoProy);
+				fecha = global.formatoFecha(Application.application._Current_Fecha);
+				comMttoProy.init("", "", cdgAcred, acred, fecha, proyObj);		
+			}
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvCont" styleName="canvasMod" x="99.7" y="25" width="500.6" height="145">
+		<mx:Label x="44.55" y="13" text="Proyecto de inversión:"/>
+		<mx:ComboBox id="cboProyecto" x="164.05" y="10" width="210" labelField="desc"/>
+		<mx:Button id="btnAgregar" x="382.05" y="11" label="Agregar" width="72" click="mostrarFormProy()"/>
+		<mx:Canvas x="86.8" y="63" width="150" height="70" styleName="canvasMod">
+			<mx:Label id="lblEGHombres" x="10" y="10" text="Hombres:"/>
+			<mx:Label id="lblEGMujeres" x="15" y="38" text="Mujeres:"/>
+			<mx:TextInput id="txtEGHombres" x="69" y="8" width="69" maxChars="3" restrict="0-9"/>
+			<mx:TextInput id="txtEGMujeres" x="69" y="36" width="69" maxChars="3" restrict="0-9"/>
+		</mx:Canvas>
+		<mx:Label x="86.8" y="43" text="Empleos generados"/>
+		<mx:Canvas x="261.8" y="63" width="150" height="70" styleName="canvasMod">
+			<mx:Label id="lblESHombres" x="10" y="10" text="Hombres:"/>
+			<mx:Label id="lblESMujeres" x="15" y="38" text="Mujeres:"/>
+			<mx:TextInput id="txtESHombres" x="69" y="8" width="69" maxChars="3" restrict="0-9"/>
+			<mx:TextInput id="txtESMujeres" x="69" y="36" width="69" maxChars="3" restrict="0-9"/>
+		</mx:Canvas>
+		<mx:Label x="261.8" y="43" text="Empleos sostenidos"/>
+	</mx:Canvas>
+</mx:Canvas>

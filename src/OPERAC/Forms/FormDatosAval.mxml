@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="420" height="420" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosAcred", type="Data.EventAcred")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosAcred;
+			import Data.EventAcred;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.effects.easing.Elastic;
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;
+			import mx.utils.StringUtil;
+			import mx.validators.Validator;
+
+			private var _xmlCoord:XML =  new XML();
+			private var _xmlDatos:XML =  new XML();
+			private var _xmlEntFed:XML =  new XML();
+			private var _xmlPais:XML =  new XML();
+			
+			public var coordArr:Array = new Array();
+			
+			public var coordObj:ArrayCollection = new ArrayCollection();
+			public var paisObj:ArrayCollection = new ArrayCollection();
+			public var entFedObj:ArrayCollection = new ArrayCollection();
+			public var datos:DatosAcred = new DatosAcred();
+			
+			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS	
+			public var du:Utils;
+			private var global:Globales;
+			public var bandCURP:Boolean;
+			public var f:Date;
+			public var fecMin:Date;
+			public var fecMax:Date;
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function enviarDatosAcred(formData:DatosAcred):void{
+				formData.nombreAval = StringUtil.trim(txtNombre.text.toUpperCase());
+				formData.segNombreAval = StringUtil.trim(txtSegNombre.text.toUpperCase());
+				formData.aPaternoAval = StringUtil.trim(txtAP.text.toUpperCase());
+				formData.aMaternoAval = StringUtil.trim(txtAM.text.toUpperCase());
+				formData.fechaAval = txtFecha.text;
+					
+				if (rdbMasculino.selected == true)
+					formData.sexoAval = "M";
+				if (rdbFemenino.selected == true)
+					formData.sexoAval = "F";
+				//selecciona el codigo del pais	
+				if (cboPais.selectedIndex > 0)
+					formData.cdgPaisAval = cboPais.selectedItem.CODIGO;
+				//selecciona el codigo de la entidad de nacimiento		
+				if (cboEntidad.selectedIndex > 0)
+					formData.cdgEntFedAval = cboEntidad.selectedItem.id;
+				//selecciona el codigo de la nacionalidad
+				if (cboNac.selectedIndex > 0)
+				 	formData.cdgNacAval = cboNac.selectedItem.CODIGO;
+					 											 						
+				formData.rfcAval = txtRfc.text;
+				formData.curpAval = txtCurp.text;
+				formData.ifeAval = StringUtil.trim(txtIfe.text); 
+				formData.guardaAval = true;
+				
+				var event:EventAcred = new EventAcred("enviarDatosAcred", formData);
+				dispatchEvent(event);
+			}
+			
+			public function formateaCoord():void{
+				var i:int;
+				var cont:int = _xmlCoord.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlCoord.Table[i].CODIGO;	
+					oItem.nombre = _xmlCoord.Table[i].NOMBRE;
+					item.push(oItem);
+					coordArr[i + 1] = _xmlCoord.Table[i].NOMBRE.toString();
+				}
+				coordObj = new ArrayCollection(item);
+			}
+			
+			public function formateaEntFed():void{
+				var i:int;
+				var cont:int = _xmlEntFed.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.clave = "0";
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlEntFed.Table[i].CODIGO;
+					oItem.clave = _xmlEntFed.Table[i].CDGCURP;	
+					oItem.nombre = _xmlEntFed.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				entFedObj = new ArrayCollection(item);
+			}
+			
+			public function formateaPais(cadInfo:String):void{
+				var oItem:Object;
+				var array:Array;
+				
+				oItem = new Object();
+				oItem.CODIGO = "0";	
+				oItem.NOMBRE = "--Seleccionar--";
+				oItem.GENTILICIO = "--Seleccionar--";
+				
+				var xml:XMLDocument = new XMLDocument(cadInfo); 
+     			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+     			var data:Object = decoder.decodeXML(xml);  
+				array = ArrayUtil.toArray(data.NewDataSet.Table);   
+				paisObj = new ArrayCollection(array);
+				paisObj.addItemAt(oItem, 0);
+			}
+			
+			public function generaCURP():void{
+				//Elimina espacios al principio y final de los textos 
+				txtAP.text = StringUtil.trim(txtAP.text);
+				txtAM.text = StringUtil.trim(txtAM.text);
+				txtNombre.text = StringUtil.trim(txtNombre.text);
+				txtSegNombre.text = StringUtil.trim(txtSegNombre.text);
+				
+				if (txtAP.text != "" && txtNombre.text != "" && txtFecha.text != "" 
+				&& (rdbMasculino.selected == true || rdbFemenino.selected == true) && cboEntidad.selectedIndex > 0){
+						var wsCat:WebService = new WebService;
+						var params:Array = new Array;
+						var curp:String;
+						var nombres:String;
+						var sexo:String;
+						var clave:String;
+						var j:int;
+											
+						du.initWsCat(wsCat);
+						du.sCursor();
+						
+						nombres = txtNombre.text + " " + txtSegNombre.text;
+						
+						if(rdbMasculino.selected == true) 
+							sexo = "H";
+						else if(rdbFemenino.selected == true)
+							sexo = "M";
+						
+						for(j = 0; j < entFedObj.length; j++){
+							if (entFedObj[j].nombre.toString() == cboEntidad.text){
+								clave = entFedObj[j].clave.toString();	
+								break;		
+							}			
+						}
+							
+						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+							curp = evt.result.toString();
+
+							du.rCursor();
+							du.closeWs(wsCat);
+							
+							txtRfc.text = curp.substr(0,10);
+							txtCurp.text = curp;	
+						});
+						//GENERA EL CURP DEL CLIENTE
+						params[0] = txtAP.text;
+						params[1] = txtAM.text;
+						params[2] = nombres;
+						params[3] = txtFecha.text;
+						params[4] = sexo;
+						params[5] = clave;
+						wsCat.getInfoAcred.send(2, params);
+				}
+				else{
+					txtRfc.text = "";
+					txtCurp.text = "";
+				}	
+			}
+			
+			public function init(info:DatosAcred):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				global = new Globales();
+				du = new Utils();
+				f = Application.application._Current_Fecha;
+				fecMin = new Date(f.getFullYear()-17,f.getMonth(),f.getDate());
+				fecMax = new Date(f.getFullYear()-80,f.getMonth(),f.getDate());
+				txtFecha.selectableRange = {rangeStart: fecMax, rangeEnd: fecMin};
+				
+				permisos();
+				 	
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlPais = new XML(evt.result.toString());
+					
+					if (_xmlPais.elements().length() > 0){
+						formateaPais(evt.result.toString());
+						cboPais.dataProvider = paisObj;
+						cboNac.dataProvider = paisObj;
+					}
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlEntFed = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						
+						if (_xmlEntFed.elements().length() > 0){
+							formateaEntFed();
+							cboEntidad.dataProvider = entFedObj;
+						}
+					
+						if (info != null){
+							var j:int;
+							txtNombre.text = info.nombreAval;
+							txtSegNombre.text = info.segNombreAval;
+							txtAP.text = info.aPaternoAval;
+							txtAM.text = info.aMaternoAval;
+							if (info.sexoAval.toUpperCase() == "F")
+								rdbFemenino.selected = true;
+							else if (info.sexoAval.toUpperCase() == "M")
+								rdbMasculino.selected = true;
+							txtFecha.text = info.fechaAval;
+							//selecciona el pais del acreditado
+							//j = 0;
+							//j = _xmlPais.Table.(CODIGO.toString() == info.cdgPais.toString()).childIndex();
+							//cboPais.selectedIndex = j + 1;
+							for(j = 0; j < paisObj.length; j++){   
+								if (paisObj[j].CODIGO.toString() == info.cdgPaisAval){
+									cboPais.selectedIndex = j;
+									break;
+								}
+							}
+							//selecciona la entidad federativa del acreditado
+							//j = 0;
+							//j = _xmlEntFed.Table.(CODIGO.toString() == info.cdgEntFed.toString()).childIndex();
+							//cboEntidad.selectedIndex = j + 1;
+							for(j = 0; j < entFedObj.length; j++){   
+								if (entFedObj[j].id.toString() == info.cdgEntFedAval){
+									cboEntidad.selectedIndex = j;
+									break;
+								}
+							} 
+							//selecciona la nacionalidad del acreditado
+							//j = 0;
+							//j = _xmlPais.Table.(CODIGO.toString() == info.cdgNac.toString()).childIndex();
+							//cboNac.selectedIndex = j + 1;
+							for(j = 0; j < paisObj.length; j++){   
+								if (paisObj[j].CODIGO.toString() == info.cdgNacAval){
+									cboNac.selectedIndex = j;
+									break;
+								}
+							}
+							txtRfc.text = info.rfcAval;
+							txtCurp.text = info.curpAval;
+							txtIfe.text = info.ifeAval;
+						}		
+						else{
+							for(j = 0; j < paisObj.length; j++){   
+								if (paisObj[j].NOMBRE.toString().toUpperCase() == "MEXICO"){
+									cboPais.selectedIndex = j;
+									break;
+								}
+							}
+							for(j = 0; j < paisObj.length; j++){   
+								if (paisObj[j].GENTILICIO.toString().toUpperCase() == "MEXICANO"){
+									cboNac.selectedIndex = j;
+									break;
+								}		
+							}
+						}
+					});
+					//MUESTRA LAS ENTIDADES FEDERATIVAS DISPONIBLES
+					wsCat.getCatalogoGral.send(2);
+				});
+				//CONSULTA LOS PAISES DISPONIBLES
+				wsCat.getCatalogoGral.send(1);
+			}
+			
+			public function limpiaCampos():void{
+			}
+			
+			public function permisos():void{
+				if(global.permisosModAcred(Application.application.PERFIL_ID)){
+					txtRfc.editable = true;
+					txtCurp.editable = true;
+				}
+			}
+	]]>
+	</mx:Script>
+	<mx:FormItem label="Nombres:" id="nombre" visible="true" width="384">
+		<mx:Canvas>
+			<mx:TextInput id="txtNombre" width="129" restrict="A-Z;a-z;Ñ;ñ; " focusOut="generaCURP()"/>
+			<mx:TextInput id="txtSegNombre" x="127" width="137" restrict="A-Z;a-z;Ñ;ñ; " focusOut="generaCURP()"/>	
+		</mx:Canvas>
+	</mx:FormItem>
+	<mx:FormItem label="Apellido Paterno:" id="AP" visible="true">
+		<mx:TextInput id="txtAP" restrict="A-Z;a-z;Ñ;ñ; " focusOut="generaCURP()"/>
+	</mx:FormItem>
+	<mx:FormItem label="Apellido Materno:" id="AM" visible="true">
+		<mx:TextInput id="txtAM" restrict="A-Z;a-z;Ñ;ñ; " focusOut="generaCURP()"/>
+	</mx:FormItem>
+	<mx:FormItem label="Sexo:" id="sexo" visible="true" width="330">
+		<mx:Canvas>
+			<mx:RadioButton id="rdbFemenino" label="Femenino" focusOut="generaCURP()"/>
+			<mx:RadioButton id="rdbMasculino" label="Masculino" x="80" focusOut="generaCURP()"/>	
+		</mx:Canvas>	
+	</mx:FormItem>
+	<mx:FormItem label="Fecha Nacimiento:" id="fecha" visible="true" width="280">
+		<mx:DateField id="txtFecha" width="109" yearNavigationEnabled="true" focusOut="generaCURP()"/>
+	</mx:FormItem>
+	<mx:FormItem label="País Nacimiento:" id="pais" visible="true" width="290">
+		<mx:ComboBox id="cboPais" labelField="NOMBRE" width="170"/>
+	</mx:FormItem>
+	<mx:FormItem label="Entidad Nacimiento:" id="entidad" visible="true" width="290">
+		<mx:ComboBox id="cboEntidad" labelField="nombre" width="170" focusOut="generaCURP()"/>
+	</mx:FormItem>
+	<mx:FormItem label="Nacionalidad:" id="nacionalidad" visible="true" width="290">
+		<mx:ComboBox id="cboNac" labelField="GENTILICIO" width="170"/>
+	</mx:FormItem>
+	<mx:FormItem label="RFC:" id="rfc" visible="true">
+		<mx:TextInput id="txtRfc" focusIn="generaCURP()" editable="false"/>
+	</mx:FormItem>
+	<mx:FormItem label="CURP:" id="curp" visible="true">
+		<mx:TextInput id="txtCurp" focusIn="generaCURP()" editable="false"/>
+	</mx:FormItem>
+	<mx:FormItem label="IFE:" id="ife" visible="true">
+		<mx:TextInput id="txtIfe" restrict="0-9" maxChars="15"/>
+	</mx:FormItem>
+</mx:Form>

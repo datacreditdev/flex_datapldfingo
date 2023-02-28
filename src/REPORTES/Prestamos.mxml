@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="570" height="530" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()"
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*" xmlns:control="CONTROL.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.containers.TitleWindow;
+		 	import mx.controls.Alert;
+		 	import mx.controls.DataGrid;
+			import mx.collections.ArrayCollection;
+			import mx.collections.IViewCursor
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ArrayUtil;
+			import mx.validators.Validator;
+			
+			[Bindable]
+			private var _xmlRep:XML =  new XML();
+			private var repObj:ArrayCollection;
+			
+			public var wsRep:WebService;
+			public var du:Utils;
+			public var titulo:String;
+			public var fecha:String;
+			public var fechaFin:String;
+			private var global:Globales;	
+			
+			public function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo);		
+			}		
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Préstamos";
+				comFiltroRepPrestamos.init("-1", titulo, "");
+				comFiltroRepPrestamos.addEventListener("enviar",generar);	
+			}
+					
+			public function generar(event:Event):void{
+				var obj:FiltroRepPrestamos = event.target as FiltroRepPrestamos;
+				if(obj.valida() == true){				
+			
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsRep);
+							
+						if(_xmlRep.elements().length() > 0){
+							exportar();	
+						}
+						else
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					});
+					wsRep.getRepPrestamos.send(Number(obj.prestamos.selectedValue), Number(obj.ciclos.selectedValue),
+											  obj.dtfIniDesde.text, obj.dtfIniHasta.text, obj.dtfFinDesde.text, 
+											  obj.dtfFinHasta.text, obj.dtfPagos.text, Number(obj.chkSitCart.selected), 
+											  Number(obj.chkSitTes.selected), Number(obj.chkSitSaldo.selected), 
+											  Number(obj.chkSitLiq.selected), Number(obj.chkSitDev.selected),   
+										      obj.tipoCart.selectedValue.toString(), Application.application.U_ID,
+										      Application.application.NOM_U_ID, obj.cboRegion.selectedItem.codigo, 
+										      obj.cboSucursal.selectedItem.codigo, obj.cboAsesor.selectedItem.codigo);	
+				}
+			}
+			
+			public function initConexion():void{				
+				wsRep = new WebService();			
+				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsRep.loadWSDL();
+			}	
+		]]>
+	</mx:Script>
+	<mx:DataGrid id="dgReporte" dataProvider="{_xmlRep.dtPrestamos}" x="18" y="52" width="860.5" visible="false" horizontalScrollPolicy="on" height="289">
+			<mx:columns>
+				<mx:DataGridColumn headerText="CODIGO" dataField="COD_GRUPO"/>
+				<mx:DataGridColumn headerText="NOMBRE" dataField="GRUPO"/>
+				<mx:DataGridColumn headerText="CICLO" dataField="CICLO"/>
+				<mx:DataGridColumn headerText="INICIO" dataField="INICIO"/>
+				<mx:DataGridColumn headerText="DURACION" dataField="PLAZO"/>
+				<mx:DataGridColumn headerText="PERIODICIDAD" dataField="PERIODICIDAD"/>
+				<mx:DataGridColumn headerText="FIN CICLO" dataField="FIN"/>
+				<mx:DataGridColumn headerText="TASA" dataField="TASA"/>
+				<mx:DataGridColumn headerText="PARCIALIDAD" dataField="PARCIALIDAD"/>
+				<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION"/>
+				<mx:DataGridColumn headerText="CANT AUTORIZADA" dataField="CANT_AUTOR"/>
+				<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANT_ENTRE"/>
+				<mx:DataGridColumn headerText="CANT A PAGAR" dataField="CANT_TOTAL"/>
+				<mx:DataGridColumn headerText="PAGOS COMPROMETIDOS" dataField="PAGOS_COMP"/>
+				<mx:DataGridColumn headerText="CARGOS" dataField="CARGOS"/>
+				<mx:DataGridColumn headerText="ABONOS" dataField="ABONOS"/>
+				<mx:DataGridColumn headerText="PAGADO CAPITAL" dataField="PAGADO_CAPITAL"/>
+				<mx:DataGridColumn headerText="PAGADO INTERES" dataField="PAGADO_INTERES"/>
+				<mx:DataGridColumn headerText="PAGADO RECARGOS" dataField="PAGADO_RECARGOS"/>
+				<mx:DataGridColumn headerText="SALDO CAPITAL" dataField="SDO_CAPITAL"/>
+				<mx:DataGridColumn headerText="ULTIMO PAGO" dataField="FEC_ULT_PAGO"/>
+				<mx:DataGridColumn headerText="CANT ULTIMO PAGO" dataField="ULT_PAGO"/>
+				<mx:DataGridColumn headerText="SALDO TOTAL" dataField="SDO_TOTAL"/>
+				<mx:DataGridColumn headerText="COD ASESOR" dataField="COD_ASESOR"/>
+				<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="ASESOR"/>
+				<mx:DataGridColumn headerText="COD REGION" dataField="COD_REGION"/>
+				<mx:DataGridColumn headerText="NOMBRE REGION" dataField="REGION"/>
+				<mx:DataGridColumn headerText="COD SUCURSAL" dataField="COD_SUCURSAL"/>
+				<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="SUCURSAL"/>
+				<mx:DataGridColumn headerText="COD COORDINADOR" dataField="COD_COORD"/>
+				<mx:DataGridColumn headerText="NOMBRE COORDINADOR" dataField="COORDINADOR"/>
+				<mx:DataGridColumn headerText="MUJERES CON PRESTAMO" dataField="MUJERES"/>
+				<mx:DataGridColumn headerText="HOMBRES CON PRESTAMO" dataField="HOMBRES"/>
+				<mx:DataGridColumn headerText="REFERENCIA" dataField="REFERENCIA"/>
+				<mx:DataGridColumn headerText="REFERENCIA GL" dataField="REFERENCIAGL"/>
+				<mx:DataGridColumn headerText="SALDO GL" dataField="SDO_GL"/>
+				<mx:DataGridColumn headerText="MORA TOTAL" dataField="MORA_TOTAL"/>
+				<mx:DataGridColumn headerText="MORA CAPITAL" dataField="MORA_CAPITAL"/>
+				<mx:DataGridColumn headerText="MORA INTERES" dataField="MORA_INTERES"/>
+				<mx:DataGridColumn headerText="DIAS MORA" dataField="DIAS_MORA"/>
+				<mx:DataGridColumn headerText="RECARGOS" dataField="RECARGOS"/>	
+				<mx:DataGridColumn headerText="TIPO PRODUCTO" dataField="NOMTPC"/>
+				<mx:DataGridColumn headerText="PRODUCTO CREDITO" dataField="NOMPCR"/>		
+			</mx:columns>
+		</mx:DataGrid>
+	
+	<control:FiltroRepPrestamos id="comFiltroRepPrestamos"/>
+	<mx:Button id="btnExportar" x="775.5" y="20" label="Exportar Excel" enabled="false" click="exportar()"/>
+	<mx:Label id="lblTitulo" x="18" y="10" width="470.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+</mx:Canvas>

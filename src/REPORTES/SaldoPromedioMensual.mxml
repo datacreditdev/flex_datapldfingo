@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="370" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML =  new XML();
+			
+			public var mesObj:ArrayCollection = new ArrayCollection();
+			public var anioObj:ArrayCollection = new ArrayCollection();
+			
+			public var wsRep:WebService;
+			public var du:Utils;
+			public var mes:String;
+			public var mesNom:String;
+			public var anio:String;
+			public var titulo:String;
+			private var global:Globales;
+		
+			public function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				dgE.loadDGInExcel(dgReporte,null,titulo + " de " + mesNom + " del " + anio);		
+			}
+			
+			public function formateaAnio():void{
+				var i:int;
+				var anio:int = 2011;
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "----";	
+				item.push(oItem);
+				
+				for(i = 0; i < 20; i++){
+					oItem = new Object();
+					oItem.id = anio.toString();	
+					item.push(oItem);
+					anio++;	
+				}
+				anioObj = new ArrayCollection(item);
+			}
+			
+			public function formateaMes():void{
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "-Seleccionar-";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "1";	
+				oItem.nombre = "Enero";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "2";	
+				oItem.nombre = "Febrero";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "3";	
+				oItem.nombre = "Marzo";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "4";	
+				oItem.nombre = "Abril";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "5";	
+				oItem.nombre = "Mayo";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "6";	
+				oItem.nombre = "Junio";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "7";	
+				oItem.nombre = "Julio";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "8";	
+				oItem.nombre = "Agosto";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "9";	
+				oItem.nombre = "Septiembre";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "10";	
+				oItem.nombre = "Octubre";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "11";	
+				oItem.nombre = "Noviembre";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "12";	
+				oItem.nombre = "Diciembre";
+				item.push(oItem);
+				
+				mesObj = new ArrayCollection(item);
+			}
+		
+			public function generar():void{
+				if(valida()){
+					mes = cboMes.selectedItem.id;
+					mesNom = cboMes.selectedItem.nombre;
+					anio = cboAnio.selectedLabel;
+					
+					Application.application.bloquear();
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						Application.application.desbloquear();
+						du.rCursor();
+						du.closeWs(wsRep);
+						
+						dgReporte.dataProvider = null;
+						btnExportar.enabled = false;
+													
+						if(_xmlRep.elements().length() > 0){
+							var cont:int = _xmlRep.elements().length();
+							btnExportar.enabled = true;						
+							lblTotal.text = cont + " Registro(s)";
+							dgReporte.dataProvider = _xmlRep.Table;
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							lblTotal.text = "";
+						}
+					});
+					wsRep.getRepSaldoPromMens.send(mes, anio);
+				}	
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Saldo Promedio Mensual";
+				lblTitulo.text = titulo.toUpperCase();
+				formateaMes();
+				cboMes.dataProvider = mesObj;
+				formateaAnio();
+				cboAnio.dataProvider = anioObj
+				limpiar();
+			}		
+			
+			public function initConexion():void{				
+				wsRep = new WebService();			
+				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsRep.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				dgReporte.dataProvider = null;
+				btnExportar.enabled = false;
+				lblTotal.text = "";
+				cboMes.selectedIndex = 0;
+				cboAnio.selectedIndex = 0;
+			}
+				
+			public function valida():Boolean{
+				if(cboMes.selectedIndex <= 0){
+					Alert.show("Seleccione el mes de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cboAnio.selectedIndex <= 0){
+					Alert.show("Seleccione el año de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="230.05" height="68.5" styleName="canvasMod">
+		<mx:Label x="13.5" y="10" text="Mes" width="81" height="20"/>
+		<mx:ComboBox id="cboMes" labelField="nombre" x="13.5" y="28.5" width="111"/>
+		<mx:Label x="142.45" y="10" text="Año" width="72" height="20"/>
+		<mx:ComboBox id="cboAnio" labelField="id" x="142.45" y="28.5" width="72"/>
+	</mx:Canvas>
+	<mx:Button x="57.25" y="130" label="Generar" click="generar()"/>
+	<mx:Button x="135.75" y="130" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:DataGrid id="dgReporte" x="17.95" y="166" width="763.05" visible="true" height="165" horizontalScrollPolicy="on">
+		<mx:columns>
+			<mx:DataGridColumn headerText="REGION" dataField="REGION" width="100"/>
+			<mx:DataGridColumn headerText="SUCURSAL" dataField="NOM_SUCURSAL" width="120"/>
+			<mx:DataGridColumn headerText="ASESOR" dataField="NOM_ASESOR" width="250"/>
+			<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANTENTRE" width="130"/>
+			<mx:DataGridColumn headerText="SALDO CAPITAL" dataField="SDOCAPITAL" width="110"/>
+			<mx:DataGridColumn headerText="SALDO TOTAL" dataField="SDOTOTAL" width="110"/>
+			<mx:DataGridColumn headerText="MORA" dataField="MORA" width="80"/>
+			<mx:DataGridColumn headerText="GRUPOS" dataField="GRUPOS" width="70"/>
+			<mx:DataGridColumn headerText="INTEGRANTES" dataField="CLIENTES" width="90"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnExportar" x="678" y="130" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Label id="lblTotal" x="17.95" y="339" width="680.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+</mx:Canvas>

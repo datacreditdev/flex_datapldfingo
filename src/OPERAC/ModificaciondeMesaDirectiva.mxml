@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="180" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*" xmlns:control="CONTROL.*">
+	<mx:states>
+		<mx:State name="modifica">
+			<mx:RemoveChild target="{comFiltroGrupoCiclo}"/>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas x="15.5" y="53.5" width="247" height="73" styleName="canvasMod">
+					<mx:Label id="lblCiclo" x="142.5" y="10" text="Ciclo" width="81" height="20"/>
+					<mx:Label id="lblGrupo" x="29.5" y="10" text="Número de Grupo" width="114.3" height="20"/>
+					<mx:TextInput id="txtGrupo" x="29.5" y="28.5" maxChars="6" restrict="0-9" editable="false"/>
+					<mx:TextInput id="txtCiclo" x="142.5" y="28.5" width="45" maxChars="2" restrict="0-9" editable="false"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Label x="16.5" y="34" text="Información de Grupo" width="124.25"/>
+			</mx:AddChild>
+			<mx:SetProperty name="width" value="530"/>
+			<mx:SetProperty name="height" value="310"/>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas x="16.5" y="153.5" width="503.5" height="110" styleName="canvasMod">
+					<mx:Label x="7" y="12" text="Presidente:" width="65" textAlign="right"/>
+					<mx:Label x="148.5" y="12" text="Nombre:" width="54" textAlign="right"/>
+					<mx:TextInput id="txtCodPres" x="81.5" y="10" width="60" maxChars="6" restrict="0-9" enter="{buscarAcred(event, 1)}"/>
+					<mx:TextInput id="txtPresidente" x="210.5" y="10" width="200.5" editable="false"/>
+					<mx:Button id="btnBuscarPres" x="419" y="11" icon="@Embed(source='assets/ico_lupa.png')" toolTip="Buscar Presidente" click="buscar(1)"/>
+					<mx:Label x="8.5" y="42" text="Tesorero:" width="65" textAlign="right"/>
+					<mx:Label x="148.5" y="42" text="Nombre:" width="54" textAlign="right"/>
+					<mx:TextInput id="txtCodTeso" x="81.5" y="40" width="60" maxChars="6" restrict="0-9" enter="buscarAcred(event, 2)"/>
+					<mx:TextInput id="txtTesorero" x="212" y="40" width="200.5" editable="false"/>
+					<mx:Button id="btnBuscarTeso" x="420.5" y="41" icon="@Embed(source='assets/ico_lupa.png')" toolTip="Buscar Tesorero" click="buscar(2)"/>
+					<mx:Label x="8.5" y="72" text="Secretario:" width="65" textAlign="right"/>
+					<mx:Label x="150" y="72" text="Nombre:" width="54" textAlign="right"/>
+					<mx:TextInput id="txtCodSec" x="81.5" y="70" width="60" maxChars="6" restrict="0-9" enter="buscarAcred(event, 3)"/>
+					<mx:TextInput id="txtSecretario" x="212" y="70" width="200.5" editable="false"/>
+					<mx:Button id="btnBuscarSec" x="420.5" y="71" icon="@Embed(source='assets/ico_lupa.png')" toolTip="Buscar Secretario" click="buscar(3)"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Label x="16.5" y="134.5" text="Mesa Directiva" width="124.25"/>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Button x="452" y="271.5" label="Limpiar" click="limpiar()"/>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Button x="385" y="271.5" label="Enviar" click="enviar()"/>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Sequence>
+				<mx:Resize duration="1000" target="{this}"/> 
+			</mx:Sequence>				
+		</mx:Transition>
+	</mx:transitions>
+	
+	<mx:Validator id="codPresV" source="{txtCodPres}" property="text" 
+	invalid="{txtCodPres.setFocus()}" triggerEvent="" requiredFieldError="Presidente Requerido"/>
+	 
+	<mx:Validator id="codSecV" source="{txtCodSec}" property="text" 
+	invalid="{txtCodSec.setFocus()}" triggerEvent="" requiredFieldError="Secretario Requerido"/>
+	 
+	<mx:Validator id="codTesoV" source="{txtCodTeso}" property="text" 
+	invalid="{txtCodTeso.setFocus()}" triggerEvent="" requiredFieldError="Tesorero Requerido"/>
+	
+	<mx:Validator id="presidenteV" source="{txtPresidente}" property="text" 
+	invalid="{txtPresidente.setFocus()}" triggerEvent="" requiredFieldError="Presidente Requerido"/>
+	 
+	<mx:Validator id="secretarioV" source="{txtSecretario}" property="text" 
+	invalid="{txtSecretario.setFocus()}" triggerEvent="" requiredFieldError="Secretario Requerido"/>
+	 
+	<mx:Validator id="tesoreroV" source="{txtTesorero}" property="text" 
+	invalid="{txtTesorero.setFocus()}" triggerEvent="" requiredFieldError="Tesorero Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import CONTROL.pLoading;
+			import Data.Globales;
+			import Data.Utils;
+			import flash.external.*;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;	
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.FlexEvent;
+			import mx.managers.CursorManager;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			[Bindable]
+			private var _xmlAcred:XML =  new XML();
+			[Bindable]
+			private var _xmlGrupo:XML =  new XML();
+			
+			private var global:Globales;
+			public var wsMS:WebService;
+			public var titulo:String;
+			private var du:Utils;
+			private var loading:pLoading;
+			
+			public function buscar(tipo:int):void{
+				switch(tipo){
+					case 1:
+						txtCodPres.dispatchEvent(new FlexEvent(FlexEvent.ENTER, true, false));
+						break;
+					case 2:
+						txtCodTeso.dispatchEvent(new FlexEvent(FlexEvent.ENTER, true, false));
+						break;
+					case 3:
+						txtCodSec.dispatchEvent(new FlexEvent(FlexEvent.ENTER, true, false));
+						break;
+				}
+				//txtCodPres.addEventListener(FlexEvent.ENTER, function(e:FlexEvent):void{buscarAcred(e,1)});
+			}
+			
+			public function buscarAcred(event:FlexEvent, tipo:int):void{
+				
+				switch(tipo){
+					case 1:
+						txtPresidente.text = "";
+						break;
+					case 2:
+						txtTesorero.text = "";
+						break;
+					case 3:
+						txtSecretario.text = "";
+						break;
+				}
+				
+				if(event.currentTarget.text != "" && event.currentTarget.length == 6){ 
+					var acred:String = event.currentTarget.text;
+					var grupo:String = txtGrupo.text;
+					
+					initConexion();
+					du.sCursor();
+						
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlAcred = new XML(evt.result);
+							
+						du.rCursor();
+						du.closeWs(wsMS);
+								
+						if(_xmlAcred.elements().length() > 0){
+							switch(tipo){
+								case 1:
+									txtPresidente.text = _xmlAcred.Table[0].NOMBRE_CL;
+									break;
+								case 2:
+									txtTesorero.text = _xmlAcred.Table[0].NOMBRE_CL;
+									break;
+								case 3:
+									txtSecretario.text = _xmlAcred.Table[0].NOMBRE_CL;
+									break;
+							}
+						}
+						else
+							Alert.show("Código de cliente incorrecto.\n\nVerifique el dato capturado.",titulo,4,null,null,global.iAlert);					
+					});
+					//metodo que consulta que el cliente pertenezca al grupo
+					wsMS.getAcred.send(grupo, acred, "");
+				}
+				else
+					Alert.show("Capture el código de acreditado.",titulo,4,null,null,global.iAlert);
+			}
+			
+			//funcion que consulta la mesa directiva del grupo
+			public function consultar(event:Event):void{
+				var grupo:String = event.currentTarget.txtGrupo.text;
+				var ciclo:String = event.currentTarget.txtCiclo.text; 
+				
+				initConexion();
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlGrupo = XML(evt.result.toString());
+						
+					du.rCursor();
+					du.closeWs(wsMS);
+						
+					if(_xmlGrupo.elements().length() > 0){
+						event.currentTarget.txtGrupo.text = "";
+						event.currentTarget.txtCiclo.text = "";
+						
+						currentState = "modifica";
+						txtGrupo.text = grupo;
+						txtCiclo.text = ciclo;
+						lblTitulo.text = titulo.toUpperCase();
+						
+						txtCodPres.text = _xmlGrupo.Table[0].PRESIDENTE;
+						txtPresidente.text = _xmlGrupo.Table[0].NOMPRES;
+						txtCodTeso.text = _xmlGrupo.Table[0].TESORERO;
+						txtTesorero.text = _xmlGrupo.Table[0].NOMTESO;
+						txtCodSec.text = _xmlGrupo.Table[0].SECRETARIO;
+						txtSecretario.text = _xmlGrupo.Table[0].NOMSEC;
+					}
+					else
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);	
+				});
+				wsMS.getMesaDirectiva.send(grupo, ciclo);	
+			}
+			
+			public function enviar():void{
+				if(valida()){
+					var grupo:String = txtGrupo.text;
+					var ciclo:String = txtCiclo.text; 
+					var presidente:String = txtCodPres.text;
+					var tesorero:String = txtCodTeso.text;
+					var secretario:String = txtCodSec.text;
+					
+					initConexion();
+					du.sCursor();
+						
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						var res:String = evt.result.toString();
+							
+						du.rCursor();
+						du.closeWs(wsMS);
+								
+						if (res.substr(0,1) == "1"){
+							limpiar();
+							Alert.show("Modificación realizada exitosamente.",titulo,4,null,null,global.iInfo);
+						}	
+						else
+							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);							
+					});
+					//metodo que envia los datos de la modificacion
+					wsMS.setAccionModMesaDir.send(grupo, ciclo, presidente, tesorero, secretario, Application.application.U_ID);
+				}
+				else
+					Alert.show("No es posible realizar el proceso de modificación.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Modificación de Mesa Directiva";
+				comFiltroGrupoCiclo.init("0", titulo.toUpperCase(), "");
+				comFiltroGrupoCiclo.addEventListener("enviar",consultar);
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				currentState = "";
+			}
+			
+			public function valida():Boolean{
+				var invalidArray:Array = Validator.validateAll([codPresV, codSecV, codTesoV, presidenteV, secretarioV, tesoreroV]);
+				
+				if(invalidArray.length == 0){
+					if(txtCodPres.text == txtCodTeso.text){
+						txtCodPres.text = "";
+						txtCodTeso.text = "";
+						txtPresidente.text = "";
+						txtTesorero.text = "";
+						return false;
+					} 
+					else if(txtCodPres.text == txtCodSec.text){ 
+						txtCodPres.text = "";
+						txtCodSec.text = "";
+						txtPresidente.text = "";
+						txtSecretario.text = "";
+						return false;
+					}
+					else if(txtCodSec.text == txtCodTeso.text){
+						txtSecretario.text = "";
+						txtTesorero.text = "";
+						txtCodSec.text = "";
+						txtCodTeso.text = "";
+						return false;
+					}
+					return true;
+				}
+				else 
+					return false;
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Label id="lblTitulo" x="16.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<control:FiltroGrupoCiclo id="comFiltroGrupoCiclo"/>
+</mx:Canvas>

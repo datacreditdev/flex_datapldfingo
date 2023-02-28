@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="258" height="178" creationPolicy="all">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import Data.Globales;
+			
+			[Bindable]
+			public var fechaMin:Date;
+			[Bindable]
+			public var fechaMax:Date;
+			[Bindable]
+			public var edita:Boolean;
+			
+			public var global:Globales;
+			public var tipo:int;
+			//public var fecAnt:Date = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDay() - 1);
+			
+			public function init(tipo:int):void{
+				global = new Globales();
+				this.tipo = tipo;
+				//ESTABLECE EL TIPO DE CUADRO DE DIALOGO QUE DEBE MOSTRARSE EN PANTALLA
+				if (this.tipo == 1)
+					btnCerrar.visible = true;
+				else if(this.tipo == 2){
+					btnCerrar.visible = false;
+					btnAceptar.x = btnCerrar.x;
+				}
+				dtfFecha.selectableRange = {rangeStart: new Date(fechaMin), rangeEnd: new Date(fechaMax)};
+					dtfFecha.selectedDate = fechaMax;
+				if (edita == true){
+					dtfFecha.enabled = true;
+					txtFecha.visible = false;
+				}
+				else{
+					dtfFecha.visible = false;
+					txtFecha.visible = true;
+					txtFecha.text = global.formatoFecha(fechaMax);
+				}
+				
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function validar():void{
+				if (dtfFecha.text == "")
+					Alert.show("Debe seleccionar la fecha solicitada", this.title, 4,null,null,global.iAlert);
+
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Button id="btnCerrar" x="208" y="106" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="160" y="106" icon="@Embed(source='assets/button_ok.png')" click="validar()" width="40"/>
+	<mx:Canvas id="cnvFecha" x="17" y="10" width="224" height="83" styleName="canvasMod">
+		<mx:DateField id="dtfFecha" x="58" y="38" width="106"/>
+		<mx:TextInput id="txtFecha" x="66.5" y="38" width="89" editable="false"/>
+		<mx:Label id="lblFecha" textAlign="center" x="15.5" y="10" width="191"/>
+	</mx:Canvas>
+</mx:TitleWindow>

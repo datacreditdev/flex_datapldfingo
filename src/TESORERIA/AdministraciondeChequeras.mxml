@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" height="661">
+	
+	<!--Componente de chequeras-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;    
+			import mx.controls.ComboBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;	
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;	
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.Fault;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import OPERAC.MttoCuenta;            
+
+			[Bindable]
+			public var dPermisos:XML = new XML();
+			public var _xmlChq:XML = new XML();
+			public var _xmlCta:XML = new XML();
+			
+			public var wsMS:WebService;	
+			public var du:Utils;
+			public var titulo:String;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionChq:int;
+			public var indChq:int;
+			public var vScroll:Number;
+			public var res:String;
+			
+			//variables que indican las opciones disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+					
+			public function activaContChq(band:Boolean):void{
+				if(alta == true)
+					btnAgregarChq.enabled = band;
+				btnDatosChq.enabled = band;
+			}
+			
+			public function activaContModChq(band:Boolean):void{
+				if(edicion == true)	
+					btnEditarChq.enabled = band;
+			}
+			
+			public function actualizaChq(event:Event):void{
+				buscaListaChq(1);
+			}
+			
+			public function actualizaCta(event:Event):void{
+				var comMttoCta:MttoCuenta = event.currentTarget as MttoCuenta; 
+				txtCodCuenta.text = comMttoCta.dgCuenta.selectedItem.CODIGO; 
+				txtCuenta.text = comMttoCta.dgCuenta.selectedItem.BANCO;
+				buscaListaChq(1);	
+				activaContChq(true);
+			}
+			
+			public function buscaCuenta():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				if (txtCodCuenta.text != ""){
+					txtCuenta.setFocus();
+					dgChequera.dataProvider = null;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+							
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {											
+						_xmlCta = new XML(event.result);
+								
+						du.rCursor();
+						du.closeWs(wsCat);
+								
+						if (_xmlCta.elements().length() > 0){
+							txtCodCuenta.text = _xmlCta.Table[0].CODIGO;
+							txtCuenta.text = _xmlCta.Table[0].BANCO + " - " + _xmlCta.Table[0].NUMERO;
+							buscaListaChq(2);	
+							activaContChq(true);	
+						}
+						else{
+							Application.application.desbloquear();
+							txtCuenta.text = "";
+							Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+						}
+					});
+					params[0] = txtCodCuenta.text; 
+					wsCat.getInfoRegistro.send(14, params);	
+				}	
+			}
+		
+			public function buscaListaChq(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				if (txtCodCuenta.text != ""){
+					dgChequera.dataProvider = null;
+					if(tipo == 1)
+						Application.application.bloquear();
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {											
+						_xmlChq = new XML(event.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+						
+						if(_xmlChq.elements().length() > 0){
+							dgChequera.dataProvider = _xmlChq.Table;
+							if (accionChq == 2){
+								dgChequera.validateNow();
+								dgChequera.verticalScrollPosition = vScroll;
+								dgChequera.selectedIndex = indChq;
+								accionChq = 0;
+							}
+						}
+						seleccionaChq();
+					});
+					params[0] = txtCodCuenta.text; 
+					params[1] = Application.application.U_ID;
+					wsCat.getListado.send(27, params);
+				}	
+			}
+			
+			public function iniVar():void{
+				this.indChq = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Administración de Chequeras";
+				alta = true;
+				borrado = true;
+				consulta = true;
+				edicion = true;
+				//permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			public function manejadorEliminaChq(e:CloseEvent):void{
+				if(e.detail==Alert.YES){    	
+					var codigo:String = dgChequera.selectedItem.CODIGO;
+					var cuenta:String = dgChequera.selectedItem.CDGCB;
+					var coord:String = dgChequera.selectedItem.CDGCO; 
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setEliminaChequera);
+					wsMS.setEliminaChequera.send(codigo, cuenta, coord);
+			    } 
+			}
+			
+			public function muestraFormChq(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var codCuenta:String;
+				var cuenta:String;
+				var coord:String;
+				var codigo:String;
+				if(edicion == true){
+					codCuenta = txtCodCuenta.text;
+					cuenta = txtCuenta.text;
+					var comMttoChq:MttoChequera = new MttoChequera();
+					comMttoChq = MttoChequera(PopUpManager.createPopUp(this,MttoChequera,true));
+					comMttoChq.addEventListener(Event.REMOVED_FROM_STAGE, actualizaChq);
+					comMttoChq.init(codCuenta, cuenta);
+					switch(tipo){
+						case 1: 
+							PopUpManager.centerPopUp(comMttoChq);
+							comMttoChq.registraInfoChq();
+							break;
+						case 2: 
+							if (dgChequera.selectedIndex >= 0){
+								iniVar();
+								accionChq = tipo;
+								indChq = dgChequera.selectedIndex;
+								vScroll = dgChequera.verticalScrollPosition;
+								coord = dgChequera.selectedItem.CDGCO;
+								codigo = dgChequera.selectedItem.CODIGO; 					
+								PopUpManager.centerPopUp(comMttoChq);
+								comMttoChq.cargaInfoChq(coord, codigo);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Chequera",titulo,4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}
+			
+			public function muestraFormCta():void{
+				var comMttoCta:MttoCuenta = new MttoCuenta();
+				comMttoCta = MttoCuenta(PopUpManager.createPopUp(this,MttoCuenta,true));
+				comMttoCta.init(5);
+				comMttoCta.addEventListener("enviar", actualizaCta);
+				PopUpManager.centerPopUp(comMttoCta);	
+			}
+			
+			public function permisos():void{
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var i:int;
+				var cont:int;
+				
+				initConexion();
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(i = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
+							case "C":
+								consulta = true;
+								if (global.permisosModSolic(Application.application.PERFIL_ID)){
+									borrado = true;
+									alta = true;
+									edicion = true;
+								}
+								break;	
+							/*case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;*/
+						}
+					}
+					du.rCursor();
+					du.closeWs(wsMS);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			public function seleccionaChq():void{
+				activaContModChq(false);
+				if (dgChequera.selectedIndex >= 0){
+					activaContModChq(true);
+				}
+				else{
+					activaContModChq(false);
+				}
+			}
+			
+			private function setEliminaChequera(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaChequera);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscaListaChq(1);
+				else
+					Alert.show(res.substr(2,res.length-1), titulo,4,null,null,global.iAlert);
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas width="798.5" height="400" backgroundColor="#FFFFFF" backgroundAlpha="1">
+		<mx:Label x="18" y="10" text="ADMINISTRACIÓN DE CHEQUERAS" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="87.5" y="39" width="412.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCuenta" x="10" y="7" text="CUENTA:" width="53"/>
+			<mx:TextInput id="txtCodCuenta" x="69.5" y="5" width="45.5" maxChars="2" restrict="0-9" enter="buscaCuenta()"/>
+			<mx:TextInput id="txtCuenta" x="123" y="5" width="225.5" editable="false"/>
+			<mx:Button id="btnBuscar" x="359.5" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="muestraFormCta()" toolTip="Buscar Cuenta" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle" x="18" y="84" width="763.5" height="306" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
+			<Data:RowColorDataGrid id="dgChequera" x="10" y="10" width="741.5" height="284" horizontalScrollPolicy="on"
+				sortableColumns="false" verticalScrollPolicy="on" itemClick="seleccionaChq()" doubleClickEnabled="true" 
+				itemDoubleClick="muestraFormChq(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CHEQUERA" dataField="CODIGO" width="80"/>
+					<mx:DataGridColumn headerText="SUCURSAL" dataField="CDGCO" width="100"/>
+					<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="COORD" width="150"/>
+					<mx:DataGridColumn headerText="CUENTA" dataField="CDGCB" width="60"/>
+					<mx:DataGridColumn headerText="BANCO" dataField="BANCO" width="120"/>
+					<mx:DataGridColumn headerText="CHEQUE INICIAL" dataField="CHEQUEINICIAL" width="100"/>
+					<mx:DataGridColumn headerText="CHEQUE FINAL" dataField="CHEQUEFINAL" width="95"/>
+					<mx:DataGridColumn headerText="ESTATUS" dataField="ESTATUS" width="60"/>
+					<mx:DataGridColumn headerText="FECHA ALTA" dataField="FECALTA" width="80"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="508" y="39" width="155" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
+			<mx:Button id="btnAgregarChq" x="103" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="muestraFormChq(1)" toolTip="Agregar Chequera" width="40"/>
+			<mx:Button id="btnEditarChq" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="muestraFormChq(2)" toolTip="Editar Chequera" width="40"/>
+			<mx:Button id="btnDatosChq" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscaListaChq(1)" enabled="false" toolTip="Chequeras de la Cuenta" width="40"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

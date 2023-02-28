@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="450" height="130" creationPolicy="all">
+	<mx:states>
+		<mx:State name="revolvente">
+			<mx:SetProperty name="height" value="200"/>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas x="122.5" y="128" width="295" height="59" styleName="canvasMod">
+					<mx:FormItem label="Fecha de Autorizado:" id="prodCred0" visible="true" x="19" y="18" width="255">
+						<mx:ComboBox id="cboProdCred0" labelField="nombre" width="131"/>
+					</mx:FormItem>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:SetProperty target="{tipoProd}" name="x" value="98"/>
+			<mx:SetProperty target="{prodCred}" name="x" value="84"/>
+		</mx:State>
+	</mx:states>
+	<mx:Metadata>
+		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
+	</mx:Metadata>
+	
+	<mx:NumberValidator id="tipoProdV" source="{cboTipoProd}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Tipo de Producto Requerido"/>
+	
+	<mx:NumberValidator id="prodCredV" source="{cboProdCred}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Producto de Crédito Requerido"/>
+	 
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import Data.Globales;
+			import mx.validators.Validator;
+			import mx.managers.PopUpManager;
+			import mx.collections.ArrayCollection;
+			import Data.EventSolic;
+			import Data.DatosSolic;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.controls.Alert;
+			import mx.controls.DateField;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			
+			[Bindable]
+			private var _xmlTipoProd:XML =  new XML();
+			[Bindable]
+			private var _xmlProdCred:XML =  new XML();
+
+			public var tipoProdObj:ArrayCollection = new ArrayCollection();
+			public var prodCredObj:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosSolic = new DatosSolic();
+			
+			public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS	
+			public var du:Utils;
+			public var tipoAccion:int;
+			public var coord:String;
+			private var global:Globales;
+			
+			public function cargaProdCred():void{
+				initConexion();
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlProdCred = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					
+					cboProdCred.dataProvider = null;
+					
+					if (_xmlProdCred.elements().length() > 0){
+						var j:int;
+						formateaProdCred();
+						cboProdCred.dataProvider = prodCredObj;
+						cboProdCred.selectedIndex = 0;
+						if (tipoAccion == 1){
+							prodCredObj.filterFunction = filtraProdCred;
+							prodCredObj.refresh();
+						}
+						if (tipoAccion == 2){
+							for(j = 0; j < prodCredObj.length; j++){
+								if (prodCredObj[j].id.toString() == datos.cdgProdCred){
+									cboProdCred.selectedIndex = j;
+									break;
+								}
+							}
+						}
+					}				
+				});
+				wsMS.getProdCred.send(cboTipoProd.selectedItem.id, coord);
+			}
+			
+			public function enviarDatosSolic(formData:DatosSolic):void{
+				var invalidArray:Array = Validator.validateAll([tipoProdV, prodCredV]);
+				
+				if(invalidArray.length == 0){		
+					formData.cdgTipoProd = cboTipoProd.selectedItem.id;
+					formData.cdgProdCred = cboProdCred.selectedItem.id;
+					formData.guardaProd = true;
+				}
+				else
+					formData.guardaProd = false;
+				
+				var event:EventSolic = new EventSolic("enviarDatosSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			public function filtraProdCred(item:Object):Boolean{
+				var isMatch:Boolean = false
+				var d:Date = DateField.stringToDate(item.fecVal.toString(),"DD/MM/YYYY")
+				if(d >= Application.application._Current_Fecha)
+					isMatch = true 
+				return isMatch; 
+			}
+			
+			public function formateaTipoProd():void{
+				var cont:int = _xmlTipoProd.elements().length();
+				var oItem:Object
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				tipoProdObj.addItem(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlTipoProd.Table[i].CODIGO;	
+					oItem.nombre = _xmlTipoProd.Table[i].NOMBRE;
+					tipoProdObj.addItem(oItem);
+				}
+			}
+			
+			public function formateaProdCred():void{
+				var cont:int = _xmlProdCred.elements().length();
+				var oItem:Object
+				
+				prodCredObj.removeAll();
+				prodCredObj.refresh();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				oItem.fecVal = DateField.dateToString(Application.application._Current_Fecha,"DD/MM/YYYY");
+				prodCredObj.addItem(oItem);
+				
+				for (var i:int = 0; i < cont; i++){		
+					oItem = new Object();
+					oItem.id = _xmlProdCred.Table[i].CODIGO;	
+					oItem.nombre = _xmlProdCred.Table[i].NOMBRE;
+					oItem.fecVal = _xmlProdCred.Table[i].FVALIDO;
+					prodCredObj.addItem(oItem);
+				}
+			}
+			
+			public function init(info:DatosSolic, tipoAccion:int, coord:String = ""):void{
+				global = new Globales();
+				du = new Utils();
+				this.tipoAccion = tipoAccion;
+				this.coord = coord;
+				
+				if(tipoAccion == 2)
+					cnvProdSolic.enabled = false;
+				
+				initConexion();
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlTipoProd = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					
+					if (_xmlTipoProd.elements().length() > 0){
+						formateaTipoProd();
+						cboTipoProd.dataProvider = tipoProdObj;
+					}				
+					if (info != null){
+						datos.cdgTipoProd = info.cdgTipoProd;
+						datos.cdgProdCred = info.cdgProdCred;
+							
+						for(var j:int = 0; j < tipoProdObj.length; j++){
+							if (tipoProdObj[j].id.toString() == info.cdgTipoProd){
+								cboTipoProd.selectedIndex = j;
+								cargaProdCred();
+								break;
+							}
+						}
+					}	
+				});
+				wsMS.getTipoProd.send();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvProdSolic" x="10" y="10" width="430" height="110" styleName="canvasMod">
+		<mx:FormItem label="Tipo de Producto:" id="tipoProd" visible="true" x="59.5" y="19">
+			<mx:ComboBox id="cboTipoProd" labelField="nombre" change="cargaProdCred()"/>
+		</mx:FormItem>
+		<mx:FormItem label="Producto de Crédito:" id="prodCred" visible="true" x="45.5" y="63" width="350">
+			<mx:ComboBox id="cboProdCred" labelField="nombre" width="230"/>
+		</mx:FormItem>
+	</mx:Canvas>
+</mx:Canvas>

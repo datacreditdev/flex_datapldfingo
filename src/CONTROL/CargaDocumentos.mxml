@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="700" height="434" creationComplete="initApp()">
+	<mx:Script>    
+    <![CDATA[
+    	import Data.Utils;
+		import mx.collections.XMLListCollection;
+  		import flash.net.URLRequest;
+  		import Data.Globales;
+  		import mx.core.Application;
+  		import mx.rpc.Fault;
+  		import mx.rpc.soap.WebService;
+  		import mx.rpc.events.ResultEvent;
+  		import mx.rpc.events.FaultEvent;		
+  		import mx.events.CloseEvent;	
+  		import mx.events.ListEvent;	
+  		import mx.utils.ArrayUtil;
+  		import mx.collections.ArrayCollection;
+  
+  		import mx.managers.PopUpManager;
+  		import mx.controls.Alert;
+  		import mx.core.ScrollPolicy;
+      
+		private var xmlResult:XML ;
+         
+		private var archivo:FileReference;
+  
+  		private var tipoArchivo:FileFilter = new FileFilter("Archivo PDF", "*.pdf");  
+  	
+  		private var global:Globales;
+		private var du:Utils;
+  		public var ws:WebService;	
+  
+  		[Bindable]
+  		public var nombreArchivo:String = "";
+     
+		public function initApp():void{ 
+			global = new Globales();
+			du = new Utils();
+			archivo = new FileReference();
+			
+			archivo.addEventListener(Event.SELECT                  , __fileSelectionHandler); 
+			archivo.addEventListener(Event.COMPLETE                , __completeHandler     );
+			archivo.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, __uploadDataHandler   );
+		}
+   
+  		private function __onBrowse():void{       
+	        try
+	        {    
+	          		var success:Boolean = archivo.browse([fileTelecom]);         
+	        }  
+	        catch (error:Error) 
+	        {
+	          __status__.text = "Estatus: No es posible abrir el cuadro de selección de archivos";             
+	        }
+  		}
+  
+  private function __onUpload():void 
+  {
+    // replace with URL to your upload handler - THIS ONE WON'T WORK!!!!
+    var myRequest:URLRequest = new URLRequest(global.url_up);
+    myRequest.method         = URLRequestMethod.POST;
+     
+    try 
+    {       
+      archivo.upload(myRequest);         
+      __status__.text = "Estatus: Cargando " + archivo.name + " ... ";         
+    }  
+    catch (error:Error) 
+    {         
+      __status__.text = "Estatus: Error de carga " + archivo.name;
+    }
+  }
+  
+  private function __fileSelectionHandler(_e:Event):void 
+  {  
+    __upload__.enabled = true;   
+              
+    __uploadFile__.text = archivo.name;             
+    __status__.text     = "Estatus:  Haga click en el botón 'Cargar Archivo' para iniciar el proceso";
+  }
+       
+  private function __completeHandler(_e:Event):void 
+  {         
+    // nothing currently done in this handler - experiment and have fun :)            
+  }
+  
+  private function __uploadDataHandler(_e:DataEvent):void 
+    {
+    var myResult:XML = new XML(_e.data);
+	    __status__.text  = "Estatus: Carga de archivo completa \n" + myResult.toString();
+	    this.nombreArchivo = myResult.toString();
+    }       
+    
+	public function initConexion():void{				
+		ws = new WebService();			
+		ws.wsdl = Application.application.wsStr.wsdlGarantia.toString();
+		ws.loadWSDL();
+	}
+    
+	]]>
+	</mx:Script>
+  	<mx:Canvas id="cnvEncabezado" x="75.5" y="19" width="549" height="175" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:TextArea width="319" height="60" id="__status__" wordWrap="true" editable="false" enabled="true" text="Estatus:  Seleccione el archivo que desea cargar" x="114" y="10"/>
+	  	<mx:Button label="Cargar Archivo" id="__upload__" enabled="false" click="__onUpload()" x="211.5" y="141"/>
+	  	<mx:TextInput id="__uploadFile__" editable="false" enabled="true" x="172.5" y="111" width="185"/>
+	  	<mx:Button label="Buscar" id="__browse__" enabled="true" click="__onBrowse()" x="365.5" y="109"/>
+	  	<mx:Label x="116.5" y="111" text="Archivo:"/>
+  	</mx:Canvas>
+</mx:Canvas>

@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="670" height="140" creationPolicy="all">
+	<mx:states>
+		<mx:State name="cuenta">
+			<mx:AddChild position="lastChild">
+				<mx:Canvas id="cnvDesembolso" x="269" y="30" width="340" height="45" styleName="canvasMod">
+					<mx:Label id="lblCuenta" x="12" y="12" text="Cuenta:"/>
+					<mx:TextInput id="txtCodCuenta" x="59" y="10" width="45.5" maxChars="2" restrict="0-9" enter="buscaCuenta()"/>
+					<mx:TextInput id="txtCuenta" x="112.5" y="10" width="159.5" editable="false"/>		
+					<mx:Button id="btnBusqCta" x="280" y="10" icon="@Embed(source='assets/ico_lupa.png')" click="muestraFormCta()" toolTip="Buscar Cuenta" width="40"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Label x="269" y="10" text="Desembolso"/>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	<mx:Metadata>
+		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
+	</mx:Metadata>
+	
+	<mx:Validator id="cuentaV" source="{txtCodCuenta}" property="text" 
+	invalid="{txtCodCuenta.setFocus()}" triggerEvent="" requiredFieldError="Cuenta requerida"/>
+	 	 
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import Data.Globales;
+			import Data.Utils;
+			import OPERAC.MttoCuenta;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.effects.easing.Elastic;
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.validators.Validator;
+			
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			public var desObj:ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			private var _xmlCodigo:XML =  new XML();
+			[Bindable]
+			public var _xmlCta:XML = new XML();
+			
+			public var datos:DatosSolic = new DatosSolic();
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var tipoAccion:int;
+			public var estatus:String;
+			public var texto:String;
+			private var global:Globales;
+			
+			public function activaControles(_xmlControl:XML):void{
+				var formaEntrega:String = _xmlControl.Table[0].FIJAFEN;
+				//Forma de entrega
+				if(formaEntrega == "S")
+					cnvEntrega.enabled = false;
+				else if(formaEntrega == "N")
+					cnvEntrega.enabled = true;
+			}
+			
+			public function actualizarCta(event:Event):void{
+				var comMttoCta:MttoCuenta = event.currentTarget as MttoCuenta; 
+				txtCodCuenta.text = comMttoCta.dgCuenta.selectedItem.CODIGO; 
+				txtCuenta.text = comMttoCta.dgCuenta.selectedItem.BANCO;
+				buscaCuenta();		
+			}
+			
+			public function buscaCuenta():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodCuenta.text != ""){
+					txtCuenta.setFocus();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlCta = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);		
+						Application.application.desbloquear();		
+						
+						if(_xmlCta.elements().length() > 0){
+							txtCuenta.text = _xmlCta.Table[0].BANCO;
+						}
+						else{
+							txtCuenta.text = "";
+							Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.","Entrega",4,null,null,global.iAlert);
+						}
+					});
+					params[0] = "4";
+					params[1] = txtCodCuenta.text;
+					params[2] = "";
+					params[3] = Application.application.U_ID;
+					params[4] = "";
+					wsCat.getInfoRegistro.send(3, params);
+				}	
+			}
+			
+			public function cargaAcred(Arr:ArrayCollection):void{
+				acredObj = Arr;
+			}
+			
+			public function cargaParamsProd(_xmlParam:XML):void{
+				entrega.selectedValue = _xmlParam.Table[0].FORMAENTREGA;
+			}
+			
+			public function desactivaControles():void{
+				cnvEntrega.enabled = false;	
+				if(currentState == "cuenta")
+					cnvDesembolso.enabled = false;
+			}
+			
+			public function enviarDatosSolic(formData:DatosSolic):void{
+				if(entrega.selection != null){	
+					formData.formaEntre = entrega.selectedValue.toString();
+					
+					if(currentState == "cuenta")
+						formData.cdgCb = txtCodCuenta.text;
+					else
+						formData.cdgCb = "";
+					formData.guardaEntre = true;
+				}
+				else
+					formData.guardaEntre = false;
+		
+				var event:EventSolic = new EventSolic("enviarDatosSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			private function filtraCaptura(item:Object):Boolean{
+				var isMatch:Boolean = false
+				if(texto.toLowerCase().search(item.nombre.toLowerCase()) != -1)
+					isMatch = true 
+				return isMatch; 
+			}
+			
+			public function init(info:DatosSolic, tipoAccion:int, estatus:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				this.tipoAccion = tipoAccion;
+				this.estatus = estatus;
+				global = new Globales();
+				du = new Utils();
+				
+				if (info != null){
+					datos = info;	
+					
+					if(info.situacion == 'A' || info.situacion == 'R' || estatus == "evaluacion" || estatus == "entrega")
+						desactivaControles();
+					
+					entrega.selectedValue = info.formaEntre;
+					modificaEstado();
+					if(currentState == "cuenta"){
+						txtCodCuenta.text = info.cdgCb;
+						
+						du.initWsCat(wsCat);
+						du.sCursor();
+						
+						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+							_xmlCta = new XML(evt.result);
+							
+							du.rCursor();
+							du.closeWs(wsCat);		
+									
+							if(_xmlCta.elements().length() > 0)
+								txtCuenta.text = _xmlCta.Table[0].BANCO;
+						});
+						params[0] = "4";
+						params[1] = txtCodCuenta.text;
+						params[2] = "";
+						params[3] = Application.application.U_ID;
+						params[4] = "";
+						wsCat.getInfoRegistro.send(3, params);
+					}
+				}	
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function modificaEstado():void{
+				if(entrega.selectedValue == "I")
+					currentState = "cuenta";
+				else
+					currentState = null;
+			}
+			
+			public function muestraFormCta():void{
+				var comMttoCta:MttoCuenta = new MttoCuenta();
+				comMttoCta = MttoCuenta(PopUpManager.createPopUp(this,MttoCuenta,true));
+				comMttoCta.init(5);
+				comMttoCta.addEventListener("enviar", actualizarCta);
+				PopUpManager.centerPopUp(comMttoCta);	
+			}
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvEntrega" x="61" y="30" width="200" height="100" styleName="canvasMod">
+		<mx:RadioButtonGroup id="entrega" change="modificaEstado()"/>
+		<mx:RadioButton id="rdbChequeClien" x="15" y="10" label="Cheque por cliente" groupName="entrega" value="I"/>
+		<mx:RadioButton id="rdbEfectivo" x="15" y="36" label="Efectivo" groupName="entrega" value="E"/>
+		<mx:RadioButton id="rdbTransElect" x="15" y="62" label="Transferencia electrónica" groupName="entrega" value="T"/>
+	</mx:Canvas>
+	<mx:Label x="61" y="10" text="Forma de entrega"/>
+</mx:Canvas>

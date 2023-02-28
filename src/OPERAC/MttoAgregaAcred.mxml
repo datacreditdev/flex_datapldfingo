@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" title="Nuevo" layout="absolute" width="272" height="172" creationComplete="init()" creationPolicy="all">
+	<mx:states>
+		<mx:State name="existente">
+			<mx:SetProperty name="height" value="228"/>
+			<mx:SetProperty target="{btnAceptar}" name="y" value="156"/>
+			<mx:SetProperty target="{button1}" name="y" value="156"/>
+			<mx:SetProperty target="{canvas1}" name="height" value="81"/>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas x="10" y="112" width="252" height="37" styleName="canvasMod">
+					<mx:DateField id="dtfFecha" x="65" y="6" width="120" selectableRange="{{rangeStart: new Date(2009,7,1), rangeEnd: new Date(fecAct)}}"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Label x="10" y="93" text="Fecha de Alta del Cliente:"/>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	
+	<mx:Script>
+	<![CDATA[
+		import mx.managers.PopUpManager;
+		import mx.controls.*;
+		import Data.Globales;
+		
+		public var global:Globales = new Globales();
+		public var fecAct:Date;
+		
+		public function cerrar():void{
+			PopUpManager.removePopUp(this);
+		}
+	
+		public function cambiarVista():void{
+			/*if (rdbNuevo.selected == true)
+				this.currentState = '';
+			if (rdbExistente.selected == true)
+				this.currentState = 'existente';*/
+		}
+		
+		public function init():void{
+		}
+		
+		public function validar():void{
+			//if (dtfFecha.text == "" && rdbExistente.selected == true)
+			//	Alert.show("Debe seleccionar la fecha de Alta", "Alta Acreditados", 4,null,null,global.iAlert);
+		}
+	]]>
+	</mx:Script>
+
+	<mx:Canvas x="10" y="10" width="252" height="82" styleName="canvasMod" id="canvas1">
+		<mx:RadioButton id="rdbNuevo" x="42.5" y="10" label="Agregar Nuevo Cliente" width="165" click="cambiarVista()"/>
+		<mx:RadioButton id="rdbExistente" x="42.5" y="42" label="Agregar Cliente Existente" width="165" click="cambiarVista()"/>
+	</mx:Canvas>
+	<mx:Button x="222" y="100" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" id="button1" width="40"/>
+	<mx:Button id="btnAceptar" x="174" y="100" icon="@Embed(source='assets/button_ok.png')" click="validar()" width="40"/>
+	
+</mx:TitleWindow>

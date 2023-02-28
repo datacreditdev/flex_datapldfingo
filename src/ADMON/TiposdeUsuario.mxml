@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationPolicy="all" creationComplete="init()">
+	<mx:DataGrid x="10" y="39" width="500" height="200" id="dgPerfil" dataProvider="{dpPerfiles.Table}" 
+		itemClick="{cargarAsignados()}" sortableColumns="false">
+		<mx:columns>
+			<mx:DataGridColumn headerText="PERFIL" dataField="CODIGO" width="100"/>
+			<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="300"/>			
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Label x="10" y="10" text="PERFILES DE USUARIO" fontSize="12" fontWeight="bold" fontStyle="italic" width="228"/>
+	<mx:LinkButton x="518" y="49" icon="@Embed(source='assets/add.png')" width="50" toolTip="Agregar Perfil" click="{Agregar(1)}" id="btnAlta" visible="true"/>
+	<mx:LinkButton x="518" y="84" icon="@Embed(source='assets/edit.png')" width="50" toolTip="Editar Perfil" click="{Agregar(2)}" id="btnCambio" visible="true" show="Activar_Edicion()"/>
+	<mx:LinkButton x="518" y="196" icon="@Embed(source='assets/delete-icon.png')" width="50" height="30" toolTip="Borrar Perfil" id="btnBaja" click="ConfirmarBorrar()" visible="true"/>
+	<mx:Label x="10" y="259" text="PRIVILEGIOS DE PERFIL" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:HRule x="10" y="274" width="509" height="13"/>
+	
+	<mx:Tree id="trAsignados" showRoot="false" paddingTop="5" labelField="@label" height="347" 
+    width="300" mouseEnabled="false" verticalScrollPolicy="auto" x="10" y="295"/>
+	<mx:Script>
+		<![CDATA[
+		
+		import Data.Utils;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.core.IFlexDisplayObject;
+		import mx.events.CloseEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.events.ResultEvent;
+	
+		[Bindable]
+		private var dpPerfiles:XML = new XML();				
+		[Bindable]
+		private var dpAsignados:XML = new XML();
+		
+		private var du:Utils;
+		private var indPerfil:int;
+		private var ws:WebService;
+		private var vScroll:Number;
+		private var accionPerfil:int;
+		
+		private function init():void{
+			du = new Utils();
+			ws = new WebService();
+			CargarPerfiles();
+			//ActivarAcciones();
+		}
+		
+		private function ActivarAcciones():void{
+			var Params:Array = new Array();
+				
+			ws = du.initWs(ws);
+			du.sCursor();
+			du.ejecutaWsMethod(ws,function(evt_2:ResultEvent):void{
+				var dpAcciones:XML = new XML(evt_2.result.toString());
+				Activar(dpAcciones);
+				du.rCursor();
+				ws = du.closeWs(ws);	
+				CargarPerfiles();									
+			});
+			Params[0] = Application.application.PERFIL_ID;
+			Params[1] = Application.application._Current_Mod_Id; 
+			ws.ESLoginMethods.send(6,Params);
+		}
+		
+		public function Activar(_Acciones:XML):void{
+			var v_acciones:int = _Acciones.elements().length();
+			for (var i:int = 0;i<v_acciones;i++)
+			{
+				var dObj:DisplayObject;
+				var str:String = _Acciones.Table[i].OBJETO;
+				dObj = getChildByName(_Acciones.Table[i].OBJETO);
+					
+				if (dObj != null){
+					dObj.visible = true;	
+				}
+			}
+		}
+		
+		private function Activar_Edicion():void{
+			btnEditarPrivilegio.visible = true;
+			btnQuitarPrivilegios.visible = true;
+		}
+		
+		private function CargarPerfiles():void{
+			ws = du.initWs(ws);
+			du.sCursor();
+			du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
+				dpPerfiles = new XML(evt.result.toString());
+				du.rCursor();
+				du.closeWs(ws);	
+				if(accionPerfil == 2){
+					dgPerfil.validateNow();
+					dgPerfil.verticalScrollPosition = vScroll;
+					dgPerfil.selectedIndex = indPerfil;
+					accionPerfil = 0;
+				}			
+			});
+			ws.ESLoginMethods.send(7,null); //Método para obtener la lista de perfiles del catálogo
+		}
+		
+			private function cargarAsignados():void
+			{
+				var Params:Array = new Array();
+				ws = du.initWs(ws);
+				du.sCursor();
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{				
+					var temp:XML = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(ws);
+				
+					dpAsignados = null;
+					trAsignados.dataProvider = null;
+					
+					if(temp.elements().length() > 0){
+						dpAsignados = temp;
+						trAsignados.dataProvider = dpAsignados;
+					}
+					/*var rsSplit:Array = evt.result.toString().split('|');
+					if(rsSplit[0] == '-1')
+					{
+						//du.showMsg(rsSplit[1]);
+					}*/				
+				});
+				Params[0] = dpPerfiles.Table[dgPerfil.selectedIndex].CODIGO;
+				ws.ESLoginMethods.send(8,Params); //Método para obtener los módulos asignados a un perfil
+			}
+			
+			private function Agregar(TipoAccion:int):void
+			{
+				if(TipoAccion == 2 && dgPerfil.selectedIndex == -1)
+				{
+					du.showMsg("Debe seleccionar un perfil");
+					return;
+				}
+				var usrAdd:MttoPerfiles = new MttoPerfiles();												
+				usrAdd = MttoPerfiles(PopUpManager.createPopUp(this,MttoPerfiles,true));
+				
+				if(TipoAccion == 1)
+					usrAdd.registraInfoPerfil();
+				else if(TipoAccion == 2){
+					usrAdd.cargaInfoPerfil(dgPerfil.selectedItem.CODIGO, dgPerfil.selectedItem.NOMBRE);
+					this.indPerfil = dgPerfil.selectedIndex;
+					this.vScroll = dgPerfil.verticalScrollPosition;
+				}											
+				usrAdd.addEventListener('CloseEvent',Recargar);						
+				PopUpManager.centerPopUp(usrAdd);										
+			}
+						
+			private function Recargar(evt:CloseEvent):void{				
+				var obj:MttoPerfiles = evt.target as MttoPerfiles;				
+				obj.removeEventListener('CloseEvent',Recargar);
+				accionPerfil = obj.tipoAccion;
+				CargarPerfiles();	
+				PopUpManager.removePopUp(obj);				
+			}
+			
+			private function Recargar_2(evt:CloseEvent):void{				
+				var obj:PrivilegiosPerfil = evt.target as PrivilegiosPerfil;				
+				obj.removeEventListener('CloseEvent',Recargar);
+				//if(obj.mAction == 1)
+				//{
+					cargarAsignados();
+					//CargarPerfiles();
+				//	dpAsignados = new XML("<node></node>");
+				//}				
+				PopUpManager.removePopUp(obj);				
+			}
+			
+			private function ConfirmarBorrar():void{
+				if(dgPerfil.selectedIndex >= 0)
+					Alert.show("¿Desea realmente eliminar el perfil seleccionado?","Eliminar perfil",3,null,BorrarPerfil,du.iQuest,4);
+				else
+					Alert.show("Debe seleccionar un perfil","Eliminar perfil",4,null,null,du.iAlert,4);
+			}
+			
+			private function BorrarPerfil(evt:CloseEvent):void
+			{
+				if(evt.detail == Alert.YES)
+				{
+					var aPerfil:Array = new Array();									
+					aPerfil[0] = dgPerfil.selectedItem.CODIGO.toString();					
+					
+					ws = du.initWs(ws);
+					du.sCursor();
+					du.ejecutaWsMethod(ws,function(evt2:ResultEvent):void{
+						dpAsignados = new XML(evt2.result.toString());					
+						var res:String = evt2.result.toString();
+						
+						if(res.substr(0,1) != '1')
+							Alert.show(res.substr(0,res.length),"Eliminar perfil",4,null,null,du.iAlert,4);
+							
+						du.rCursor();
+						du.closeWs(ws);
+						CargarPerfiles();
+					});
+					ws.ES_Admin_Perfiles.send(3,aPerfil);
+				}
+			}
+			
+			private function EditPrivilegios():void{
+				if(dgPerfil.selectedIndex == -1){
+					du.showMsg("Debe seleccionar un perfil");
+					return;
+				}
+				
+				var usrAdd:PrivilegiosPerfil = new PrivilegiosPerfil();												
+				usrAdd = PrivilegiosPerfil(PopUpManager.createPopUp(this,PrivilegiosPerfil,true));				
+						
+				usrAdd.lblIdPerfil.text = dpPerfiles.Table[dgPerfil.selectedIndex].CODIGO; 				
+				usrAdd.txtPerfil.text = dgPerfil.selectedItem.NOMBRE.toString();
+				usrAdd.codPerfil = dpPerfiles.Table[dgPerfil.selectedIndex].CODIGO;
+				usrAdd.dpAsignados = this.dpAsignados;
+				usrAdd.addEventListener('CloseEvent',Recargar_2);						
+				PopUpManager.centerPopUp(usrAdd);														
+			}
+			
+			private function Confirmar_Quitar():void{
+				Alert.show("¿Confirma eliminar privilegios del perfil seleccionado?","Quitar privilegios de perfil",3,null,QuitarPrivilegios,du.iQuest,4);
+			}
+			
+			private function QuitarPrivilegios(evt:CloseEvent):void
+			{
+				if(evt.detail != Alert.YES)
+					return;
+					
+				var Params:Array = new Array();
+				if(dgPerfil.selectedIndex == -1)
+				{
+					du.showMsg("Debe seleccionar un perfil");
+					return;
+				}
+				Params[0] = dgPerfil.selectedItem.PERFIL_ID;
+				ws = du.initWs(ws);
+				du.sCursor();
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
+					ws = du.closeWs(ws);
+					du.rCursor();
+					cargarAsignados();
+				});
+				ws.ES_Admin_Perfiles.send(4,Params);
+			}
+		]]>
+	</mx:Script>
+	<mx:LinkButton x="322" y="295" icon="@Embed(source='assets/icon_user_profile.gif')" height="31" click="EditPrivilegios()" id="btnEditarPrivilegio" toolTip="Editar privilegios" />
+	<mx:LinkButton x="322" y="499" icon="@Embed(source='assets/delete-icon.png')" toolTip="Quitar privilegios" click="{Confirmar_Quitar()}" id="btnQuitarPrivilegios" label="Quitar privilegios" visible="false"/>
+</mx:Canvas>

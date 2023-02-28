@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="600" height="200" creationPolicy="all">
+<mx:DataGrid id="dgAcred" x="183" y="131" width="300" visible="false" showHeaders="false" alpha="0.7" itemClick="selecciona()" keyDown="presDGAcred(event)" height="52">
+	<mx:columns>
+		<mx:DataGridColumn dataField="nombre"/>
+	</mx:columns>
+</mx:DataGrid>
+	<mx:Metadata>
+		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
+	</mx:Metadata>
+	
+	<mx:Validator id="presidenteV" source="{txtPresidente}" property="text" 
+	invalid="{txtPresidente.setFocus()}" triggerEvent="" requiredFieldError="Nombre Presidente Requerido"/>
+	 
+	<mx:Validator id="secretarioV" source="{txtSecretario}" property="text" 
+	invalid="{txtSecretario.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Secretario Requerido"/>
+	 
+	<mx:Validator id="tesoreroV" source="{txtTesorero}" property="text" 
+	invalid="{txtTesorero.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Tesorero Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.events.DataGridEvent;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.validators.Validator;
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+		
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			public var _xmlAcred:XML =  new XML();
+					
+			public var datos:DatosSolic = new DatosSolic();
+			
+			public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS	
+			public var du:Utils;
+			public var tipoAccion:int;
+			public var estatus:String;
+			public var texto:String;
+			private var global:Globales;
+			
+			public function buscaPresidente(event:Event):void{
+				if(TextInput(event.currentTarget).text != '')
+				{	
+					dgAcred.selectedIndex = -1;
+					texto = TextInput(event.currentTarget).text;					
+					acredObj.filterFunction = filtraAcred;
+					acredObj.refresh();
+					if (acredObj.length > 0){
+						dgAcred.validateNow();
+						dgAcred.scrollToIndex(0);
+						dgAcred.selectedIndex = 0;
+						dgAcred.y = 67;
+						dgAcred.visible = true;
+						this.setChildIndex(dgAcred,this.numChildren - 1);	
+					}
+					else
+						dgAcred.visible = false;									
+				}
+				else{
+					acredObj.filterFunction = null;
+					acredObj.refresh();
+					dgAcred.visible = false;
+				}
+			}
+			
+			public function buscaSecretario(event:Event):void{
+				if(TextInput(event.currentTarget).text != '')
+				{	
+					dgAcred.selectedIndex = -1;
+					texto = TextInput(event.currentTarget).text;					
+					acredObj.filterFunction = filtraAcred;
+					acredObj.refresh();
+					if (acredObj.length > 0){
+						dgAcred.validateNow();
+						dgAcred.scrollToIndex(0);
+						dgAcred.selectedIndex = 0;
+						dgAcred.y = 99;
+						dgAcred.visible = true;
+						this.setChildIndex(dgAcred,this.numChildren - 1);	
+					}
+					else
+						dgAcred.visible = false;									
+				}
+				else{
+					acredObj.filterFunction = null;
+					acredObj.refresh();
+					dgAcred.visible = false;
+				}
+			}
+			
+			public function buscaTesorero(event:Event):void{
+				if(TextInput(event.currentTarget).text != '')
+				{	
+					dgAcred.selectedIndex = -1;
+					texto = TextInput(event.currentTarget).text;					
+					acredObj.filterFunction = filtraAcred;
+					acredObj.refresh();
+					if (acredObj.length > 0){
+						dgAcred.validateNow();
+						dgAcred.scrollToIndex(0);
+						dgAcred.selectedIndex = 0;
+						dgAcred.y = 131;
+						dgAcred.visible = true;
+						this.setChildIndex(dgAcred,this.numChildren - 1);	
+					}
+					else
+						dgAcred.visible = false;									
+				}
+				else{
+					acredObj.filterFunction = null;
+					acredObj.refresh();
+					dgAcred.visible = false;
+				}
+			}
+			
+			public function cargaAcred(Arr:ArrayCollection):void{
+				acredObj = Arr;
+				dgAcred.dataProvider = acredObj;
+				
+				if(tipoAccion == 2)
+				{	
+					var j:int;
+					for(j = 0; j < acredObj.length; j++)
+					{
+						if(acredObj[j].codigo.toString() == datos.presidente){
+							txtPresidente.text = acredObj[j].nombre;
+							break;
+						}
+							
+					}
+					for(j = 0; j < acredObj.length; j++)
+					{
+						if(acredObj[j].codigo.toString() == datos.secretario){
+							txtSecretario.text = acredObj[j].nombre;
+							break;
+						}
+							
+					}
+					for(j = 0; j < acredObj.length; j++)
+					{
+						if(acredObj[j].codigo.toString() == datos.tesorero){
+							txtTesorero.text = acredObj[j].nombre;
+							break;
+						}
+					}
+				}
+			}
+			
+			public function desactivaControles():void{
+				cnvMesaDir.enabled = false;	
+			}
+			
+			public function enviarDatosSolic(formData:DatosSolic):void{
+				var invalidArray:Array = Validator.validateAll([presidenteV, secretarioV, tesoreroV]);
+				var j:int;
+				
+				if(invalidArray.length == 0){
+					if(datos.presidente == datos.secretario){ 
+						txtPresidente.text = "";
+						txtSecretario.text = "";
+						datos.presidente = "";
+						datos.secretario = "";
+						formData.guardaProc = false;
+					}
+					else if(datos.presidente == datos.tesorero){
+						txtPresidente.text = "";
+						txtTesorero.text = "";
+						datos.presidente = "";
+						datos.tesorero = "";
+						formData.guardaProc = false;
+					} 
+					else if(datos.secretario == datos.tesorero){
+						txtSecretario.text = "";
+						txtTesorero.text = "";
+						datos.secretario = "";
+						datos.tesorero = "";
+						formData.guardaProc = false;
+					}
+					else{
+						formData.presidente = datos.presidente;
+						formData.secretario = datos.secretario;
+						formData.tesorero = datos.tesorero;
+						formData.guardaProc = true;
+					}
+				}
+				else{
+					formData.guardaProc = false;
+				}
+				var event:EventSolic = new EventSolic("enviarDatosSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			private function filtraAcred(item:Object):Boolean{
+				var isMatch:Boolean = false
+				if(item.nombre.toString().substr(0, texto.length).toLowerCase() == texto.toLowerCase())
+					isMatch = true 
+				return isMatch; 	
+			}
+			
+			private function filtraCaptura(item:Object):Boolean{
+				var isMatch:Boolean = false
+				if(texto.toLowerCase().search(item.nombre.toLowerCase()) != -1)
+					isMatch = true
+				return isMatch; 
+			}
+			
+			public function init(info:DatosSolic, tipoAccion:int, estatus:String):void{
+				global = new Globales();
+				du = new Utils();
+				wsMS = new WebService();
+				this.tipoAccion = tipoAccion;
+				this.estatus = estatus;
+				
+				if (info != null){
+					var j:int;
+					datos = info;
+					
+					if(info.situacion == 'A' || info.situacion == 'R' || estatus == "evaluacion" || estatus == "entrega")
+						desactivaControles();	
+				}	
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function presAcred(event:KeyboardEvent):void{
+				if(event.keyCode == Keyboard.DOWN){
+					dgAcred.setFocus();
+				}	
+			}
+			
+			public function presDGAcred(event:KeyboardEvent):void{
+				if(event.keyCode == Keyboard.ENTER){
+					if(dgAcred.y == 67){
+						selecciona();
+						txtPresidente.setFocus();
+					}
+					else if(dgAcred.y == 99){
+						selecciona();
+						txtSecretario.setFocus();
+					}
+					else if(dgAcred.y == 131){
+						selecciona();
+						txtTesorero.setFocus();
+					}
+				}	
+			}
+			
+			public function selecciona():void{
+				if(dgAcred.selectedIndex >= 0){
+					var indice:int = dgAcred.selectedIndex;
+					if(dgAcred.y == 67){
+						if (datos.presidente != acredObj[indice].codigo){
+							txtPresidente.text = acredObj[indice].nombre;
+							datos.presidente = acredObj[indice].codigo;
+						}
+						else
+							txtPresidente.text = acredObj[indice].nombre;
+					}
+					else if(dgAcred.y == 99){
+						if (datos.secretario != acredObj[indice].codigo){
+							txtSecretario.text = acredObj[indice].nombre;
+							datos.secretario = acredObj[indice].codigo;
+						}
+						else
+							txtSecretario.text = acredObj[indice].nombre;
+					}
+					else if(dgAcred.y == 131){
+						if (datos.tesorero != acredObj[indice].codigo){
+							txtTesorero.text = acredObj[indice].nombre;
+							datos.tesorero = acredObj[indice].codigo;
+						}
+						else
+							txtTesorero.text = acredObj[indice].nombre;
+					}
+					dgAcred.visible = false;
+				}
+			}
+			
+			public function verificaPresidente():void{
+				if (dgAcred.selectedIndex < 0){
+					dgAcred.visible = false;
+					texto = txtPresidente.text;
+					acredObj.filterFunction = filtraCaptura;
+					acredObj.refresh();
+					if (acredObj.length == 0){
+						txtPresidente.text = "";
+						datos.presidente = "";
+					}
+					acredObj.filterFunction = null;
+					acredObj.refresh();
+				}
+			}
+			
+			public function verificaSecretario():void{
+				if (dgAcred.selectedIndex < 0){
+					dgAcred.visible = false;
+					texto = txtSecretario.text;
+					acredObj.filterFunction = filtraCaptura;
+					acredObj.refresh();
+					if (acredObj.length == 0){
+						txtSecretario.text = "";
+						datos.secretario = "";
+					}
+					acredObj.filterFunction = null;
+					acredObj.refresh();
+				}
+			}
+			
+			public function verificaTesorero():void{
+				if (dgAcred.selectedIndex < 0){
+					dgAcred.visible = false;
+					texto = txtTesorero.text;
+					acredObj.filterFunction = filtraCaptura;
+					acredObj.refresh();
+					if (acredObj.length == 0){
+						txtTesorero.text = "";
+						datos.tesorero = "";
+					}
+					acredObj.filterFunction = null;
+					acredObj.refresh();
+				}
+			}
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvMesaDir" x="10" y="22" width="580" height="137" styleName="canvasMod">
+		<mx:Label id="lblPresidente" x="105.5" y="23" text="Presidente:"/>
+		<mx:TextInput id="txtPresidente" x="172.5" y="21" width="300" change="buscaPresidente(event)" keyDown="presAcred(event)" enter="selecciona()" focusOut="verificaPresidente()"/>
+		<mx:Label id="lblSecretario" x="105.5" y="55" text="Secretario:"/>
+		<mx:TextInput id="txtSecretario" x="172.5" y="53" width="300" change="buscaSecretario(event)" keyDown="presAcred(event)" enter="selecciona()" focusOut="verificaSecretario()"/>
+		<mx:Label id="lblTesorero" x="112.5" y="87" text="Tesorero:"/>
+		<mx:TextInput id="txtTesorero" x="172.5" y="85" width="300" change="buscaTesorero(event)" keyDown="presAcred(event)" enter="selecciona()" focusOut="verificaTesorero()"/>
+	</mx:Canvas>
+	<mx:Label x="10" y="3" text="Comité de Administración"/>
+</mx:Canvas>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="412" height="138" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+
+<!--Componente que permite registrar el motivo por el cual fue rechazada la solicitud del acreditado-->
+
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.collections.ArrayCollection;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+
+			private var _xmlCausa:XML =  new XML();	
+			
+			public var causaObj:ArrayCollection = new ArrayCollection();
+
+			public var global:Globales;
+			public var du:Utils;
+			public var wsMS:WebService;	
+			
+			public function formateaCausa():void{
+				var i:int;
+				var cont:int = _xmlCausa.elements().length();
+				var oItem:Object;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.descripcion = "--Seleccionar--";
+				causaObj.addItem(oItem);
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlCausa.Table[i].CODIGO;	
+					oItem.descripcion = _xmlCausa.Table[i].DESCRIPCION;
+					causaObj.addItem(oItem);
+				}
+			}
+			
+			public function init(indice:int, rechazo:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				this.title = "Registro de Rechazo";
+				cboRechazo.setFocus();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlCausa = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+					
+					if (_xmlCausa.elements().length() > 0){	
+						formateaCausa();
+						cboRechazo.dataProvider = causaObj;
+						
+						if(indice > 0 && rechazo != "")
+							var j:int;
+							for(j = 0; j < causaObj.length; j++){
+								if(causaObj[j].id.toString() == rechazo){
+									cboRechazo.selectedIndex = j;
+									break;	
+								}
+							}
+					}
+				});
+				//Obtiene Causas de Rechazo
+				wsCat.getCatalogoGral.send(22);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function registraRechazo():void{
+				if (cboRechazo.selectedIndex > 0)
+					PopUpManager.removePopUp(this);
+				else
+					Alert.show("Debe seleccionar el motivo de rechazo del acreditado","Registro de Rechazo",4,null,null,global.iAlert);
+			}
+						
+		]]>
+	</mx:Script>
+	<mx:Button id="btnAceptar" x="330.5" y="62" label="Aceptar" click="registraRechazo()"/>
+	<mx:Canvas x="12.5" y="10" width="387" height="44" styleName="canvasMod">
+		<mx:ComboBox id="cboRechazo" labelField="descripcion" x="12.5" y="10" width="362"></mx:ComboBox>
+	</mx:Canvas>
+</mx:TitleWindow>

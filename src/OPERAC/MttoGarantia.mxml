@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="560" height="540" creationPolicy="all" xmlns:Forms="OPERAC.Forms.*">
+	<mx:Script>
+	<![CDATA[
+		import Data.DatosGarantia;
+		import Data.EventGarantia;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.managers.PopUpManager;		
+		import mx.controls.Alert;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.events.ResultEvent;
+		import mx.core.Application;
+		
+		[Bindable]
+		private var info:DatosGarantia;
+		
+		[Bindable]
+		public var _xmlGtia:XML = new XML();
+		
+		public var global:Globales;
+		public var wsMS:WebService;	
+		public var du:Utils;
+		public var titulo:String;
+		public var tipoAccion:int;
+		public var sec:String;
+		
+		public function cargaInfoGarantia(cdgAcred:String):void{
+			tipoAccion = 2;
+			this.title = "Edición";
+			
+			//Datos de la Garantia
+			initConexion();
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlGtia = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsMS);
+					
+				if (_xmlGtia.elements().length() > 0){
+					llenaRegistros();
+				} 	
+			});
+			wsMS.getInfoGarantia.send(cdgAcred);
+		} 
+		
+		public function cerrar():void{
+			PopUpManager.removePopUp(this);
+		}
+	
+		public function enviar():void{
+			info = new DatosGarantia();		
+			//formDatosGarantia.enviarGarantia(info);
+			validaFinal();
+		}
+		
+		private function guardaGarantia():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionGarantia);
+			wsMS.setAccionGarantia.send(tipoAccion, txtCdgAcred.text, "I", sec, info.tipo, info.articulo, info.valorNominal,
+										info.valorContable, info.tipoProp, info.descripcion, info.factura, info.activa,
+										Application.application.U_ID); 			
+		}
+	
+		public function init(cdgAcred:String, acred:String, tipoAccion:int, sec:String = ""):void{
+			global = new Globales();
+			du = new Utils();
+			titulo = "Mantenimiento de Garantía";
+			this.sec = sec;
+			txtCdgAcred.text = cdgAcred;
+			txtAcreditado.text = acred;
+			/*if(tipoAccion == 2)
+				cargaInfoGarantia();*/
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+			info.tipo = _xmlGtia.Table[0].NOMBRE;
+			info.articulo = _xmlGtia.Table[0].ARTICULO;
+			info.valorNominal = _xmlGtia.Table[0].VALORNOMINAL;
+			info.valorContable = _xmlGtia.Table[0].VALORCONTABLE;
+			info.tipoProp = _xmlGtia.Table[0].TIPOPROP;
+			info.descripcion = _xmlGtia.Table[0].DESCRIPCION;
+			info.factura = _xmlGtia.Table[0].FACTURA;
+			info.activa = _xmlGtia.Table[0].ACTIVA; 
+		}
+		
+		public function validaDatosProy(event:EventGarantia):void{
+			info = event.customProp;
+		}
+			
+		public function validaEmpProy(event:EventGarantia):void{
+			info = event.customProp;
+		}
+			
+		public function validaFinal():void{
+			if (info.guarda == true)
+				guardaGarantia();
+			else
+				Alert.show("Debe capturar los datos requeridos.",titulo,4,null,null,global.iAlert);
+		}
+		
+		private function setAccionGarantia(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionGarantia);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1")
+				Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iAlert);
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+	]]>
+	</mx:Script>
+
+	<mx:Canvas x="13" y="10" width="534" height="50" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblCliente" x="72" y="12" text="Cliente:"/>
+		<mx:TextInput id="txtCdgAcred" editable="false" x="120" y="10" width="58"/>
+		<mx:TextInput id="txtAcreditado" editable="false" x="186" y="10" width="300"/>
+	</mx:Canvas>
+	<mx:Button id="btnCancelar" x="510" y="468" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="462" y="468" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Canvas styleName="canvasMod" width="534" height="392" y="68" x="13">
+		<Forms:FormDatosGarantia id="formDatosGarantia" x="10" width="512" height="380" y="0"/>
+	</mx:Canvas>
+</mx:TitleWindow>

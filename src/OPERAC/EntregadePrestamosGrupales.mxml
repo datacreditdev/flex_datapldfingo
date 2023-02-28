@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" xmlns:forms="forms.*" 
+	xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" xmlns:Administracion="Administracion.*" 
+	height="100%">
+	
+	<!--Componente de mantenimiento de Prestamos-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;  
+			import mx.events.*;  
+			import Data.Globales;
+			import mx.controls.ComboBox;
+			import mx.events.FlexEvent;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.formatters.NumberFormatter;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.CloseEvent;	
+			import mx.events.ListEvent;	
+			import mx.core.Application;
+			import mx.containers.TitleWindow;
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.collections.ArrayCollection;
+			import mx.effects.easing.Elastic;
+			import mx.events.ValidationResultEvent;            
+
+			[Bindable]
+			public var _xmlGrupos:XML = new XML();
+			[Bindable]
+			public var _xmlPrn:XML = new XML();
+			[Bindable]
+			public var _xmlAcred:XML = new XML();
+			[Bindable]
+			public var dPermisos:XML = new XML();	
+			
+			public var wsMS:WebService = new WebService();	
+			public var du:Utils;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionPrn:int;
+			public var indPrn:int;
+			public var vScroll:Number;
+			
+			//variables que indican las opciones disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			public function activarContAcred(band:Boolean):void{
+				btnDatosAcred.enabled = band;	
+			}	
+					
+			public function activarContPrn(band:Boolean):void{
+				btnDatosPrn.enabled = band;
+			}
+			
+			public function activarContModPrn(band:Boolean):void{
+				if(edicion == true)	
+					btnEditarPrn.enabled = band;
+			}
+			
+			public function actualizarAcred(event:Event):void{
+				buscarListaAcredPrn(1);
+			}
+			
+			public function actualizarPrn(event:Event):void{
+				buscarListaPrn(1);
+			}
+			
+			public function buscarGrupo():void{
+				if (txtCodGrupo.text != "" || txtGrupo.text != ""){
+					btnBuscar.setFocus();
+					dgGrupos.dataProvider = null;
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, getGrupos);
+					wsMS.getGrupos.send(Application.application.U_ID, txtCodGrupo.text, txtGrupo.text);
+				}	
+			}
+			
+			public function buscarListaAcredPrn(tipo:int):void{
+				var indice:int = dgGrupos.selectedIndex;
+				var grupo:String = this._xmlGrupos.Table[indice].CODIGO;
+				var indPrn:int = dgPrn.selectedIndex;
+				var ciclo:String = this._xmlPrn.Table[indPrn].CICLO;
+				dgAcred.dataProvider = null;
+				initConexion();
+				du.sCursor();
+			 	if (tipo == 1)
+					Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, getListaAcredPrn);
+				wsMS.getListaAcredPrn.send(grupo, ciclo);
+			}
+			
+			public function buscarListaPrn(tipo:int):void{
+				var indice:int = dgGrupos.selectedIndex;
+				var grupo:String = this._xmlGrupos.Table[indice].CODIGO;
+				initConexion();
+				du.sCursor();
+			 	if(tipo == 1)
+			 		Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, getListaPrn);
+				wsMS.getListaPrn.send(grupo);
+			}
+
+			private function getGrupos(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getGrupos);
+				this._xmlGrupos = new XML(event.result);
+				if (this._xmlGrupos.elements().length() > 0){
+					dgGrupos.dataProvider = _xmlGrupos.Table;
+				}
+				seleccionaGrupo();
+			}
+			
+			private function getListaAcredPrn(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getListaAcredPrn);
+				this._xmlAcred = new XML(event.result);
+				if (this._xmlAcred.elements().length() > 0){
+					dgAcred.dataProvider = _xmlAcred.Table;
+				}
+				seleccionaAcred();
+			}
+			
+			private function getListaPrn(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getListaPrn);
+				this._xmlPrn = new XML(event.result);
+				if (this._xmlPrn.elements().length() > 0){
+					dgPrn.dataProvider = _xmlPrn.Table;
+					if (accionPrn == 2){
+						dgPrn.validateNow();
+						dgPrn.verticalScrollPosition = vScroll;
+						dgPrn.selectedIndex = indPrn;
+						this.accionPrn = 0;
+					}
+				}
+				seleccionaPrn();
+			}
+			
+			public function iniVar():void{
+				this.indPrn = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			public function mostrarFormPrn(tipo:int):void{
+				//tipo = 2 MODIFICA REGISTRO
+				var grupo:String;
+				var nomGrupo:String;
+				var coord:String;
+				var promotor:String;
+				var munic:String;
+				var indGrupo:int;
+				var ciclo:String;
+				if(edicion == true){
+					var comMttoPrn:MttoPrestamo = new MttoPrestamo();
+					indGrupo = dgGrupos.selectedIndex;
+					grupo = this._xmlGrupos.Table[indGrupo].CODIGO;
+					nomGrupo = this._xmlGrupos.Table[indGrupo].GRUPO;
+					coord = this._xmlGrupos.Table[indGrupo].CDGCO;
+					promotor = this._xmlGrupos.Table[indGrupo].CDGPRPE;
+					munic = this._xmlGrupos.Table[indGrupo].MUNIC;
+					switch(tipo){
+						case 2: 
+							if (dgPrn.selectedIndex >= 0){
+								accionPrn = tipo;
+								comMttoPrn = MttoPrestamo(PopUpManager.createPopUp(this,MttoPrestamo,true));  
+								comMttoPrn.addEventListener(Event.REMOVED_FROM_STAGE, actualizarPrn);
+								PopUpManager.centerPopUp(comMttoPrn);
+								iniVar();
+								var indice:int = dgPrn.selectedIndex;
+								this.indPrn = indice;
+								this.vScroll = dgPrn.verticalScrollPosition;		
+								indPrn = dgPrn.selectedIndex;
+								ciclo = this._xmlPrn.Table[indPrn].CICLO;
+								comMttoPrn.cargaInfoPrn(grupo, nomGrupo, ciclo, munic, coord, promotor);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Préstamo","Mantenimiento de Préstamo",4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}
+			
+			public function permisos():void{
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var i:int;
+				var cont:int;
+				
+				du = new Utils();
+				wsMS = du.initWs(wsMS);
+				du.sCursor();
+				//bloquear();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(i = 0; i < cont; i++)
+					{
+						switch(dPermisos.Table[i].OPCION.toString())
+						{
+							case "C":
+								consulta = true;
+								if (global.permisosEvSolic(Application.application.PERFIL_ID)){
+									borrado = true;
+									alta = true;
+									edicion = true;
+								}
+								break;	
+							/*case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;*/
+						}
+					}
+					//desbloquear();
+					du.rCursor();
+					du.closeWs(wsMS);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			public function seleccionaAcred():void{
+				if (dgPrn.selectedIndex >= 0){
+					activarContAcred(true);
+				}
+				else{
+					activarContAcred(false);
+				}
+			}
+			
+			public function seleccionaGrupo():void{
+				dgPrn.dataProvider = null;
+				dgAcred.dataProvider = null;
+				activarContAcred(false);
+				if (dgGrupos.selectedIndex >= 0){
+					activarContPrn(true);
+				}
+				else{
+					activarContPrn(false);
+				}
+			}
+			
+			public function seleccionaPrn():void{
+				dgAcred.dataProvider = null;
+				activarContAcred(false);
+				if (dgPrn.selectedIndex >= 0){
+					activarContModPrn(true);
+					activarContAcred(true);
+				}
+				else{
+					activarContModPrn(false);
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas width="800" height="650" backgroundColor="#FFFFFF" backgroundAlpha="1.0"> 
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="763.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgGrupos" x="10" y="10" width="741.5" height="124"
+				sortableColumns="false"
+				resizableColumns="false" verticalScrollPolicy="on" horizontalScrollPolicy="on" itemClick="seleccionaGrupo()" doubleClickEnabled="true" itemDoubleClick="buscarListaPrn(1)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+					<mx:DataGridColumn headerText="GRUPO" dataField="GRUPO" width="200"/>
+					<mx:DataGridColumn headerText="MUNICIPIO" dataField="MUNIC" width="200"/>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CDGPRPE" width="70"/>
+					<mx:DataGridColumn headerText="OFICIAL DE CREDITO" dataField="PROMOTOR" width="200"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="10" text="GRUPO SOLIDARIO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="656.75" y="39" width="61" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarGrupo()" toolTip="Buscar Grupo" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas x="98.25" y="39" width="550.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodGrupo" x="10" y="7" text="CODIGO:" width="53"/>
+			<mx:Label id="lblGrupo" x="137" y="7" text="GRUPO:" width="52.5"/>
+			<mx:TextInput id="txtGrupo" x="187" y="5" width="351.5" enter="buscarGrupo()" maxChars="50"/>
+			<mx:TextInput id="txtCodGrupo" x="64" y="5" width="68" enter="buscarGrupo()" maxChars="6" restrict="0-9"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle0" x="18.5" y="289" width="763.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
+			<Data:RowColorDataGrid id="dgPrn" x="10" y="10" width="741.5" height="124"
+				sortableColumns="false"
+			  	draggableColumns="false" 
+				resizableColumns="false" verticalScrollPolicy="on" itemClick="seleccionaPrn()" doubleClickEnabled="true" itemDoubleClick="mostrarFormPrn(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="35"/>
+					<mx:DataGridColumn headerText="CANT. AUTORIZADA" dataField="CANTAUTOR" width="100"/>
+					<mx:DataGridColumn headerText="CANT. ENTREGADA" dataField="CANTENTRE" width="100"/>
+					<mx:DataGridColumn headerText="DEVOLUCIONES" dataField="CANTDEVOL" width="80"/>
+					<mx:DataGridColumn headerText="TASA" dataField="TASA" width="50"/>
+					<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION" width="80"/>
+					<mx:DataGridColumn headerText="INICIO CICLO" dataField="INICIO" width="70"/>
+					<mx:DataGridColumn headerText="CONCILIADO" dataField="CONCILIADO" width="80"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="621" y="244" width="110" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
+			<mx:Button id="btnEditarPrn" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormPrn(2)" toolTip="Editar Préstamo" width="40"/>
+			<mx:Button id="btnDatosPrn" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaPrn(1)" enabled="false" toolTip="Préstamos del Grupo" width="40"/>
+		</mx:Canvas>
+		<mx:Label x="18.5" y="260" text="CICLO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Label x="18.5" y="465" text="PRÉSTAMO AL ACREDITADO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="671" y="449" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnDatosAcred" x="9" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaAcredPrn(1)" enabled="false" toolTip="Acreditados del Grupo" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle2" x="18.5" y="494" width="763.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
+			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="741.5" height="124"
+				sortableColumns="false"
+			  	draggableColumns="false" 
+				resizableColumns="false" verticalScrollPolicy="on" itemClick="seleccionaAcred()"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="50"/>
+					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBREC" width="180"/>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="90"/>
+					<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="CANTENTRE" width="90"/>
+					<mx:DataGridColumn headerText="SITUACION" dataField="SITUACIONC" width="65"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Image x="725" y="19" width="57" height="57" source="assets/users.png"/>
+		<mx:Image x="739" y="238" width="43" height="43" source="assets/notepad.png"/>
+		<mx:Image x="739" y="443" width="43" height="43" source="images/user.png"/>
+	</mx:Canvas>
+</mx:Canvas>

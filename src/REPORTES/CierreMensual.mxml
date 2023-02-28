@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="300" height="430" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*" xmlns:local="*">
+	
+	<mx:StringValidator id="tipoCartV"  
+        source="{comFiltroAsesor.tipoCart}"  
+        property="selectedValue"  
+        required="true" requiredFieldError="Tipo de Cartera requerido"/> 
+	
+	<mx:states>
+		<mx:State name="resultado">
+			<mx:SetProperty name="width" value="900"/>
+			<mx:SetProperty name="height" value="400"/>
+			<mx:AddChild position="lastChild">
+				<Data:RowColorDataGrid id="dgReporte" sortableColumns="false" x="18.45" y="52" width="860.05" visible="true" height="289" 
+									   horizontalScrollPolicy="auto">
+					<Data:columns>
+						<!--<mx:DataGridColumn headerText="COD_SUCURSAL" headerWordWrap="true" dataField="COD_COORD"/>-->
+						<mx:DataGridColumn headerText="FECHA DE PAGO ESPERADO" headerWordWrap="true" dataField="FECHA" width="100"/>
+						<mx:DataGridColumn headerText="SUCURSAL" headerWordWrap="true" dataField="COORDINACION" width="100"/>
+						<!--<mx:DataGridColumn headerText="COD_ASESOR" headerWordWrap="true" dataField="COD_ASESOR"/>-->
+						<mx:DataGridColumn headerText="ASESOR" headerWordWrap="true" dataField="OF_CREDITO" width="200"/>
+						<mx:DataGridColumn headerText="COD GRUPO" headerWordWrap="true" dataField="COD_GRUPO" width="80"/>
+						<mx:DataGridColumn headerText="NOMBRE GRUPO" headerWordWrap="true" dataField="GRUPO" width="200"/>
+						<mx:DataGridColumn headerText="CICLO" headerWordWrap="true" dataField="CICLO" width="50"/>
+						<mx:DataGridColumn headerText="INICIO" headerWordWrap="true" dataField="INICIO" width="70"/>
+						<!--<mx:DataGridColumn headerText="PARCIALIDAD" headerWordWrap="true" dataField="PARCIALIDAD" width="80"/>-->
+						<mx:DataGridColumn headerText="PAGOS PACTADOS" headerWordWrap="true" dataField="PAGOS_COMP" width="80"/>
+						<mx:DataGridColumn headerText="MORA INICIAL DEL MES" headerWordWrap="true" dataField="PERIPAG" width="100"/>
+						<mx:DataGridColumn headerText="MORA DEL MES" headerWordWrap="true" width="80" dataField="PERINC"/>
+						<mx:DataGridColumn headerText="PAGOS DEL MES" headerWordWrap="true" width="80" dataField="PAGOS_EFEC"/>
+						<!--<mx:DataGridColumn headerText="MORA ACUMULADA" headerWordWrap="true" width="100" dataField="MORA"/>-->
+					</Data:columns>
+				</Data:RowColorDataGrid>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Button id="btnExportar" x="775.5" y="20" label="Exportar Excel" click="exportar()" enabled="false"/>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Label id="lblTotal" x="18.45" y="349" width="860.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+			</mx:AddChild>
+			<mx:RemoveChild target="{comFiltroAsesor}"/>
+			<mx:AddChild position="lastChild">
+				<mx:Label id="lblTitulo" x="18" y="10" width="470.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Label id="lblTotalPagos" x="18.45" y="372" width="860.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	
+	<mx:transitions>
+		<mx:Transition toState="resultado">		
+			<mx:Sequence>
+				<mx:Resize duration="1000" target="{this}"/> 
+			</mx:Sequence>				
+		</mx:Transition>
+	</mx:transitions>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.DataGrid;
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;		
+			import mx.managers.PopUpManager;
+			import mx.formatters.NumberFormatter;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;
+		
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsRep:WebService;
+			public var du:Utils;
+			public var titulo:String;
+			public var fecIni:String;
+			public var fecFin:String;
+			private var global:Globales;
+			
+			public function agregaInicial(codigo:String, texto:String):Object{
+				var oItem:Object = new Object();
+				oItem.codigo = codigo;	
+				oItem.nombre = texto;
+				return oItem;
+			}		
+			
+			private function cambiarColorFila(event:Event):void{
+				dgReporte.rowColorFunction = seleccionaColor;
+			}			
+		
+			public function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo + " al " + fecIni);		
+			}
+				
+			public function generar(event:Event):void{
+				if(valida() == true){
+					var tipo:int;
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsRep);
+													
+						if(_xmlRep.elements().length() > 0){
+							var i:int;
+							var cantidad:Number = 0;
+							var registro:String;
+							var etiqueta:String;
+							var etiqPagos:String;
+							var cont:int = _xmlRep.elements().length();
+							currentState = 'resultado';
+							dgReporte.dataProvider = null;
+							btnExportar.enabled = true;
+							fecIni = comFiltroAsesor.dtfFecha.text;
+							lblTitulo.text = titulo.toUpperCase() + " AL " + fecIni;
+							cantidad = Number(_xmlRep.dtPagos[cont-1].PARCIALIDAD);
+							registro = global.formatoEntero(cantidad.toString()) + " Registro(s)";
+							etiqueta = " ** Pagos Comprometidos: $" + global.formatoDecimal(_xmlRep.dtPagos[cont-1].PAGOS_COMP);
+							etiqueta += " ** Pagos Efectuados: $" + global.formatoDecimal(_xmlRep.dtPagos[cont-1].PAGOS_EFEC);
+							etiqueta += " ** Mora Generada: $" + global.formatoDecimal(_xmlRep.dtPagos[cont-1].MORA);
+							lblTotal.text = "TOTAL: " + registro; //+ etiqueta;
+							etiqPagos = " ** No. Pagos Incompletos: " + global.formatoEntero(_xmlRep.dtPagos[cont-1].PERIPAG);
+							etiqPagos += " ** No. Pagos No Recibidos: " + global.formatoEntero(_xmlRep.dtPagos[cont-1].PERITRAN);
+							//lblTotalPagos.text = etiqPagos;
+							delete _xmlRep.dtPagos[cont-1];
+							dgReporte.dataProvider = _xmlRep.dtPagos;
+							//cambiarColorFila(evt);	
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						}
+					});
+					wsRep.getRepResumenMensual.send(comFiltroAsesor.dtfFecha.text, "2", comFiltroAsesor.tipoCart.selectedValue.toString(), Application.application.U_ID, 
+													    Application.application.NOM_U_ID, comFiltroAsesor.cboRegion.selectedItem.codigo, 
+													    comFiltroAsesor.cboCoord.selectedItem.codigo, comFiltroAsesor.cboAsesor.selectedItem.codigo);	
+				}
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Seguimiento Mensual";
+				comFiltroAsesor.init(titulo.toUpperCase(),"");
+				comFiltroAsesor.addEventListener("genera",generar);
+			}		
+			
+			public function initConexion():void{				
+				wsRep = new WebService();			
+				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsRep.loadWSDL();
+			}	
+				
+			private function seleccionaColor(datagrid:DataGrid, rowIndex:int, color:uint):uint{
+				var rColor:uint;
+				var value:String = _xmlRep.dtPagos[rowIndex].FECHA;
+				if (value == "-- SUBTOTAL --")
+					rColor = 0xbfc8be; 
+				else 
+					rColor = color;
+				return rColor;
+			}
+			
+			public function valida():Boolean{
+				var invTipoCart:Array = Validator.validateAll([tipoCartV]);
+				
+				if(comFiltroAsesor.dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha límite del reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(invTipoCart.length > 0){
+					Alert.show("Seleccione el Tipo de Cartera del reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			} 
+		]]>
+	</mx:Script>
+	<local:FiltroAsesor id="comFiltroAsesor"/>
+</mx:Canvas>

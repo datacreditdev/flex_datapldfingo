@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="462" height="494" xmlns:control="CONTROL.*">
+	<mx:states>
+		<mx:State name="persona">
+			<mx:AddChild relativeTo="{cnvCont}" position="lastChild">
+				<mx:Label id="lblAPaterno" x="69.5" y="104" text="Apellido(s):"/>
+			</mx:AddChild>
+			<mx:RemoveChild target="{lblNombre}"/>
+			<mx:AddChild relativeTo="{cnvCont}" position="lastChild">
+				<mx:Label id="lblNomPer" x="69.5" y="73" text="Nombre(s):"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvCont}" position="lastChild">
+				<mx:TextInput id="txtSegNombre" x="265.5" y="71" width="120" restrict="A-Z;a-z;Ñ;ñ; " maxChars="15"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvCont}" position="lastChild">
+				<mx:TextInput id="txtAPaterno" x="137.5" y="102" width="120" restrict="A-Z;a-z;Ñ;ñ; " maxChars="20"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvCont}" position="lastChild">
+				<mx:TextInput id="txtAMaterno" x="265.5" y="103" width="120" restrict="A-Z;a-z;Ñ;ñ; " maxChars="20"/>
+			</mx:AddChild>
+			<mx:SetProperty target="{txtNombre}" name="width" value="120"/>
+		</mx:State>
+	</mx:states>
+
+	<mx:Validator id="orgFondV" source="{txtOF}" property="text" 
+	invalid="{txtOF.setFocus()}" triggerEvent="" requiredFieldError="Código Requerido"/>
+	
+	<mx:Validator id="nombreV" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Nombre Requerido"/>
+	
+	<mx:Validator id="calleV" source="{txtCalle}" property="text" 
+	invalid="{txtCalle.setFocus()}" triggerEvent="" requiredFieldError="Calle Requerida"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosOrgFond;
+		import Data.EventOrgFond;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.utils.StringUtil;
+		import mx.validators.Validator;	
+		
+		[Bindable]
+		private var info:DatosOrgFond;
+		[Bindable]
+		private var _xmlOF:XML =  new XML();
+		private var _xmlColonia:XML =  new XML();
+		private var _xmlDir:XML =  new XML();
+		private var _xmlEntidad:XML =  new XML();
+		private var _xmlMunicipio:XML =  new XML();
+		private var _xmlLocalidad:XML =  new XML();	
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var texto:String;
+		public var du:Utils;
+		
+		//Realiza la busqueda de direccion utilizando el codigo postal
+		public function buscaCodPostal():void{ 
+			txtCodPostal.text = StringUtil.trim(txtCodPostal.text);
+			if (txtCodPostal.text != "" && txtCodPostal.length == 5){
+				initConexion();
+				du.sCursor();
+				
+				_xmlDir = null;
+			
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlDir = new XML(evt.result.toString());
+				
+					limpiaDatosDir();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+						
+					if(_xmlDir.elements().length() > 0){						
+						comEntGrid.txtDato.text = _xmlDir.Table[0].ENTFED;
+						comMunGrid.txtDato.text = _xmlDir.Table[0].MUNIC;
+						comLocGrid.txtDato.text = _xmlDir.Table[0].LOC;
+						comColGrid.txtDato.text = _xmlDir.Table[0].COL;	
+						
+						comEntGrid.codigo = _xmlDir.Table[0].CDGEF;
+						comMunGrid.codigo = _xmlDir.Table[0].CDGMU;
+						comLocGrid.codigo = _xmlDir.Table[0].CDGLO;
+						comColGrid.codigo = _xmlDir.Table[0].CDGCOL;	
+							
+						info.cdgEntFed = _xmlDir.Table[0].CDGEF;
+						info.cdgMun = _xmlDir.Table[0].CDGMU;
+						info.cdgLoc = _xmlDir.Table[0].CDGLO;
+						info.cdgCol = _xmlDir.Table[0].CDGCOL; 
+							
+						obtieneMunicipio();
+						obtieneLocalidad();
+						obtieneColonia();
+					}
+				});
+				wsMS.getDirCodPostal.send(txtCodPostal.text);
+			}
+			else{
+				txtCodPostal.text = "";
+				obtieneMunicipio();
+				obtieneLocalidad();
+				obtieneColonia();
+			}
+		}
+		
+		public function cargaInfoOF(codOF:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			tipoAccion = 2; 
+			this.title = "Edición";
+			//Datos del Organizacion Fondeadora
+			info.cdgOF = codOF;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlOF = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if (_xmlOF.elements().length() > 0){
+					llenaRegistros();
+					obtieneMunicipio();
+					obtieneLocalidad();
+					obtieneColonia();
+				} 	
+			});
+			params[0] = codOF;
+			wsCat.getInfoRegistro.send(11, params);
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			var invalidArray:Array = Validator.validateAll([orgFondV, nombreV, calleV]);
+				
+			if(invalidArray.length == 0){	
+				info.cdgOF = txtOF.text;
+				if(currentState == null){
+					info.nombre = txtNombre.text;
+					info.segNombre = "";
+					info.aPaterno = "";
+					info.aMaterno = "";
+				}
+				else if(currentState == "persona"){
+					info.nombre = txtNombre.text;
+					info.segNombre = txtSegNombre.text;
+					info.aPaterno = txtAPaterno.text;
+					info.aMaterno = txtAMaterno.text;
+				}
+				info.calle = txtCalle.text;
+				info.codPostal = txtCodPostal.text;
+				info.telefono = txtTelefono.text;
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+					
+		public function guardaOrgFond():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionOrgFond);
+			wsMS.setAccionOrgFond.send(tipoAccion, info.cdgOF, info.nombre, info.segNombre, info.aPaterno,
+								 	   info.aMaterno, info.calle, info.cdgEntFed, info.cdgMun, 
+								 	   info.cdgLoc, info.cdgCol, info.telefono, Application.application.U_ID);	 
+		}
+	
+		public function init(tipo:int, codOF:String = null):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			global = new Globales(); 
+			du = new Utils();
+			info = new DatosOrgFond();
+			titulo = "Mantenimiento de Organización Fondeadora";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+					
+			_xmlEntidad = null;
+				
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlEntidad = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if(_xmlEntidad.elements().length() > 0){
+					comEntGrid.init(_xmlEntidad, 130);
+					comEntGrid.addEventListener("seleccionar",selecEntFed);
+					comEntGrid.addEventListener("verificar",verifEntFed);
+				}
+				if(tipo == 1)
+			 		registraInfoOF(); 
+			 	else if(tipo == 2)
+			 		cargaInfoOF(codOF);
+			});
+			wsCat.getCatalogoGral.send(2);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function limpiaDatosDir():void{
+			comEntGrid.limpiar();
+			comMunGrid.limpiar();
+			comLocGrid.limpiar();
+			comColGrid.limpiar();
+			
+			info.cdgEntFed = "";
+			info.cdgMun = "";
+			info.cdgLoc = "";
+			info.cdgCol = ""; 
+		}
+		
+		public function llenaRegistros():void{
+			txtOF.setFocus();
+			
+			txtOF.text = _xmlOF.Table[0].CODIGO;
+			if(_xmlOF.Table[0].PRIMAPE.toString() == "" && 
+			   _xmlOF.Table[0].NOMBRE2.toString() == "" &&
+			   _xmlOF.Table[0].SEGAPE.toString() == ""){
+				currentState = "";	
+				cboTipo.selectedIndex = 0;
+				txtNombre.text = _xmlOF.Table[0].NOMBRE1;
+			}
+			else{
+				currentState = "persona";
+				cboTipo.selectedIndex = 1;
+				txtNombre.text = _xmlOF.Table[0].NOMBRE1;
+				txtSegNombre.text = _xmlOF.Table[0].NOMBRE2;
+				txtAPaterno.text = _xmlOF.Table[0].PRIMAPE;
+				txtAMaterno.text = _xmlOF.Table[0].SEGAPE;
+			}
+			txtCalle.text = _xmlOF.Table[0].CALLE;
+			txtCodPostal.text = _xmlOF.Table[0].CODPOSTAL;
+			comEntGrid.codigo = _xmlOF.Table[0].CDGEF;
+			comEntGrid.txtDato.text = _xmlOF.Table[0].ENTFED;
+			comMunGrid.codigo = _xmlOF.Table[0].CDGMU;
+			comMunGrid.txtDato.text = _xmlOF.Table[0].MUNIC;
+			comLocGrid.codigo = _xmlOF.Table[0].CDGLO;
+			comLocGrid.txtDato.text = _xmlOF.Table[0].LOC;
+			comColGrid.codigo = _xmlOF.Table[0].CDGCOL;
+			comColGrid.txtDato.text = _xmlOF.Table[0].COL;
+			txtTelefono.text = _xmlOF.Table[0].TELEFONO;
+			
+			info.cdgEntFed = _xmlOF.Table[0].CDGEF;
+			info.cdgMun = _xmlOF.Table[0].CDGMU;
+			info.cdgLoc = _xmlOF.Table[0].CDGLO;
+			info.cdgCol = _xmlOF.Table[0].CDGCOL; 
+		}
+		
+		public function modificarEstado():void{
+			if(cboTipo.selectedItem.value == "0")
+				currentState = "";
+			else if(cboTipo.selectedItem.value == "1")
+				currentState = "persona"; 
+		}
+		
+		public function obtieneColonia():void{
+			var wsMS:WebService = new WebService(); 
+			wsMS = du.initWsMS(wsMS);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlColonia = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsMS);
+				wsMS = null;
+				
+				comColGrid.init(_xmlColonia, 70);
+				if(_xmlColonia.elements().length() > 0){
+					comColGrid.addEventListener("seleccionar",selecColonia);
+				}	
+			});
+			wsMS.getColonia.send(info.cdgEntFed, info.cdgMun, info.cdgLoc, "");
+		}
+			
+		public function obtieneLocalidad():void{
+			var wsMS:WebService = new WebService();
+			wsMS = du.initWsMS(wsMS);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlLocalidad = new XML(evt.result.toString());
+					
+				comLocGrid.init(_xmlLocalidad, 90);	
+				if(_xmlLocalidad.elements().length() > 0){
+					comLocGrid.addEventListener("seleccionar",selecLocalidad);
+					comLocGrid.addEventListener("verificar",verifLocalidad);
+				}
+				du.rCursor();
+				du.closeWs(wsMS);
+				wsMS = null;		
+			});
+			wsMS.getLocalidad.send(info.cdgEntFed, info.cdgMun, "");
+		}
+			
+		public function obtieneMunicipio():void{
+			initConexion();
+			du.sCursor();
+				
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlMunicipio = new XML(evt.result.toString());
+					
+				comMunGrid.init(_xmlMunicipio, 130);
+				if(_xmlMunicipio.elements().length() > 0){
+					comMunGrid.addEventListener("seleccionar",selecMunic);
+					comMunGrid.addEventListener("verificar",verifMunic);
+				}
+				du.rCursor();
+				du.closeWs(wsMS);
+				wsMS = null;	
+			});
+			wsMS.getMunicipio.send(info.cdgEntFed, "");
+		}
+			
+		public function registraInfoOF():void{
+			tipoAccion = 1;
+			this.title = "Nuevo";
+			
+			txtOF.setFocus();
+			
+			initConexion();
+			du.sCursor();
+				
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				var _xmlCod:XML = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsMS);
+				wsMS = null;
+					
+				if(_xmlCod.elements().length() > 0){
+					txtOF.text = _xmlCod.Table[0].CDGORF;
+				}
+			});
+			wsMS.getCodigoOrgFond.send();
+		}
+		
+		private function selecColonia(event:Event):void{
+			info.cdgCol = event.currentTarget.codigo;
+			comColGrid.setFocus();
+		}
+		
+		private function selecEntFed(event:Event):void{
+			if(info.cdgEntFed != event.currentTarget.codigo){
+				comMunGrid.limpiar();
+				comLocGrid.limpiar();
+				comColGrid.limpiar();
+				info.cdgEntFed = event.currentTarget.codigo;
+				obtieneMunicipio();
+			}
+			comEntGrid.setFocus();
+		}
+			
+		private function selecMunic(event:Event):void{
+			if(info.cdgMun != event.currentTarget.codigo){	
+				comLocGrid.limpiar();
+				comColGrid.limpiar();
+				info.cdgMun = event.currentTarget.codigo;
+				obtieneLocalidad();
+			}
+			comMunGrid.setFocus();
+		}
+			
+		private function selecLocalidad(event:Event):void{
+			if(info.cdgLoc != event.currentTarget.codigo){
+				comColGrid.limpiar();
+				info.cdgLoc = event.currentTarget.codigo;
+				obtieneColonia();
+			}
+			comLocGrid.setFocus();
+		}
+		
+		private function setAccionOrgFond(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionOrgFond);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validaDatosOrgFond(event:EventOrgFond):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			if (info.guarda == true)
+				guardaOrgFond();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		public function verifEntFed(event:Event):void{
+			if(comEntGrid.codigo == ""){	
+				comMunGrid.limpiar();
+				comLocGrid.limpiar();
+				comColGrid.limpiar();
+				info.cdgMun = "";
+				info.cdgLoc = "";
+				info.cdgCol = ""; 
+			}
+		}
+		
+		public function verifLocalidad(event:Event):void{
+			if(comColGrid.codigo == "")
+				comColGrid.limpiar();
+				info.cdgCol = ""; 
+		}
+		
+		public function verifMunic(event:Event):void{
+			if(comMunGrid.codigo == ""){
+				comLocGrid.limpiar();
+				comColGrid.limpiar();
+				info.cdgLoc = "";
+				info.cdgCol = ""; 
+			}
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Canvas id="cnvCont" x="21" y="10" width="420" height="138" styleName="canvasMod">
+		<mx:Label id="lblOF" x="63.5" y="9" text="Fondeadora:"/>
+		<mx:Label id="lblNombre" x="84.5" y="73" text="Nombre:"/>
+		<mx:Label id="lblTipo" x="101.5" y="41" text="Tipo:"/>
+		<mx:TextInput id="txtOF" x="137.5" y="7" width="50" maxChars="4" editable="false"/>
+		<mx:ComboBox id="cboTipo" x="137.5" y="38" width="120" change="modificarEstado()">
+		    <mx:dataProvider>
+		     <mx:Object label="Persona Moral" value="0"/>
+		     <mx:Object label="Persona Física" value="1"/>	
+		    </mx:dataProvider>
+		</mx:ComboBox>
+		<mx:TextInput id="txtNombre" x="137.5" y="71" restrict="A-Z;a-z;Ñ;ñ; " maxChars="50" width="230"/>
+	</mx:Canvas>
+	<mx:Canvas id="cnvDir" x="21" y="171" styleName="canvasMod" width="420" height="243">
+		<mx:Label id="lblCalle" x="107.5" y="12" text="Calle:"/>
+		<mx:Label id="lblEntFed" x="41.5" y="76" text="Entidad Federativa:"/>
+		<mx:Label id="lblMunicipio" x="86.5" y="108" text="Municipio:"/>
+		<mx:Label id="lblLocalidad" x="84.5" y="140" text="Localidad:"/>
+		<mx:Label id="lblColonia" x="95.5" y="172" text="Colonia:"/>
+		<mx:Label id="lblTelefono" x="88.5" y="204" text="Teléfono:"/>
+		<mx:Label id="lblCodPostal" x="65.5" y="44" text="Código Postal:"/>
+		<mx:TextInput id="txtCalle" x="146.5" y="10" width="210" maxChars="50"/>
+		<mx:TextInput id="txtCodPostal" x="146.5" y="42" width="80" maxChars="5" enter="buscaCodPostal()" focusOut="buscaCodPostal()" restrict="0-9"/>
+		<control:TextGrid id="comEntGrid" x="146.5" y="74" height="24"/>
+		<control:TextGrid id="comMunGrid" x="146.5" y="106" height="24"/>
+		<control:TextGrid id="comLocGrid" x="146.5" y="138" height="24"/>
+		<control:TextGrid id="comColGrid" x="146.5" y="170" height="24"/>
+		<mx:TextInput id="txtTelefono" x="146.5" y="202" width="120" maxChars="10" restrict="0-9"/>
+	</mx:Canvas>
+	<mx:Label id="lblDom" x="21" y="152" text="Domicilio"/>
+	<mx:Button id="btnAceptar" x="353" y="422" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="401" y="422" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+</mx:TitleWindow>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" height="100%" width="100%">
+    
+	<!--Componente que permite mostrar la informacion de la tabla de amortizacion de la disposicion-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;			
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+
+			public var _xmlRes:XML = new XML();
+			
+			public var ArrPagos:ArrayCollection;
+			
+			public var myPattern:RegExp = /,/g;
+			public var wsMS:WebService;	
+			private var global:Globales;
+			private var du:Utils;
+			
+			public var orgFond:String;
+			public var lineaCred:String;
+			public var disp:String;
+			
+			public function cargaTablaAmort(orgFond:String, nomOF:String, lineaCred:String, nomLC:String, disp:String, nomDisp:String):void{
+				init();
+				this.orgFond = orgFond;
+				this.lineaCred = lineaCred;
+				this.disp = disp;
+				
+				Application.application.bloquear();
+				du.sCursor();
+				initConexion();
+						
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlRes = new XML(evt.result.toString());
+	
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+					
+					if(_xmlRes.elements().length() > 0){
+						dgReporte.dataProvider = _xmlRes.Table;
+						lblOF.text = nomOF;
+						lblLC.text = nomLC;
+						lblDisp.text = nomDisp;
+					}
+				});
+				wsMS.getTablaAmortDisp.send(orgFond, lineaCred, disp);
+			}
+			
+			public function init():void{
+				global = new Globales();
+				du = new Utils();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:DataGrid id="dgReporte" x="27.5" y="101" width="460" height="310" alpha="1.0" sortableColumns="false">
+		<mx:columns>
+			<mx:DataGridColumn headerText="NO." dataField="NOPAGO" width="40"/>
+			<mx:DataGridColumn headerText="FECHA" dataField="FECHA"/>
+			<mx:DataGridColumn headerText="CAPITAL" dataField="CAP"/>
+			<mx:DataGridColumn headerText="INTERES" dataField="INT"/>
+			<mx:DataGridColumn headerText="TOTAL" dataField="TOTAL"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Canvas x="27.5" y="10" width="460" height="83" styleName="canvasMod">
+		<mx:Label x="48" y="6" text="Organización Fondeadora:"/>
+		<mx:Label x="95" y="30" text="Línea de Crédito:"/>
+		<mx:Label x="118" y="54" text="Disposición:"/>
+		<mx:Label x="189" y="6" id="lblOF" textAlign="right"/>
+		<mx:Label x="189" y="30" id="lblLC" textAlign="right"/>
+		<mx:Label x="189" y="54" id="lblDisp" textAlign="right"/>
+	</mx:Canvas>
+</mx:Canvas>

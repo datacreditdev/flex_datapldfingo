@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="500" height="300" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosProy", type="Data.EventProy")]
+	</mx:Metadata>
+	
+	<mx:NumberValidator id="sectorV" source="{cboSector}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Sector Requerido"/>
+	
+	<mx:NumberValidator id="giroV" source="{cboGiro}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Giro Requerido"/>
+	 
+	<mx:NumberValidator id="actEcoV" source="{cboActEco}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Actividad Económica Requerida"/>
+	 
+	<mx:Validator id="nombreV" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Nombre Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.Utils;
+		import Data.Globales;
+		import mx.controls.Alert;
+		import mx.validators.Validator;
+		import Data.DatosProy;
+		import Data.EventProy;
+		import mx.collections.ArrayCollection;
+		import mx.core.Application;
+		import mx.containers.TitleWindow;			
+		import mx.managers.PopUpManager;
+		import mx.effects.easing.Elastic;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.events.FaultEvent;
+		import mx.rpc.xml.SimpleXMLDecoder;
+		import mx.utils.ArrayUtil;
+		
+		private var _xmlSector:XML =  new XML();
+		private var _xmlProy:XML =  new XML();
+		private var _xmlGiro:XML =  new XML();
+		private var _xmlActEco:XML =  new XML();
+		
+		public var sectorObj:ArrayCollection = new ArrayCollection();
+		public var giroObj:ArrayCollection = new ArrayCollection();
+		public var actEcoObj:ArrayCollection = new ArrayCollection();
+		
+		public var datos:DatosProy = new DatosProy();
+		
+		public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS	
+		public var ws:WebService = new WebService();     //variable utilizada en las llamadas sincronas de WS
+		public var du:Utils;
+		private var global:Globales;
+		
+		public function cargaActEco():void{
+			initConexion();
+			bloquear();
+			CursorManager.setBusyCursor();
+			wsMS.addEventListener(ResultEvent.RESULT, getActividadEconomic);
+			wsMS.getActividadEconomica.send(cboSector.selectedItem.CODIGO, cboGiro.selectedItem.CODIGO);
+		}
+		
+		public function cargaGiro():void{
+			initConexion();
+			bloquear();
+			CursorManager.setBusyCursor();
+			wsMS.addEventListener(ResultEvent.RESULT, getGiro);
+			wsMS.getGiro.send(cboSector.selectedItem.CODIGO);
+		}
+		
+		public function enviarDatosProy(formData:DatosProy):void{
+			var invalidArray:Array = Validator.validateAll([sectorV, giroV, nombreV]);
+			
+			if(invalidArray.length == 0){	
+				formData.codigo = datos.codigo;
+				formData.cdgSector = cboSector.selectedItem.CODIGO;
+				formData.cdgGiro = cboGiro.selectedItem.CODIGO;
+				if(cboActEco.selectedItem != null)
+					formData.cdgActEco = cboActEco.selectedItem.CODIGO;
+				formData.nombre = txtNombre.text;
+				formData.texto = txtTexto.text;
+				//formData.actualiza = dtfActualiza.text;
+				formData.guardaDatos = true;
+			}
+			else{
+				formData.guardaDatos = false;
+			}
+			var event:EventProy = new EventProy("enviarDatosProy", formData);
+			dispatchEvent(event);
+		}
+		
+		public function formateaActEco(cadInfo:String):void{
+			var oItem:Object;
+			var array:Array;
+			
+			oItem = new Object();
+			oItem.CODIGO = "0";
+			oItem.NOMBRE = "--Seleccionar--";			
+						
+			var xml:XMLDocument = new XMLDocument(cadInfo); 
+ 			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+ 			var data:Object = decoder.decodeXML(xml);  
+			array = ArrayUtil.toArray(data.NewDataSet.Table);   
+			actEcoObj = new ArrayCollection(array);
+			actEcoObj.addItemAt(oItem,0);	
+		}
+		
+		public function formateaGiro(cadInfo:String):void{
+			var oItem:Object;
+			var array:Array;
+			
+			oItem = new Object();
+			oItem.CODIGO = "0";
+			oItem.NOMBRE = "--Seleccionar--";			
+						
+			var xml:XMLDocument = new XMLDocument(cadInfo); 
+ 			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+ 			var data:Object = decoder.decodeXML(xml);  
+			array = ArrayUtil.toArray(data.NewDataSet.Table);   
+			giroObj = new ArrayCollection(array);
+			giroObj.addItemAt(oItem,0);	
+		}
+		
+		public function formateaSector(cadInfo:String):void{
+			var oItem:Object;
+			var array:Array;
+			
+			oItem = new Object();
+			oItem.CODIGO = "0";
+			oItem.NOMBRE = "--Seleccionar--";			
+						
+			var xml:XMLDocument = new XMLDocument(cadInfo); 
+ 			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+ 			var data:Object = decoder.decodeXML(xml);  
+			array = ArrayUtil.toArray(data.NewDataSet.Table);   
+			sectorObj = new ArrayCollection(array);
+			sectorObj.addItemAt(oItem,0);	
+		}
+		
+		private function getActividadEconomic(event:ResultEvent):void{
+			wsMS.disconnect();
+			desbloquear();
+			CursorManager.removeBusyCursor();
+			wsMS.removeEventListener(ResultEvent.RESULT, getActividadEconomic);
+			_xmlActEco = new XML(event.result);
+			if (_xmlActEco.elements().length() > 0){
+				formateaActEco(event.result.toString());
+				cboActEco.dataProvider = actEcoObj;
+			}
+			else{
+				actEcoObj.removeAll();
+				cboActEco.dataProvider = null;
+			}
+		}
+		
+		private function getGiro(event:ResultEvent):void{
+			wsMS.disconnect();
+			desbloquear();
+			CursorManager.removeBusyCursor();
+			
+			giroObj.removeAll();
+			actEcoObj.removeAll();
+			cboGiro.dataProvider = null;
+			cboActEco.dataProvider = null;
+			
+			wsMS.removeEventListener(ResultEvent.RESULT, getGiro);
+			_xmlGiro = new XML(event.result);
+			if (_xmlGiro.elements().length() > 0){
+				formateaGiro(event.result.toString());
+				cboGiro.dataProvider = giroObj;
+			}
+		}
+		
+		public function init(cdgAcred:String):void{
+			global = new Globales();
+			du = new Utils();
+			var wsMS:WebService = new WebService();
+			var fecha:Date = Application.application._Current_Fecha;
+			
+			dtfActualiza.selectedDate = Application.application._Current_Fecha;
+		
+			wsMS = du.initWsMS(wsMS);
+			du.sCursor();
+			bloquear();
+			
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlProy = new XML(evt.result.toString());
+			
+				if (_xmlProy.elements().length() > 0){
+					txtCodigo.text = _xmlProy.Table[0].CODIGO;
+					datos.codigo = _xmlProy.Table[0].CODIGO;	
+				}
+
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlSector = new XML(evt.result.toString());
+				
+					desbloquear();
+					du.rCursor();
+					du.closeWs(wsMS);
+				
+					if (_xmlSector.elements().length() > 0){
+						formateaSector(evt.result.toString());
+						cboSector.dataProvider = sectorObj;
+					} 	
+					
+					wsMS = null;
+				});
+				wsMS.getSector.send();
+			});
+			wsMS.getNvoProyecto.send(cdgAcred);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}
+	]]>
+	</mx:Script>
+	<mx:FormItem label="Código:" id="codigo" visible="true">
+		<mx:TextInput id="txtCodigo" maxChars="12" editable="false" width="50"/>
+	</mx:FormItem>
+	<mx:FormItem label="Sector:" id="sector" visible="true" width="410">
+		<mx:ComboBox id="cboSector" labelField="NOMBRE" change="cargaGiro()" width="280"/>
+	</mx:FormItem>
+	<mx:FormItem label="Giro:" id="giro" visible="true" width="410">
+		<mx:ComboBox id="cboGiro" labelField="NOMBRE" change="cargaActEco()" width="280"/>
+	</mx:FormItem>
+	<mx:FormItem label="Actividad Económica:" id="actEco" visible="true" width="410">
+		<mx:ComboBox id="cboActEco" labelField="NOMBRE" width="280"/>
+	</mx:FormItem>
+	<mx:FormItem label="Nombre:" id="nombre" visible="true" width="460">
+		<mx:TextInput id="txtNombre" width="330" maxChars="100"/>
+	</mx:FormItem>
+	<mx:FormItem label="Texto:" id="texto" visible="true" width="460">
+		<mx:TextArea id="txtTexto" width="330" height="94" maxChars="2500"/>
+	</mx:FormItem>
+	<mx:FormItem label="Actualización:" id="actualizacion" visible="false" width="225">
+		<mx:DateField id="dtfActualiza" width="100"/>
+	</mx:FormItem>
+</mx:Form>

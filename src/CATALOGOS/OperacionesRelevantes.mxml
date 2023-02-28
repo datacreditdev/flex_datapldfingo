@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" 
+	creationPolicy="all" creationComplete="init()">
+	
+	<mx:Script>
+	<![CDATA[
+		import mx.collections.ArrayCollection;
+		import mx.managers.PopUpManager;
+		import mx.managers.CursorManager;		
+		import mx.controls.*;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import Data.Utils;
+		import Data.Globales;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.events.ResultEvent;
+		import mx.core.Application;
+		import mx.validators.Validator;
+		import mx.events.ValidationResultEvent;	
+		
+		[Bindable]
+		private var _xmlLD:XML =  new XML();
+	
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var codTipoProd:String;
+		public var codProd:String;
+		public var prod:String; 
+		public var titulo:String;
+		public var tituloCorto:String;
+		public var du:Utils;
+		private var vResult:ValidationResultEvent;
+		
+		public function calculaMonto():void{
+			var conv:Number;
+			if(txtMonto.text != "" && txtCambio.text != ""){
+				conv = Number(txtMonto.text) * Number(txtCambio.text);
+				lblMontoConv.text = global.formatoMoneda(conv.toString());
+			}
+			else
+				lblMontoConv.text = "";
+		}
+		
+		public function cargaInfoOpRelevantes():void{	
+			initConexion();
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlLD = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsMS);
+					
+				if (_xmlLD.elements().length() > 0){
+					var montoMax:Number = Number(_xmlLD.Table[0].MONTOMAX);
+					var cambio:Number = Number(_xmlLD.Table[0].TIPOCAMBIO);
+					txtMonto.text = montoMax.toString();
+					txtCambio.text = cambio.toString();
+					calculaMonto();
+				} 	
+			});
+			wsMS.getInfoOpRelevantes.send();
+		}
+		
+		public function enviar():void{
+			if(valida()){
+				initConexion();
+				Application.application.bloquear();
+				CursorManager.setBusyCursor();
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionParamsOperativos);
+				wsMS.setAccionParamsOperativos.send(Number(txtMonto.text), Number(txtCambio.text), Application.application.U_ID);
+			}	
+		}
+	
+		public function init():void{
+			global = new Globales();
+			du = new Utils();
+			titulo = "Prevención de Lavado de Dinero (Operaciones Relevantes)";
+			tituloCorto = "Operaciones Relevantes";
+			lblTitulo.text = titulo.toUpperCase();
+			cargaInfoOpRelevantes();
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function setAccionParamsOperativos(event:ResultEvent):void{
+			wsMS.disconnect();
+			Application.application.desbloquear();
+			CursorManager.removeBusyCursor();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionParamsOperativos);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1")
+				Alert.show("Proceso finalizado exitosamente.",tituloCorto,4,null,null,global.iInfo);
+			else
+				Alert.show(res.substr(2,res.length -1),tituloCorto,4,null,null,global.iAlert);		
+		}
+		
+		public function valida():Boolean{
+			if (txtMonto.text == ""){
+				Alert.show("Debe capturar el monto máximo.",tituloCorto,4,null,null,global.iAlert);
+				return false;
+			}
+			if (txtCambio.text == ""){
+				Alert.show("Debe capturar el tipo de cambio actual.",tituloCorto,4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}
+		
+		public function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+               	TextInput(event.currentTarget).text = "";
+		}
+		
+	]]>
+	</mx:Script>
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="485" height="260" >
+		<mx:Label id="lblTitulo" x="18" y="10" width="450" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvParam" x="18" y="58" width="450" height="161" styleName="canvasMod">
+			<mx:Label x="74" y="29" text="Monto Máximo (DLS):" width="130.75" textAlign="right"/>
+			<mx:Label x="64" y="114" text="Monto Máximo (PESOS):" width="140.75" textAlign="right"/>
+			<mx:Label x="104" y="71" text="Tipo de Cambio $:" width="100.75" textAlign="right"/>
+			<mx:Label id="lblMontoConv" x="212.75" y="114" />
+			<mx:TextInput id="txtMonto" x="212.75" y="27" width="90" maxChars="8" restrict="0-9;." change="validaMonto(event)" focusOut="calculaMonto()"/>
+			<mx:TextInput id="txtCambio" x="212.75" y="69" width="90" maxChars="15" restrict="0-9;." change="validaMonto(event)" focusOut="calculaMonto()"/>		
+		</mx:Canvas>
+		<mx:Label x="18" y="39" text="Parámetros" width="130.75"/>
+		<mx:Button id="btnAceptar" x="404" y="227" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	</mx:Canvas>
+</mx:Canvas>

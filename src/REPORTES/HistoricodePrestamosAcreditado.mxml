@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="408" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:control="CONTROL.*" xmlns:Data="Data.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsRep:WebService;
+			public var du:Utils;
+			public var titulo:String;
+			public var rep:String;
+			private var global:Globales;
+		
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				dgE.loadDGInExcel(dgReporte,null,titulo);		
+			}
+		
+			public function generar(event:Event):void{	
+				if(comFiltroGrupoCiclo.valida() == true){
+					var grupo:String = comFiltroGrupoCiclo.txtGrupo.text;
+					var ciclo:String = comFiltroGrupoCiclo.txtCiclo.text;
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsRep);
+						
+						dgReporte.dataProvider = null;
+						btnExportar.enabled = false;
+						lblTotal.text = "";
+						
+						var cont:Number = _xmlRep.elements().length()
+														
+						if(_xmlRep.elements().length() > 0){
+							dgReporte.dataProvider = _xmlRep.Table;
+							btnExportar.enabled = true;
+							lblTotal.text = cont.toString() + " Registro(s)"; 
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							lblTotal.text = "";
+						}
+					});
+					wsRep.getRepHistPrnAcred.send(grupo, ciclo);	
+				}
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				rep = "0";
+				titulo = "Histórico de Préstamos Acreditado";
+				comFiltroGrupoCiclo.init("0",titulo);
+				comFiltroGrupoCiclo.addEventListener("enviar",generar);
+				comFiltroGrupoCiclo.addEventListener("limpiar",limpiar);
+			}		
+			
+			public function initConexion():void{				
+				wsRep = new WebService();			
+				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsRep.loadWSDL();
+			}	
+		
+			private function limpiar(event:Event):void{
+				dgReporte.dataProvider = null;
+				lblTotal.text = "";
+				btnExportar.enabled = false;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:DataGrid id="dgReporte" x="18.45" y="182" width="763.05" visible="true" height="187" horizontalScrollPolicy="on">
+		<mx:columns>
+			<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
+			<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMBRE_CL" width="200"/>
+			<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="100"/>
+			<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="150"/>
+			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
+			<mx:DataGridColumn headerText="INICIO" dataField="FINICIO" width="80"/>
+			<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANTENTRE" width="125"/>
+			<mx:DataGridColumn headerText="% INCREMENTO" dataField="PORC_INC" width="125"/>								
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnExportar" x="670" y="146" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Label id="lblTotal" x="18.45" y="377" width="680.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+	<control:FiltroGrupoCiclo id="comFiltroGrupoCiclo"/>
+</mx:Canvas>

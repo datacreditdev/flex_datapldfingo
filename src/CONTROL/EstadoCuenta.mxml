@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" showCloseButton="true" close="cerrar()" width="360" height="456" title="Bitácora de Pagos" creationComplete="init()" verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
+
+<!--Componente que permite simular la aplicación de los pagos capturados por el usuario-->
+
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import Data.Globales;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.collections.ArrayCollection;
+
+			[Bindable]
+			public var _xmlCuenta:XML = new XML();
+			
+			public var ArrPagos:ArrayCollection;
+			
+			public var myPattern:RegExp = /,/g;
+			public var wsMS:WebService;	
+			private var global:Globales;
+			private var du:Utils;
+			
+			public var grupo:String;
+			public var ciclo:String;
+			
+			public function calculaSaldo():void{
+				initConexion();
+				wsMS.addEventListener(ResultEvent.RESULT, getTotalPagar);
+				wsMS.getTotalPagar.send(this.grupo, this.ciclo);
+			}
+				
+			public function cargaEdoCuenta(Arr:ArrayCollection, grupo:String, ciclo:String):void{
+				var n:int;
+				var i:int;
+				ArrPagos = Arr;
+				this.grupo = grupo;
+				this.ciclo = ciclo;
+				n = ArrPagos.length;
+				for(i = 0; i < n; i++){
+					ArrPagos[i].MONTO = global.formatoDecimal(ArrPagos[i].MONTO);
+				} 
+				initConexion();
+				bloquear();
+				CursorManager.setBusyCursor();
+				wsMS.addEventListener(ResultEvent.RESULT, getEdoCuenta);
+				wsMS.getEdoCuenta.send(grupo, ciclo);
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function formateaPagos():void{
+				var cont:int = _xmlCuenta.elements().length();
+				var i:int;
+				
+				for(i = 0; i < cont; i++){
+					var oItem:Object = new Object();
+					oItem.FECHA = _xmlCuenta.Table[i].FECHA;
+					oItem.MONTO = global.formatoDecimal(_xmlCuenta.Table[i].CANTIDAD);
+					oItem.IND = false;
+					ArrPagos.addItem(oItem);
+				}
+				ordenaPagos();
+				dgPagos.dataProvider = ArrPagos;
+				
+			}
+			
+			private function getEdoCuenta(event:ResultEvent):void{
+				wsMS.disconnect();
+				desbloquear();
+				CursorManager.removeBusyCursor();
+				wsMS.removeEventListener(ResultEvent.RESULT, getEdoCuenta);
+				this._xmlCuenta = new XML(event.result);	
+				if (_xmlCuenta.elements().length() > 0){
+					formateaPagos();
+					modificaColor();
+					calculaSaldo();
+				}	
+			}
+			
+			private function getTotalPagar(event:ResultEvent):void{
+				var Pagos:ArrayCollection = dgPagos.dataProvider as ArrayCollection;
+				var _xmlTotal:XML;
+				var cont:int = Pagos.length;
+				var total:Number = 0;
+				var pagado:Number = 0;
+				var saldo:Number = 0;
+				var i:int;	
+				
+				wsMS.disconnect();
+				CursorManager.removeBusyCursor();
+				wsMS.removeEventListener(ResultEvent.RESULT, getTotalPagar);
+				
+				_xmlTotal = new XML(event.result);
+				total = Number(_xmlTotal.Table[0].TOTAL); 
+				
+				for(i = 0; i < cont; i++){
+					var monto:String = Pagos[i].MONTO 
+					pagado += Number(monto.replace(myPattern, "")); 
+				}
+				
+				saldo = total - pagado
+				
+				lblSaldo.text = "SALDO: " + global.formatoMoneda(saldo.toString()); 
+			}
+			
+			public function init():void{
+				global = new Globales();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function modificaColor():void{
+				dgPagos.rowColorFunction = seleccionaColor; 
+			}
+			public function ordenaPagos():void{
+				var i:int;
+				var j:int;
+				var n:int = ArrPagos.length;
+				var auxFecha:String;
+				var auxMonto:String;
+				var auxInd:Boolean;
+				
+				for(i = 0; i < n-1; i++){                           
+          			for(j = 0; j < n-1; j++){  
+          				var fecIni:Date = DateField.stringToDate(ArrPagos[j].FECHA, "DD/MM/YYYY");
+          				var fecFin:Date = DateField.stringToDate(ArrPagos[j+1].FECHA, "DD/MM/YYYY");
+          				if(fecIni > fecFin){               
+                      		auxFecha = ArrPagos[j].FECHA;   
+                      		auxMonto = ArrPagos[j].MONTO;  
+                      		auxInd = ArrPagos[j].IND;              
+							ArrPagos[j].FECHA = ArrPagos[j+1].FECHA;
+							ArrPagos[j].MONTO = ArrPagos[j+1].MONTO; 
+							ArrPagos[j].IND = ArrPagos[j+1].IND;             
+							ArrPagos[j+1].FECHA = auxFecha;
+							ArrPagos[j+1].MONTO = auxMonto;
+							ArrPagos[j+1].IND = auxInd;  
+                		}
+             		}
+				}
+			}
+			
+			private function seleccionaColor(datagrid:DataGrid, rowIndex:int, color:uint):uint
+			{
+				var Pagos:ArrayCollection = dgPagos.dataProvider as ArrayCollection;
+				var rColor:uint;
+				if (Pagos[rowIndex].IND == true){ 
+					rColor = 0xd03737;
+				}
+				else{
+					rColor = color;
+				} 
+				return rColor;
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Button x="280.5" y="382" label="Cerrar" click="cerrar()"/>
+	<mx:Label x="181.5" y="351" text="SALDO:" width="161" id="lblSaldo"/>
+	<Data:RowColorDataGrid id="dgPagos" x="17.5" y="10" width="325" height="333" alpha="1.0">
+		<Data:columns>
+			<mx:DataGridColumn headerText="FECHA" dataField="FECHA"/>
+			<mx:DataGridColumn headerText="MONTO" dataField="MONTO"/>
+		</Data:columns>
+	</Data:RowColorDataGrid>
+	<mx:Image x="17.5" y="34" width="304.5" height="309" source="assets/etiqueta.png" scaleContent="false" alpha="0.4"/>
+	<mx:Canvas x="17.5" y="351" width="21" height="18" backgroundColor="#D37272">
+	</mx:Canvas>
+	<mx:Label x="46.5" y="351" text="SIMULACIÓN" width="85" id="lblSimula"/>
+</mx:TitleWindow>

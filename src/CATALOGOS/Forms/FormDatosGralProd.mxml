@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="550" height="230">
+	<mx:Metadata>
+		[Event(name="enviarDatosProd", type="Data.EventProd")]
+	</mx:Metadata>
+
+	<mx:Validator id="nombreV" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Producto Requerido"/>
+	 
+	<mx:Validator id="codigoV" source="{txtCodigo}" property="text" 
+	invalid="{txtCodigo.setFocus()}" triggerEvent="" requiredFieldError="Código de Producto Requerido"/>
+	 
+	<mx:NumberValidator id="monedaV" source="{cboMoneda}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Moneda Requerida"/>
+	
+	<mx:Validator id="tipoCredV" source="{cboTipoCred}" property="selectedIndex" 
+	invalid="{cboTipoCred.setFocus()}" triggerEvent="" requiredFieldError="Tipo de Crédito Requerido"/>
+	
+	<mx:Validator id="validoV" source="{dtfValido}" property="text" 
+	invalid="{dtfValido.setFocus()}" triggerEvent="" requiredFieldError="Fecha Requerida"/>
+	
+	<mx:Validator id="minimoV" source="{txtMinimo}" property="text" 
+	invalid="{txtMinimo.setFocus()}" triggerEvent="" requiredFieldError="Monto Mínimo Requerido"/>
+	
+	<mx:Validator id="maximoV" source="{txtMaximo}" property="text" 
+	invalid="{txtMaximo.setFocus()}" triggerEvent="" requiredFieldError="Monto Máximo Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;		
+			import Data.EventProd;
+			import Data.DatosProd;
+			import mx.controls.Alert;
+			import mx.effects.*;
+			import mx.events.EffectEvent;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.core.Application;
+			
+			private var _xmlMoneda:XML =  new XML();
+			private var _xmlBase:XML =  new XML();
+			private var _xmlCred:XML =  new XML();
+			
+			public var credObj:ArrayCollection = new ArrayCollection();
+			public var monedaObj:ArrayCollection = new ArrayCollection();
+			public var baseObj:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosProd = new DatosProd();
+			
+			private var global:Globales;	
+			private var du:Utils;
+			public var wsMS:WebService;	
+			public var tipoAccion:int;
+			
+			public function enviarDatosProd(formData:DatosProd):void{
+				var invalidArray:Array = Validator.validateAll([codigoV, nombreV, monedaV, tipoCredV, validoV, minimoV, maximoV]);
+				
+				if(invalidArray.length == 0){		
+					formData.cdgProd = txtCodigo.text;
+					formData.nombreProd = txtNombre.text;
+					formData.moneda = cboMoneda.selectedItem.id;
+					formData.tipoCred = cboTipoCred.selectedItem.id;
+					formData.valido = dtfValido.text;
+					formData.montoMin = Number(txtMinimo.text);
+					formData.montoMax = Number(txtMaximo.text);
+					formData.baseCalc = cboBaseCalc.selectedItem.id;
+					formData.guarda = true;
+				}
+				else
+					formData.guarda = false;
+				
+				var event:EventProd = new EventProd("enviarDatosProd", formData);
+				dispatchEvent(event);
+			}
+			
+			public function formateaBaseCalc():void{
+				var cont:int = _xmlBase.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlBase.Table[i].CODIGO;	
+					oItem.nombre = _xmlBase.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				baseObj = new ArrayCollection(item);
+			}
+			
+			public function formateaMoneda():void{
+				var cont:int = _xmlMoneda.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlMoneda.Table[i].CODIGO;	
+					oItem.nombre = _xmlMoneda.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				monedaObj = new ArrayCollection(item);
+			}
+			
+			public function formateaTipoCred():void{
+				var cont:int = _xmlCred.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlCred.Table[i].CODIGO;	
+					oItem.nombre = _xmlCred.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				credObj = new ArrayCollection(item);
+			}
+			
+			public function init(info:DatosProd, tipoAccion:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				global = new Globales();
+				du = new Utils();
+				this.tipoAccion = tipoAccion;
+				
+				if(tipoAccion == 2)
+					txtCodigo.editable = false;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlCred = new XML(evt.result.toString()); 
+					
+					if (_xmlCred.elements().length() > 0){
+						formateaTipoCred();
+						cboTipoCred.dataProvider = credObj;
+					} 	
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlMoneda = new XML(evt.result.toString());
+						
+						if (_xmlMoneda.elements().length() > 0){
+							formateaMoneda();
+							cboMoneda.dataProvider = monedaObj;
+						} 	
+
+						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+							_xmlBase = new XML(evt.result.toString());
+						
+							du.rCursor();
+							du.closeWs(wsCat);
+							
+							if (_xmlBase.elements().length() > 0){
+								formateaBaseCalc();
+								cboBaseCalc.dataProvider = baseObj;
+							}
+							
+							if (info != null){
+								var j:int;
+								datos = info;
+										
+								for(j = 0; j < baseObj.length; j++){
+									if(baseObj[j].id.toString() == info.baseCalc){
+										cboBaseCalc.selectedIndex = j;
+										break;	
+									}
+								}			
+																		
+								for(j = 0; j < credObj.length; j++){
+									if(credObj[j].id.toString() == info.tipoCred){
+										cboTipoCred.selectedIndex = j;
+										break;	
+									}
+								}					
+														
+								for(j = 0; j < monedaObj.length; j++){
+									if(monedaObj[j].id.toString() == info.moneda){
+										cboMoneda.selectedIndex = j;
+										break;	
+									}
+								}
+								txtCodigo.text = info.cdgProd;
+								txtNombre.text = info.nombreProd;
+								txtMinimo.text = info.montoMin.toString();
+								txtMaximo.text = info.montoMax.toString();
+								dtfValido.selectedDate = global.convCadenaFecha(info.valido);						
+							}	
+						});
+						wsCat.getCatalogoGral.send(33);
+					});
+					wsCat.getCatalogoGral.send(14);
+				});
+				//Obtiene catalogo de Tipos de Crédito
+				wsCat.getCatalogoGral.send(16);	
+			}	
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		]]>
+	</mx:Script>
+
+	<mx:Canvas x="14.75" y="29" width="520.5" height="190" styleName="canvasMod">
+		<mx:Label id="lblCodigo" x="26" y="12" text="Código:" width="43"/>
+		<mx:TextInput id="txtCodigo" x="77" y="10" width="55" maxChars="4"/>
+		<mx:Label id="lblNombre" x="173" y="12" text="Nombre:"/>
+		<mx:TextInput id="txtNombre" x="226" y="10" width="271"/>
+		<mx:Label id="lblMoneda" x="23" y="47" text="Moneda:"/>
+		<mx:ComboBox id="cboMoneda" x="77" y="44" width="153" labelField="nombre"></mx:ComboBox>
+		<mx:Label id="lblTipoCred" x="248" y="47" text="Tipo de Crédito:" width="88"/>
+		<mx:ComboBox id="cboTipoCred" x="344" y="44" width="153" labelField="nombre"></mx:ComboBox>
+		<mx:Canvas x="23" y="99" width="200" height="80" styleName="canvasMod">
+			<mx:Label id="lblMinimo" x="32" y="12" text="Mínimo:"/>
+			<mx:Label id="lblMaximo" x="28" y="44" text="Máximo:"/>
+			<mx:TextInput id="txtMinimo" x="80" y="10" width="90"/>
+			<mx:TextInput id="txtMaximo" x="80" y="42" width="90"/>
+		</mx:Canvas>
+		<mx:Label id="lblMonto" x="23" y="80" text="Monto"/>
+		
+		<mx:DateField id="dtfValido" x="344" y="78" width="109"/>
+		<mx:Label id="lblValido" x="268" y="80" text="Válido hasta:"/>
+		<mx:Label id="lblBaseCalc" x="265" y="113" text="Base Cálculo:"/>
+		<mx:ComboBox id="cboBaseCalc" x="344" y="110" width="153" labelField="nombre"></mx:ComboBox>
+	</mx:Canvas>
+	<mx:Label x="14.75" y="10" text="Datos Generales" width="100"/>
+</mx:Canvas>

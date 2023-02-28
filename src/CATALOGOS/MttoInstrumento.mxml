@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="330" height="236">
+	
+	<mx:Validator id="codigoV" source="{txtCodigo}" property="text" 
+	invalid="{txtCodigo.setFocus()}" triggerEvent="" requiredFieldError="Código Requerido"/>
+	
+	<mx:Validator id="descripcionV" source="{txtDescripcion}" property="text" 
+	invalid="{txtDescripcion.setFocus()}" triggerEvent="" requiredFieldError="Descripción Requerida"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosInstrumento;
+		import Data.EventInstrumento;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		[Bindable]
+		private var info:DatosInstrumento;
+		[Bindable]
+		private var _xmlProd:XML =  new XML();
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var du:Utils;
+		
+		public function cargaInstrumento(codigo:String, instrumento:String, tipo:String):void{
+			tipoAccion = 2; 
+			this.title = "Edición";
+			
+			info = new DatosInstrumento();
+			//Datos del Instrumento de credito
+			info.codigo = codigo;
+			info.descripcion = instrumento;
+			info.tipo = tipo;
+			
+			llenaRegistros();
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			info = new DatosInstrumento();
+			
+			var invalidArray:Array = Validator.validateAll([codigoV, descripcionV]);
+		
+			if(invalidArray.length == 0 && tipo.selectedValue.toString() != ""){	
+				info.codigo = txtCodigo.text;
+				info.descripcion = txtDescripcion.text;
+				info.tipo = tipo.selectedValue.toString();
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+		
+		public function guardaInstrumento():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionInst);
+			wsMS.setAccionInst.send(tipoAccion, info.codigo, info.descripcion, info.tipo);	
+		}
+	
+		public function init():void{
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Instrumento de Crédito";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+			txtCodigo.setFocus();
+			txtCodigo.editable = false;
+			
+			txtCodigo.text = info.codigo;
+			txtDescripcion.text = info.descripcion;
+			tipo.selectedValue = info.tipo;
+		}
+			
+		public function registraInstrumento():void{
+			tipoAccion = 1;
+			this.title = "Nuevo";
+			info = null;
+			
+			txtCodigo.setFocus();
+			txtCodigo.editable = true;
+		}
+		
+		private function setAccionInst(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionInst);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validaDatosInst(event:EventInstrumento):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			if (info.guarda == true)
+				guardaInstrumento();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="10" width="310" height="146" styleName="canvasMod">
+		<mx:Label id="lblCodigo" x="36.75" y="12" text="Código:"/>
+		<mx:Label id="lblDescripcion" x="12.75" y="44" text="Descripción:"/>
+		<mx:Canvas x="10" y="94" width="289.25" height="40" styleName="canvasMod">
+			<mx:RadioButtonGroup id="tipo" />
+			<mx:RadioButton x="10" y="7" label="Recargo" groupName="tipo" value="R"/>
+			<mx:RadioButton x="84" y="7" label="Crédito" groupName="tipo" value="C"/>
+			<mx:RadioButton x="151" y="7" label="Ahorro" groupName="tipo" value="A"/>
+			<mx:RadioButton x="218" y="7" label="Fondeo" groupName="tipo" value="F"/>
+		</mx:Canvas>
+		<mx:Label id="lblTipo" x="10" y="75" text="Tipo"/>
+		<mx:TextInput id="txtCodigo" x="85.75" y="10" width="50" maxChars="3"/>
+		<mx:TextInput id="txtDescripcion" x="85.75" y="42" width="213.5"/>
+		</mx:Canvas>
+	<mx:Button id="btnAceptar" x="232" y="164" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="280" y="164" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

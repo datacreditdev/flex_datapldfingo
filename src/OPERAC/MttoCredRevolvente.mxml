@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="520" height="520" xmlns:Data="Data.*" xmlns:Forms="OPERAC.Forms.*">
+	
+	<mx:Validator id="desdeV" source="{dtfDesde}" property="text" 
+	invalid="{dtfDesde.setFocus()}" triggerEvent="" requiredFieldError="Fecha Inicio Requerida"/>
+	
+	<mx:Validator id="hastaV" source="{dtfHasta}" property="text" 
+	invalid="{dtfHasta.setFocus()}" triggerEvent="" requiredFieldError="Fecha Fin Requerida"/>
+	
+	<mx:Validator id="fecLimV" source="{dtfFecLim}" property="text" 
+	invalid="{dtfFecLim.setFocus()}" triggerEvent="" requiredFieldError="Fecha Límite Requerida"/>
+	
+	<mx:Validator id="montoV" source="{txtMonto}" property="text" 
+	invalid="{txtMonto.setFocus()}" triggerEvent="" requiredFieldError="Monto Requerido"/>
+	
+	<mx:Validator id="plazoV" source="{txtPlazo}" property="text" 
+	invalid="{txtPlazo.setFocus()}" triggerEvent="" requiredFieldError="Plazo Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;
+		
+		private var _xmlCR:XML =  new XML();
+		
+		private var global:Globales;
+		private var du:Utils;
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var wsMS:WebService;	
+		private var vResult:ValidationResultEvent;
+		public var tipoAccion:int;
+		public var titulo:String;
+		
+		public function cargaInfoCredRev(tipo:int, acred:String, nomAcred:String, autorizo:String, nomAutorizo:String, autorizado:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			tipoAccion = tipo; 
+			this.title = "Edición";
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlCR = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if (_xmlCR.elements().length() > 0){
+					llenaRegistros();
+				} 	
+			});
+			params[0] = acred;
+			params[1] = autorizado;
+			//Obtiene informacion de la Linea de Credito Revolvente
+			wsCat.getInfoAcred.send(16, params);
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			if(valida()){
+				guardaCredRevolvente();	
+			}
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+				
+		public function guardaCredRevolvente():void{
+			var prodCred:String = formProdSolic.cboProdCred.selectedItem.id;
+			var tipoProd:String = formProdSolic.cboTipoProd.selectedItem.id;
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionCredRevolvente);
+			wsMS.setAccionCredRevolvente.send(tipoAccion, txtCodAcred.text, dtfAutorizado.text, dtfDesde.text,
+											  dtfHasta.text, Number(txtMonto.text), dtfFecLim.text, txtCodAut.text, 
+											  tipoProd, prodCred, Number(txtPlazo.text));	
+		}
+	
+		public function init(tipo:int, acred:String, nomAcred:String, autorizo:String, nomAutorizo:String, autorizado:String = null):void{
+			global = new Globales(); 
+			du = new Utils();
+			titulo = "Mantenimiento de Crédito Revolvente";
+			
+			txtCodAcred.text = acred;
+			txtAcred.text = nomAcred;
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+						
+			if(tipo == 1)
+				registraInfoCredRev(tipo, acred, nomAcred, autorizo, nomAutorizo);
+			else if(tipo == 2)
+				cargaInfoCredRev(tipo, acred, nomAcred, autorizo, nomAutorizo, autorizado);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+			txtCodAut.text = _xmlCR.Table[0].AUTORIZAPE;
+			txtAut.text = _xmlCR.Table[0].NOMAUT;
+			dtfAutorizado.enabled = false;
+			dtfAutorizado.selectedDate = global.convCadenaFecha(_xmlCR.Table[0].FAUTORIZADO);
+			dtfDesde.setFocus();
+			dtfDesde.selectedDate = global.convCadenaFecha(_xmlCR.Table[0].FINICIO);
+			dtfHasta.selectedDate = global.convCadenaFecha(_xmlCR.Table[0].FFIN);
+			txtMonto.text = _xmlCR.Table[0].MONTO;
+			txtPlazo.text = _xmlCR.Table[0].PLAZO;
+			dtfFecLim.selectedDate = global.convCadenaFecha(_xmlCR.Table[0].FFINPRC);
+		}
+			
+		public function registraInfoCredRev(tipo:int, acred:String, nomAcred:String, autorizo:String, nomAutorizo:String):void{
+			var i:int;
+			tipoAccion = tipo;
+			this.title = "Nuevo";
+			
+			txtCodAut.text = autorizo;
+			txtAut.text = nomAutorizo;
+			
+			dtfAutorizado.selectedDate = Application.application._Current_Fecha;
+			formProdSolic.init(null, 1);
+		}
+		
+		private function setAccionCredRevolvente(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCredRevolvente);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function valida():Boolean{	
+			var invalidArray:Array = Validator.validateAll([desdeV, hastaV, montoV, fecLimV, plazoV]);
+				
+			if(invalidArray.length > 0)	
+				return false;
+			return true;
+		}
+		
+		private function validaFechaAut():void{
+			if(dtfDesde.text != "")
+				dtfAutorizado.selectedDate = global.validaFecha(dtfAutorizado.selectedDate, dtfDesde.selectedDate, titulo);
+		}
+		
+		private function validaFechaIni():void{
+			if(dtfAutorizado.text != "" && dtfDesde.selectedDate < dtfAutorizado.selectedDate){
+				Alert.show("La fecha inicial debe ser igual o superior a la fecha de autorización",titulo,4,null,null,global.iAlert);
+				dtfDesde.selectedDate = dtfAutorizado.selectedDate;
+			}	
+			if(dtfHasta.text != "")
+				dtfDesde.selectedDate = global.validaFecha(dtfDesde.selectedDate, dtfHasta.selectedDate, titulo);
+		}
+		
+		private function validaFechaFin():void{
+			if(dtfDesde.text != "" && dtfHasta.selectedDate < dtfDesde.selectedDate){
+				Alert.show("La fecha fin debe ser igual o superior a la fecha inicial",titulo,4,null,null,global.iAlert);
+				dtfHasta.selectedDate = dtfDesde.selectedDate;
+			}	
+			if(dtfFecLim.text != "")
+				dtfHasta.selectedDate = global.validaFecha(dtfHasta.selectedDate, dtfFecLim.selectedDate, titulo);
+		}
+		
+		private function validaFechaFinCred():void{
+			if(dtfFecLim.text != "" && dtfFecLim.selectedDate < dtfHasta.selectedDate){
+				Alert.show("La fecha fin del crédito debe ser igual o superior a la fecha fin de vigencia",titulo,4,null,null,global.iAlert);
+				dtfFecLim.selectedDate = dtfHasta.selectedDate;
+			}	
+		}
+				
+		public function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+               	TextInput(event.currentTarget).text = "";
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	<mx:Canvas x="20.5" y="9" width="480.5" height="70" styleName="canvasMod">
+		<mx:Label id="lblAcred" x="54.5" y="9" text="Acreditado:"/>
+		<mx:Label id="lblAut" x="36.5" y="38" text="Autorizado por:"/>
+		<mx:TextInput id="txtCodAcred" x="123.5" y="7" width="50" editable="false"/>
+		<mx:TextInput id="txtAcred" x="181.5" y="7" width="253" editable="false"/>
+		<mx:TextInput id="txtCodAut" x="124.5" y="37" width="50" editable="false"/>
+		<mx:TextInput id="txtAut" x="182.5" y="37" width="252" editable="false"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="209.45" y="445" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="266.5" y="445" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:Canvas x="20.5" y="87" width="480.5" height="349" styleName="canvasMod">
+		<mx:Label id="lblCantidad" x="23.75" y="315" text="Fecha Límite de Terminación de Préstamo:" textAlign="right" width="221"/>
+		<mx:Label id="lblcodDisp" x="127.75" y="141" text="Fecha de Autorización:" textAlign="right"/>
+		<mx:Label id="lblMonto" x="207.1" y="249" text="Monto:" textAlign="right"/>
+		<mx:DateField id="dtfAutorizado" x="252.75" y="139" width="109.6" editable="false" change="validaFechaAut()"/>
+		<mx:DateField id="dtfFecLim" x="252.75" y="313" width="109.6" change="validaFechaFinCred()"/>
+		<mx:TextInput id="txtMonto" x="252.1" y="247" width="110.25" maxChars="13" restrict="0-9;." change="validaMonto(event)"/>
+		<mx:Canvas id="cnvVigencia" x="50.75" y="189" width="404" height="45" styleName="canvasMod">
+			<mx:Label id="lblHasta" x="214.1" y="12" text="Hasta:" textAlign="right"/>
+			<mx:Label id="lblDesde" x="36.85" y="12" text="Desde:" textAlign="right"/>
+			<mx:DateField id="dtfDesde" x="83.85" y="10" width="109" change="validaFechaIni()"/>
+			<mx:DateField id="dtfHasta" x="258.1" y="10" width="109" change="validaFechaFin()"/>
+		</mx:Canvas>
+		<mx:Label id="lblVigencia" x="50.75" y="170" text="Vigencia del Crédito Revolvente " textAlign="right"/>
+		<Forms:FormProductoSolic id="formProdSolic" x="14.25" y="1" width="450" height="130"/>
+		<mx:Label id="lblPlazo" x="210.75" y="281" text="Plazo:" textAlign="right"/>
+		<mx:TextInput id="txtPlazo" x="252.75" y="279" width="50.25" maxChars="13" restrict="0-9;." change="validaMonto(event)"/>
+	</mx:Canvas>
+</mx:TitleWindow>

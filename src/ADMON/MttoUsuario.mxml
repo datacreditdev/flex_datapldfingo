@@ -1,0 +1,843 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="770" height="600" 
+	title="Agregar/Modificar Usuario" close="cerrar()" xmlns:control="CONTROL.*" creationPolicy="all">
+			
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.CheckTreeRenderer;
+		import Data.DatosPer;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.events.CloseEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.utils.StringUtil;
+		
+		[Bindable]
+		public var UsrInfo:XML = new XML();
+		private var _xmlNivelEsc:XML =  new XML();
+		[Bindable]
+		public var _xmlCoord:XML = new XML();
+		[Bindable]
+		public var _xmlLstCoord:XML = new XML();
+		public var _xmlPerfil:XML = new XML();
+		[Bindable]		
+		public var _xmlPerfilUsu:XML = new XML();
+		[Bindable]
+		public var _xmlPuesto:XML = new XML();
+		[Bindable]
+		public var dpUsuarios:XML = new XML();
+		[Bindable]
+		public var dpUsuariosF:XMLList = new XMLList();
+		private var _xmlDir:XML =  new XML();
+		private var _xmlColonia:XML =  new XML();
+		private var _xmlEntidad:XML =  new XML();
+		private var _xmlMunicipio:XML =  new XML();
+		private var _xmlLocalidad:XML =  new XML();
+		
+		private var	_xmlFiltro:XMLList;
+		
+		public var nivelEscObj:ArrayCollection = new ArrayCollection();
+		public var perfilObj:ArrayCollection = new ArrayCollection();
+		public var puestoObj:ArrayCollection = new ArrayCollection();
+		public var coordObj:ArrayCollection = new ArrayCollection();
+		public var coordLstObj:ArrayCollection = new ArrayCollection();
+		
+		public var info:DatosPer;	
+		public var tipoAccion:int;
+		public var texto:String;
+		private var du:Utils;
+		private var global:Globales;
+		private var wsMS:WebService;
+		private var ws:WebService;
+		
+		//Realiza la busqueda de direccion del acreditado utilizando el codigo postal
+		public function buscaCodPostal():void{ 
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			txtCodPostal.text = StringUtil.trim(txtCodPostal.text);
+			if (txtCodPostal.text != "" && txtCodPostal.length == 5){
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				_xmlDir = null;
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlDir = new XML(evt.result.toString());
+					
+					limpiaDatosDir();
+						
+					du.rCursor();
+					du.closeWs(wsCat);
+						
+					if(_xmlDir.elements().length() > 0){
+						comEntGrid.asignaTexto(_xmlDir.Table[0].ENTFED);
+						comMunGrid.asignaTexto(_xmlDir.Table[0].MUNIC);
+						comLocGrid.asignaTexto(_xmlDir.Table[0].LOC);
+						comColGrid.asignaTexto(_xmlDir.Table[0].COL);	
+						
+						info.cdgEntFed = _xmlDir.Table[0].CDGEF;		
+						info.cdgMun = _xmlDir.Table[0].CDGMU;
+						info.cdgLoc = _xmlDir.Table[0].CDGLO;
+						info.cdgCol = _xmlDir.Table[0].CDGCOL;	
+							
+						obtieneMunicipio();
+						obtieneLocalidad();
+						obtieneColonia();
+					}
+				});
+				params[0] = txtCodPostal.text;
+				wsCat.getCatalogoGral.send(6, params);
+			}
+			else{
+				txtCodPostal.text = "";
+				obtieneMunicipio();
+				obtieneLocalidad();
+				obtieneColonia();
+			}
+		}
+			
+		public function cargaInfoUsuario():void{
+			tipoAccion = 2;
+			init();
+		}
+		
+		public function cargaLstCoord():void{
+			var p_usuario:Array = new Array();
+			p_usuario[0] = UsrInfo[0].CODIGO;
+
+			ws = du.initWs(ws);
+			du.sCursor();
+						
+			du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
+				_xmlLstCoord = new XML(evt.result.toString());
+						
+				du.rCursor();
+				du.closeWs(ws);
+						
+				if(_xmlLstCoord.elements().length() > 0){
+					var i:int;
+					var j:int;
+					var cont:int = _xmlLstCoord.elements().length();
+					var contAux:int = _xmlCoord.elements().length();
+					var coordLst:Array = new Array();
+						
+ 					for(i = 0; i < cont; i++){
+						for(j = 0; j < contAux; j++){
+							if(_xmlLstCoord.Table[i].CDGCO.toString() == _xmlCoord.Table[j].CODIGO.toString())
+								coordLst[i] = j;  
+						}	
+					}
+					lstSucursales.selectedIndices = coordLst;
+				}
+			});
+			//carga las sucursales adicionales del usuario
+			ws.ES_Admin_Usuarios.send(10, p_usuario);
+		}
+		
+		private function cerrar():void{																			
+			var event:CloseEvent = new CloseEvent('CloseEvent',true);
+			dispatchEvent(event);											
+		}
+			
+		private function filtraPerfil(item:Object):Boolean{
+			var isMatch:Boolean = false
+			if(item.estatus == true)
+				isMatch = true 
+			return isMatch; 
+		}
+				
+		public function formateaCoord():void{
+			var i:int;
+			var cont:int = _xmlCoord.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			oItem = new Object();
+			oItem.id = "0";	
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+			
+			for (i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.id = _xmlCoord.Table[i].CODIGO;	
+				oItem.nombre = _xmlCoord.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			coordObj = new ArrayCollection(item);
+			coordLstObj = new ArrayCollection(item);
+		}
+		
+		public function formateaNivel():void{
+			var i:int;
+			var cont:int = _xmlNivelEsc.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			oItem = new Object();
+			oItem.id = "-1";	
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "C";	
+			oItem.nombre = "Carrera Corta";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "O";	
+			oItem.nombre = "Doctorado";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "L";	
+			oItem.nombre = "Licenciatura";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "R";	
+			oItem.nombre = "Maestría";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "N";	
+			oItem.nombre = "Ninguna";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "B";	
+			oItem.nombre = "Preparatoria";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "P";	
+			oItem.nombre = "Primaria";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "S";	
+			oItem.nombre = "Secundaria";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "T";	
+			oItem.nombre = "Técnico";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "U";	
+			oItem.nombre = "Técnico Superior";
+			item.push(oItem);
+			
+			nivelEscObj = new ArrayCollection(item);
+		}
+		
+		public function formateaPerfil():void{
+			var i:int;
+			var cont:int = _xmlPerfil.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			for (i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.estatus = false; 
+				oItem.id = _xmlPerfil.Table[i].CODIGO;	
+				oItem.nombre = _xmlPerfil.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			perfilObj = new ArrayCollection(item);
+		}
+		
+		public function formateaPuesto():void{
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			oItem = new Object();
+			oItem.id = "0";	
+			oItem.nombre = "--Seleccionar--";
+			oItem.reqSuc = false;
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "D";	
+			oItem.nombre = "Administrativo";
+			oItem.reqSuc = false;
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "U";	
+			oItem.nombre = "Auditor";
+			oItem.reqSuc = true;
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "C";	
+			oItem.nombre = "Coordinador";
+			oItem.reqSuc = true;
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "A";	
+			oItem.nombre = "Ejecutivo de Crédito";
+			oItem.reqSuc = true;
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "S";	
+			oItem.nombre = "Gerente Regional";
+			oItem.reqSuc = false; 
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "R";	
+			oItem.nombre = "Recuperador";
+			oItem.reqSuc = true;
+			item.push(oItem);
+			
+			puestoObj = new ArrayCollection(item);
+		}
+					
+		private function guardar():void{
+			if(ValidarForm() == false)
+				return;
+			
+			var i:int;
+			var p_usuario:Array = new Array(18);
+			var x:String = UsrInfo.toString();
+			var sSucursales:String = "";
+			var sPerfil:String = "";
+			var sucBase:String = "";
+			
+			if(cboCoord.selectedIndex > 0){
+				sucBase = cboCoord.selectedItem.id.toString();
+				sSucursales = sucBase + "|";
+			}
+				
+			try
+			{
+				for each(var a:XML in lstSucursales.selectedItems){
+					if(a.CODIGO.toString() != sucBase)
+						sSucursales += a.CODIGO.toString() + "|";
+				}
+				sSucursales = sSucursales.substr(0,sSucursales.length-1);
+			}catch(err:Error)
+			{
+				sSucursales = "";
+			}
+			
+			var perfil:ArrayCollection = dgPerfil.dataProvider as ArrayCollection;
+			perfil.filterFunction = filtraPerfil;
+			perfil.refresh();
+			for(i = 0; i < perfil.length; i++){
+				sPerfil += perfil[i].id + "|"; 	
+			}
+			sPerfil = sPerfil.substr(0,sPerfil.length-1);
+			perfil.filterFunction = null;
+			perfil.refresh();
+			
+			p_usuario[0] = txtAPaterno.text;
+			if(txtAMaterno.text != "")
+				p_usuario[1] = txtAMaterno.text;
+			else
+				p_usuario[1] = "-";
+			p_usuario[2] = txtNombre.text;
+			if(txtSegNombre.text != "")
+				p_usuario[3] = txtSegNombre.text;
+			else
+				p_usuario[3] = "-";
+			p_usuario[4] = txtUsuario.text;
+			p_usuario[5] = txtPwd.text;	
+			p_usuario[6] = sexo.selectedValue != null? sexo.selectedValue.toString(): "";
+			p_usuario[7] = cboNivelEsc.selectedItem.id.toString();
+			p_usuario[8] = (txtCalle.text != "" ? txtCalle.text : "-");	
+			if(txtTelefono.text != "")
+				p_usuario[9] = txtTelefono.text;
+			else
+				p_usuario[9] = "-";
+			p_usuario[10] = info.cdgEntFed != null && info.cdgEntFed.toString() != "" ? info.cdgEntFed : "-";
+			p_usuario[11] = info.cdgMun != null && info.cdgMun.toString() != "" ? info.cdgMun : "-";
+			p_usuario[12] = info.cdgLoc != null && info.cdgLoc.toString() != "" ? info.cdgLoc : "-";
+			p_usuario[13] = info.cdgCol != null && info.cdgCol.toString() != "" ? info.cdgCol : "-";		
+			p_usuario[14] = cboCoord.selectedIndex > 0 ? cboCoord.selectedItem.id.toString() : "-";
+			p_usuario[15] = cboPuesto.selectedItem.id.toString();
+			p_usuario[16] = sPerfil != "" ? sPerfil : "-"; //cboPerfil.selectedItem.id.toString() != "" ? cboPerfil.selectedItem.id.toString() : "-";	
+			p_usuario[17] = sSucursales != "" ? sSucursales : "-";
+			
+			if(chkActivo.selected == true)
+				p_usuario[18] = "S";
+			else 
+				p_usuario[18] = "N";
+				
+			ws = du.initWs(ws)
+			du.sCursor();
+			du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
+				var res:String = evt.result.toString();
+				
+				du.rCursor();
+				du.closeWs(ws);
+				
+				if(res.substr(0,1) == "1")
+					cerrar();
+				else
+					du.showMsg("Error al guardar la información del usuario: " + res);																			
+			});
+			if(tipoAccion == 1)
+				ws.ES_Admin_Usuarios.send(1, p_usuario);
+			else
+				ws.ES_Admin_Usuarios.send(2, p_usuario);
+		}
+
+		private function init():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			var i:int;
+			var j:int;
+			
+			info = new DatosPer();
+			global = new Globales();
+			du = new Utils();
+			
+			formateaNivel();
+			formateaPuesto();
+			
+			cboPuesto.dataProvider = puestoObj;
+			cboNivelEsc.dataProvider = nivelEscObj;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			Application.application.bloquear();
+				
+			_xmlEntidad = null;
+					
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlEntidad = new XML(evt.result.toString());
+								
+				du.rCursor();
+				du.closeWs(wsCat);	
+									
+				if(_xmlEntidad.elements().length() > 0){
+					comEntGrid.init(_xmlEntidad, 130);
+					comEntGrid.addEventListener("seleccionar",selecEntFed);
+					comEntGrid.addEventListener("verificar",verifEntFed);
+					
+					obtieneMunicipio();
+					obtieneLocalidad();
+					obtieneColonia();
+				}
+			
+				ws = new WebService();
+				ws = du.initWs(ws);
+				du.sCursor();
+						
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
+					_xmlPerfil = new XML(evt.result.toString());
+						
+					if (_xmlPerfil.elements().length() > 0){
+						formateaPerfil();
+						dgPerfil.dataProvider = perfilObj;					
+					}
+						
+					du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
+						_xmlCoord = new XML(evt.result.toString());
+						
+						if (_xmlCoord.elements().length() > 0){
+							formateaCoord();
+							cboCoord.dataProvider = coordObj;
+							lstSucursales.dataProvider = _xmlCoord.Table;
+						} 
+					
+						if(tipoAccion == 1)
+							Application.application.desbloquear();
+						//carga informacion del registro de usuario
+						else if(tipoAccion == 2){
+							llenaRegistros();					
+						
+							var p_usuario:Array = new Array();
+							p_usuario[0] = UsrInfo[0].CODIGO;
+	
+							du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
+								_xmlPerfilUsu = new XML(evt.result.toString());
+											
+								if(_xmlPerfilUsu.elements().length() > 0){
+									var cont:int = _xmlPerfilUsu.elements().length();
+									var info:String;
+									
+									for(i = 0; i < cont; i++){
+										info = _xmlPerfilUsu.Table[i].CDGTUS	
+										j = _xmlPerfil.Table.(CODIGO.toString() == info).childIndex();
+										perfilObj[j].estatus = true;
+									}	
+									dgPerfil.dataProvider = perfilObj;
+								}
+								
+								du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{											
+									_xmlLstCoord = new XML(evt.result.toString());
+												
+									du.rCursor();
+									du.closeWs(ws);
+									
+									Application.application.desbloquear();
+												
+									if(_xmlLstCoord.elements().length() > 0){
+										var cont:int = _xmlLstCoord.elements().length();
+										var contAux:int = _xmlCoord.elements().length();
+										var coordLst:Array = new Array();
+												
+						 				for(i = 0; i < cont; i++){
+											for(j = 0; j < contAux; j++){
+												if(_xmlLstCoord.Table[i].CDGCO.toString() == _xmlCoord.Table[j].CODIGO.toString())
+													coordLst[i] = j;  
+											}	
+										}
+										lstSucursales.selectedIndices = coordLst;
+									}
+								});
+								//carga las sucursales adicionales del usuario
+								ws.ES_Admin_Usuarios.send(10, p_usuario);
+							});
+							//carga los perfiles del usuario
+							ws.ES_Admin_Usuarios.send(5, p_usuario);
+						}
+					});
+					//carga las sucursales disponibles
+					ws.ES_Admin_Usuarios.send(7,null);
+				});
+				//carga los perfiles de usuario disponibles
+				ws.ESLoginMethods.send(7,null);
+			});
+			wsCat.getCatalogoGral.send(2);	
+		}		
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function keyListener(event:KeyboardEvent):void{
+			if (event.keyCode == 13){					
+				guardar();										
+			}				
+		}
+		
+		public function llenaRegistros():void{
+			var i:int;
+			txtUsuario.text = UsrInfo[0].CODIGO;
+			txtPwd.text = UsrInfo[0].CLAVE;
+			txtAPaterno.text = UsrInfo[0].PRIMAPE;
+			txtAMaterno.text = UsrInfo[0].SEGAPE;
+			txtNombre.text = UsrInfo[0].NOMBRE1;
+			txtSegNombre.text = UsrInfo[0].NOMBRE2;
+			sexo.selectedValue = UsrInfo[0].SEXO.toString();
+			txtCalle.text = UsrInfo[0].CALLE; 
+			txtTelefono.text = UsrInfo[0].TELEFONO;
+			comEntGrid.asignaTexto(UsrInfo[0].ENTFED);
+			comMunGrid.asignaTexto(UsrInfo[0].MUNIC);
+			comLocGrid.asignaTexto(UsrInfo[0].LOC);
+			comColGrid.asignaTexto(UsrInfo[0].COL);
+			txtCodPostal.text = UsrInfo[0].CDGPOSTAL;
+			
+			//asignacion de codigos de direccion
+			info.cdgEntFed = UsrInfo[0].CDGEF
+  			info.cdgMun = UsrInfo[0].CDGMU
+  			info.cdgLoc = UsrInfo[0].CDGLO
+  			info.cdgCol = UsrInfo[0].CDGCOL
+			
+			for(i = 0; i < nivelEscObj.length; i++){
+				if(UsrInfo[0].NIVESCOLAR.toString() == nivelEscObj[i].id){
+					cboNivelEsc.selectedIndex = i;
+					break;
+				}
+			}
+			for(i = 0; i < coordObj.length; i++){
+				if(UsrInfo[0].CDGCO == coordObj[i].id.toString()){
+					cboCoord.selectedIndex = i;
+					break;
+				}
+			}
+			
+			for(i = 0; i < puestoObj.length; i++){
+				if(UsrInfo[0].PUESTO.toString() == puestoObj[i].id.toString()){
+					cboPuesto.selectedIndex = i;
+					break;
+				}
+			}
+			if(UsrInfo[0].ACTIVO == "S")
+				chkActivo.selected = true;
+			else if(UsrInfo[0].ACTIVO == "N")
+				chkActivo.selected = false;
+  		}
+		
+		public function registraInfoUsuario():void{
+			tipoAccion = 1;
+			init();
+		} 
+		
+		public function limpiaDatosDir():void{
+			comEntGrid.asignaTexto("");
+			comMunGrid.asignaTexto("");
+			comLocGrid.asignaTexto("");
+			comColGrid.asignaTexto("");	
+						
+			comEntGrid.codigo = "";
+			comMunGrid.codigo = "";
+			comLocGrid.codigo = "";
+			comColGrid.codigo = "";	
+			
+			info.cdgEntFed = "";		
+			info.cdgMun = "";
+			info.cdgLoc = "";
+			info.cdgCol = "";		
+		}
+		
+		private function obtieneColonia():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlColonia = new XML(evt.result.toString());
+				
+				comColGrid.init(_xmlColonia, 70);
+				if(_xmlColonia.elements().length() > 0){
+					comColGrid.addEventListener("seleccionar",selecColonia);
+				}
+				
+				du.rCursor();
+				du.closeWs(wsCat);
+			});
+			params[0] = info.cdgEntFed;
+			params[1] = info.cdgMun;
+			params[2] = info.cdgLoc;
+			params[3] = txtCodPostal.text;
+			wsCat.getCatalogoGral.send(5, params);
+		}
+		
+		private function obtieneLocalidad():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlLocalidad = new XML(evt.result.toString());
+				
+				comLocGrid.init(_xmlLocalidad, 90);
+				if(_xmlLocalidad.elements().length() > 0){
+					comLocGrid.addEventListener("seleccionar",selecLocalidad);
+					comLocGrid.addEventListener("verificar",verifLocalidad);
+				}
+				du.rCursor();
+				du.closeWs(wsCat);
+			});
+			params[0] = info.cdgEntFed;
+			params[1] = info.cdgMun;
+			params[2] = txtCodPostal.text;
+			wsCat.getCatalogoGral.send(4, params);
+		}
+		
+		private function obtieneMunicipio():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlMunicipio = new XML(evt.result.toString());
+				
+				comMunGrid.init(_xmlMunicipio, 130);
+				if(_xmlMunicipio.elements().length() > 0){
+					comMunGrid.addEventListener("seleccionar",selecMunic);
+					comMunGrid.addEventListener("verificar",verifMunic);
+				}
+				du.rCursor();
+				du.closeWs(wsCat);
+			});
+			params[0] = info.cdgEntFed;
+			params[1] = txtCodPostal.text;
+			wsCat.getCatalogoGral.send(3, params);
+		}
+		
+		private function selecColonia(event:Event):void{
+			info.cdgCol = event.currentTarget.codigo;
+			_xmlFiltro = _xmlColonia.Table.(CODIGO.toString() == info.cdgCol)
+			if(txtCodPostal.text != _xmlFiltro.CDGPOSTAL.toString())
+				txtCodPostal.text = _xmlFiltro.CDGPOSTAL.toString();
+			comColGrid.setFocus();
+		}
+		
+		private function selecEntFed(event:Event):void{
+			comMunGrid.limpiar();
+			comLocGrid.limpiar();
+			comColGrid.limpiar();
+			info.cdgEntFed = event.currentTarget.codigo;
+			obtieneMunicipio();
+			comEntGrid.setFocus();
+		}
+		
+		private function selecLocalidad(event:Event):void{
+			comColGrid.limpiar();
+			info.cdgLoc = event.currentTarget.codigo;
+			obtieneColonia();
+			comLocGrid.setFocus();
+		}
+		
+		private function selecMunic(event:Event):void{	
+			comLocGrid.limpiar();
+			comColGrid.limpiar();
+			info.cdgMun = event.currentTarget.codigo;
+			obtieneLocalidad();
+			comMunGrid.setFocus();
+		}
+		
+		private function ValidarForm():Boolean{
+			if(txtAPaterno.text == ''){
+				du.showInfo("El campo apellido paterno es invalido");
+				return false;
+			}
+			if(txtAMaterno.text == ''){
+				du.showInfo("El campo apellido materno es invalido");
+				return false;
+			}
+			if(txtNombre.text == ''){
+				du.showInfo("El campo nombre es invalido");
+				return false;
+			}				
+			if(txtUsuario.text == ''){
+				du.showInfo("El campo usuario es invalido");
+				return false;
+			}
+			if(txtPwd.text == ''){
+				du.showInfo("El campo password es invalido");
+				return false;
+			}			
+			if(cboPuesto.selectedItem.id == '0'){
+				du.showInfo("Puesto de usuario inválido");
+				return false;
+			}
+			if(cboPuesto.selectedItem.reqSuc == true && cboCoord.selectedIndex == 0){
+				du.showInfo("Debe seleccionar una Sucursal Base");					
+				return false;
+			}		
+			if(cboCoord.selectedIndex == 0 && lstSucursales.selectedItems.length == 0){
+				du.showInfo("Debe seleccionar una Sucursal Base u Otras Sucursales");					
+				return false;
+			}
+			var perfil:ArrayCollection = dgPerfil.dataProvider as ArrayCollection;
+			perfil.filterFunction = filtraPerfil;
+			perfil.refresh();
+			if(perfil.length == 0){
+				du.showInfo("Debe seleccionar al menos un Perfil de Usuario");
+				perfil.filterFunction = null;
+				perfil.refresh();					
+				return false;
+			}
+			return true;
+		}
+		
+		private function verifEntFed(event:Event):void{
+			if(comEntGrid.codigo == ""){	
+				comMunGrid.limpiar();
+				comLocGrid.limpiar();
+				comColGrid.limpiar();
+				info.cdgMun = "";
+				info.cdgLoc = "";
+				info.cdgCol = ""; 
+			}
+		}
+		
+		private function verifLocalidad(event:Event):void{
+			if(comLocGrid.codigo == ""){
+				comColGrid.limpiar();
+				info.cdgCol = ""; 
+			}
+		}
+		
+		private function verifMunic(event:Event):void{
+			if(comMunGrid.codigo == ""){
+				comLocGrid.limpiar();
+				comColGrid.limpiar();
+				info.cdgLoc = "";
+				info.cdgCol = ""; 
+			}
+		}
+		]]>
+	</mx:Script>	
+	<mx:Button id="btnAceptar" icon="@Embed(source='assets/button_ok.png')" click="{guardar()}" x="672" y="528" width="40"/>
+	<mx:Button id="btnCancelar" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" x="720" y="528" width="40"/>
+	<mx:TabNavigator x="10" y="10" width="750" height="507">
+		<mx:Canvas label="Datos Generales" width="100%" height="100%">
+			<mx:Canvas x="8" y="10" width="360" height="450" styleName="canvasMod" verticalScrollPolicy="off">	
+				<mx:Label x="30" y="4" id="lblU_ID" visible="false"/>
+				<mx:Label text="Apellido Paterno:" x="32" y="13"/>
+				<mx:TextInput width="200" id="txtAPaterno" x="136" y="11" maxChars="20"/>
+				<mx:Label text="Apellido Materno:" x="30" y="43"/>
+				<mx:TextInput width="200" id="txtAMaterno" x="136" y="41" maxChars="20"/>
+				<mx:Label text="Primer Nombre:" x="40" y="73"/>
+				<mx:TextInput width="200" id="txtNombre" x="136" y="71" maxChars="15"/>
+				<mx:Label text="Segundo Nombre:" x="27" y="103"/>
+				<mx:TextInput width="200" id="txtSegNombre" x="136" y="101" maxChars="15"/>
+				<mx:Label text="Usuario:" x="73" y="133"/>
+				<mx:Label text="Contraseña:" x="54" y="163"/>
+				<mx:Label text="Sexo:" x="85" y="195"/>
+				<mx:Label text="Municipio:" x="66" y="292"/>
+				<mx:Label text="Localidad:" x="64" y="324"/>
+				<mx:Label text="Colonia:" x="75" y="356"/>	
+				<mx:Label text="Nivel Escolar:" x="48" y="387"/>
+				<mx:Label text="Entidad Federativa:" x="21" y="260" />
+				<mx:Label x="45" y="228" text="Código Postal:"/>
+				<mx:TextInput width="200" id="txtUsuario" x="136" y="131"/>
+				<mx:TextInput width="200" id="txtPwd" x="136" y="161" displayAsPassword="true"/>
+				<mx:Canvas x="136" y="193" width="200" height="25">
+					<mx:RadioButtonGroup id="sexo"/>
+						<mx:RadioButton id="rdbFemenino" x="0" y="1" label="Femenino" value="F" groupName="sexo"/>
+						<mx:RadioButton id="rdbMasculino" x="79" y="1" label="Masculino" value="M" groupName="sexo"/>	
+				</mx:Canvas>
+				<mx:TextInput id="txtCodPostal" x="136" y="226" width="80" maxChars="5" restrict="0-9" enter="buscaCodPostal()" focusOut="buscaCodPostal()"/>
+				<control:TextGrid id="comEntGrid" x="136" height="24" y="256"/>
+				<control:TextGrid id="comMunGrid" x="136" height="24" y="288"/>
+				<control:TextGrid id="comLocGrid" x="136" height="24" y="320"/>
+				<control:TextGrid id="comColGrid" x="136" height="24" y="352"/>
+				<mx:ComboBox id="cboNivelEsc" labelField="nombre" x="136" y="384"></mx:ComboBox>
+			</mx:Canvas>
+			<mx:Canvas x="376" y="10" width="362" height="320" styleName="canvasMod">
+				<mx:Label x="26" y="108" text="Sucursal base:"/>
+				<mx:Label x="63" y="76" text="Puesto:"/>
+				<mx:Label x="14" y="141" text="Otras sucursales:"/>
+				<mx:Label text="Nómina:" x="61" y="12"/>
+				<mx:Label text="Nómina Jefe:" x="35" y="44" width="69"/>
+				<mx:TextInput width="200" id="txtCalle" x="112" y="42"/>
+				<mx:TextInput width="200" id="txtTelefono" x="112" y="10"/>
+				<mx:ComboBox x="112" y="105" width="238" id="cboCoord" labelField="nombre"></mx:ComboBox>
+				<mx:ComboBox x="112" y="73" width="238" id="cboPuesto" labelField="nombre"></mx:ComboBox>
+				<mx:List x="114" y="137" width="236" height="136" labelField="NOMBRE" id="lstSucursales" allowMultipleSelection="true" ></mx:List>
+				<mx:CheckBox id="chkActivo" x="114" y="281" label="Activo"/>
+			</mx:Canvas>
+		</mx:Canvas>
+		<mx:Canvas label="Perfiles" width="100%" height="100%">
+			<mx:DataGrid id="dgPerfil" x="10" y="10" width="726" height="452" editable="true">
+				<mx:columns>
+					<mx:DataGridColumn headerText="ESTATUS" dataField="estatus" textAlign="center" width="60" rendererIsEditor="true"
+						editorDataField="selected"> 
+						<mx:itemRenderer>
+							<mx:Component>
+			  					<mx:CheckBox width="30" fontSize="10" verticalCenter="0"/> 
+			  				</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="ID" dataField="id" width="60" editable="false"/>
+					<mx:DataGridColumn headerText="NOMBRE" dataField="nombre" editable="false"/>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:Canvas>
+	</mx:TabNavigator>
+</mx:TitleWindow>

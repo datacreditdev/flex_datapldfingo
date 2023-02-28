@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="670" height="204" creationPolicy="all" xmlns:Data="Data.*">
+	<mx:Metadata>
+		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import Data.Globales;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.events.ValidationResultEvent;  
+			
+			public var datos:DatosSolic = new DatosSolic();
+			
+			public var wsMS:WebService;
+			public var tipoAccion:int;
+			public var estatus:String;
+			public var dia:String;
+			private var du:Utils;
+			private var global:Globales;
+			private var vResult:ValidationResultEvent;
+			
+			public function activaControles(_xmlControl:XML):void{
+				var periodicidad:String = _xmlControl.Table[0].FIJAPER;
+				var multPer:String = _xmlControl.Table[0].FIJAMULTPER;
+				var pagoCap:String = _xmlControl.Table[0].FIJAPGC;
+				var pagoInt:String = _xmlControl.Table[0].FIJAPGI;
+				var plazo:String = _xmlControl.Table[0].FIJAPLA;
+				//Periodicidad de pago
+				if(periodicidad == "S")
+					cnvPeriodicidad.enabled = false;
+				else if(periodicidad == "N")
+					cnvPeriodicidad.enabled = true;
+				//Multiplos de periodicidad
+				if(multPer == "S")
+					cnvMult.enabled = false;
+				else if(multPer == "N")
+					cnvMult.enabled = true;
+				//Periodos de gracia Pago Capital
+				if(pagoCap == "S")
+					pagoCapital.enabled = false;
+				else if(pagoCap == "N")
+					pagoCapital.enabled = true;
+				//Periodos de gracia Pago Interes 
+				if(pagoInt == "S")
+					pagoInteres.enabled = false;
+				else if(pagoInt == "N")
+					pagoInteres.enabled = true;
+				//Plazo
+				if(plazo == "S"){
+					lblDuracion.enabled = false;
+					txtDuracion.enabled = false;
+				}
+				else if(plazo == "N"){
+					lblDuracion.enabled = true;
+					txtDuracion.enabled = true;
+				}
+			}
+			
+			//funcion que modifica la informacion del dia de pago
+			public function actualizaDiaJunta(dia:String):void{
+				if(dia != "")
+					this.dia = dia;
+				datos.diaJunta = this.dia;
+			}
+			
+			public function cargaParamsProd(_xmlParam:XML):void{
+				periodicidad.selectedValue = _xmlParam.Table[0].PERIODICIDAD;
+				txtMultiplos.text = _xmlParam.Table[0].MULTPER;
+				txtPagoCapital.text = _xmlParam.Table[0].PERIGRCAP;
+				txtPagoInteres.text = _xmlParam.Table[0].PERIGRINT;
+				txtDuracion.text = _xmlParam.Table[0].PLAZO;
+				numDiaEsp.value = _xmlParam.Table[0].DIAESP;
+			}
+			
+			public function desactivaControles():void{
+				cnvPeriodicidad.enabled = false;
+				cnvDuracion.enabled = false;
+				cnvPagos.enabled = false;
+				cnvMultPer.enabled = false;
+			}
+			
+			public function enviarDatosSolic(formData:DatosSolic):void{
+				if(periodicidad.selection != null){	
+					formData.periodicidad = periodicidad.selectedValue.toString();
+					formData.diasGracia = Number(txtDiasGracia.text);
+					formData.duracion = Number(txtDuracion.text);
+					formData.multPerio = Number(txtMultiplos.text);
+					formData.pagoCapital = Number(txtPagoCapital.text);
+					formData.pagoInteres = Number(txtPagoInteres.text);
+					formData.diaEsp = Number(numDiaEsp.value);
+					formData.guardaCalendario = true;
+				}
+				else{
+					formData.guardaCalendario = false;
+				}
+				var event:EventSolic = new EventSolic("enviarDatosSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(info:DatosSolic, tipoAccion:int, estatus:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				this.tipoAccion = tipoAccion;
+				this.estatus = estatus;
+				global = new Globales();
+				du = new Utils();
+				
+				var diasFecEnt:int;
+				var fec:Date = Application.application._Current_Fecha;
+				var fecEnt:Date; 
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					diasFecEnt = int(evt.result.toString());
+					
+					fecEnt = new Date(fec.getFullYear(), fec.getMonth(), fec.getDate() + diasFecEnt);
+					
+					if(tipoAccion == 1){
+						actualizaDiaJunta(fecEnt.getDay().toString());
+					}
+					if (info != null){
+						var j:int;
+						datos = info;
+						
+						if(info.situacion == 'A' || info.situacion == 'R' || estatus == "evaluacion" || estatus == "entrega")
+							desactivaControles();
+						
+						periodicidad.selectedValue = info.periodicidad;
+						actualizaDiaJunta(info.diaJunta);
+						txtDiasGracia.text = info.diasGracia.toString();
+						txtDuracion.text = info.duracion.toString();
+						txtPagoCapital.text = info.pagoCapital.toString();
+						txtPagoInteres.text = info.pagoInteres.toString();
+						txtMultiplos.text = info.multPerio.toString();
+						numDiaEsp.value = Number(info.diaEsp);
+					}						
+				});
+				wsCat.getCatalogoGral.send(13);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}		
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvPeriodicidad" x="125.5" y="29" width="190" height="68" styleName="canvasMod">
+		<mx:RadioButtonGroup id="periodicidad"/>
+		<mx:RadioButton id="rdbSemanal" x="10" y="4" label="Semanal" groupName="periodicidad" value="S"/>
+		<mx:RadioButton id="rdbQuincenal" x="10" y="36" label="Quincenal" groupName="periodicidad" value="Q"/>
+		<mx:RadioButton id="rdbCatorcenal" x="106" y="4" label="Catorcenal" groupName="periodicidad" value="C"/>
+		<mx:RadioButton id="rdbMensual" x="106" y="36" label="Mensual" groupName="periodicidad" value="M"/>
+	</mx:Canvas>
+	<mx:Canvas id="cnvDuracion" x="332.5" y="29" width="212" height="68" styleName="canvasMod">
+		<mx:Label id="lblDiasGracia" x="10" y="10" text="Días de Gracia para depositar:"/>
+		<mx:TextInput id="txtDiasGracia" x="169" y="8" width="30" restrict="0-9" maxChars="2"/>
+		<mx:Label id="lblDuracion" x="127" y="39" text="Plazo:"/>
+		<mx:TextInput id="txtDuracion" width="30" restrict="0-9" maxChars="2" x="169" y="38"/>
+	</mx:Canvas>
+	<mx:Canvas id="cnvPagos" x="332.5" y="124" width="212" height="68" styleName="canvasMod">
+		<mx:FormItem id="pagoCapital" label="Para pago de capital:" x="46" y="7">
+			<mx:TextInput id="txtPagoCapital" width="30" restrict="0-9" maxChars="2"/>	
+		</mx:FormItem>
+		<mx:FormItem id="pagoInteres" label="Para pago de interés:" x="45" y="36">
+			<mx:TextInput id="txtPagoInteres" width="30" restrict="0-9" maxChars="2"/>	
+		</mx:FormItem>
+	</mx:Canvas>
+	<mx:Label x="125.5" y="10" text="Periodicidad del préstamo"/>
+	<mx:Label x="332.5" y="105" text="Periodos de gracia"/>
+	<mx:Canvas id="cnvMultPer" x="125.5" y="124" width="190" height="68" styleName="canvasMod">
+		<mx:Canvas id="cnvMult" y="4" x="3" height="30" width="184">
+			<mx:Label id="lblMultiplos" x="6" y="5" text="Multiplos de Periodicidad:"/>
+			<mx:TextInput id="txtMultiplos" x="139" y="4" width="40" restrict="0-9" maxChars="2"/>	
+		</mx:Canvas>
+		<mx:Label id="lblDiaPago" text="Día de Pago:" x="30" y="39"/>
+		<mx:NumericStepper id="numDiaEsp" maximum="31" minimum="1" x="103" y="38" height="20"/>
+	</mx:Canvas>
+</mx:Canvas>

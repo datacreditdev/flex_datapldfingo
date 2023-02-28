@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="540" height="130" creationPolicy="all">
+	<mx:states>
+		<mx:State name="revolvente">
+			<mx:SetProperty name="height" value="190"/>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas id="cnvAutorizado" x="122.5" y="124" width="295" height="59" styleName="canvasMod">
+					<mx:FormItem label="Fecha de Autorizado:" id="fecAut" visible="true" x="19" y="18" width="255">
+						<mx:ComboBox id="cboCredRev" labelField="aut" width="131"/>
+					</mx:FormItem>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:SetProperty target="{tipoProd}" name="x" value="43"/>
+			<mx:SetProperty target="{prodCred}" name="x" value="29"/>
+			<mx:SetProperty target="{prodCred}" name="y" value="62"/>
+			<mx:SetProperty target="{tipoProd}" name="y" value="18"/>
+			<mx:SetProperty target="{cnvProdSolic}" name="y" value="6"/>
+		</mx:State>
+	</mx:states>
+	<mx:Metadata>
+		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
+		[Event(name="actualiza", type="actualiza")]
+	</mx:Metadata>
+	
+	<mx:NumberValidator id="tipoProdV" source="{cboTipoProd}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Tipo de Producto Requerido"/>
+	
+	<mx:NumberValidator id="prodCredV" source="{cboProdCred}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Producto de Crédito Requerido"/>
+	 
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;			
+			import mx.controls.Alert;
+			import mx.controls.DateField;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.ItemClickEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.validators.Validator;
+			
+			private var _xmlTipoProd:XML =  new XML();
+			private var _xmlCR:XML =  new XML();
+			private var _xmlProdCred:XML =  new XML();
+
+			public var credRevObj:ArrayCollection = new ArrayCollection();
+			public var tipoProdObj:ArrayCollection = new ArrayCollection();
+			public var prodCredObj:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosSolic = new DatosSolic();
+			
+			public var wsMS:WebService;
+			public var tipoAccion:int;
+			public var coord:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private function actualizaProd():void{
+				dispatchEvent(new Event("actualiza"));
+			}
+			
+			public function cargaProdCred():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlProdCred = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					cboProdCred.dataProvider = null;
+					
+					if (_xmlProdCred.elements().length() > 0){
+						formateaProdCred();
+						cboProdCred.dataProvider = prodCredObj;
+						cboProdCred.selectedIndex = 0;
+						if (tipoAccion == 1){
+							prodCredObj.filterFunction = filtraProdCred;
+							prodCredObj.refresh();
+						}
+						if (tipoAccion == 2){
+							for(var j:int = 0; j < prodCredObj.length; j++){
+								if (prodCredObj[j].id.toString() == datos.cdgProdCred){
+									cboProdCred.selectedIndex = j;
+									break;
+								}
+							}
+						}
+					}				
+				});
+				params[0] = cboTipoProd.selectedItem.id;
+				params[1] = coord;
+				wsCat.getCatalogoGral.send(12, params);
+			}
+			
+			public function enviarDatosSolic(formData:DatosSolic):void{
+				var invalidArray:Array = Validator.validateAll([tipoProdV, prodCredV]);
+				
+				if(invalidArray.length == 0){		
+					formData.cdgTipoProd = cboTipoProd.selectedItem.id;
+					formData.cdgProdCred = cboProdCred.selectedItem.id;
+					if(currentState == "revolvente")
+						formData.autorCrr = cboCredRev.selectedItem.id;
+					else
+						formData.autorCrr = "";
+					formData.guardaProd = true;
+				}
+				else
+					formData.guardaProd = false;
+				
+				var event:EventSolic = new EventSolic("enviarDatosSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			public function filtraProdCred(item:Object):Boolean{
+				var isMatch:Boolean = false
+				var d:Date = DateField.stringToDate(item.fecVal.toString(),"DD/MM/YYYY")
+				if(d >= Application.application._Current_Fecha)
+					isMatch = true 
+				return isMatch; 
+			}
+			
+			private function formateaCredRev():void{
+				var cont:int = _xmlCR.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "";	
+				oItem.aut = "--Ninguno--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlCR.Table[i].AUTORIZADO;	
+					oItem.aut = _xmlCR.Table[i].AUTORIZADO;
+					item.push(oItem);
+				}
+				credRevObj = new ArrayCollection(item);
+			}
+			
+			private function formateaTipoProd():void{
+				var cont:int = _xmlTipoProd.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlTipoProd.Table[i].CODIGO;	
+					oItem.nombre = _xmlTipoProd.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				tipoProdObj = new ArrayCollection(item);
+			}
+			
+			private function formateaProdCred():void{
+				var cont:int = _xmlProdCred.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				prodCredObj.removeAll();
+				prodCredObj.refresh();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				oItem.fecVal = DateField.dateToString(Application.application._Current_Fecha,"DD/MM/YYYY");
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){		
+					oItem = new Object();
+					oItem.id = _xmlProdCred.Table[i].CODIGO;
+					oItem.nombre = _xmlProdCred.Table[i].NOMBRE;
+					oItem.fecVal = _xmlProdCred.Table[i].FVALIDO;
+					item.push(oItem);
+				}
+				prodCredObj = new ArrayCollection(item);
+			}
+			
+			public function init(acred:String, info:DatosSolic, tipoAccion:int, coord:String = ""):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				global = new Globales();
+				du = new Utils();
+				this.tipoAccion = tipoAccion;
+				this.coord = coord;
+				
+				if(tipoAccion == 2)
+					cnvProdSolic.enabled = false;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlCR = new XML(evt.result.toString());
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlTipoProd = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						
+						if (_xmlCR.elements().length() > 0){
+							formateaCredRev();
+							if(tipoAccion == 1){
+								currentState = "revolvente";
+								cboCredRev.dataProvider = credRevObj;
+							}
+						}		
+						if (_xmlTipoProd.elements().length() > 0){
+							formateaTipoProd();
+							cboTipoProd.dataProvider = tipoProdObj;
+						}				
+						if (info != null){
+							var j:int;
+								
+							datos.cdgTipoProd = info.cdgTipoProd;
+							datos.cdgProdCred = info.cdgProdCred;
+							datos.autorCrr = info.autorCrr;
+							
+							if(datos.autorCrr.toString() != ""){
+								currentState = "revolvente";
+								cnvAutorizado.enabled = false;
+								cboCredRev.dataProvider = credRevObj;
+								for(j = 0; j < credRevObj.length; j++){
+									if (credRevObj[j].aut.toString() == info.autorCrr){
+										cboCredRev.selectedIndex = j;
+										break;
+									}
+								}	
+							}
+							for(j = 0; j < tipoProdObj.length; j++){
+								if (tipoProdObj[j].id.toString() == info.cdgTipoProd){
+									cboTipoProd.selectedIndex = j;
+									cargaProdCred();
+									break;									
+								}
+							}
+						}
+					});
+					//Obtiene informacion del tipo de producto
+					wsCat.getCatalogoGral.send(11);
+				});
+				params[0] = acred;
+				//Obtiene informacion de los creditos revolventes del acreditado
+				wsCat.getInfoAcred.send(12, params);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}		
+			
+			public function obtieneProdCred():String{
+				return cboProdCred.selectedItem.id;
+			}
+			
+			public function obtieneTipoProd():String{
+				return cboTipoProd.selectedItem.id;
+			}
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvProdSolic" x="10" y="10" width="520" height="110" styleName="canvasMod">
+		<mx:FormItem label="Tipo de Producto:" id="tipoProd" visible="true" x="48.5" y="19" width="335">
+			<mx:ComboBox id="cboTipoProd" labelField="nombre" change="cargaProdCred()" width="225"/>
+		</mx:FormItem>
+		<mx:FormItem label="Producto de Crédito:" id="prodCred" visible="true" x="34.5" y="63" width="460">
+			<mx:ComboBox id="cboProdCred" labelField="nombre" width="340" change="actualizaProd()"/>
+		</mx:FormItem>
+	</mx:Canvas>
+</mx:Canvas>

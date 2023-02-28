@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" height="100%" width="100%" xmlns:forms="forms.*" 
+	xmlns:Data="Data.*" xmlns:Administracion="Administracion.*" creationPolicy="all" creationComplete="initApp()">
+
+	<mx:Script>
+		<![CDATA[
+		
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.CloseEvent;
+		import mx.events.EffectEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.xml.SimpleXMLDecoder;
+		import mx.utils.ArrayUtil;  
+		import mx.validators.Validator;	
+		
+		private var _xmlInfo:XML = new XML();
+		private var _xmlMoneda:XML =  new XML();
+		
+		public var estObj:ArrayCollection = new ArrayCollection();
+		public var infoObj:ArrayCollection = new ArrayCollection();
+		public var monedaObj:ArrayCollection = new ArrayCollection();
+		
+		private var global:Globales;
+		private var du:Utils;
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var texto:String;
+		public var control:Number;
+		private var vResult:ValidationResultEvent;
+		
+		private function actualizarAlertas(event:Event):void{
+			consultar();
+		}
+		
+		private function consultar():void{
+			/*var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			if(cboEstatus.selectedIndex != 0){
+				var cont:int;
+				var estatus:String = cboEstatus.selectedItem.codigo;
+				var fecIni:String = dtfFecIni.text;
+				var fecFin:String = dtfFecFin.text;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+				
+				dgReg.dataProvider = null;
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlInfo = new XML(evt.result.toString());
+						
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+						
+					if(_xmlInfo.elements().length() > 0){
+						formateaInfo();
+						dgReg.dataProvider = infoObj;
+						cont = _xmlInfo.elements().length();
+						lblTotal.text = cont + " Registro(s)";
+					}
+					else{
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						lblTotal.text = "";
+					}
+				});
+				params[0] = estatus;
+				params[1] = fecIni;
+				params[2] = fecFin;
+				wsCat.getListado.send(33, params);
+			}
+			else
+				Alert.show("Debe seleccionar el estatus de la Alerta.",titulo,4,null,null,global.iAlert);	*/
+		}
+		
+		private function formateaInfo():void{
+			var oItem:Object;
+			var i:int;
+			var cont:int = _xmlInfo.elements().length();
+			var item:Array = new Array;
+			
+			infoObj.removeAll();
+			infoObj.refresh();
+			
+			for(i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.FREG = _xmlInfo.Table[i].FREG;
+				oItem.ALTA = _xmlInfo.Table[i].FALTA;
+				oItem.DESCALERTA = _xmlInfo.Table[i].DESCALERTA;
+				oItem.SECUENCIA = _xmlInfo.Table[i].SECUENCIA;
+				oItem.DESCRIPCION = _xmlInfo.Table[i].DESCRIPCION;
+				oItem.DESCTIPO = _xmlInfo.Table[i].DESCTIPO;
+				oItem.DESCESTATUS = _xmlInfo.Table[i].DESCESTATUS;
+				oItem.CDGCL = _xmlInfo.Table[i].CDGCL;
+				oItem.NOMCL = _xmlInfo.Table[i].NOMCL;
+				oItem.REP = Boolean(Number(_xmlInfo.Table[i].REP.toString()));
+				oItem.NOREP = Boolean(Number(_xmlInfo.Table[i].NOREP.toString()));
+				oItem.REGISTROPE = _xmlInfo.Table[i].REGISTROPE;
+				oItem.NOMREGPE = _xmlInfo.Table[i].NOMREGPE;
+				oItem.REPORTADO = _xmlInfo.Table[i].REPORTADO;
+				oItem.JUSTIFICA = _xmlInfo.Table[i].JUSTIFICA;
+				item.push(oItem);	
+			}
+			infoObj = new ArrayCollection(item);
+		}
+		
+		private function formateaMoneda():void{
+				var i:int;
+				var cont:int = _xmlMoneda.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlMoneda.Table[i].CODIGO;	
+					oItem.nombre = _xmlMoneda.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				monedaObj = new ArrayCollection(item);
+			}
+		
+		public function initApp():void{
+			var wsCat:WebService = new WebService();
+			var params:Array = new Array();
+			global = new Globales();
+			du = new Utils();
+			titulo = "Parámetros PLD";
+			lblTitulo.text = titulo.toUpperCase();
+			du.initWsCat(wsCat);
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlMoneda = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsCat);
+				
+				if (_xmlMoneda.elements().length() > 0){
+					formateaMoneda();
+					cboMoneda.dataProvider = monedaObj;
+				} 	
+				
+				for(var j:int = 0; j < monedaObj.length; j++){
+					if(monedaObj[j].id.toString() == "MN"){
+						cboMoneda.selectedIndex = j;
+						break;	
+					}
+				}						
+			});
+			wsCat.getCatalogoGral.send(14);
+		}		
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function limpiar():void{
+			/*cboEstatus.selectedIndex = 0;
+			dtfFecIni.selectedDate = null;
+			dtfFecFin.selectedDate = null;
+			dgReg.dataProvider = null;
+			lblTotal.text = "";*/
+		}
+		
+		public function muestraDictamen():void{
+			/*var alta:String = dgReg.selectedItem.ALTA;
+			var sec:String = dgReg.selectedItem.SECUENCIA;
+			var comDictamen:DictamenAlertas = new DictamenAlertas();
+			comDictamen = DictamenAlertas(PopUpManager.createPopUp(this,DictamenAlertas,true));
+			comDictamen.addEventListener(Event.REMOVED_FROM_STAGE, actualizarAlertas);
+			PopUpManager.centerPopUp(comDictamen);
+			comDictamen.init(alta, sec);*/
+		}
+				
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas width="420" height="255" backgroundColor="#ffffff" backgroundAlpha="1.0" id="canvas1">
+		<mx:Label id="lblTitulo" x="21" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="21" y="39" width="380.5" height="175" styleName="canvasMod">
+			<mx:Label id="lblCodigo" x="18" y="12" text="Número Parcialidades:"/>
+			<mx:TextInput id="txtCodigo" x="138" y="10" width="35"/>
+			<mx:Label id="lblNombre" x="61" y="108" text="Monto Divisa:"/>
+			<mx:TextInput id="txtNombre" x="138" y="106" width="96"/>
+			<mx:Label id="lblMoneda" x="84" y="77" text="Moneda:"/>
+			<mx:ComboBox id="cboMoneda" x="138" y="74" width="153" labelField="nombre"></mx:ComboBox>
+			<mx:Label id="lblCodigo0" x="10" y="44" text="Número Transacciones:"/>
+			<mx:TextInput id="txtCodigo0" x="138" y="42" width="35"/>
+			<mx:Label id="lblNombre0" x="15" y="140" text="Email Of. Cumplimiento:"/>
+			<mx:TextInput id="txtNombre0" x="138" y="138" width="230.5"/>
+		</mx:Canvas>
+		<mx:Button id="btnAceptar" x="294.5" y="221" label="Registrar"/>
+	</mx:Canvas>
+</mx:Canvas>

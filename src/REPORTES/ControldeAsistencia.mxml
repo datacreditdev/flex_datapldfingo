@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="180" backgroundAlpha="1.0" backgroundColor="#FFFFFF" 
+	creationPolicy="all" xmlns:control="CONTROL.*" creationComplete="initApp()">
+	<mx:Script>
+		<![CDATA[
+			public function initApp():void{
+				comFiltroGrupoCiclo.init("7","Control de Asistencia");			
+			}		
+		]]>
+	</mx:Script>
+	<control:FiltroGrupoCiclo id="comFiltroGrupoCiclo"/>
+</mx:Canvas>

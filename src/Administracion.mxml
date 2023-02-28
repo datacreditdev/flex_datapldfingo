@@ -1,0 +1,589 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" initialize="initApp()" xmlns:control="CONTROL.*">
+	<mx:states>
+		<mx:State name="LogedIn">
+			<mx:RemoveChild target="{cnvMain}"/>
+			<mx:AddChild relativeTo="{vdividedbox1}" position="lastChild">
+				<mx:HBox width="100%" height="100%">
+					<mx:HDividedBox width="225" height="100%" horizontalGap="5" id="v_navigation" resizeEffect="{resize}">
+						<mx:Canvas width="225" height="100%" horizontalScrollPolicy="off">
+							<mx:VBox x="0" y="0" width="12" height="100%" borderStyle="inset" verticalAlign="middle">
+								<mx:Button click="Resize()" width="8" height="100" borderColor="#000000" fillAlphas="[1.0, 1.0, 1.0, 1.0]" themeColor="#000000"/>
+							</mx:VBox>
+							<mx:VBox x="10" y="0" width="215" height="100%" horizontalScrollPolicy="off"> 
+								<mx:Accordion width="215" height="100%" id="mainMenu" resizeToContent="true" click="{fillMenu(event)}">
+									<mx:Repeater id="DynamicMenu" height="200" dataProvider="{dMainMenu.Table}">
+										<mx:Canvas label="{DynamicMenu.currentItem.DESCRIPCION}" id="ItemA" width="100%" height="100%"  verticalScrollPolicy="off" horizontalScrollPolicy="off" data="{DynamicMenu.currentItem.COD_MODULO}" themeColor="#FFFFFF">
+											<mx:List x="0" y="0" id="lstSubMenu" width="213" height="100%" dataProvider="{dSubMenu.Table}" labelField="DESCRIPCION" itemClick="{Navegar(event)}"></mx:List>
+										</mx:Canvas>
+									</mx:Repeater>													
+								</mx:Accordion>	
+							</mx:VBox>
+						</mx:Canvas>
+					</mx:HDividedBox>
+					<mx:HDividedBox width="100%" height="100%" horizontalGap="5" id="v_main" borderStyle="solid">
+						<mx:Canvas width="100%" height="100%">
+							<mx:Canvas id="cnvView2" label="View 2" width="100%" height="100%" themeColor="#FFFFFF" visible="false">
+								<control:formPdf id="comFormPdf" width="100%" height="100%" visible="false"/>
+							</mx:Canvas>	
+							<mx:ViewStack id="MainWindow" width="100%" height="100%" x="0">
+								<mx:Canvas id="cnvView1" label="View 1" width="100%" height="100%" themeColor="#FFFFFF">
+								</mx:Canvas>							
+							</mx:ViewStack>
+						</mx:Canvas>
+					</mx:HDividedBox>
+				</mx:HBox>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas2}" position="lastChild">
+				<mx:Label x="224" y="20" text="Fecha:" fontWeight="bold"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas2}" position="lastChild">
+				<mx:Label x="273" y="20" text="-" width="128" id="lblFecha"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas2}" position="lastChild">
+				<mx:Label x="210" y="1" text="Sucursal:" fontWeight="bold"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas2}" position="lastChild">
+				<mx:Label id="lblSucursal" x="273" y="1" width="250"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas2}" position="lastChild">
+				<mx:Label y="1" text="Usuario:" fontWeight="bold" right="258"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas2}" position="lastChild">
+				<mx:Label id="lblUser" y="1" right="10" textAlign="left" width="240"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas2}" position="lastChild">
+				<mx:LinkButton y="14" width="30" height="30" id="btnSalir" toolTip="Cerrar sesión y salir del sistema" right="10" click="salir()">
+					<mx:icon>@Embed(source='assets/icon-exit.png')</mx:icon>
+				</mx:LinkButton>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas2}" position="lastChild">
+				<mx:Image x="10" y="0" source="assets/logoMini.png" scaleContent="true" width="118" height="45" id="imgSup"/>	
+			</mx:AddChild>
+			<mx:SetProperty target="{imgSup}" name="alpha" value="1.0"/>
+		</mx:State>
+		<mx:State name="Actualiza">
+			<mx:SetProperty target="{lblUsuario}" name="text" value="Escriba su contraseña anterior:"/>
+			<mx:SetProperty target="{lblPass}" name="text" value="Escriba su nueva contraseña:"/>
+			<mx:SetProperty target="{lblUsuario}" name="y" value="304"/>
+			<mx:SetProperty target="{lblPass}" name="y" value="361"/>
+			<mx:AddChild relativeTo="{cnvLogin}" position="lastChild">
+				<mx:TextInput id="txtPwdAnt" x="400.75" y="304" displayAsPassword="true" keyDown="keyListener(event)" />
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvLogin}" position="lastChild">
+				<mx:TextInput id="txtPwdNuevo" x="399.25" y="361" displayAsPassword="true" keyDown="keyListener(event)" restrict="A-Z;a-z;0-9;" width="160"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvLogin}" position="lastChild">
+				<mx:TextInput id="txtConfPwd" x="399.25" y="391" width="160" displayAsPassword="true" keyDown="keyListener(event)" restrict="A-Z;a-z;0-9;"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvLogin}" position="lastChild">
+				<mx:Button x="328.25" y="433" label="Modificar" id="btnModifica" width="120" click="actualizaPwd()"/>
+			</mx:AddChild>
+			<mx:SetProperty target="{lblPass}" name="x" value="223.25"/>
+			<mx:SetProperty target="{lblUsuario}" name="x" value="215.75"/>
+			<mx:RemoveChild target="{txtUsr}"/>
+			<mx:RemoveChild target="{txtPwd}"/>
+			<mx:RemoveChild target="{btnLogin}"/>
+			<mx:AddChild relativeTo="{txtConfPwd}" position="before">
+				<mx:Label id="lblPass0" x="214.25" y="391" text="Confirme su nueva contraseña:" fontFamily="Arial" fontSize="12" textAlign="center"/>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	<mx:Style source="assets/css/vistaremix/vistaremix.css"/>
+    <mx:HTTPService id="httpService"
+            resultFormat="e4x"
+            fault="httpService_fault(event);"
+            result="httpService_result(event)" />
+    <mx:VBox x="0" y="0" height="100%" width="100%">
+		<mx:VDividedBox width="100%" verticalGap="5" horizontalAlign="center" height="45">
+			<mx:Canvas width="100%" height="100%" id="canvas2">
+			</mx:Canvas>
+		</mx:VDividedBox>
+		<mx:VDividedBox width="100%" verticalGap="5" horizontalAlign="center" height="100%" id="vdividedbox1">
+			<mx:Canvas id="cnvMain" width="100%" height="100%">
+				<mx:Canvas id="cnvLogin"   width="775" height="570" horizontalCenter="0" verticalCenter="-49">
+					<mx:Button id="btnLogin" x="343.5" y="392" label="Entrar" width="120" click="loginUsuario()"/>
+					<mx:Label id="lblUsuario" x="293" y="302" text="Usuario:" fontFamily="Arial" fontSize="12" textAlign="center"/>
+					<mx:TextInput id="txtUsr" x="353" y="302" width="150" color="#000000" keyDown="keyListener(event)" fontSize="12"/>
+					<mx:Label id="lblPass" x="272" y="345" text="Contraseña:" fontFamily="Arial" fontSize="12"/>
+					<mx:TextInput id="txtPwd" x="353" y="345" width="150" color="#000000" displayAsPassword="true" keyDown="keyListener(event)" maxChars="12" fontSize="12"/>
+					<mx:Image id="imgLogin" source="assets/logoLogin.png" width="450" scaleContent="false" height="235" x="162.5" y="35" visible="true"/>
+				</mx:Canvas>
+			</mx:Canvas>
+		</mx:VDividedBox>
+	</mx:VBox>
+	<mx:Resize id="resize"/>	
+	<mx:transitions>
+		<mx:Transition id="changeState" fromState="*" toState="LogedIn">
+			<mx:Parallel>
+				<mx:Dissolve duration="1000" />				
+			</mx:Parallel>			
+		</mx:Transition>
+	</mx:transitions>
+                      
+   <mx:RegExpValidator id="vPass"
+            source="{txtPwdNuevo}"
+            property="text"
+            expression="(^[a-zA-Z].[a-zA-Z0-9]\{6,10\}$)"
+            flags="i"
+            triggerEvent=""
+            noMatchError="La contraseña no es válida. Introduzca una contraseña de 8 a 12 caracteres, que como mínimo tenga una letra y un número. Dicha contraseña no debe iniciar con un valor numérico"/>
+            
+	<mx:Script>
+		<![CDATA[
+			import Data.Modulo;
+		import CONTROL.pLoadingMsg;
+		import CONTROL.pLoading;
+		import PRINCIPAL.MainPrincipal;
+		import mx.events.IndexChangedEvent;
+		import Data.Globales;
+		import Data.Utils;
+		import flash.external.ExternalInterface;
+		import flash.utils.getDefinitionByName;
+		import mx.collections.*;
+		import mx.controls.Alert;
+		import mx.controls.DateField;
+		import mx.controls.List;
+		import mx.core.BitmapAsset;
+		import mx.core.Container;
+		import mx.core.ComponentDescriptor;		
+		import mx.core.mx_internal;
+		import mx.events.FlexEvent;
+		import mx.events.CloseEvent;
+		import mx.formatters.DateFormatter;
+		import mx.managers.CursorManager;		
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.FaultEvent;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;
+
+		public var wsStr:XML = new XML();
+		
+		[Bindable]
+		public var dMainMenu:XML;		
+		[Bindable]
+		public var dSubMenu:XML;		
+		[Bindable]
+		public var usrInfo:XML = new XML();		
+		[Bindable]
+		public var _Current_URL:String;
+		[Bindable]
+		public var _Current_Fecha:Date;	
+		[Bindable]
+		public var _Ult_Acceso_Fecha:Date;	
+		[Bindable]
+		public var U_ID:String;
+		[Bindable]
+		public var NOM_U_ID:String;
+		[Bindable]
+		public var S_ID:String;
+		[Bindable]
+		public var SUC_ID:String;
+		[Bindable]
+		public var cadPerfil:String;
+		[Bindable]
+		public var PERFIL_ID:Array;
+		[Bindable]
+		public var PUESTO:String;
+		[Bindable]
+		public var SESSION_ID:int = 0;      
+        [Bindable]        
+        public var _Current_Mod_Id:String;
+        [Bindable]        
+        public var _xmlCoord:XML;
+        [Bindable]
+		public var _xmlReg:XML;       
+        
+        public var global:Globales
+        public var Last_Mod_Id:String;
+		public var ws:WebService;
+		public var wsCat:WebService;
+		public var wsMS:WebService;
+		public var du:Utils;
+		  
+        private var dp:XML;
+        private var modulo:Modulo;
+        private var loading:pLoading;
+        private var loadingMsg:pLoadingMsg;
+        
+        public function actualizaPwd():void{
+			if(validaMod()){
+				var Params:Array;
+				ws = du.initWs(ws);
+				du.sCursor();
+				du.ejecutaWsMethod(ws,function(event:ResultEvent):void{
+					var res:String = event.result.toString();
+					
+					if(res.substr(0,1) == "1"){
+						txtPwdAnt.text = "";
+						txtPwdNuevo.text = "";
+						txtConfPwd.text = "";
+						Application.application.currentState = null;
+						txtUsr.text = "";
+						txtPwd.text = "";
+						txtUsr.setFocus();
+						Alert.show("Proceso finalizado exitosamente.","Mantenimiento de Usuario",4,null,null,global.iInfo);
+					}
+					else
+						Alert.show(res.substr(2, res.length - 1),"Mantenimiento de Usuario",4,null,null,global.iAlert);
+																			
+					du.rCursor();
+					du.closeWs(ws);												
+					});
+				Params = new Array();
+				Params[0] = U_ID;
+				Params[1] = txtPwdAnt.text;
+				Params[2] = txtPwdNuevo.text;
+				ws.ESLoginMethods.send(15,Params);
+			}
+		}
+        
+		public function bloquear():void{
+			loading = pLoading(PopUpManager.createPopUp(this, pLoading, true));
+			PopUpManager.centerPopUp(loading);							
+		}
+		
+		public function desbloquear():void{
+			PopUpManager.removePopUp(loading)	
+		}
+		
+		private function initApp():void{				
+			httpService.url = "Config.xml";
+            httpService.send();
+            txtUsr.setFocus();
+            global = new Globales();
+            ws = new WebService();
+            wsMS = new WebService();
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		//----------------------ARCHIVO DE CONFIGURACIÓN---------------------------
+		private function httpService_fault(evt:FaultEvent):void {
+            var title:String = evt.type + " (" + evt.fault.faultCode + ")";
+            var text:String = evt.fault.faultString;                             
+        }
+
+        private function httpService_result(evt:ResultEvent):void {                                
+            wsStr = new XML(evt.result.toString());
+            du = new Utils();                          
+        }
+       
+		private function loginUsuario():void{
+			var Params:Array;
+			var i:int;
+			btnLogin.setFocus();								
+			if (txtUsr.text == ''){
+				du.showMsg("Se requiere el nombre de usuario");
+				btnLogin.setFocus();									
+				return;
+			}
+			if (txtPwd.text == ''){
+				du.showMsg("Se requiere el password");
+				btnLogin.setFocus();
+				return;
+			}	
+			
+			bloquear();				
+			ws = du.initWs(ws);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(ws, function(event:ResultEvent):void {
+				dp = new XML(event.result.toString());	
+				du.rCursor();	
+				du.closeWs(ws);				
+				if (dp.elements().length() == 0){
+					desbloquear();
+					Alert.okLabel = "Aceptar";
+					Alert.show("Usuario y/o contraseña incorrectos.","Acceso al Sistema",4,null,null,global.iAlert);
+					return;													
+				}else{							
+					try{							
+						usrInfo =  new XML(event.result.toString());	
+						var rSplit:Array = event.result.toString().split('|');
+						if(rSplit[0].toString() == "-1"){
+							desbloquear();
+							du.showMsg(rSplit[1].toString());
+							return;
+						}													
+					}catch(err:Error){
+						desbloquear();
+						Alert.okLabel = "Aceptar";
+						Alert.show(err.toString(),"Acceso al Sistema",4,null,null,global.iAlert);
+					}
+					
+					U_ID = usrInfo.Table[0].CODIGO;
+					NOM_U_ID = usrInfo.Table[0].NOMBREC;
+					var t:Date = global.convCadenaFecha(usrInfo.Table[0].FECHA);
+				    _Current_Fecha = t;
+					_Ult_Acceso_Fecha = usrInfo.Table[0].FULTACCESO.toString() != ""? global.convCadenaFecha(usrInfo.Table[0].FULTACCESO): null;
+					
+					if(_Ult_Acceso_Fecha < new Date(t.getFullYear(), t.getMonth(), t.getDate() - 30)){
+						desbloquear();
+						Application.application.currentState = "Actualiza";
+						txtPwdAnt.setFocus();
+						var ingreso:String = _Ult_Acceso_Fecha != null? "\n\nÚltimo acceso al sistema " + global.formatoFecha(_Ult_Acceso_Fecha)+ "." : "";
+						var est:String = "\n\nIntroduzca una contraseña de 8 a 12 caracteres, que como mínimo tenga una letra y un número. Dicha contraseña no debe iniciar con un valor numérico";
+						Alert.show("Es necesario modificar la contraseña debido a que ha superado el periodo de vigencia." + ingreso + est,"Mantenimiento de Usuario",4,null,null,global.iAlert);								
+						return;	
+					}
+					
+					Application.application.currentState = "LogedIn";
+					systemManager.addEventListener(FlexEvent.IDLE, userIdle);
+			
+				    lblUser.text = usrInfo.Table[0].NOMBREC;
+				    lblSucursal.text = usrInfo.Table[0].S_D;
+				    lblFecha.text = global.formatoFecha(t);
+				    //ASIGNACION DE VARIABLES GLOBALES
+				    S_ID = usrInfo.Table[0].S_ID;
+				    PUESTO = usrInfo.Table[0].PUESTO;
+				   	_Current_URL = Application.application.url.toString();
+				   	_Current_URL = _Current_URL.substring(0,_Current_URL.lastIndexOf("/") + 1);
+				  	if (S_ID != "")
+				    	SESSION_ID = usrInfo.Table[0].S_ID;
+				    else 
+				    	SESSION_ID = 1;
+				   
+				    PERFIL_ID = new Array();
+				    cadPerfil = "";
+				    
+				    for(i = 0; i < usrInfo.elements().length(); i++){	
+				    	PERFIL_ID[i] = usrInfo.Table[i].COD_PERFIL;
+				    	cadPerfil += (cadPerfil != ""? ",":"") + "'" + usrInfo.Table[i].COD_PERFIL + "'"; 
+				    }
+
+				    /*var t:Date = DateField.stringToDate(usrInfo.Table[0].FECHA, 'DD/MM/YYYY');
+				    var df:DateFormatter = new DateFormatter();
+				    df.formatString = "DD/MM/YYYY";	    					   
+				    lblFecha.text = df.format(t);
+				    _Current_Fecha = t;*/
+				    
+				    var mod:MainPrincipal = new MainPrincipal();
+					MainWindow.removeAllChildren();   
+					MainWindow.addChild(mod);			 			
+				}					
+				
+				ws = du.initWs(ws);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
+					dMainMenu = new XML(evt.result.toString());
+					du.rCursor();
+					du.closeWs(ws);
+					
+						mainMenu.dispatchEvent(new MouseEvent(MouseEvent.CLICK, true, false));
+					
+						wsCat = new WebService;
+						du.initWsCat(wsCat);
+						du.sCursor();
+						
+						du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+							_xmlReg = new XML(event.result.toString());				
+							
+							du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+								_xmlCoord = new XML(event.result.toString());				
+								
+								du.rCursor();
+								du.closeWs(wsCat);
+								desbloquear();	
+							});
+							//Método para extraer las sucursales disponibles para el usuario
+							Params = new Array;
+							Params[0] = U_ID;
+							wsCat.getCatalogoUsuario.send(2, Params); 
+						});
+						//Método para extraer las regiones disponibles para el usuario
+						Params = new Array;
+						Params[0] = U_ID;
+						wsCat.getCatalogoUsuario.send(1, Params); 
+				});
+				Params = new Array();
+				Params[0] = cadPerfil;
+				ws.ESLoginMethods.send(2,Params);	//  Método para obtener los módulos asignados al perfil del usuario 	
+			});	
+			Params = new Array(2);
+			var objPwd:Object = txtPwd.text;
+			Params[0] = txtUsr.text;
+			Params[1] = objPwd.toString();			
+			ws.ESLoginMethods.send(1,Params); //Método para Login								
+		}
+		
+		private function fillMenu(evt:Event):void{
+			var Params:Array;
+			var r:String;							
+			var cnv:Canvas = evt.currentTarget.selectedChild;				
+			var _Mod_Id:String = cnv.data.toString();	
+			var indice:int = evt.currentTarget.selectedIndex;
+			indice -= 1; 							
+			var strFrm:String = dMainMenu.Table[indice].FORM;							
+			var mod:MainPrincipal = new MainPrincipal();
+			
+			ExternalInterface.call("actualizarTitulo");
+			
+			if(_Mod_Id == '0'){					
+				MainWindow.removeAllChildren();	
+				MainWindow.addChild(mod);			
+				Last_Mod_Id = _Mod_Id;
+			}
+			
+			if(_Mod_Id!='0' && _Mod_Id != Last_Mod_Id){
+				try{
+					var myClass:Class = flash.utils.getDefinitionByName(strFrm) as Class;	
+					var myComponent:* = new myClass();
+					MainWindow.removeAllChildren();		
+					MainWindow.addChild(myComponent);		
+				}
+				catch(err:Error){						
+					MainWindow.removeAllChildren();		
+					MainWindow.addChild(mod);			
+				}
+				Last_Mod_Id = _Mod_Id;
+				ws = du.initWs(ws);
+				du.sCursor();
+				du.ejecutaWsMethod(ws,function(event:ResultEvent):void{
+					dSubMenu = new XML(event.result.toString());
+					du.rCursor();
+					du.closeWs(ws);				
+				});
+				Params = new Array();
+				Params[0] = cadPerfil;
+				Params[1] = _Mod_Id;
+				ws.ESLoginMethods.send(4,Params);	//Método para obtener los submodulos de un módulo seleccionado.	
+			}				 				
+		}
+       
+		public function keyListener(event:KeyboardEvent):void{
+			if (event.keyCode == 13){
+				if(currentState == null)					
+					loginUsuario();		
+				else if(currentState == "Actualiza")
+					actualizaPwd();
+			}				
+		}
+       
+       	private function Resize():void{
+       		if(v_navigation.width == 11)
+       			v_navigation.width = 225;           		
+       		else if(v_navigation.width == 225)
+       			v_navigation.width = 11;
+       	}
+       
+       	private function Navegar(evt:Event):void{	       		
+       		var a:Object = evt.currentTarget.selectedItem;
+       		_Current_Mod_Id = a.ITEM.toString();
+       		var frm:String = a.FORM.toString();
+       		frm = frm.replace("/","");
+       		frm = global.reemplazaCaracteres(frm);
+       		
+       		ocultaPdf();       			       			       		
+			var myClass:Class = flash.utils.getDefinitionByName(frm) as Class;	
+			var myComponent:* = new myClass();
+			
+			MainWindow.removeAllChildren();		
+			MainWindow.addChild(myComponent);				
+			Resize();
+       	}
+       	
+       	private function salir():void{
+			var Params:Array = new Array();
+			var t:Timer = new Timer(500, 1);
+			if(SESSION_ID == 0)
+				return;
+				
+			loadingMsg = pLoadingMsg(PopUpManager.createPopUp(this, pLoadingMsg, true));
+			loadingMsg.init("Redireccionando a la ventana de Acceso...");
+			PopUpManager.centerPopUp(loadingMsg);	
+			
+			t.addEventListener(TimerEvent.TIMER_COMPLETE, function(event:TimerEvent):void{
+				var urlString:String = _Current_URL + "Administracion.html"; 
+				var request:URLRequest = new URLRequest(urlString);
+				navigateToURL(request,"_self");
+			});
+			t.start();			
+		}
+		
+		private function GuardarBitacora():void{
+			var Params:Array;
+			ws = du.initWs(ws);
+				du.sCursor();
+				du.ejecutaWsMethod(ws,function(event:ResultEvent):void{												
+					du.rCursor();
+					du.closeWs(ws);												
+					});
+			Params = new Array();
+			Params[0] = SESSION_ID;
+			Params[1] = _Current_Mod_Id;
+			Params[2] = 1;
+			Params[3] = 'Accesó al sub-módulo';
+				
+			ws.ESLoginMethods.send(5,Params);
+		}
+		
+		public function muestraPdf(consulta:String):void{
+			MainWindow.visible = false;
+			cnvView2.visible = true;
+			comFormPdf.visible = true;
+			comFormPdf.muestraPdf(consulta);
+		}
+		
+		public function ocultaPdf():void{
+			comFormPdf.ocultarPdf();
+			MainWindow.visible = true;
+			comFormPdf.visible = false;
+			cnvView2.visible = false;
+		}
+		
+		private function userIdle(e:FlexEvent):void {
+			//verifica que la sesión no se encuentre inactiva mas de 15 minutos 7200
+			if(currentState == "LogedIn"){
+				if(e.currentTarget.mx_internal::idleCounter == 7200){
+					if(this.currentState == 'LogedIn'){
+						ocultaPdf();
+						systemManager.removeEventListener(FlexEvent.IDLE, userIdle);
+						Alert.show("Tiempo de sesión expirado.","Sesión",4,null,finSesion,global.iInfo);
+					}
+				}
+			}
+		}
+
+		private function finSesion(event:CloseEvent):void{
+			salir();
+		}
+		
+		private function validaMod():Boolean{
+			if(txtPwdAnt.text == ""){
+				Alert.show("Debe capturar la contraseña anterior.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				return false;
+			}
+			if(txtPwdNuevo.text == ""){
+				Alert.show("Debe capturar la nueva contraseña.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				return false;
+			}
+			if(txtConfPwd.text == ""){
+				Alert.show("Debe capturar la confirmación de contraseña.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				return false;
+			}
+			if(txtPwdNuevo.text != txtConfPwd.text){
+				Alert.show("La nueva contraseña no coincide con su confirmación.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				return false;
+			}
+			if(txtPwdNuevo.text == txtPwdAnt.text){
+				Alert.show("Debe capturar una nueva contraseña diferente de la anterior.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				return false;
+			}
+			var arrayResult:Array = Validator.validateAll([vPass]);
+            if(arrayResult.length > 0)
+            {
+                Alert.show("Formato de la nueva contraseña incorrecto.\n\nIntroduzca una contraseña de 8 a 12 caracteres, que como mínimo tenga una letra y un número. Dicha contraseña no debe iniciar con un valor numérico","Mantenimiento de Usuario",4,null,null,global.iAlert);
+                return false;
+            }
+			return true;
+		}
+		]]>
+	</mx:Script>
+</mx:Application>

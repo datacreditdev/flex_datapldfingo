@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"  width="425" height="479" layout="absolute" 
+	showCloseButton="true" close="cerrar()">
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+    
+	<!--Componente que permite mostrar la informacion de la tabla de amortizacion-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CollectionEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+					
+			private var _xmlTabla:XML = new XML();
+			
+			private var pagos:ArrayCollection;
+
+			private var global:Globales;
+			private var du:Utils;
+			private var titulo:String;
+			private var codigo:String;
+			private var nombre:String;
+			private var ciclo:String;
+			private var tipoCred:String;
+			private var total:Number;
+			
+			private function actualizaTotal(event:CollectionEvent):void{
+				calculaTotal();
+			}
+			
+			private function calculaTotal():void{
+				var cont:int = pagos.length;
+				total = 0;
+				
+				for(var i:int = 0; i < cont; i++){
+					total += Number(pagos[i].cantidad);
+				}
+				lblTotal.text = global.formatoMoneda(total.toString());
+			}
+			
+			private function cargaTablaAmort():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+						
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlTabla = new XML(evt.result.toString());
+	
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+					
+					if(_xmlTabla.elements().length() > 0){
+						formateaTablaAmort();
+						dgTablaAmort.dataProvider = pagos;
+						calculaTotal();
+					}
+				});
+				params[0] = codigo;
+				params[1] = ciclo;
+				params[2] = tipoCred;
+				//Obtiene el listado de registros de la tabla de Amortización
+ 				wsCat.getListado.send(45, params);
+ 				
+ 				/*du.initWsCat(wsMS);
+				du.sCursor();
+				Application.application.bloquear();
+						
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlTabla = new XML(evt.result.toString());
+	
+					du.rCursor();
+					du.closeWs(wsMS);
+					Application.application.desbloquear();
+					
+					if(_xmlTabla.elements().length() > 0){
+						formateaTablaAmort();
+						dgTablaAmort.dataProvider = pagos;
+						calculaTotal();
+					}
+				});
+				wsMS.getTablaAmort.send(this.codigo, this.ciclo, this.tipoCred);*/
+			}
+			
+			private function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function enviar():void{
+				dispatchEvent(new Event("enviar"));
+				cerrar();
+			}
+			
+			private function formateaTablaAmort():void{
+				var cont:int = _xmlTabla.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object;
+					oItem.numero = _xmlTabla.Table[i].NOPAGO;
+					oItem.fecha = _xmlTabla.Table[i].FECHA;
+					oItem.cantidad = Number(_xmlTabla.Table[i].CANTIDAD);
+					oItem.capital = Number(_xmlTabla.Table[i].CAPITAL);
+					oItem.interes = Number(_xmlTabla.Table[i].INTERES);
+					item.push(oItem);
+				}
+				pagos = new ArrayCollection(item);
+				pagos.addEventListener(CollectionEvent.COLLECTION_CHANGE,actualizaTotal);
+			}
+			
+			public function init(codigo:String, nombre:String, ciclo:String, tipoCred:String, editable:Boolean = false):void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Tabla de Amortización";
+				this.title = titulo;
+				this.codigo = codigo;
+				this.nombre = nombre;
+				this.ciclo = ciclo;
+				this.tipoCred = tipoCred;
+				
+				lblCodigo.text = codigo;
+				lblNombre.text = nombre;
+				lblCiclo.text = ciclo;
+				dgTablaAmort.editable = editable;
+				
+				cargaTablaAmort();
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas width="398.25" height="100" styleName="canvasMod" x="12.75" y="10">
+		<mx:Label x="28" y="10" text="Código:"/>
+		<mx:Label x="24" y="38" text="Nombre:"/>
+		<mx:Label x="38" y="66" text="Ciclo:"/>
+		<mx:Label x="77" y="10" id="lblCodigo" textAlign="right"/>
+		<mx:Label x="77" y="38" id="lblNombre" textAlign="right"/>
+		<mx:Label x="77" y="66" id="lblCiclo" textAlign="right"/>
+		<mx:Label x="119" y="66" text="Definición:" visible="false"/>
+		<mx:RadioButton x="182" y="64" label="Automática" visible="false"/>
+		<mx:RadioButton x="269" y="64" label="Manual" visible="false"/>
+	</mx:Canvas>
+	<mx:DataGrid id="dgTablaAmort" width="398.25" height="230" alpha="1.0" sortableColumns="false" x="12.75" y="118">
+		<mx:columns>
+			<mx:DataGridColumn headerText="NO." dataField="numero" width="35" editable="false"/>
+			<mx:DataGridColumn headerText="FECHA PAGO" dataField="fecha" width="90" editable="false"/>
+			<mx:DataGridColumn headerText="AMORTIZACION" dataField="cantidad" width="100" editable="false"/>
+			<!--<mx:DataGridColumn headerText="CAPITAL" dataField="capital" editable="false"/>
+			<mx:DataGridColumn headerText="INTERES" dataField="interes" editable="false"/>-->
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Canvas styleName="canvasMod" x="291" y="356" width="120" height="37.65">
+		<mx:Label id="lblTotal" x="10" y="8.6" textAlign="right" width="100"/>
+	</mx:Canvas>
+	<mx:Button id="btnCancelar" x="350" y="401.65" label="Cerrar" click="cerrar()"/>
+	<mx:Label x="239" y="363" text="Total:" fontSize="14" fontStyle="italic" fontWeight="bold"/>
+</mx:TitleWindow>

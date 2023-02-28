@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="auto" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente que permite observar el listado de regionales y coordinaciones que pertenecen a la empresa-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;  
+			import mx.events.*;  
+			import Data.Globales;
+			import mx.controls.ComboBox;
+			import mx.events.FlexEvent;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.formatters.NumberFormatter;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.CloseEvent;	
+			import mx.events.ListEvent;	
+			import mx.core.Application;
+			import mx.containers.TitleWindow;				
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.collections.ArrayCollection;
+			import mx.effects.easing.Elastic;
+			import mx.events.ValidationResultEvent;            
+
+			public var _xmlReg:XML = new XML();
+			public var _xmlCoord:XML = new XML();
+			[Bindable]
+			public var dPermisos:XML = new XML();
+			[Bindable]
+			public var dpCoord:XMLList = new XMLList();		
+			
+			public var wsMS:WebService = new WebService();	
+			public var du:Utils;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionReg:int;
+			public var accionCoord:int;
+			public var indReg:int;
+			public var indCoord:int;
+			public var vScroll:Number;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			public function activarContCoord(band:Boolean):void{
+				txtCodCoord.editable = band;
+				txtCoord.editable = band;
+				if(alta == true)
+					btnAgregarCoord.enabled = band;
+				btnDatosCoord.enabled = band;
+			}
+			
+			public function activarContModCoord(band:Boolean):void{
+				if(borrado == true)
+					btnEliminarCoord.enabled = band;
+				if(edicion == true)	
+					btnEditarCoord.enabled = band;
+			}
+			
+			public function activarContReg(band:Boolean):void{
+				if(edicion == true)
+					btnEditar.enabled = band;
+				if(borrado == true)
+					btnEliminar.enabled = band;
+			}
+			
+			public function actualizarCoord(event:Event):void{
+				buscarListaCoord(1);
+			}
+			
+			public function actualizarReg(event:Event):void{
+				buscarReg(1);
+			}
+			
+			//FUNCION QUE SE ENCARGA DE BUSCAR LOS REGISTROS QUE COINCIDEN CON LOS CRITERIOS 
+			//DE BUSQUEDA SELECCIONADOS
+			public function buscarCoord():void{
+				var codigo:String = txtCodCoord.text;
+				var nombre:String = txtCoord.text;
+				if(codigo != "" && nombre != "")
+					dpCoord = _xmlCoord.Table.(CODIGO.toString().substr(0, codigo.length).toLowerCase() == codigo.toLowerCase() && NOMBRE.toString().substr(0, nombre.length).toLowerCase() == nombre.toLowerCase());
+				//busqueda utilizando el campo de codigo de la Sucursal
+				else if	(codigo != "" && nombre == "")
+					dpCoord = _xmlCoord.Table.(CODIGO.toString().substr(0, codigo.length).toLowerCase() == codigo.toLowerCase());
+				//busqueda utilizando el campo de nombre de la Sucursal
+				else if (codigo == "" && nombre != "")
+					dpCoord = _xmlCoord.Table.(NOMBRE.toString().substr(0, nombre.length).toLowerCase() == nombre.toLowerCase());
+				else
+					dpCoord = _xmlCoord.elements();
+				seleccionaCoord();
+			}
+			
+			public function buscarReg(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				if (txtCodReg.text != "" || txtRegional.text != ""){
+					dgRegional.dataProvider = null;
+					du.initWsCat(wsCat);
+					du.sCursor();
+					if(tipo == 1)
+						Application.application.bloquear();
+						
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
+						_xmlReg = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+						
+						if(_xmlReg.elements().length() > 0){
+							dgRegional.dataProvider = _xmlReg.Table;
+							
+							if(accionReg == 2){
+								dgRegional.validateNow();
+								dgRegional.verticalScrollPosition = vScroll;
+								dgRegional.selectedIndex = indReg;
+								this.accionReg = 0;
+							}
+						}
+						seleccionaReg();
+					});
+					params[0] = txtCodReg.text;
+					params[1] = txtRegional.text;
+					wsCat.getListado.send(15, params);
+				}	
+			}
+			
+			public function buscarListaCoord(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var codReg:String = dgRegional.selectedItem.CODIGO;
+				dgCoord.dataProvider = null;
+				du.initWsCat(wsCat);
+				du.sCursor();
+			 	if (tipo == 1)
+					Application.application.bloquear();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
+					_xmlCoord = new XML(evt.result);
+				
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+					
+					if (_xmlCoord.elements().length() > 0){
+						dpCoord = _xmlCoord.elements();
+						buscarCoord();
+						
+						if(accionCoord == 2){
+							dgCoord.validateNow();
+							dgCoord.verticalScrollPosition = vScroll;
+							dgCoord.selectedIndex = indCoord;
+							this.accionCoord = 0;
+						}
+					}
+					seleccionaCoord();
+				});
+				params[0] = codReg;
+				wsCat.getListado.send(16, params);
+			}
+
+			public function eliminarCoord():void{
+				Alert.show("¿Desea eliminar la Coordinación seleccionada?", "Mantenimiento de Coordinaciones", Alert.YES|Alert.NO,null, manejadorEliminarCoord,global.iQuest);
+			}
+			
+			public function eliminarReg():void{
+				Alert.show("¿Desea eliminar la Gerencia Regional seleccionada?", "Mantenimiento de Gerencias Regionales", Alert.YES|Alert.NO,null, manejadorEliminarReg,global.iQuest);
+			}
+			
+			public function iniVar():void{
+				this.indReg = -1;
+				this.indCoord = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function limpiarContCoord():void{
+				txtCodCoord.text = "";
+				txtCoord.text = "";
+			}
+			
+			public function manejadorEliminarCoord(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codReg:String = dgRegional.selectedItem.CODIGO;
+					var codCoord:String = dgCoord.selectedItem.CODIGO;  
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionCoord);
+					wsMS.setAccionCoord.send(3, codReg, codCoord, "", "", "",
+                                 			 "", "", "", "", "");
+			    } 
+			}
+			
+			public function manejadorEliminarReg(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codReg:String = dgRegional.selectedItem.CODIGO;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionReg);
+					wsMS.setAccionReg.send(3, codReg, "", "", "", "", "", "", "", "");
+			    } 
+			}
+			
+			public function mostrarFormCoord(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion == true){
+					var codReg:String = dgRegional.selectedItem.CODIGO;
+					var regional:String = dgRegional.selectedItem.NOMBRE;
+					var comMttoCoord:MttoCoordinacion = new MttoCoordinacion();
+					switch(tipo){
+						case 1: 
+							comMttoCoord = MttoCoordinacion(PopUpManager.createPopUp(this,MttoCoordinacion,true)); 
+							comMttoCoord.addEventListener(Event.REMOVED_FROM_STAGE, actualizarCoord);
+							PopUpManager.centerPopUp(comMttoCoord);
+							comMttoCoord.init(tipo, codReg, regional,"","","");
+							break;
+						case 2: 
+							if (dgCoord.selectedIndex >= 0){
+								accionCoord = tipo;
+								comMttoCoord = MttoCoordinacion(PopUpManager.createPopUp(this,MttoCoordinacion,true)); 
+								var codCoord:String = dgCoord.selectedItem.CODIGO;
+								var coord:String = dgCoord.selectedItem.NOMBRE;
+								var codPers:String = dgCoord.selectedItem.CDGPE;
+								var indice:int = dgCoord.selectedIndex;
+								iniVar();
+								this.indCoord = indice;
+								this.vScroll = dgCoord.verticalScrollPosition;
+								comMttoCoord.addEventListener(Event.REMOVED_FROM_STAGE, actualizarCoord);
+								PopUpManager.centerPopUp(comMttoCoord);
+								comMttoCoord.init(tipo, codReg, regional, codCoord, coord, codPers);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Acreditado","Mantenimiento de Acreditado",4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			public function mostrarFormReg(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoReg:MttoRegional = new MttoRegional();
+				comMttoReg = MttoRegional(PopUpManager.createPopUp(this,MttoRegional,true)); 
+				if(edicion == true){
+					switch(tipo){
+						case 1: 
+							comMttoReg.init(tipo,"","","");
+							comMttoReg.addEventListener(Event.REMOVED_FROM_STAGE, actualizarReg);
+							PopUpManager.centerPopUp(comMttoReg);
+							break;
+						case 2: 
+							if (dgRegional.selectedIndex >= 0){
+								accionReg = tipo;
+								var codReg:String = dgRegional.selectedItem.CODIGO;
+								var regional:String = dgRegional.selectedItem.NOMBRE;
+								var codPers:String = dgRegional.selectedItem.CDGPE;
+								var indice:int = dgRegional.selectedIndex;
+								iniVar();
+								this.indReg = indice;
+								this.vScroll = dgRegional.verticalScrollPosition;
+								comMttoReg.init(tipo, codReg, regional, codPers);
+								comMttoReg.addEventListener(Event.REMOVED_FROM_STAGE, actualizarReg);	
+								PopUpManager.centerPopUp(comMttoReg);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de la Gerencia Regional","Mantenimiento de Gerencias Regionales",4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}
+			
+			public function permisos():void{
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var i:int;
+				var cont:int;
+				
+				wsMS = du.initWs(wsMS);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(i = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
+							case "C":
+								consulta = true;
+								if (global.permisosRegionales(Application.application.PERFIL_ID)){
+									borrado = true;
+									alta = true;
+									edicion = true;
+								}
+								break;	
+							/*case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;	*/			
+				}
+					}
+					btnAgregar.enabled = alta;
+					du.rCursor();
+					du.closeWs(wsMS);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			public function seleccionaCoord():void{
+				if (dgCoord.selectedIndex >= 0){
+					activarContModCoord(true);
+				}
+				else{
+					activarContModCoord(false);
+				}
+			}
+			
+			public function seleccionaReg():void{
+				dgCoord.dataProvider = null;
+				activarContModCoord(false);
+				if (dgRegional.selectedIndex >= 0){
+					activarContReg(true);
+					activarContCoord(true);
+					limpiarContCoord();
+				}
+				else{
+					activarContReg(false);
+					activarContCoord(false);
+				}
+			}
+			
+			private function setAccionCoord(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionCoord);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarListaCoord(1);
+				else
+					Alert.show(res.substr(2,res.length-1), "Mantenimiento de Coordinaciones",4,null,null,global.iAlert);
+			}
+
+			private function setAccionReg(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionReg);
+				var res:String = new String(event.result);
+				if (res.substr(0,1) == "1")
+					buscarReg(1);
+				else
+					Alert.show("Error en el proceso: " + res, "Mantenimiento de Gerencias Regionales",4,null,null,global.iAlert);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="760" height="580">
+	<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="726.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<Data:RowColorDataGrid id="dgRegional" x="10" y="10" width="700.5" height="124"
+			sortableColumns="false" draggableColumns="false" resizableColumns="false" 
+			verticalScrollPolicy="on" itemClick="seleccionaReg()" itemDoubleClick="mostrarFormReg(2)" 
+			doubleClickEnabled="true"> 
+			<Data:columns>
+				<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="75"/>
+				<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="200"/>
+				<!--<mx:DataGridColumn headerText="CODIGO" dataField="CDGPE" width="75"/>-->
+				<mx:DataGridColumn headerText="GERENTE" dataField="NOMBRE_CL" width="200"/>
+			</Data:columns>
+		</Data:RowColorDataGrid>
+	</mx:Canvas>
+	<mx:Label x="18" y="10" text="GERENCIA REGIONAL" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarReg(1)" toolTip="Buscar Regional" width="40"/>
+		<mx:Button id="btnAgregar" x="105" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormReg(1)" toolTip="Registrar Regional" width="40"/>
+		<mx:Button id="btnEliminar" x="153" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarReg()" enabled="false" toolTip="Eliminar Regional" width="40"/>
+		<mx:Button id="btnEditar" x="57" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormReg(2)" toolTip="Editar Regional" width="40"/>
+	</mx:Canvas>
+	<mx:Canvas x="18.5" y="39" width="513.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:Label id="lblCodReg" x="15" y="6" text="Código:"/>
+		<mx:Label id="lblRegional" x="147.5" y="6" text="Nombre:"/>
+		<mx:TextInput id="txtRegional" x="200.5" y="5" width="300" enter="buscarReg(1)" maxChars="50"/>
+		<mx:TextInput id="txtCodReg" x="64" y="5" width="68" enter="buscarReg(1)" maxChars="3"/>
+	</mx:Canvas>
+	<mx:Canvas id="cnvDetalle0" x="18.5" y="327" width="726.5" height="234" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<Data:RowColorDataGrid id="dgCoord" dataProvider="{dpCoord}" x="10" y="10" width="704.5" height="212"
+			sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on" 
+			itemClick="seleccionaCoord()" doubleClickEnabled="true" doubleClick="mostrarFormCoord(2)"> 
+			<Data:columns>
+				<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="75"/>
+				<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="200"/>
+				<!--<mx:DataGridColumn headerText="CODIGO" dataField="CDGPE" width="75"/>-->
+				<mx:DataGridColumn headerText="COORDINADOR" dataField="NOMBRE_CL" width="200"/>
+			</Data:columns>
+		</Data:RowColorDataGrid>
+	</mx:Canvas>
+	<mx:Canvas x="540" y="282" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:Button id="btnAgregarCoord" x="105" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormCoord(1)" toolTip="Agregar Sucursal" width="40"/>
+		<mx:Button id="btnEliminarCoord" x="153" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarCoord()" toolTip="Eliminar Sucursal" width="40"/>
+		<mx:Button id="btnEditarCoord" x="60" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormCoord(2)" toolTip="Editar Sucursal" width="40"/>
+		<mx:Button id="btnDatosCoord" x="12" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaCoord(1)" enabled="false" toolTip="Sucursales" width="40"/>
+	</mx:Canvas>
+	<mx:Canvas x="18.5" y="282" width="513.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:Label id="lblCodCoord" x="15" y="6" text="Código:"/>
+		<mx:Label id="lblCoord" x="145.5" y="6" text="Nombre:"/>
+		<mx:TextInput id="txtCoord" x="198.5" y="5" width="303" change="buscarCoord()" maxChars="50" editable="false"/>
+		<mx:TextInput id="txtCodCoord" x="64" y="5" width="68" change="buscarCoord()" maxChars="3" editable="false"/>
+	</mx:Canvas>
+	<mx:Label x="18.5" y="253" text="SUCURALES" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	</mx:Canvas>
+</mx:Canvas>

@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="500" height="510" xmlns:Data="Data.*">
+	
+	<mx:Validator id="cuentaV" source="{txtCodCB}" property="text" 
+	invalid="{txtCodCB.setFocus()}" triggerEvent="" requiredFieldError="Código Requerido"/>
+	
+	<mx:Validator id="numeroV" source="{txtNumero}" property="text" 
+	invalid="{txtNumero.setFocus()}" triggerEvent="" requiredFieldError="Número Requerido"/>
+	
+	<mx:Validator id="saldoV" source="{txtSaldo}" property="text" 
+	invalid="{txtSaldo.setFocus()}" triggerEvent="" requiredFieldError="Saldo Requerido"/>
+	
+	<mx:NumberValidator id="monedaV" source="{cboMoneda}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Moneda Requerida"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosCtaBancaria;
+		import Data.EventCtaBancaria;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;
+		import mx.events.ValidationResultEvent;	
+		
+		[Bindable]
+		private var info:DatosCtaBancaria;
+		private var _xmlCB:XML =  new XML();
+		private var _xmlMoneda:XML =  new XML();
+		
+		public var monedaObj:ArrayCollection = new ArrayCollection();
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var du:Utils;
+		private var vResult:ValidationResultEvent;
+		
+		public function cargaInfoCB(tipo:int, codIB:String, instBanc:String, codSB:String, sucBanc:String, codCB:String):void{
+			tipoAccion = tipo; 
+			this.title = "Edición";
+			//Datos de la Disposicion
+			info.cdgIB = codIB;
+			info.cdgSB = codSB;
+			info.cdgCB = codCB;
+			
+			initConexion();
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlCB = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsMS);
+					
+				if (_xmlCB.elements().length() > 0){
+					llenaRegistros();
+				} 	
+			});
+			wsMS.getInfoCuentaBancaria.send(codIB, codSB, codCB);
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			var invalidArray:Array = Validator.validateAll([cuentaV, numeroV, saldoV, monedaV]);
+				
+			if(invalidArray.length == 0){	
+				info.cdgCB = txtCodCB.text;
+				info.numero = txtNumero.text;
+				info.nombre = txtNombre.text;
+				info.titular = txtTitular.text;
+				info.favor = txtFavor.text;
+				info.saldo = Number(txtSaldo.text);
+				info.moneda = cboMoneda.selectedItem.id;
+				info.tipo = tipo.selectedValue.toString();
+				info.activa = activa.selectedValue.toString();
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+		
+		public function formateaMoneda():void{
+			var i:int;
+			var cont:int = _xmlMoneda.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			oItem = new Object();
+			oItem.id = "0";	
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+				
+			for (i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.id = _xmlMoneda.Table[i].CODIGO;	
+				oItem.nombre = _xmlMoneda.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			monedaObj = new ArrayCollection(item);
+		}
+		
+		public function guardaCtaBancaria():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionCuentaBancaria);
+			wsMS.setAccionCuentaBancaria.send(tipoAccion, info.cdgIB, info.cdgSB, info.cdgCB, info.numero, info.nombre, 
+											  info.titular, info.favor, info.saldo, info.moneda, info.tipo, info.activa, 
+									       	  Application.application.U_ID);	
+		}
+	
+		public function init(tipo:int, codIB:String, instBanc:String, codSB:String, sucBanc:String, codCB:String = null):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			global = new Globales(); 
+			du = new Utils();
+			info = new DatosCtaBancaria();
+			titulo = "Mantenimiento de Cuenta Bancaria";
+			txtCodIB.text = codIB;
+			txtIB.text = instBanc;
+			txtCodSB.text = codSB;
+			txtSB.text = sucBanc;
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlMoneda = new XML(evt.result.toString());
+						
+				du.rCursor();
+				du.closeWs(wsCat);
+						
+				if (_xmlMoneda.elements().length() > 0){
+					formateaMoneda();
+					cboMoneda.dataProvider = monedaObj;
+					
+				} 	
+				if(tipo == 1)
+					registraInfoCB(tipo, codIB, instBanc, codSB, sucBanc);
+				else if(tipo == 2)
+					cargaInfoCB(tipo, codIB, instBanc, codSB, sucBanc, codCB);
+			});
+			//obtiene informacion de la moneda disponible
+			wsCat.getCatalogoGral.send(14);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+			var i:int;
+			txtCodCB.setFocus();
+			
+			txtCodCB.text = info.cdgCB;
+			txtNumero.text = _xmlCB.Table[0].NUMERO;
+			txtNombre.text = _xmlCB.Table[0].NOMBRE;
+			txtTitular.text = _xmlCB.Table[0].TITULAR;
+			txtFavor.text = _xmlCB.Table[0].AFAVORDE;
+			txtSaldo.text = _xmlCB.Table[0].SALDOREFER;
+			for(i = 0; i < monedaObj.length; i++){
+				if(monedaObj[i].id == _xmlCB.Table[0].CDGMO.toString()){
+					cboMoneda.selectedIndex = i;
+					break;
+				}
+			}
+			tipo.selectedValue = _xmlCB.Table[0].TIPO;
+			activa.selectedValue = _xmlCB.Table[0].ACTIVO;
+		}
+			
+		public function registraInfoCB(tipo:int, codIB:String, instBanc:String, codSB:String, sucBanc:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			var i:int;
+			tipoAccion = tipo;
+			this.title = "Nuevo";
+			info.cdgIB = codIB;
+			info.cdgSB = codSB;
+			
+			txtCodCB.setFocus();
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+				
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				var _xmlCod:XML = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsCat);
+				wsCat = null;
+					
+				if(_xmlCod.elements().length() > 0){
+					txtCodCB.text = _xmlCod.Table[0].CDGCB;
+				}
+			});
+			//Codigo de Cuenta Bancaria
+			wsCat.getInfoRegistro.send(16);
+		}
+		
+		private function setAccionCuentaBancaria(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCuentaBancaria);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validaDatosCtaBancaria(event:EventCtaBancaria):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			if (info.guarda == true)
+				guardaCtaBancaria();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		public function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+               	TextInput(event.currentTarget).text = "";
+		}
+		
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	<mx:Canvas x="20.5" y="9" width="459.5" height="70" styleName="canvasMod">
+		<mx:Label id="lblOF" x="14.5" y="9" text="Institución Bancaria:"/>
+		<mx:Label id="lblOF0" x="19.5" y="39" text="Sucursal Bancaria:"/>
+		<mx:TextInput id="txtCodIB" x="123.5" y="7" width="50" editable="false"/>
+		<mx:TextInput id="txtIB" x="181.5" y="7" width="253" editable="false"/>
+		<mx:TextInput id="txtCodSB" x="124.5" y="37" width="50" editable="false"/>
+		<mx:TextInput id="txtSB" x="182.5" y="37" width="252" editable="false"/>
+	</mx:Canvas>
+	<mx:Canvas x="20" y="87" width="460" height="240" styleName="canvasMod">
+		<mx:Label id="lblCantidad" x="56" y="140" text="A favor de:" textAlign="right"/>
+		<mx:Label id="lblDesc" x="70.5" y="76" text="Nombre:" textAlign="right"/>
+		<mx:Label id="lblOtor" x="78.5" y="108" text="Titular:" textAlign="right"/>
+		<mx:Label id="lblcodDisp" x="74.5" y="12" text="Código:" textAlign="right"/>
+		<mx:Label id="lblContrato" x="70.5" y="44" text="Número:" textAlign="right"/>
+		<mx:Label id="lblPlazo" x="21.25" y="172" text="Saldo Referencial:" textAlign="right"/>
+		<mx:TextInput id="txtCodCB" x="123.5" y="10" width="50" maxChars="3" editable="false"/>
+		<mx:TextInput id="txtNumero" x="123.5" y="42" width="109" maxChars="150"/>
+		<mx:TextInput id="txtNombre" x="123.5" y="74" width="280" maxChars="150"/>
+		<mx:TextInput id="txtTitular" x="124" y="106" width="279.5" maxChars="150"/>
+		<mx:TextInput id="txtFavor" x="124" y="138" width="279.5"/>
+		<mx:TextInput id="txtSaldo" x="122.25" y="170" width="110.25" maxChars="13" restrict="0-9;." change="validaMonto(event)"/>
+		<mx:Label id="lblMoneda" x="68.25" y="204" text="Moneda:" textAlign="right"/>
+		<Data:CustomComboBox id="cboMoneda" x="122.25" y="201" width="230" labelField="nombre"/>
+	</mx:Canvas>
+	<mx:Canvas x="71" y="354" width="170" height="66" styleName="canvasMod">
+		<mx:RadioButtonGroup id="tipo"/>
+		<mx:RadioButton id="rdbDeposito" x="46" y="0" label="Depósito" groupName="tipo" value="D" width="76" selected="true"/>
+		<mx:RadioButton id="rdbPagadora" x="46" y="20" groupName="tipo" value="P" width="76" label="Pagadora"/>
+		<mx:RadioButton id="rdbAmbas" x="46" y="41" label="Ambas" groupName="tipo" value="A" width="76"/>
+	
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="177" y="433" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="259" y="433" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:Label x="71.5" y="335" text="Tipo de Cuenta" width="130.75"/>
+	<mx:Canvas x="259" y="354" width="110.25" height="66" styleName="canvasMod">
+		<mx:RadioButtonGroup id="activa"/>
+		<mx:RadioButton id="rdbSi" x="35.6" y="6" label="Si" groupName="activa" value="S" width="60" selected="true"/>
+		<mx:RadioButton id="rdbNo" x="35.6" y="30" groupName="activa" value="N" width="60" label="No"/>
+	</mx:Canvas>
+	<mx:Label x="259.5" y="335" text="Activa" width="130.75"/>
+</mx:TitleWindow>

@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" 
+	width="100%" xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" 
+	creationPolicy="all" xmlns:Administracion="Administracion.*" height="100%">
+	<mx:states>
+		<mx:State name="grupo">
+			<mx:SetProperty target="{canvas1}" name="height" value="190"/>
+			<mx:SetProperty target="{btnAceptar}" name="y" value="156"/>
+			<mx:SetProperty target="{btnLimpiar}" name="y" value="156"/>
+			<mx:SetProperty target="{cnvCriterios}" name="height" value="110"/>
+			<mx:AddChild relativeTo="{cnvCriterios}" position="lastChild">
+				<mx:Label id="lblGrupo" x="44.25" y="75" text="Grupo:" width="42.75" textAlign="right"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvCriterios}" position="lastChild">
+				<mx:TextInput id="txtGrupo" x="95" y="74" width="60" maxChars="6" restrict="0-9"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvCriterios}" position="lastChild">
+				<mx:TextInput id="txtCiclo" x="214.75" y="72" width="50" maxChars="2" restrict="0-9"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvCriterios}" position="lastChild">
+				<mx:Label id="lblCiclo" x="164" y="75" text="Ciclo:" width="42.75" textAlign="right"/>
+			</mx:AddChild>
+		</mx:State>
+		<mx:State name="acred" basedOn="grupo">
+			<mx:RemoveChild target="{txtCiclo}"/>
+			<mx:RemoveChild target="{lblCiclo}"/>
+			<mx:RemoveChild target="{txtGrupo}"/>
+			<mx:RemoveChild target="{lblGrupo}"/>
+			<mx:AddChild relativeTo="{cnvCriterios}" position="lastChild">
+				<mx:Label id="lblAcred" x="10" y="76" text="Acreditado:" width="77" textAlign="right"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvCriterios}" position="lastChild">
+				<mx:TextInput id="txtAcred" x="95" y="74" width="60" maxChars="6" restrict="0-9"/>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="">		
+			<mx:Parallel>
+				<mx:Resize duration="500" target="{cnvCriterios}"/> 
+			</mx:Parallel>
+		</mx:Transition>
+		<mx:Transition fromState="*" toState="grupo">		
+			<mx:Parallel>
+				<mx:Resize duration="500" target="{cnvCriterios}"/> 
+			</mx:Parallel>
+		</mx:Transition>
+		<mx:Transition fromState="*" toState="acred">		
+			<mx:Parallel>
+				<mx:Resize duration="500" target="{cnvCriterios}"/> 
+			</mx:Parallel>
+		</mx:Transition>
+	</mx:transitions>
+	
+	<!--Componente de administración de ordenes de pago-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import Data.TxtExport;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;				
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;  
+			import mx.controls.ComboBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.DataGridEvent;				
+			import mx.events.CloseEvent;	
+			import mx.events.ListEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;  
+			import mx.validators.Validator;
+			          
+			public var _xmlAct:XML = new XML();
+			private var _xmlCoord:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var titulo:String;
+			private var global:Globales;
+	
+			public var coordObj:ArrayCollection = new ArrayCollection();
+			public var actObj:ArrayCollection =  new ArrayCollection();
+			
+			public function cargaCoord():void{
+				_xmlCoord = Application.application._xmlCoord;
+				
+				cboCoord.dataProvider = null;	
+					
+				if (_xmlCoord.elements().length() > 0){
+					formateaCoord();
+					cboCoord.dataProvider = coordObj;
+				} 	
+			}
+			
+			private function cargaActividad():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlAct = new XML(evt.result.toString());
+						
+					du.rCursor();
+					du.closeWs(wsCat);
+					wsCat = null;	
+					
+					cboActividad.dataProvider = null;
+						
+					if(_xmlAct.elements().length() > 0){
+						formateaActividad();
+						cboActividad.dataProvider = actObj;
+					}
+				});
+				wsCat.getCatalogoGral.send(28);
+			}
+			
+			public function enviar():void{
+				if(valida() == true){
+					var grupo:String = "-";
+					var ciclo:String = "-"; 
+					var acred:String = ""; 
+					
+					if(currentState == "grupo"){
+						grupo = txtGrupo.text;
+						ciclo = txtCiclo.text;
+					}
+					else if(currentState == "acred"){
+						acred = txtAcred.text;
+					}
+					var coord:String = cboCoord.selectedItem.id.toString();
+					var act:String = cboActividad.selectedItem.id.toString();
+						
+					var wsMS:WebService = new WebService();
+					wsMS = du.initWsMS(wsMS);
+					du.sCursor();
+					
+					Application.application.bloquear();
+								
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();	
+							
+						du.rCursor();
+						du.closeWs(wsMS);	
+						wsMS = null;
+						
+						Application.application.desbloquear();
+							
+						if(res.substr(0,1) == "1"){
+							Alert.show("Actividad registrada exitosamente.",titulo,4,null,null,global.iInfo);
+							limpiar();			
+						}
+						else
+							Alert.show(res.substring(2,res.length - 1),titulo,4,null,null,global.iAlert);
+					});
+					wsMS.setAccionBitacoraOp.send(grupo, ciclo, coord, act, Application.application.U_ID, acred);
+				}
+			}
+			
+			public function formateaActividad():void{
+				var i:int;
+				var cont:int = _xmlAct.elements().length();
+				var oItem:Object;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.descripcion = "--Seleccionar--";
+				oItem.tipo = "0";
+				actObj.addItem(oItem);
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlAct.Table[i].CODIGO;	
+					oItem.descripcion = _xmlAct.Table[i].DESCRIPCION;
+					oItem.tipo = _xmlAct.Table[i].TIPO;
+					actObj.addItem(oItem);
+				}
+			}
+			
+			public function formateaCoord():void{
+				var i:int;
+				var cont:int = _xmlCoord.elements().length();
+				var oItem:Object;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				coordObj.addItem(oItem);
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlCoord.Table[i].CODIGO;	
+					oItem.nombre = _xmlCoord.Table[i].NOMBRE;
+					coordObj.addItem(oItem);
+				}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Bitacora de Operación";
+				lblTitulo.text = titulo.toUpperCase();
+				cargaCoord();
+				cargaActividad();
+			}
+			
+			public function limpiar():void{
+				if(currentState == "grupo"){
+					txtGrupo.text = "";
+					txtCiclo.text = "";
+				}
+				else if(currentState == "acred"){
+					txtAcred.text = "";
+				}
+				cboCoord.selectedIndex = 0;
+				cboActividad.selectedIndex = 0;
+				modificaEstado();
+			}
+			
+			public function modificaEstado():void{
+				if(cboActividad.selectedItem.tipo == "U" || cboActividad.selectedItem.tipo == "0")
+					currentState = null;
+				else if(cboActividad.selectedItem.tipo == "G")
+					currentState = "grupo";
+				else if(cboActividad.selectedItem.tipo == "I")
+					currentState = "acred";
+			}
+			
+			public function valida():Boolean{
+				if(cboCoord.selectedIndex <= 0){	
+					Alert.show("Seleccione la sucursal para la que se realizó la actividad.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cboActividad.selectedIndex <= 0){	
+					Alert.show("Seleccione la actividad realizada.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(currentState == "grupo" && txtGrupo.text == ""){
+					Alert.show("Capture el código del grupo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(currentState == "grupo" && txtCiclo.text == ""){
+					Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(currentState == "acred" && txtAcred.text == ""){
+					Alert.show("Capture el código del acreditado.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="460" height="160" id="canvas1">
+		<mx:Label id="lblTitulo" x="10" y="10" width="340" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvCriterios" styleName="canvasMod" width="440" height="80" x="10" y="39">
+			<mx:Label id="lblCoord" x="10" y="13" text="Sucursal:" width="76.95" textAlign="right"/>
+			<mx:ComboBox id="cboCoord" labelField="nombre" x="95" y="10" width="333"></mx:ComboBox>
+			<mx:Label id="lblActividad" x="10" y="44" text="Actividad:" width="77.05" textAlign="right"/>
+			<mx:ComboBox id="cboActividad" labelField="descripcion" x="95.05" y="41" width="332.95" change="modificaEstado()"></mx:ComboBox>
+		</mx:Canvas>
+		<mx:Button id="btnAceptar" x="282" y="127" click="enviar()" enabled="true" toolTip="Registrar" label="Registrar" width="80"/>
+		<mx:Button id="btnLimpiar" x="370" y="127" click="limpiar()" enabled="true" toolTip="Limpiar" label="Limpiar" width="80"/>
+	</mx:Canvas>
+</mx:Canvas>

@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" layout="absolute" width="525" 
+	height="550" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*" creationComplete="initApp()" 
+	creationPolicy="all">
+	<mx:states>
+		<mx:State name="moral">
+			<mx:SetProperty target="{formDatosPer}" name="width" value="480"/>
+			<mx:SetProperty target="{formDatosPer}" name="x" value="9"/>
+		</mx:State>
+	</mx:states>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.EventPersona;
+			import Data.DatosPersona;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;	
+			import mx.controls.Alert;
+			import mx.core.Application;		
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			
+			[Bindable]
+			private var info:DatosPersona;
+			private var _xmlPers:XML =  new XML();
+			private var tipoObj:ArrayCollection;
+			
+			public var wsMS:WebService;	
+			public var tipoAccion:int;
+			public var band:Boolean;
+			public var pers:String;
+			public var titulo:String;
+			public var du:Utils;
+			private var global:Globales;
+			
+			public function cargaInfoPersona(pers:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				tipoAccion = 2;
+				this.title = "Edición";
+				this.pers = pers;
+				cboTipoPers.enabled = false;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlPers = new XML(evt.result);	
+						
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+					
+					if (_xmlPers.elements().length() > 0)
+						llenaRegistros();
+					else
+						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+				});
+				params[0] = pers;
+				wsCat.getInfoRegistro.send(31, params);
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function enviar():void{
+				info = new DatosPersona();
+				info.tipoPers = cboTipoPers.selectedItem.id;
+				formDatosPer.enviarDatosPersona(info);
+				formDirPer.enviarDatosPersona(info);
+				validaFinal();
+			}
+			
+			private function formateaTipoPers():void{
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.nombre = "--Seleccionar--";
+				oItem.id = "0";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.nombre = "Física";
+				oItem.id = "F";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.nombre = "Moral";
+				oItem.id = "M";
+				item.push(oItem);
+				
+				tipoObj = new ArrayCollection(item);
+			}
+			
+			public function guardaPersona():void{
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionPersona);
+				wsMS.setAccionPersona.send(tipoAccion, Application.application.U_ID, 
+											 info.codigo, info.nombre, info.segNombre, info.aPaterno, 
+											 info.aMaterno, info.sexo, info.fecha, info.cdgNacPais, 
+											 info.cdgNacEntFed, info.cdgNac, info.rfc, info.curp, info.ife, 
+											 info.calle, info.entreCalles, info.telefono, info.codPostal,
+											 info.cdgEntFed, info.cdgMun, info.cdgLoc, info.cdgCol, 
+											 info.tipoPers, info.repLegal);
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Mantenimiento de Persona";
+				formateaTipoPers();
+				cboTipoPers.dataProvider = tipoObj;
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function llenaRegistros():void{
+				info = new DatosPersona();
+				//Datos personales
+				info.codigo = _xmlPers.Table[0].CODIGO;
+				info.nombre = _xmlPers.Table[0].NOMBRE1;
+				info.segNombre = _xmlPers.Table[0].NOMBRE2;
+				info.aPaterno = _xmlPers.Table[0].PRIMAPE;
+				info.aMaterno = _xmlPers.Table[0].SEGAPE;
+				info.tipoPers = _xmlPers.Table[0].TIPOPERS;
+				info.repLegal = _xmlPers.Table[0].REPLEGAL;
+				info.nomRepLegal = _xmlPers.Table[0].NOMREPLEGAL;
+				info.sexo = _xmlPers.Table[0].SEXO;
+				info.fecha = _xmlPers.Table[0].FECNAC
+				info.cdgNacPais = _xmlPers.Table[0].NACIOPAI;
+				info.cdgNacEntFed = _xmlPers.Table[0].NACIOEF;
+				info.cdgNac = _xmlPers.Table[0].NACIONALIDAD;
+				info.rfc = _xmlPers.Table[0].RFC;	
+				info.curp = _xmlPers.Table[0].CURP;
+				info.ife = _xmlPers.Table[0].IFE;
+				
+				//Direccion
+				info.calle = _xmlPers.Table[0].CALLE;
+				info.entreCalles = _xmlPers.Table[0].ENTRECALLES;
+				info.telefono = _xmlPers.Table[0].TELEFONO;
+				info.codPostal = _xmlPers.Table[0].CDGPOSTAL;
+				info.cdgEntFed = _xmlPers.Table[0].CDGEF;
+				info.entFed = _xmlPers.Table[0].ENTFED;
+				info.cdgMun = _xmlPers.Table[0].CDGMU;
+				info.municipio = _xmlPers.Table[0].MUNIC;
+ 				info.cdgLoc = _xmlPers.Table[0].CDGLO; 
+				info.localidad = _xmlPers.Table[0].LOC;
+				info.cdgCol = _xmlPers.Table[0].CDGCOL;
+				info.colonia = _xmlPers.Table[0].COL;
+				
+				for(var i:int = 0; i < tipoObj.length; i++){
+					if(info.tipoPers == tipoObj[i].id.toString()){
+						cboTipoPers.selectedIndex = i;
+						break;
+					}
+				}
+				
+				modificaEstatus();
+				
+				formDatosPer.init(info);
+				formDirPer.init(info);
+			}
+			
+			private function modificaEstatus():void{
+				tabNav.selectedIndex = 0;
+				formDatosPer.asignaEstatus(cboTipoPers.selectedItem.id);
+				if(cboTipoPers.selectedItem.id == "F")
+					currentState = null;
+				else if(cboTipoPers.selectedItem.id == "M")
+					currentState = "moral";
+			}
+			
+			private function permisos():void{
+				var perfil_id:String = Application.application.cadPerfil;	
+			}
+			
+			public function registraInfoPersona():void{
+				tipoAccion = 1;
+				info = null;
+				formDatosPer.init(info);
+				formDirPer.init(info);
+				this.title = "Nuevo";
+				cboTipoPers.enabled = true;
+			} 
+			
+			private function setAccionPersona(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionPersona);
+				var res:String = event.result.toString();
+				var codigo:String;
+				if (res.substr(0,1) == "1"){
+					if(tipoAccion == 1){
+						var rSplit:Array = res.toString().split('|');
+						codigo = rSplit[1].toString();
+						Alert.show("Registro de persona almacenado con el código - " + codigo,titulo,4,null,null,global.iInfo);
+					}	
+					else
+						Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+					cerrar();
+				}	
+				else
+					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+			}
+			
+			private function validaDatosPersona(event:EventPersona):void{
+				info = event.customProp;
+			}
+			
+			private function validaFinal():void{
+				if (info.guardaDatos == true && info.guardaDir == true){
+					guardaPersona();
+				}
+				else
+					Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+			}
+
+		]]>
+	</mx:Script>
+	<mx:TabNavigator id="tabNav" width="500" height="419" x="10" y="52" creationPolicy="all">
+		<mx:Canvas label="Datos Personales" width="100%" height="100%">
+			<Forms:FormDatosPer id="formDatosPer" x="36.5" height="382" width="425"/>
+		</mx:Canvas>
+		<mx:Canvas label="Dirección" width="100%" height="100%">	
+			<Forms:FormDirPer id="formDirPer" x="39" height="370" width="420"/>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Button id="btnCancelar" x="471" y="478" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="423" y="478" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Image x="454" y="10" width="57" height="57" scaleContent="true" id="image1" source="assets/user.png"/>
+	<mx:Label x="127.5" y="18" text="Tipo Persona:" id="lblTipoPers"/>
+	<mx:ComboBox id="cboTipoPers" labelField="nombre" x="206.5" y="15" change="modificaEstatus()"/>
+</mx:TitleWindow>

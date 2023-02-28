@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	height="100%">
+	
+	<!--Componente de cancelación de Cheques Preimpresos-->
+	<mx:Script>
+		<![CDATA[
+			import OPERAC.MttoCuenta;
+			import Data.Globales;
+			import Data.Utils;
+			import Data.TxtExport;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;				
+			import mx.controls.Alert;
+			import mx.controls.CheckBox;
+			import mx.controls.ComboBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;	
+			import mx.events.ListEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;  
+			import mx.validators.Validator;
+			            
+			[Bindable]
+			private var _xmlCoord:XML =  new XML();
+			[Bindable]
+			private var _xmlCta:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+
+			public var cheque:Array;
+
+			public var ctaObj:ArrayCollection =  new ArrayCollection();
+			public var coordObj:ArrayCollection =  new ArrayCollection();
+			
+			public function actualizaCta(event:Event):void{
+				var comMttoCta:MttoCuenta = event.currentTarget as MttoCuenta;
+				txtCodCuenta.text = comMttoCta.dgCuenta.selectedItem.CODIGO;
+				txtCuenta.text = comMttoCta.dgCuenta.selectedItem.BANCO;			
+			}
+			
+			public function buscaCuenta():void{
+				if (txtCodCuenta.text != ""){
+					btnBusqCta.setFocus();
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, getInfoCuenta);
+					wsMS.getInfoCuenta.send(5, txtCodCuenta.text, "", Application.application.U_ID);
+				}						
+			}
+			
+			public function cargaCoord():void{
+				_xmlCoord = Application.application._xmlCoord;
+					
+				if (_xmlCoord.elements().length() > 0){
+					formateaCoord();
+					cboCoordinacion.dataProvider = coordObj;
+				}
+			}
+			
+			public function enviar():void{
+				if(valida()){
+					var coord:String = cboCoordinacion.selectedItem.id;
+					var cuenta:String = txtCodCuenta.text;
+					formateaRegCheque();
+						
+					initConexion();
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();
+							
+						du.rCursor();
+						du.closeWs(wsMS);	
+							
+						if(res.substr(0,1) == "1"){
+							Alert.show("Proceso finalizado exitosamente.","Privilegios por Perfil",4,null,null,global.iInfo);
+							limpiar();
+						}
+						else	
+							Alert.show(res.substr(2,res.length),titulo,4,null,null,global.iAlert);	
+					});
+					wsMS.setAccionCancCheque.send(2, coord, cuenta, "", "", "", cheque, "", Application.application.U_ID);
+				}
+			}
+			
+			public function formateaCoord():void{
+				var cont:int = _xmlCoord.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlCoord.Table[i].CODIGO;	
+					oItem.nombre = _xmlCoord.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				coordObj = new ArrayCollection(item);
+			}
+			
+			public function formateaCuenta(cadInfo:String):void{
+				var oItem:Object;
+				var array:Array;
+				
+				oItem = new Object();
+				oItem.CDGIB = "0";                       
+				oItem.NUMERO = "0";
+                oItem.TIPO = "0";
+				oItem.CODIGO = "0";
+				oItem.BANCO = "--Seleccionar--";
+				oItem.CANCELA = "0";
+				oItem.MODIFICA = "0";			
+							
+				var xml:XMLDocument = new XMLDocument(cadInfo); 
+     			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+     			var data:Object = decoder.decodeXML(xml);  
+				array = ArrayUtil.toArray(data.NewDataSet.Table);   
+				ctaObj = new ArrayCollection(array);
+				ctaObj.addItemAt(oItem,0);	
+			}
+						
+			public function formateaRegCheque():void{
+				var cont:int;
+				var n:Number;
+				var ini:Number = Number(txtChqIni.text);
+				var fin:Number = Number(txtChqFin.text);
+				n = ini;
+				cont = (fin - ini) + 1;
+				
+				cheque = new Array;
+				
+				for(var i:int = 0; i < cont; i++){
+					cheque[i] = n.toString();
+					n++;			
+				}
+			}
+			
+			private function getInfoCuenta(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getInfoCuenta);
+				this._xmlCta = new XML(event.result);
+				if (this._xmlCta.elements().length() > 0){
+					txtCuenta.text = _xmlCta.Table[0].BANCO;	
+				}
+				else{
+					txtCuenta.text = "";
+					Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+				}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Cancelación de Cheques Preimpresos";
+				lblTitulo.text = titulo.toUpperCase();
+				cargaCoord(); 	
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function limpiar():void{
+				cboCoordinacion.selectedIndex = 0;
+				txtCodCuenta.text = "";
+				txtCuenta.text = "";
+				txtChqIni.text = "";
+				txtChqFin.text = "";
+			}
+			
+			public function muestraFormCta():void{
+				var comMttoCta:MttoCuenta = new MttoCuenta();
+				comMttoCta = MttoCuenta(PopUpManager.createPopUp(this,MttoCuenta,true));
+				comMttoCta.init(5);
+				comMttoCta.addEventListener("enviar", actualizaCta);
+				PopUpManager.centerPopUp(comMttoCta);
+			}
+			
+			public function valida():Boolean{
+				if(cboCoordinacion.selectedIndex <= 0){	
+					Alert.show("Seleccione la sucursal de la cuenta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtCodCuenta.text == "" || txtCuenta.text == ""){
+					Alert.show("Debe seleccionar la cuenta bancaria.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtChqIni.text == ""){
+					Alert.show("Debe capturar el número del cheque inicial.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtChqFin.text == ""){
+					Alert.show("Debe capturar el número del cheque final.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(validaRango() == false){
+					Alert.show("El número de cheque final debe ser mayor o igual al número de cheque inicial.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function validaRango():Boolean{
+				var chqIni:Number = Number(txtChqIni.text);
+				var chqFin:Number = Number(txtChqFin.text);
+				if(chqIni <= chqFin)
+					return true;
+				else
+					return false;	
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="480" height="190">
+		<mx:Label id="lblTitulo" x="10" y="10" width="370.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvCriterios" styleName="canvasMod" width="460" height="110" x="10" y="39">
+			<mx:TextInput id="txtCuenta" x="156.75" y="42" width="231.5" editable="false"/>
+			<mx:TextInput id="txtCodCuenta" x="103.75" y="42" width="45" maxChars="2" restrict="0-9" enter="buscaCuenta()"/>
+			<mx:Label id="lblEtiqCuenta" x="37.75" y="44" text="Cuenta:" width="60" textAlign="right"/>
+			<mx:Button id="btnBusqCta" x="396.75" y="40" icon="@Embed(source='assets/ico_lupa.png')" click="muestraFormCta()" toolTip="Buscar Cuenta" width="40"/>
+			<mx:ComboBox id="cboCoordinacion" x="103.7" y="8" labelField="nombre"/>
+			<mx:Label id="lblCoordinacion" x="10" y="11" text="Sucursal:" width="85.7" textAlign="right"/>
+			<mx:TextInput id="txtChqIni" x="103.75" y="74" maxChars="7" restrict="0-9"/>
+			<mx:TextInput id="txtChqFin" x="295.75" y="74" width="72" maxChars="7" restrict="0-9"/>
+			<mx:Label id="lblChqIni" x="10" y="76" text="Cheque Inicial:" width="85.75" textAlign="right"/>
+			<mx:Label id="lblChqFin" x="202.75" y="76" text="Cheque Final:" width="85" textAlign="right"/>
+		</mx:Canvas>
+		<mx:Button id="btnCancelar" x="302" y="156" label="Cancelar" click="enviar()" enabled="true" toolTip="Cancelar" width="80"/>
+		<mx:Button id="btnLimpiar" x="390" y="156" label="Limpiar" click="limpiar()" enabled="true" toolTip="Limpiar" width="80"/>
+	</mx:Canvas>
+</mx:Canvas>

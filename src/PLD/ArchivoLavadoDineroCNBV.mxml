@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="260" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
+	<mx:states>
+		<mx:State name="relevante">
+			<mx:RemoveChild target="{cnvFecha}"/>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas x="19.75" y="132" width="245.7" height="82" styleName="canvasMod" id="cnvPeriodo">
+					<mx:ComboBox id="cboAnio" labelField="descripcion" x="63.2" y="10" width="76.5" ></mx:ComboBox>
+					<mx:ComboBox id="cboPeriodo" labelField="descripcion" x="63.2" y="42" width="170.5" ></mx:ComboBox>
+					<mx:Label id="lblAnio" x="20.2" y="13" width="35" height="20" text="Año:" textAlign="right"/>
+					<mx:Label id="lblPeriodo" x="5.7" y="45" width="49.5" height="20" text="Periodo:" textAlign="right"/>
+				</mx:Canvas>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition toState="">		
+			<mx:Sequence>
+				<mx:Blur duration="500" target="{cnvFecha}"/>
+			</mx:Sequence>			
+		</mx:Transition>
+		<mx:Transition toState="relevante">		
+			<mx:Sequence>
+				<mx:Blur duration="500" target="{cnvPeriodo}"/>
+			</mx:Sequence>			
+		</mx:Transition>
+	</mx:transitions>
+	
+	<mx:NumberValidator id="operacV" source="{cboOperac}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Operación Requerida"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.TxtExport;
+			import Data.Utils;
+			import flash.external.*;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;	
+			import mx.managers.CursorManager;		
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;
+			import mx.utils.ObjectUtil;
+			import mx.utils.StringUtil;
+			import mx.validators.Validator;
+			
+			[Bindable]
+			private var _xmlInfo:XML = new XML();
+			
+			public var operObj:ArrayCollection = new ArrayCollection();
+			public var anioObj:ArrayCollection = new ArrayCollection();
+			public var perObj:ArrayCollection = new ArrayCollection();
+			
+			private var global:Globales;
+			public var wsMS:WebService;
+			public var rep:String;
+			public var titulo:String;
+			private var du:Utils;
+			
+			public function formateaActividad():void{
+				var oItem:Object
+			
+				oItem = new Object();
+				oItem.codigo = "";	
+				oItem.descripcion = "--Seleccionar--";
+				operObj.addItem(oItem);
+					
+				oItem = new Object();
+				oItem.codigo = "R";	
+				oItem.descripcion = "Op. Relevantes";
+				operObj.addItem(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "I";	
+				oItem.descripcion = "Op. Inusuales";
+				operObj.addItem(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "P";	
+				oItem.descripcion = "Op. Preocupantes";
+				operObj.addItem(oItem);
+			}
+			
+			public function formateaAnio():void{
+				var oItem:Object
+			
+				oItem = new Object();
+				oItem.codigo = "";	
+				oItem.descripcion = "--";
+				anioObj.addItem(oItem);
+					
+				oItem = new Object();
+				oItem.codigo = "2011";	
+				oItem.descripcion = "2011";
+				anioObj.addItem(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "2012";	
+				oItem.descripcion = "2012";
+				anioObj.addItem(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "2013";	
+				oItem.descripcion = "2013";
+				anioObj.addItem(oItem);
+			}
+			
+			public function formateaPeriodo():void{
+				var oItem:Object
+			
+				oItem = new Object();
+				oItem.codigo = "";	
+				oItem.descripcion = "--Seleccionar--";
+				perObj.addItem(oItem);
+					
+				oItem = new Object();
+				oItem.codigo = "1";	
+				oItem.descripcion = "1er Trimestre";
+				perObj.addItem(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "2";	
+				oItem.descripcion = "2do Trimestre";
+				perObj.addItem(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "3";	
+				oItem.descripcion = "3er Trimestre";
+				perObj.addItem(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "4";	
+				oItem.descripcion = "4to Trimestre";
+				perObj.addItem(oItem);
+			}
+			
+			//funcion que invoca la generacion de las alertas de lavado de dinero
+			public function generar():void{
+			/*	if(valida() == true){
+					var cadInfo:String = "";
+					var tipo:String = cboOperac.selectedItem.codigo;
+					var fecOp:String = global.formatoFechaYYYYMMDD(Application.application._Current_Fecha);
+			    	var fecNac:String = global.formatoFechaYYYYMMDD(Application.application._Current_Fecha);
+					var rfc:String = "TIAD841017";
+					var diaRep:String = (fecRep.date).toString();
+					var cadFec:String = fecRep.fullYear.toString().substring(2,4) + global.insertaCaracter(mesRep,'0',2 - mesRep.length,1) + global.insertaCaracter(diaRep,'0',2 - diaRep.length,1) + ".002";
+				
+					if(cboOperac.selectedItem.codigo == "I")
+						tipo = "2";
+					else if(cboOperac.selectedItem.codigo == "P")
+						tipo = "3"	
+				
+					cadInfo = tipo; 
+					cadInfo += ";" + fecOp;
+					cadInfo += ";" + global.insertaCaracter("1","0",4,1);
+					cadInfo += ";001002";
+					cadInfo += ";0692819";
+					cadInfo += ";01001002";
+					cadInfo += ";11470";
+					cadInfo += ";08";
+					cadInfo += ";03";
+					cadInfo += ";" + "0"; //txtMonto.text;
+					cadInfo += ";MXN"; 
+					cadInfo += ";"+ fecOp;
+					cadInfo += ";1";
+					cadInfo += ";1";
+					cadInfo += ";";  
+					cadInfo += ";" + "DIEGO";
+					cadInfo += ";" + "TRINADO";
+					cadInfo += ";" + "ALARCON"; 
+					cadInfo += ";" + rfc;
+					cadInfo += ";" + "TIAD841017HDFRLG01";
+					cadInfo += ";" + fecNac; 
+					cadInfo += ";" + txtCalle.text;
+					cadInfo += ";" + comColGrid.texto;
+					cadInfo += ";01001002";
+					cadInfo += ";" + txtTelefono.text;
+					cadInfo += ";2093011";
+					cadInfo += ";;;;;;";
+					cadInfo += ";" + txtDesc.text;
+					cadInfo += ";" + txtDesc.text;		
+						
+					tituloRep = tipo + "692819" + cadFec;
+					res = cadInfo;
+					var exp:TxtExport = new TxtExport();
+					exp.cargaCadena(res, tituloRep);
+				}*/
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Layout Lavado de Dinero";
+				lblTitulo.text = titulo.toUpperCase();
+				formateaActividad();
+				formateaAnio();
+				formateaPeriodo();
+				cboOperac.dataProvider = operObj;
+				limpiar();
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				cboOperac.selectedIndex = 0;
+				fec = Application.application._Current_Fecha;
+				currentState = "";
+				dtfFecIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				dtfFecFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 
+			}
+				
+			public function modificaEstado():void{
+				if(cboOperac.selectedItem.codigo == "R"){
+					currentState = "relevante";	
+					cboAnio.dataProvider = anioObj;
+					cboPeriodo.dataProvider = perObj;	
+				}
+				else if(cboOperac.selectedItem.codigo == "" || cboOperac.selectedItem.codigo == "I" || cboOperac.selectedItem.codigo == "P"){
+					currentState = "";		
+				}
+				
+			}	
+				
+			public function valida():Boolean{
+				var invalidArray:Array = Validator.validateAll([operacV]);
+			
+				if(invalidArray.length > 0){	
+					Alert.show("Seleccione el tipo de Operación.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(currentState == ""){
+					if(dtfFecIni.text == ""){
+						Alert.show("Seleccione la fecha inicial de Reporte.",titulo,4,null,null,global.iAlert);
+						return false;
+					}
+					if(dtfFecFin.text == ""){
+						Alert.show("Seleccione la fecha final de Reporte.",titulo,4,null,null,global.iAlert);
+						return false;
+					}
+				}
+				if(currentState == "relevante"){
+					if(cboAnio.selectedIndex == 0){
+						Alert.show("Debe seleccionar el año de reporte.",titulo,4,null,null,global.iAlert);
+						return false;
+					}
+					if(cboPeriodo.selectedIndex == 0){
+						Alert.show("Debe seleccionar el periodo del reporte.",titulo,4,null,null,global.iAlert);
+						return false;
+					}
+				} 
+				return true;
+			}
+			
+			public function validaFecha():void{
+				dtfFecIni.selectedDate = global.validaFecha(dtfFecIni.selectedDate, dtfFecFin.selectedDate,titulo);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="16.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="247.54999" height="70.5" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblOperac" x="20" y="10" width="114.3" height="20" text="Tipo de Operación"/>
+		<mx:ComboBox id="cboOperac" labelField="descripcion" x="19.5" y="30" width="206.5" change="modificaEstado()"></mx:ComboBox>	
+	</mx:Canvas>
+	<mx:Canvas x="17.95" y="135" width="247.5" height="78" styleName="canvasMod" id="cnvFecha">
+		<mx:DateField id="dtfFecIni" x="101" y="10" width="111" change="validaFecha()"/>
+		<mx:Label id="lblFecIni" text="Fecha Inicial:"  x="10" y="12" width="83" textAlign="right"/>
+		<mx:DateField id="dtfFecFin" x="101" y="42" width="111" change="validaFecha()"/>
+		<mx:Label id="lblFecFin" text="Fecha Final:"  x="10" y="44" width="83" textAlign="right"/>
+	</mx:Canvas>
+	<mx:Label x="16.5" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:Button id="btnGenerar" x="65" y="223" label="Generar" click="generar()"/>
+	<mx:Button id="btnLimpiar" x="144" y="223" label="Limpiar" width="71" height="24" click="limpiar()"/>	
+</mx:Canvas>

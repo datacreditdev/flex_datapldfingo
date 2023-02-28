@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="426" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.DataGrid;
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;		
+			import mx.managers.PopUpManager;
+			import mx.formatters.NumberFormatter;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML = new XML();
+			
+			public var wsRep:WebService;
+			public var du:Utils;
+			public var fecIni:String;
+			public var fecFin:String;
+			public var titulo:String;
+			private var global:Globales;
+		
+			private function cambiarColorFila(event:Event):void{
+				dgReporte.rowColorFunction = seleccionaColor;
+			}
+		
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo + " del " + fecIni + " al " + fecFin);		
+			}
+		
+			public function generar():void{
+				if(valida() == true){
+					var tipo:int;
+					var tipoFecha:int;
+					initConexion();
+					du.sCursor();
+					
+					tipo = int(tipoPago.selectedValue);
+					tipoFecha = int(cboFecha.selectedItem.value);
+							
+					du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsRep);
+						
+						dgReporte.dataProvider = null;
+						btnExportar.enabled = false;
+													
+						if(_xmlRep.elements().length() > 0){
+							var i:int;
+							var cantidad:Number = 0;
+							var registro:Number = 0;
+							var cont:int = _xmlRep.elements().length();
+							var etiqueta:String;
+							btnExportar.enabled = true;
+							cantidad = Number(_xmlRep.dtPagos[cont-1].CANTIDAD);
+							registro = Number(_xmlRep.dtPagos[cont-1].REFERENCIA);   
+							if(tipo == 1)
+								etiqueta = " Depósitos Identificados de Pago $";
+							else if(tipo == 2)
+								etiqueta = " Depósitos Identificados de Garantía $";
+							else if(tipo == 3)
+								etiqueta = " Depósitos Identificados de Pago y Garantía $";
+							else if(tipo == 4)
+								etiqueta = " Depósitos Identificados de Transferencia de GL a Cartera $";
+							else if(tipo == 5)
+								etiqueta = " Depósitos Identificados de Transferencia de Cartera a GL $";					
+							lblTotal.text = registro + etiqueta + global.formatoEntero(cantidad.toString());
+							//delete _xmlRep.dtPagos[cont-1];
+							dgReporte.dataProvider = _xmlRep.dtPagos;
+							fecIni = dtfFecha.text;
+							fecFin = dtfFechaFinal.text;
+							cambiarColorFila(evt);	
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						}
+					});
+					wsRep.getRepPagosIdentFecha.send(tipo, dtfFecha.text, dtfFechaFinal.text, tipoFecha);	
+				}
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				var f:Date = Application.application._Current_Fecha;
+				var fecMin:Date = new Date(f.getFullYear(),f.getMonth()-1,1);
+				var fecMax:Date = new Date(f.getFullYear(),f.getMonth(),f.getDate());
+				//dtfFecha.selectableRange = {rangeStart: new Date(fecMin), rangeEnd: new Date(fecMax)};
+				//dtfFechaFinal.selectableRange = {rangeStart: new Date(fecMin), rangeEnd: new Date(fecMax)};
+				titulo = "Reporte de Pagos Identificados"
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+			
+			public function initConexion():void{				
+				wsRep = new WebService();			
+				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsRep.loadWSDL();
+			}	
+		
+			private function limpiar():void{
+				var fec:Date;
+				dgReporte.dataProvider = null;
+				btnExportar.enabled = false;
+				lblTotal.text = "";
+				fec = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFechaFinal.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				cboFecha.selectedIndex = 0;
+				tipoPago.selection = null;
+			}
+				
+			private function seleccionaColor(datagrid:DataGrid, rowIndex:int, color:uint):uint{
+				var rColor:uint;
+				var value:String = _xmlRep.dtPagos[rowIndex].FECHA;
+				if (value == "-- SUBTOTAL --")
+					rColor = 0xbfc8be;
+				else 
+					rColor = color;
+				return rColor;
+			}	
+				
+			public function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la Fecha Inicial del Reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(dtfFechaFinal.text == ""){
+					Alert.show("Seleccione la Fecha Final del Reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(tipoPago.selection == null){
+					Alert.show("Seleccione el tipo de Depósito Identificado.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cboFecha.selectedIndex == 0){
+					Alert.show("Seleccione el tipo de Fecha del Reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function validaFecha():void{
+				//validacion de diferencia de fechas
+				dtfFecha.selectedDate = global.validaFecha(dtfFecha.selectedDate, dtfFechaFinal.selectedDate,titulo);
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="440.05" height="128.5" styleName="canvasMod">
+		<mx:Label x="10" y="10" text="Fecha Inicial" width="81" height="20"/>
+		<mx:Label x="141.05" y="10" text="Fecha Final" width="81" height="20"/>
+		<mx:DateField id="dtfFecha" x="10" y="28.5" width="111" change="validaFecha()"/>
+		<mx:DateField id="dtfFechaFinal" x="141.05" y="28.5" width="111" change="validaFecha()"/>
+		<mx:Label x="10" y="60.5" text="Tipo" width="81" height="20"/>
+		<mx:Canvas x="10" y="80.5" width="403.05" height="30" styleName="canvasMod">
+			<mx:RadioButtonGroup id="tipoPago"/>
+			<mx:RadioButton id="rdbPago" x="22.5" y="2" label="Pago" groupName="tipoPago" value="1"/>
+			<mx:RadioButton id="rdbGarantia" x="76.5" y="2" label="Garantía" groupName="tipoPago" value="2"/>
+			<mx:RadioButton id="rdbPagoGtia" x="150.55" y="2" label="Pago y Garantía" groupName="tipoPago" value="3"/>
+			<mx:RadioButton id="rdbTransGLCart" x="257.55" y="2" label="Trans. GL a Cartera" groupName="tipoPago" value="4"/>
+			<!--<mx:RadioButton id="rdbTransCartGL" x="373.05" y="2" label="Trans. Cartera a GL" groupName="tipoPago" value="5"/>-->
+		</mx:Canvas>
+		<mx:ComboBox id="cboFecha" x="273" y="27.5" width="140.05">
+			<mx:dataProvider>
+				<mx:Object label="--Seleccionar--" value="0"/>
+				<mx:Object label="Fecha Operación" value="1"/>	
+	    		<mx:Object label="Fecha Valor" value="2"/>
+			</mx:dataProvider>
+		</mx:ComboBox>
+		<mx:Label x="273" y="10" text="Fecha de Consulta" width="117.05" height="20"/>
+	</mx:Canvas>
+	<mx:Button x="71.25" y="190" label="Generar" click="generar()"/>
+	<mx:Button x="150.25" y="190" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<Data:RowColorDataGrid id="dgReporte" sortableColumns="false" x="17.95" y="222" width="763.05" visible="true" height="165" horizontalScrollPolicy="on">
+		<Data:columns>
+			<mx:DataGridColumn headerText="FECHA VALOR" dataField="FECHA"/>
+			<mx:DataGridColumn headerText="FEC OPERACION" dataField="FECHA_OPERA"/>
+			<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO"/>
+			<mx:DataGridColumn headerText="GRUPO" dataField="GRUPO"/>
+			<mx:DataGridColumn headerText="CICLO" dataField="CICLO"/>
+			<mx:DataGridColumn headerText="REFERENCIA" dataField="REFERENCIA"/>
+			<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD"/>
+			<mx:DataGridColumn headerText="CAPITAL" dataField="CAPITAL"/>
+			<mx:DataGridColumn headerText="INTERES" dataField="INTERES"/>
+			<mx:DataGridColumn headerText="RECARGOS" dataField="RECARGOS"/>
+			<mx:DataGridColumn headerText="BANCO" dataField="BANCO"/>
+			<!--<mx:DataGridColumn headerText="CDGCB" dataField="CDGCB"/>-->
+			<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA"/>
+			<mx:DataGridColumn headerText="USUARIO" dataField="USUARIO"/>
+			<mx:DataGridColumn headerText="ASESOR" dataField="ASESOR"/>
+			<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="NOMASESOR"/>
+			<!--<mx:DataGridColumn headerText="SECUENCIA" dataField="SECUENCIA"/>-->
+		</Data:columns>
+	</Data:RowColorDataGrid>
+	<mx:Button id="btnExportar" x="678" y="190" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Label id="lblTotal" x="17.95" y="395" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+</mx:Canvas>

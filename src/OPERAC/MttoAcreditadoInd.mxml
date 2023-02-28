@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" layout="absolute" 
+	width="610" height="580" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*" 
+	creationComplete="initApp()" creationPolicy="all">
+	
+	<mx:Metadata>
+		[Event(name="consultar", type="consultar")]
+	</mx:Metadata>
+	
+	<mx:states>
+		<mx:State name="moral">
+			<mx:RemoveChild target="{cnvOtros}"/>
+			<mx:SetProperty target="{formPLDAcred}" name="width" value="470"/>
+			<mx:SetProperty target="{formPLDAcred}" name="x" value="59.5"/>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Parallel>
+				<mx:Fade duration="500" target="{cnvDirNeg}"/>
+				<mx:Fade duration="500" target="{cnvOtros}"/>  
+			</mx:Parallel>
+		</mx:Transition>
+	</mx:transitions>
+	
+	<mx:Script>
+		<![CDATA[
+			import CONTROL.CtrlVisorDoc;
+			import mx.containers.Panel;
+			import Data.EventAcred;
+			import Data.DatosAcred;
+			import Data.Globales;
+			import Data.PdfExport;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;	
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.ListEvent;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			
+			[Bindable]
+			private var info:DatosAcred;
+			private var _xmlAcred:XML =  new XML();
+			
+			private var tipoObj:ArrayCollection;
+			
+			private var wsMS:WebService;	
+			private var wsCC:WebService; 
+			public var tipoAccion:int;
+			public var band:Boolean;
+			public var grupo:String;
+			public var acred:String;
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var consBuro:Boolean = new Boolean();
+			
+			public function cargaInfoAcred(acred:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				tipoAccion = 2;
+				this.acred = acred;
+				this.title = "Edición";
+				cboTipoPers.enabled = false;
+				permisos();
+				
+				du.initWsCat(wsCat);
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlAcred = new XML(evt.result);	
+						
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+					
+					if (_xmlAcred.elements().length() > 0)
+						llenaRegistros();
+					else
+						Alert.show("Error en la carga de datos.",titulo,4,null,null,global.iAlert);
+				});
+				params[0] = acred;
+				wsCat.getInfoAcred.send(1, params);	
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function consultaBuro():void{
+				tipoAccion = 3;
+				this.addEventListener("consultar", procesarConsulta);
+				enviar();
+			}
+			
+			public function enviar():void{
+				info = new DatosAcred();
+				
+				if(validaInfo()){
+					//Asignacion del Tipo de Persona
+					info.tipoPers = cboTipoPers.selectedItem.id;
+					formDPAcred.enviarDatosAcred(info);
+					formDirAcred.enviarDatosAcred(info);
+					formDirNegocio.enviarDatosAcred(info);
+					formOtroAcred.enviarDatosAcred(info);
+					formOficialAcred.enviarOficialAcred(info);
+					formPLDAcred.enviarDatosAcred(info);
+					validaFinal();
+				}
+			}
+			
+			private function formateaTipoPers():void{
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.nombre = "--Seleccionar--";
+				oItem.id = "0";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.nombre = "Física";
+				oItem.id = "F";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.nombre = "Moral";
+				oItem.id = "M";
+				item.push(oItem);
+				
+				tipoObj = new ArrayCollection(item);
+			}
+			
+			public function guardaAcred():void{
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionAcred);
+				wsMS.setAccionAcred.send(tipoAccion, Application.application.U_ID, this.grupo, info.codigo, 
+											 info.cdgco, info.nombre, info.segNombre, info.aPaterno, info.aMaterno, 
+											 info.sexo, info.fecha, info.cdgNacPais, info.cdgNacEntFed, info.cdgNac, info.rfc, 
+											 info.curp, info.ife, info.calle, info.noInt, info.noExt, info.entreCalles, info.telefono, 
+											 info.codPostal, info.cdgEntFed, info.entFed, info.cdgMun, info.municipio, info.cdgLoc, 
+											 info.localidad, info.cdgCol, info.colonia, info.edoCivil, info.nivelEsc, info.depend, 
+											 info.marca, info.enano, info.cantEnano, info.cdgPr, info.cdgRec, info.calleNeg, 
+											 info.entreCallesNeg, info.telefonoNeg, info.cdgDirEntFedNeg, info.cdgMunNeg, info.cdgLocNeg,
+										 	 info.cdgColNeg, info.tipoPers, info.repLegal, info.detPer, info.origen, 
+										 	 info.destino, info.pep, info.propReal, info.provRec);
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Mantenimiento de Acreditado";
+				formateaTipoPers();
+				cboTipoPers.dataProvider = tipoObj;
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function initConexionCC():void{
+				wsCC = new WebService();			
+				wsCC.wsdl = Application.application.wsStr.wsdlCC.toString();
+				wsCC.loadWSDL();
+			}
+			
+			public function llenaRegistros():void{
+				info = new DatosAcred();
+				//Datos personales del Acreditado
+				info.codigo = _xmlAcred.Table[0].CODIGO;
+				info.nombre = _xmlAcred.Table[0].NOMBRE1;
+				info.segNombre = _xmlAcred.Table[0].NOMBRE2;
+				info.aPaterno = _xmlAcred.Table[0].PRIMAPE;
+				info.aMaterno = _xmlAcred.Table[0].SEGAPE;
+				info.tipoPers = _xmlAcred.Table[0].TIPOPERS;
+				info.repLegal = _xmlAcred.Table[0].REPLEGAL;
+				info.nomRepLegal = _xmlAcred.Table[0].NOMREPLEGAL;
+				info.cdgco = _xmlAcred.Table[0].CDGCO;
+				info.sexo = _xmlAcred.Table[0].SEXO;
+				info.fecha = _xmlAcred.Table[0].NACIMIENTO;
+				info.cdgNacPais = _xmlAcred.Table[0].NACIOPAI;
+				info.cdgNacEntFed = _xmlAcred.Table[0].NACIOEF;
+				info.cdgNac = _xmlAcred.Table[0].NACIONALIDAD;
+				info.rfc = _xmlAcred.Table[0].RFC;	
+				info.curp = _xmlAcred.Table[0].CURP;
+				info.ife = _xmlAcred.Table[0].IFE;
+				
+				//Direccion del Acreditado
+				info.calle = _xmlAcred.Table[0].CALLE;
+				info.noInt = _xmlAcred.Table[0].NOINT;
+				info.noExt = _xmlAcred.Table[0].NOEXT;
+				info.entreCalles = _xmlAcred.Table[0].ENTRECALLES;
+				info.telefono = _xmlAcred.Table[0].TELEFONO;
+				info.codPostal = _xmlAcred.Table[0].CDGPOSTAL;
+				info.cdgEntFed = _xmlAcred.Table[0].CDGEF;
+				info.entFed = _xmlAcred.Table[0].ENTFED;
+				info.cdgMun = _xmlAcred.Table[0].CDGMU;
+				info.municipio = _xmlAcred.Table[0].MUNIC;
+ 				info.cdgLoc = _xmlAcred.Table[0].CDGLO; 
+				info.localidad = _xmlAcred.Table[0].LOC;
+				info.cdgCol = _xmlAcred.Table[0].CDGCOL;
+				info.colonia = _xmlAcred.Table[0].COL;
+				
+				//Direccion del Negocio
+				info.calleNeg = _xmlAcred.Table[0].CALLENEG;
+				info.entreCallesNeg = _xmlAcred.Table[0].ENTRECALLESNEG;
+				info.telefonoNeg = _xmlAcred.Table[0].TELEFONONEG;
+				info.codPostalNeg = _xmlAcred.Table[0].CDGPOSTALNEG;
+				info.cdgDirEntFedNeg = _xmlAcred.Table[0].CDGEFNEG;
+				info.dirEntFedNeg = _xmlAcred.Table[0].ENTFEDNEG;
+				info.cdgMunNeg = _xmlAcred.Table[0].CDGMUNEG;
+				info.municipioNeg = _xmlAcred.Table[0].MUNICNEG;
+ 				info.cdgLocNeg = _xmlAcred.Table[0].CDGLONEG; 
+				info.localidadNeg = _xmlAcred.Table[0].LOCNEG;
+				info.cdgColNeg = _xmlAcred.Table[0].CDGCOLNEG;
+				info.coloniaNeg = _xmlAcred.Table[0].COLNEG;
+				
+				//Otra información del Acreditado
+				info.edoCivil = _xmlAcred.Table[0].EDOCIVIL;
+				info.nivelEsc = _xmlAcred.Table[0].NIVESCOLAR;
+				info.depend = _xmlAcred.Table[0].NODEPEND;
+				info.marca = _xmlAcred.Table[0].MARCA;
+				info.enano = _xmlAcred.Table[0].ENANO;
+				info.cantEnano = _xmlAcred.Table[0].CANTENANO;
+				
+				//Oficial de Crédito
+				info.cdgPr = _xmlAcred.Table[0].CDGOCPE;
+				info.promotor = _xmlAcred.Table[0].PROMOTOR;
+				info.cdgRec = _xmlAcred.Table[0].CDGPRPE;
+				info.recuperador = _xmlAcred.Table[0].RECUPERADOR;
+				
+				//Informacion de Prevencion de Lavado de Dinero
+				info.detPer = _xmlAcred.Table[0].CDGTIPOPERS;
+				info.origen = _xmlAcred.Table[0].CDGORIREC;
+				info.destino = _xmlAcred.Table[0].CDGDESREC;
+				info.pep = _xmlAcred.Table[0].PEP;
+				info.propReal = _xmlAcred.Table[0].PROPREAL;
+				info.nomPropReal = _xmlAcred.Table[0].NOMPROPREAL;
+				info.provRec = _xmlAcred.Table[0].PROPREC;
+				info.nomProvRec = _xmlAcred.Table[0].NOMPROVREC;
+			
+				for(var i:int = 0; i < tipoObj.length; i++){
+					if(info.tipoPers == tipoObj[i].id.toString()){
+						cboTipoPers.selectedIndex = i;
+						break;
+					}
+				}
+				
+				modificaEstatus();
+				
+				formDPAcred.init(info);
+				formDPAcred.cboCoord.addEventListener(ListEvent.CHANGE, selecCoord);
+				formDirAcred.init(info);
+				formDirNegocio.init(info);
+				formOtroAcred.init(info);
+				formOficialAcred.init(info);
+				formPLDAcred.init(info);
+			}
+			
+			private function modificaEstatus():void{
+				tabNav.selectedIndex = 0;
+				formDPAcred.asignaEstatus(cboTipoPers.selectedItem.id);
+				if(cboTipoPers.selectedItem.id == "F")
+					currentState = "";
+				else if(cboTipoPers.selectedItem.id == "M")
+					currentState = "moral";
+			}
+			
+			private function muestraDocumentos():void{
+				var obj:DisplayObject = this;
+				var comVisor:CtrlVisorDoc = new CtrlVisorDoc();
+				comVisor = CtrlVisorDoc(PopUpManager.createPopUp(obj,CtrlVisorDoc,false));
+				PopUpManager.centerPopUp(comVisor);	
+			}
+			
+			public function permisos():void{
+				/*var perfil_id:String = Application.application.cadPerfil;
+				
+				if (global.permisosConsBuro(Application.application.PERFIL_ID)){
+					consBuro = true;	
+				}
+				btnConsBuro.visible = consBuro;*/
+			}
+			
+			private function procesarConsulta(evt:Event):void{
+				initConexionCC();
+				du.sCursor();
+							
+				var titulo:String = "Consulta Reporte Crédito";
+				var acred:String = formDPAcred.txtCodigo.text;
+										
+				du.ejecutaWsMethod(wsCC,function(evt:ResultEvent):void{						
+					var res:String = evt.result.toString();
+						
+					du.rCursor();
+					du.closeWs(wsCC);
+													
+					if(res.substr(0,1) == "1"){
+						var consulta:String;
+						var id:String = "&id=19";
+						var tipo:String = "&tipo=C";
+						var codAcred:String = "&acred=" + acred;
+						var usuario:String = "&usuario=" + Application.application.U_ID;
+						var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+						var sic:String = "&sic=CC";
+						
+						consulta = global.urlPdf + id + codAcred + usuario + nomUsuario + tipo + sic;		
+						var pdfE:PdfExport = new PdfExport();
+						pdfE.cargaPdf(consulta);
+					}
+					else
+						Alert.show(res,titulo,4,null,null,global.iAlert);
+					this.removeEventListener("consultar", procesarConsulta);
+				});
+				wsCC.getEjecutaConsulta.send("C", acred, "I", Application.application.U_ID);
+			}
+			
+			public function registraInfoAcred():void{
+				tipoAccion = 1;
+				info = null;
+				this.title = "Nuevo";
+				cboTipoPers.enabled = true;
+				formDPAcred.init(info);
+				formDPAcred.cboCoord.addEventListener(ListEvent.CHANGE, selecCoord);
+				formDirAcred.init(info);
+				formDirNegocio.init(info);
+				formOtroAcred.init(info);
+				formOficialAcred.init(info);
+				formPLDAcred.init(info);
+			} 
+			
+			private function selecCoord(event:ListEvent):void{
+				var suc:String = ComboBox(event.currentTarget).selectedItem.id;
+				formOficialAcred.asignaSucursal(suc);
+				formOficialAcred.cargaPersonal();
+			}
+			
+			private function setAccionAcred(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionAcred);
+				var res:String = event.result.toString();
+				var codigo:String;
+				if (res.substr(0,1) == "1"){
+					if(tipoAccion != 3){
+						if(tipoAccion == 1){
+							var rSplit:Array = res.toString().split('|');
+							codigo = rSplit[1].toString();
+							Alert.show("Registro de acreditado almacenado con el código - " + codigo,titulo,4,null,null,global.iInfo);
+						}	
+						else
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+						cerrar();
+					}
+					else
+						dispatchEvent(new Event("consultar"));
+				}	
+				else
+					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+			}
+			
+			public function validaDatosAcred(event:EventAcred):void{
+				info = event.customProp;
+			}
+			
+			public function validaInfo():Boolean{
+				if(cboTipoPers.selectedIndex == 0){
+					Alert.show("Debe seleccionar el Tipo de Persona.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function validaFinal():void{
+				if (info.guardaDatos == true && info.guardaDir == true && 
+					info.guardaOficial == true && info.guardaPLD){
+					validaSituacionAcred();
+				}
+				else
+					Alert.show("Debe capturar los datos requeridos.",titulo,4,null,null,global.iAlert);
+			}
+			
+			//Funcion que verifica que el usuario no se encuentre 
+			//registrado en una solicitud o prestamo vigente 
+			public function validaSituacionAcred():void{
+				if(tipoAccion == 2){
+					var band:Boolean;
+					initConexion();
+					du.sCursor();
+						
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						if(res.substr(0,1) == "1")
+							guardaAcred();
+						else
+							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
+					});
+					wsMS.getValidaSituacionAcred.send(acred, Application.application.U_ID);
+				}
+				else
+					guardaAcred();
+			}
+		]]>
+	</mx:Script>
+	<mx:TabNavigator id="tabNav" width="591" height="450" x="10" y="52" creationPolicy="all" >
+		<mx:Canvas label="Datos Generales" width="100%" height="100%">
+			<Forms:FormDatosPerAcredInd id="formDPAcred" x="85.5" height="404" width="500"/>
+		</mx:Canvas>
+		<mx:Canvas label="Dirección" width="100%" height="100%">	
+			<Forms:FormDirAcred id="formDirAcred" x="84.5" height="370" width="420"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDirNeg" label="Dir. Negocio" width="100%" height="100%">	
+			<Forms:FormDirNegocio id="formDirNegocio" x="84.5" height="370" width="420"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvOtros" label="Otros Datos" width="100%" height="100%">	
+			<Forms:FormOtroAcred id="formOtroAcred" x="94.5"/> 
+		</mx:Canvas>
+		<mx:Canvas label="Oficial de Crédito" width="100%" height="100%">	
+			<Forms:FormOficialAcred id="formOficialAcred" x="94.5"/>
+		</mx:Canvas>
+		<mx:Canvas label="Inf. Adicional" width="100%" height="100%">
+			<Forms:FormPLDAcred id="formPLDAcred" x="59.5" width="470" y="10"/>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Button id="btnCancelar" x="560" y="508" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="512" y="508" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnConsBuro" x="10" y="508" click="consultaBuro()" label="Consulta Rep. Crédito" visible="false"/>
+	<mx:Button id="btnDoc" x="166" y="508" click="muestraDocumentos()" label="Ver Documentación" visible="false"/>
+	<mx:Label x="144" y="18" text="Tipo Persona:"/>
+	<mx:ComboBox id="cboTipoPers" labelField="nombre" x="235" y="16" change="modificaEstatus()"/>
+</mx:TitleWindow>

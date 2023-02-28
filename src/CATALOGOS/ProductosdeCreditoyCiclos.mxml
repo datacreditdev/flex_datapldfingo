@@ -1,0 +1,585 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" height="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*">
+	
+	<!--Componente que permite observar el listado de Productos existentes en la empresa-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;    
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			
+			[Bindable]
+			public var _xmlTipoProd:XML = new XML();
+			[Bindable]
+			public var _xmlProd:XML = new XML();
+			[Bindable]
+			public var _xmlCiclo:XML = new XML();
+			[Bindable]
+			public var dPermisos:XML = new XML();
+			
+			public var wsMS:WebService = new WebService();	
+			public var du:Utils;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionTipoProd:int;
+			public var accionProd:int;
+			public var accionCiclo:int;
+			public var indTipoProd:int;
+			public var indProd:int;
+			public var indCiclo:int;
+			public var vScroll:Number;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			public function activarContCiclo(band:Boolean):void{
+				if(alta == true)
+					btnAgregarCiclo.enabled = band;
+				btnDatosCiclo.enabled = band;
+			}
+			
+			public function activarContProd(band:Boolean):void{
+				if(alta == true)
+					btnAgregarProd.enabled = band;
+				btnDatosProd.enabled = band;
+			}
+			
+			public function activarContModCiclo(band:Boolean):void{
+				if(borrado == true)
+					btnEliminarCiclo.enabled = band;
+				if(edicion == true)	
+					btnEditarCiclo.enabled = band;
+			}
+			
+			public function activarContModProd(band:Boolean):void{
+				if(borrado == true)
+					btnEliminarProd.enabled = band;
+				if(edicion == true)	
+					btnEditarProd.enabled = band;
+			}
+			
+			public function activarContTipoProd(band:Boolean):void{
+				if(edicion == true)
+					btnEditar.enabled = band;
+				if(borrado == true)
+					btnEliminar.enabled = band;
+			}
+			
+			public function actualizarCiclo(event:Event):void{
+				buscarListaCiclo(1);
+			}
+			
+			public function actualizarProd(event:Event):void{
+				buscarListaProd(1);
+			}
+			
+			public function actualizarTipoProd(event:Event):void{
+				buscarTipoProd(1);
+			}
+
+			public function buscarListaCiclo(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var codTipoProd:String = dgTipoProd.selectedItem.CODIGO;
+				var codProd:String = dgProducto.selectedItem.CODIGO;
+				dgCiclo.dataProvider = null;
+				du.initWsCat(wsCat);
+				du.sCursor();
+			 	if (tipo == 1)
+					Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
+					_xmlCiclo = new XML(evt.result);
+				
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+				
+					if (_xmlCiclo.elements().length() > 0){
+						dgCiclo.dataProvider = _xmlCiclo.Table;
+						
+						if(accionCiclo == 2){
+							dgCiclo.validateNow();
+							dgCiclo.verticalScrollPosition = vScroll;
+							dgCiclo.selectedIndex = indCiclo;
+							this.accionCiclo = 0;
+						}
+					}
+					seleccionaCiclo();
+				});
+				params[0] = codTipoProd;
+				params[1] = codProd;
+				wsCat.getListado.send(6, params);
+			}
+			
+			public function buscarListaProd(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var codTipoProd:String = dgTipoProd.selectedItem.CODIGO;
+				dgProducto.dataProvider = null;
+				du.initWsCat(wsCat);
+				du.sCursor();
+			 	if (tipo == 1)
+					Application.application.bloquear();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
+					_xmlProd = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+				
+					if (_xmlProd.elements().length() > 0){
+						dgProducto.dataProvider = _xmlProd.Table;
+						
+						if(accionProd == 2){
+							dgProducto.validateNow();
+							dgProducto.verticalScrollPosition = vScroll;
+							dgProducto.selectedIndex = indProd;
+							this.accionProd = 0;
+						}
+					}
+					seleccionaProd();
+				});
+				params[0] = codTipoProd;
+				wsCat.getListado.send(5, params);
+			}
+			
+			public function buscarTipoProd(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				if (txtCodTipoProd.text != "" || txtTipoProd.text != ""){
+					btnBuscar.setFocus();
+					
+					dgTipoProd.dataProvider = null;
+					du.initWsCat(wsCat);
+					du.sCursor();
+					if(tipo == 1)
+						Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
+						_xmlTipoProd = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+						
+						if (_xmlTipoProd.elements().length() > 0){
+							dgTipoProd.dataProvider = _xmlTipoProd.Table;
+							
+							if(accionTipoProd == 2){
+								dgTipoProd.validateNow();
+								dgTipoProd.verticalScrollPosition = vScroll;
+								dgTipoProd.selectedIndex = indTipoProd;
+								this.accionTipoProd = 0;
+							}
+						}
+						seleccionaTipoProd();
+					});
+					params[0] = txtCodTipoProd.text;
+					params[1] = txtTipoProd.text;
+					wsCat.getCatalogoGral.send(20, params);
+				}	
+			}
+
+			public function eliminarCiclo():void{
+				Alert.show("¿Desea eliminar el Ciclo seleccionado?", "Mantenimiento de Productos", Alert.YES|Alert.NO,null, manejadorEliminarCiclo,global.iQuest);
+			}
+			
+			public function eliminarProd():void{
+				Alert.show("¿Desea eliminar el Producto seleccionado?", "Mantenimiento de Productos", Alert.YES|Alert.NO,null, manejadorEliminarProd,global.iQuest);
+			}
+			
+			public function eliminarTipoProd():void{
+				Alert.show("¿Desea eliminar el Tipo de Producto seleccionado?", "Mantenimiento de Productos", Alert.YES|Alert.NO,null, manejadorEliminarTipoProd,global.iQuest);
+			}
+	
+			public function iniVar():void{
+				this.indTipoProd = -1;
+				this.indProd = -1;
+				this.indCiclo = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function manejadorEliminarCiclo(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codTipoProd:String = dgTipoProd.selectedItem.CODIGO;
+					var codProd:String = dgProducto.selectedItem.CODIGO;  
+					var ciclo:String = dgCiclo.selectedItem.CICLO;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setEliminaCiclo);
+					wsMS.setEliminaCiclo.send(codTipoProd, codProd, ciclo);
+			    } 
+			}
+			
+			public function manejadorEliminarProd(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codTipoProd:String = dgTipoProd.selectedItem.CODIGO;
+					var codProd:String = dgProducto.selectedItem.CODIGO;  
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setEliminaProd);
+					wsMS.setEliminaProd.send(codTipoProd, codProd);
+			    } 
+			}
+			
+			public function manejadorEliminarTipoProd(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codTipoProd:String = dgTipoProd.selectedItem.CODIGO;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionTipoProd);
+					wsMS.setAccionTipoProd.send(3, codTipoProd, "");
+			    } 
+			}
+			
+			public function mostrarFormCiclo(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion == true){
+					var codTipoProd:String = dgTipoProd.selectedItem.CODIGO;
+					var codProd:String = dgProducto.selectedItem.CODIGO;
+					var comMttoCiclo:MttoCiclo = new MttoCiclo();
+					switch(tipo){
+						case 1: 
+							comMttoCiclo = MttoCiclo(PopUpManager.createPopUp(this,MttoCiclo,true)); 
+							comMttoCiclo.addEventListener(Event.REMOVED_FROM_STAGE, actualizarCiclo);
+							comMttoCiclo.init(tipo, codTipoProd, codProd);
+							PopUpManager.centerPopUp(comMttoCiclo);
+							break;
+						case 2: 
+							if (dgCiclo.selectedIndex >= 0){
+								accionCiclo = tipo;
+								comMttoCiclo = MttoCiclo(PopUpManager.createPopUp(this,MttoCiclo,true)); 
+								var ciclo:String = dgCiclo.selectedItem.CICLO;
+								var indice:int = dgCiclo.selectedIndex;
+								iniVar();
+								this.indCiclo = indice;
+								this.vScroll = dgCiclo.verticalScrollPosition;
+								comMttoCiclo.addEventListener(Event.REMOVED_FROM_STAGE, actualizarCiclo);
+								comMttoCiclo.init(tipo, codTipoProd, codProd, ciclo);
+								PopUpManager.centerPopUp(comMttoCiclo);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Ciclo","Mantenimiento de Productos",4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			public function mostrarFormProd(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion == true){
+					var codTPC:String = dgTipoProd.selectedItem.CODIGO;
+					var comMttoProd:MttoProdCred = new MttoProdCred();
+					switch(tipo){
+						case 1: 
+							comMttoProd = MttoProdCred(PopUpManager.createPopUp(this,MttoProdCred,true)); 
+							comMttoProd.addEventListener(Event.REMOVED_FROM_STAGE, actualizarProd);
+							comMttoProd.registraInfoProd(codTPC);
+							PopUpManager.centerPopUp(comMttoProd);
+							comMttoProd.init();
+							break;
+						case 2: 
+							if (dgProducto.selectedIndex >= 0){
+								accionProd = tipo;
+								comMttoProd = MttoProdCred(PopUpManager.createPopUp(this,MttoProdCred,true)); 
+								var codProd:String = dgProducto.selectedItem.CODIGO;
+								var prod:String = dgProducto.selectedItem.NOMBRE;
+								var indice:int = dgProducto.selectedIndex;
+								iniVar();
+								this.indProd = indice;
+								this.vScroll = dgProducto.verticalScrollPosition;
+								comMttoProd.addEventListener(Event.REMOVED_FROM_STAGE, actualizarProd);
+								comMttoProd.init();
+								comMttoProd.cargaInfoProd(codTPC, codProd, prod);
+								PopUpManager.centerPopUp(comMttoProd);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Producto de Crédito","Mantenimiento de Productos",4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			public function mostrarFormTipoProd(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoTipoProd:MttoTipoProd = new MttoTipoProd();
+				comMttoTipoProd = MttoTipoProd(PopUpManager.createPopUp(this,MttoTipoProd,true)); 
+				if(edicion == true){
+					switch(tipo){
+						case 1: 
+							comMttoTipoProd.addEventListener(Event.REMOVED_FROM_STAGE, actualizarTipoProd);
+							comMttoTipoProd.registraInfoProd();
+							PopUpManager.centerPopUp(comMttoTipoProd);
+							comMttoTipoProd.init();
+							break;
+						case 2: 
+							if (dgTipoProd.selectedIndex >= 0){
+								accionTipoProd = tipo;
+								var codTipoProd:String = dgTipoProd.selectedItem.CODIGO;
+								var tipoProd:String = dgTipoProd.selectedItem.NOMBRE;
+								var indice:int = dgTipoProd.selectedIndex;
+								iniVar();
+								this.indTipoProd = indice;
+								this.vScroll = dgTipoProd.verticalScrollPosition;
+								comMttoTipoProd.addEventListener(Event.REMOVED_FROM_STAGE, actualizarTipoProd);
+								comMttoTipoProd.init();
+								comMttoTipoProd.cargaInfoTipoProd(codTipoProd, tipoProd);	
+								PopUpManager.centerPopUp(comMttoTipoProd);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de la Gerencia Regional","Mantenimiento de Productos",4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}
+			
+			public function permisos():void{
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var i:int;
+				var cont:int;
+				
+				wsMS = du.initWs(wsMS);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(i = 0; i < cont; i++)
+					{
+						switch(dPermisos.Table[i].OPCION.toString())
+						{
+							case "C":
+								consulta = true;
+								if (global.permisosModGrupos(Application.application.PERFIL_ID)){
+									borrado = true;
+									alta = true;
+									edicion = true;
+								}
+								break;	
+							/*case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;	*/			
+						}
+					}
+					btnAgregar.enabled = alta;
+					du.rCursor();
+					du.closeWs(wsMS);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			public function seleccionaCiclo():void{
+				if (dgCiclo.selectedIndex >= 0){
+					activarContModCiclo(true);
+				}
+				else{
+					activarContModCiclo(false);
+				}
+			}
+			
+			public function seleccionaProd():void{
+				dgCiclo.dataProvider = null;
+				activarContModCiclo(false);
+				if (dgProducto.selectedIndex >= 0){
+					activarContModProd(true);
+					activarContCiclo(true);
+				}
+				else{
+					activarContModProd(false);
+					activarContCiclo(false);
+				}
+			}
+			
+			public function seleccionaTipoProd():void{
+				dgProducto.dataProvider = null;
+				dgCiclo.dataProvider = null;
+				activarContModProd(false);
+				if (dgTipoProd.selectedIndex >= 0){
+					activarContTipoProd(true);
+					activarContProd(true);
+				}
+				else{
+					activarContTipoProd(false);
+					activarContProd(false);
+					activarContCiclo(false);
+				}
+			}
+			
+			private function setAccionProd(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionProd);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarListaProd(1);
+				else
+					Alert.show(res.substr(2,res.length-1), "Mantenimiento de Productos",4,null,null,global.iAlert);
+			}
+
+			private function setAccionTipoProd(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionTipoProd);
+				var res:String = new String(event.result);
+				if (res.substr(0,1) == "1")
+					buscarTipoProd(1);
+				else
+					Alert.show("Error en el proceso: " + res, "Mantenimiento de Productos",4,null,null,global.iAlert);
+			}
+			
+			private function setEliminaCiclo(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaCiclo);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarListaCiclo(1);
+				else
+					Alert.show(res.substr(2,res.length-1), "Mantenimiento de Productos",4,null,null,global.iAlert);
+			}
+			
+			private function setEliminaProd(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaProd);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarListaProd(1);
+				else
+					Alert.show(res.substr(2,res.length-1), "Mantenimiento de Productos",4,null,null,global.iAlert);
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas width="765" height="630" styleName="canvasComp">	
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="726.5" height="125" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgTipoProd" x="10" y="10" width="700.5" height="100"	sortableColumns="false" 
+				draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on" itemClick="seleccionaTipoProd()" 
+				itemDoubleClick="mostrarFormTipoProd(2)" doubleClickEnabled="true"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="10"/>
+					<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="100"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="10" text="TIPOS DE PRODUCTOS DE CRÉDITO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarTipoProd(1)" toolTip="Buscar Tipo Producto" width="40"/>
+			<mx:Button id="btnAgregar" x="105.95" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormTipoProd(1)" toolTip="Registrar Tipo Producto" width="40"/>
+			<mx:Button id="btnEliminar" x="153.95" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarTipoProd()" enabled="false" toolTip="Eliminar Tipo Producto" width="40"/>
+			<mx:Button id="btnEditar" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormTipoProd(2)" toolTip="Editar Tipo Producto" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas x="18" y="39" width="514" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodTipoProd" x="15" y="6" text="Código:"/>
+			<mx:Label id="lblTipoProd" x="132.5" y="6" text="Nombre:"/>
+			<mx:TextInput id="txtTipoProd" x="185.5" y="5" width="307.5" enter="buscarTipoProd(1)" maxChars="50"/>
+			<mx:TextInput id="txtCodTipoProd" x="64" y="5" width="50" enter="buscarTipoProd(1)" maxChars="2"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvProdCred" x="19.25" y="262" width="726.5" height="175" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgProducto" x="10" y="10" width="704.5" height="150" verticalScrollPolicy="on" 
+				horizontalScrollPolicy="auto" itemClick="seleccionaProd()" doubleClickEnabled="true"
+				itemDoubleClick="mostrarFormProd(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60"/>
+					<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="250"/>
+					<mx:DataGridColumn headerText="MONEDA" dataField="MONEDA" width="120"/>
+					<mx:DataGridColumn headerText="PERIODICIDAD" dataField="PERIO" width="90"/>
+					<mx:DataGridColumn headerText="PLAZO" dataField="PLAZO" width="50"/>
+					<mx:DataGridColumn headerText="TASA" dataField="TASA" width="50"/>
+					<mx:DataGridColumn headerText="VIGENCIA" dataField="VIGENCIA" width="60"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="540" y="217" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnAgregarProd" x="105.95" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormProd(1)" toolTip="Agregar Producto" width="40"/>
+			<mx:Button id="btnEliminarProd" x="153.95" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarProd()" toolTip="Eliminar Producto" width="40"/>
+			<mx:Button id="btnEditarProd" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormProd(2)" toolTip="Editar Producto" width="40"/>
+			<mx:Button id="btnDatosProd" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaProd(1)" enabled="false" toolTip="Productos" width="40"/>
+		</mx:Canvas>
+		<mx:Label x="18.5" y="233" text="PRODUCTOS DE CRÉDITO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvDetalle1" x="19.25" y="490" width="726.5" height="124" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgCiclo" x="10" y="10" width="704.5" height="100" sortableColumns="false" resizableColumns="false" 
+				verticalScrollPolicy="on" itemClick="seleccionaCiclo()" doubleClickEnabled="true" doubleClick="mostrarFormCiclo(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="40"/>
+					<mx:DataGridColumn headerText="PLAZO" dataField="DURACION" width="50"/>
+					<mx:DataGridColumn headerText="MONTO MAXIMO" dataField="MONTOMAX" width="50"/>
+					<mx:DataGridColumn headerText="TASA" dataField="TASA" width="50"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="540" y="445" width="205.75" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnAgregarCiclo" x="105.95" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormCiclo(1)" toolTip="Agregar Ciclo" width="40"/>
+			<mx:Button id="btnEliminarCiclo" x="153.95" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarCiclo()" toolTip="Eliminar Ciclo" width="40"/>
+			<mx:Button id="btnEditarCiclo" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormCiclo(2)" toolTip="Editar Ciclo" width="40"/>
+			<mx:Button id="btnDatosCiclo" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaCiclo(1)" enabled="false" toolTip="Ciclo" width="40"/>
+		</mx:Canvas>
+		<mx:Label x="19.25" y="461" text="CICLO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	</mx:Canvas>
+</mx:Canvas>

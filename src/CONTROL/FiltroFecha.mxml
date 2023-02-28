@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="300" height="150" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+		[Event(name="limpiar", type="limpiar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;	
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var global:Globales;
+			public var wsMS:WebService;
+			public var rep:String;
+			public var titulo:String;
+			private var du:Utils;
+			
+			public function ejecuta():void{
+				//rep = 0 indica que el control es utilizado para extraer 
+				//los valores de sus controles
+				if(rep == "0")
+					enviar();
+				//rep <> 0 indica que el control es utilizado para generar 
+				//el reporte indicado en esta variable
+				else if(rep != "0")
+					generar();
+			}
+			
+			public function enviar():void{
+				dispatchEvent(new Event("enviar"));
+			}
+			
+			//funcion que invoca la generacion de reportes en formato PDF
+			public function generar():void{
+				if(valida() == true){
+					var id:String = "&id=" + rep;
+					var fecha:String = "&fecha=" + global.formatoFechaSep(dtfFecha.selectedDate,"-");
+					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var nomUsuario:String = "&nomUsuario=" + Application.application.NOM_U_ID;
+					var consulta:String = global.urlPdf + id + fecha + usuario + nomUsuario;
+					Application.application.muestraPdf(consulta);
+				}
+				else
+					Alert.show("No es posible generar el documento del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+			}			
+						
+			public function init(rep:String, titulo:String, fechaMin:String, fechaMax:String):void{
+				global = new Globales();
+				du = new Utils();
+				this.rep = rep;
+				this.titulo = titulo;
+				lblTitulo.text = titulo.toUpperCase();
+				dtfFecha.selectableRange = {rangeStart: global.convCadenaFecha(fechaMin), rangeEnd: global.convCadenaFecha(fechaMax)};
+				limpiar();
+			}			
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				fec = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date-1));
+				dispatchEvent(new Event("limpiar")); 
+			}
+				
+			public function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha del reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="10" y="10" width="263.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Label x="10" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:Button x="75" y="116" label="Generar" click="ejecuta()"  id="btnGenerar"/>
+	<mx:Button x="154" y="116" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	<mx:Canvas x="10" y="62" width="280" height="37" styleName="canvasMod" id="canvas1">
+		<mx:DateField id="dtfFecha" x="121.1" y="6" width="111"/>
+		<mx:Label x="2" y="8" text="Fecha:" id="lblFecha" textAlign="right" width="110.15"/>
+	</mx:Canvas>
+</mx:Canvas>

@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" 
+	width="100%" xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" 
+	creationPolicy="all" xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente de Registro de Movimientos de Comisiones y Seguros Extraordinarios-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;	
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;	
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ArrayUtil;  
+			          
+			public var _xmlInfo:XML = new XML();
+			public var _xmlJust:XML = new XML();
+			
+			public var wsMS:WebService;
+			private var global:Globales;
+			private var du:Utils;
+			private var titulo:String;
+			private var saldoCom:Number;
+			private var saldoSeg:Number;
+			private var codigo:String;
+			private var tipoCred:String; 
+			private var ciclo:String;
+			private var vResult:ValidationResultEvent;
+		
+			public var justObj:ArrayCollection = new ArrayCollection();
+
+			public function buscarInfo():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodigo.text != "" && txtCiclo.text != ""){
+					codigo = txtCodigo.text;
+					ciclo = txtCiclo.text;
+					btnBuscar.setFocus();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
+						_xmlInfo = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+				
+						if (_xmlInfo.elements().length() > 0){
+							saldoCom = Number(_xmlInfo.Table[0].COMISION);
+							saldoSeg = Number(_xmlInfo.Table[0].SEGURO);
+							lblSdoComision.text = global.formatoMoneda(saldoCom.toString());
+							lblSdoSeguro.text = global.formatoMoneda(saldoSeg.toString());
+							calculaNuevoSaldo();
+						}		
+						else
+							Alert.show("No se ha encontrado información.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+					}); 
+					params[0] = codigo;
+					params[1] = tipoCred;
+					params[2] = ciclo;
+					wsCat.getInfoGeneral.send(9, params);
+				}	
+				else
+					Alert.show("Debe capturar el código y ciclo.",titulo,4,null,null,global.iAlert);
+			}
+			
+			public function calculaNuevoSaldo():void{
+				var nvoCom:Number;
+				var nvoSeg:Number;
+				nvoCom = saldoCom + Number((txtComision.text == "" ? "0": txtComision.text));
+				nvoSeg = saldoSeg + Number((txtSeguro.text == "" ? "0": txtSeguro.text)); 
+				lblNvoSdoCom.text = global.formatoMoneda(nvoCom.toString());
+				lblNvoSdoSeg.text = global.formatoMoneda(nvoSeg.toString());
+			}
+			
+			public function enviar():void{
+				if(valida() == true){
+					var comision:Number;
+					var seguro:Number;
+					var fecha:String;
+					var justifica:String;
+					var observaciones:String;
+					
+					comision = Number((txtComision.text == "" ? "0": txtComision.text));
+					seguro = Number((txtSeguro.text == "" ? "0": txtSeguro.text));
+					fecha = dtfFecha.text;
+					justifica = cboJustifica.selectedItem.id;
+					observaciones = txtObs.text;
+					
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+							
+						if(res.substr(0,1) == "1"){	
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+							limpiar();
+						}
+						else
+							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+					}); 
+					wsMS.setRegAjusteComSeg.send(codigo, ciclo, tipoCred, fecha, comision, seguro, justifica, observaciones, 
+												 Application.application.U_ID);
+				}
+			}
+			
+			public function formateaJustifica():void{
+				var i:int;
+				var cont:int = _xmlJust.elements().length();
+				var item:Array = new Array;
+				var oItem:Object;
+				
+				justObj.removeAll();
+				justObj.refresh();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.descripcion = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlJust.Table[i].CODIGO;
+					oItem.descripcion = _xmlJust.Table[i].DESCRIPCION;		
+					item.push(oItem);
+				}
+				justObj = new ArrayCollection(item);
+			}
+			
+			public function initApp():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				tipoCred = "I";
+				titulo = "Registro de Ajustes (Comisión y Seguro)";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlJust = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlJust.elements().length() > 0){
+						formateaJustifica();
+						cboJustifica.dataProvider = justObj;
+					}
+					else{
+						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+					}
+				});
+				//Obtiene Justificaciones de Ajuste de Comisiones y Seguros
+				params[0] = "C";
+				wsCat.getCatalogoGral.send(21, params);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			public function limpiar():void{
+				saldoCom = 0;
+				saldoSeg = 0;
+				txtCodigo.text = "";
+				txtCiclo.text = "";
+				lblSdoComision.text = "";
+				lblSdoSeguro.text = "";
+				lblNvoSdoCom.text = "";
+				lblNvoSdoSeg.text = "";
+				var fec:Date = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				cboJustifica.selectedIndex = 0;
+				txtComision.text = "";
+				txtSeguro.text = "";
+				txtObs.text = "";
+			}
+			
+			public function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Debe capturar la fecha del ajuste.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if((txtComision.text == "" || txtComision.text == "-" || Number(txtComision.text) == 0) &&
+				   (txtSeguro.text == "" || txtSeguro.text == "-" || Number(txtSeguro.text) == 0)){
+					Alert.show("Debe capturar información válida al menos en alguno de los campos correspondientes.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cboJustifica.selectedIndex <= 0){
+					Alert.show("Debe seleccionar alguna opción de justificación de los registros.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function validaMonto(event:Event):void{
+				if(TextInput(event.currentTarget).text != "-"){
+					numVal.source = TextInput(event.currentTarget);
+					vResult = numVal.validate();
+			
+					if(vResult.type!=ValidationResultEvent.VALID)
+			           	TextInput(event.currentTarget).text = "";
+			    }
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" allowNegative="true"   
+		 decimalSeparator="." thousandsSeparator="," domain="real" required="false"/>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="490" height="425">
+		<mx:Canvas id="cnvDetalle" x="10" y="92" width="470" height="290" styleName="canvasMod" visible="true" enabled="true">
+			<mx:Label id="lblFecha" x="75.8" y="60" text="Fecha:" width="50" textAlign="right"/>
+			<mx:Label id="lblComision" x="75.8" y="89" text="Comisión:" textAlign="right"/>
+			<mx:Label id="lblSeguro" x="298.3" y="89" text="Seguro:" textAlign="right"/>
+			<mx:Label id="lblJust" x="50.65" y="120" text="Justificación:" width="75.15" textAlign="right"/>
+			<mx:Label id="lblSdoComision" x="133.8" y="17" width="90"/>
+			<mx:Label id="lblSdoSeguro" x="349.3" y="16" width="100"/>
+			<mx:Label id="lblESdoComision" x="44.8" y="17" text="Saldo Comisión:" textAlign="right" height="22"/>
+			<mx:Label id="lblESdoSeguro" x="266.3" y="16" text="Saldo Seguro:" width="75" textAlign="right" height="22"/>
+			<mx:HRule x="10" y="46" width="448"/>
+			<mx:Label id="lblNvoSdoCom" x="133.2" y="254" width="90"/>
+			<mx:Label id="lblNvoSdoSeg" x="349.3" y="256" width="100"/>
+			<mx:Label id="lblENvoSdoCom" x="10.2" y="254" text="Nuevo Saldo Comisión:" textAlign="right" height="22"/>
+			<mx:Label id="lblENvoSdoSeg" x="234.3" y="256" text="Nuevo Saldo Seguro:" textAlign="right" height="22"/>
+			<mx:HRule x="10" y="240" width="448"/>
+			<mx:Label id="lblObs" x="35.65" y="151" text="Observaciones:" width="90.15" textAlign="right"/>
+			<mx:DateField id="dtfFecha" x="133.8" y="58" width="100"/>
+			<mx:TextInput id="txtComision" x="133.8" y="88" width="100" maxChars="9" restrict="0-9;.;\-" change="validaMonto(event)" focusOut="calculaNuevoSaldo()"/>
+			<mx:TextInput id="txtSeguro" x="349.3" y="88" width="100" maxChars="9" restrict="0-9;.;\-" change="validaMonto(event)" focusOut="calculaNuevoSaldo()"/>
+			<mx:ComboBox id="cboJustifica" labelField="descripcion" x="133.8" y="118" width="315.5"/>
+			<mx:TextArea id="txtObs" x="133.8" y="150" width="315.5" height="79" maxChars="256" restrict="A-Z;a-z;ñ;Ñ; ;"/>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="380.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvEncabezado" x="28" y="39" width="434" height="45" styleName="canvasMod">
+			<mx:Label id="lblCodigo" x="51.7" y="12" text="Código:" width="50" textAlign="right"/>
+			<mx:Label id="lblCiclo" x="185.7" y="12" text="Ciclo:" width="45" textAlign="right"/>
+			<mx:TextInput id="txtCodigo" x="109.7" y="10" width="68" enter="buscarInfo()" maxChars="6" restrict="0-9"/>
+			<mx:TextInput id="txtCiclo" x="238.7" y="10" width="50" enter="buscarInfo()" maxChars="6" restrict="0-9"/>
+			<mx:Button id="btnBuscar" x="318.25" y="10" icon="@Embed(source='assets/ico_lupa.png')" click="buscarInfo()" toolTip="Buscar Grupo" />
+		</mx:Canvas>
+		<mx:Button id="btnAceptar" x="400" y="390" icon="@Embed(source='assets/button_ok.png')" click="enviar()" enabled="true" toolTip="Aceptar" width="80"/>
+	</mx:Canvas>
+</mx:Canvas>

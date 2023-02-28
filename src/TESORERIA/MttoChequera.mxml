@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" layout="absolute" 
+	width="390" height="350" title="Edición" showCloseButton="true" close="cerrar()" 
+	xmlns:Forms="OPERAC.Forms.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.events.ListEvent;
+			import mx.collections.ArrayCollection;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			
+			private var _xmlChq:XML =  new XML();
+			private var _xmlCoord:XML =  new XML();
+			
+			public var coordObj:ArrayCollection = new ArrayCollection();
+		
+			public var tipoAccion:int;
+			public var wsMS:WebService;	
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function cargaInfoChq(coord:String, codigo:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				tipoAccion = 2;
+				this.title = "Edición";
+				chkEstatus.enabled = false;
+		
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlChq = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlChq.elements().length() > 0){
+						llenaRegistros();
+					}
+					else{
+						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+					}
+					Application.application.desbloquear();
+				});
+				params[0] = txtCodCuenta.text;
+				params[1] = coord;
+				params[2] = codigo;
+				//Obtiene informacion de Chequera
+				wsCat.getInfoRegistro.send(15, params);			
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function enviar():void{
+				if(valida())
+					guardaChequera();
+			}
+			
+			public function formateaCoord():void{
+				var i:int;
+				var cont:int = _xmlCoord.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlCoord.Table[i].CODIGO;	
+					oItem.nombre = _xmlCoord.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				coordObj = new ArrayCollection(item);
+			}
+			
+			public function guardaChequera():void{
+				var coord:String = cboCoordinacion.selectedItem.id;
+				var codCuenta:String = txtCodCuenta.text;
+				var codigo:String = txtCodigo.text;
+				var fecha:String = txtFecha.text;
+				var chqIni:String = txtChqIni.text;
+				var chqFin:String = txtChqFin.text;
+				var estatus:String;
+				
+				if(chkEstatus.selected == true)
+					estatus = "A";
+				else
+					estatus = "I";
+				
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionChequera);
+				wsMS.setAccionChequera.send(tipoAccion, coord, codCuenta, codigo, fecha, chqIni, chqFin, estatus, Application.application.U_ID);
+			}
+			
+			public function init(codCuenta:String, cuenta:String):void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Mantenimiento de Chequera";
+				txtCodCuenta.text = codCuenta;
+				txtCuenta.text = cuenta;
+				
+				_xmlCoord = Application.application._xmlCoord;
+				
+				if (_xmlCoord.elements().length() > 0){
+					formateaCoord();
+					cboCoordinacion.dataProvider = coordObj;
+				} 	
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function llenaRegistros():void{
+				var i:int;
+				txtCodigo.text = _xmlChq.Table[0].CODIGO;
+				txtChqIni.text = _xmlChq.Table[0].CHEQUEINICIAL;
+				txtChqFin.text = _xmlChq.Table[0].CHEQUEFINAL;
+				txtFecha.text = _xmlChq.Table[0].FECALTA;
+				
+				for(i = 0; i < coordObj.length; i++){
+					if(_xmlChq.Table[0].CDGCO.toString() == coordObj[i].id.toString())
+						cboCoordinacion.selectedIndex = i;
+				}		
+				if(_xmlChq.Table[0].ESTATUS.toString() == "A")
+					chkEstatus.selected = true;
+				else
+					chkEstatus.selected = false;
+				
+				cboCoordinacion.enabled = false;
+				txtCodigo.editable = false; 
+			}
+			
+			public function registraInfoChq():void{
+				tipoAccion = 1;
+				this.title = "Nuevo";
+				txtFecha.text = global.formatoFechaSep(Application.application._Current_Fecha,"/");
+				chkEstatus.selected = true;
+				chkEstatus.enabled = false;
+			} 
+			
+			private function setAccionChequera(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionChequera);
+				var res:String = event.result.toString();
+				if (res.substr(0,1) == "1"){
+					cerrar();
+				}	
+				else
+					Alert.show(res.substr(2,res.length - 1),titulo,4,null,null,global.iAlert);		
+			}
+			
+			public function valida():Boolean{
+				if(cboCoordinacion.selectedIndex == 0){
+					Alert.show("Debe seleccionar la sucursal de la chequera.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtCodigo.text == ""){
+					Alert.show("Debe capturar el código de la chequera.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtChqIni.text == ""){
+					Alert.show("Debe capturar el número del cheque inicial",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtChqIni.text.length < 7){
+					Alert.show("El número de cheque inicial debe estar compuesto por 7 dígitos.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtChqFin.text == ""){
+					Alert.show("Debe capturar el número del cheque final",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtChqFin.text.length < 7){
+					Alert.show("El número de cheque final debe estar compuesto por 7 dígitos.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(validaRango() == false){
+					Alert.show("El número de cheque final debe ser mayor o igual al número de cheque inicial.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function validaRango():Boolean{
+				var chqIni:Number = Number(txtChqIni.text);
+				var chqFin:Number = Number(txtChqFin.text);
+				if(chqIni <= chqFin)
+					return true;
+				else
+					return false;	
+			}
+		]]>
+	</mx:Script>
+	<mx:Button x="340" y="280" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	<mx:Button x="292" y="280" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Canvas x="15" y="10" width="360" height="49" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblCuenta" x="17" y="14" text="Cuenta:"/>
+		<mx:TextInput id="txtCodCuenta" editable="false" x="65" y="12" width="58"/>
+		<mx:TextInput id="txtCuenta" editable="false" x="131" y="12" width="210"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="67" width="370" height="205" styleName="canvasMod" id="cnvChequera">
+		<mx:Form x="28" y="3" height="200">
+			<mx:FormItem label="Sucursal:" id="coordinacion" visible="true">
+				<mx:ComboBox id="cboCoordinacion" labelField="nombre"/>
+			</mx:FormItem>
+			<mx:FormItem label="Código:" id="codigo" visible="true" width="280">
+				<mx:TextInput id="txtCodigo" maxChars="10" width="110"/>
+			</mx:FormItem>
+			<mx:FormItem label="Fecha de Alta:" id="fecha" visible="true" width="200">
+				<mx:TextInput id="txtFecha" width="90" editable="false"/>
+			</mx:FormItem>
+			<mx:FormItem label="Cheque Inicial:" id="chqInicial" visible="true" width="200">
+				<mx:TextInput id="txtChqIni" restrict="0-9" maxChars="7" width="90"/>
+			</mx:FormItem>
+			<mx:FormItem label="Cheque Final:" id="chqFinal" visible="true" width="200">
+				<mx:TextInput id="txtChqFin" restrict="0-9" maxChars="7" width="90"/>
+			</mx:FormItem>
+			<mx:FormItem id="estatus" visible="true" width="200">
+				<mx:CheckBox id="chkEstatus" label="Activa"/>
+			</mx:FormItem>
+		</mx:Form>
+	</mx:Canvas>
+</mx:TitleWindow>

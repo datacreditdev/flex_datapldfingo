@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" creationPolicy="all" height="100%">
+	
+	<!--Componente de registro de transferencias individuales-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.controls.ComboBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			
+			public var _xmlAcred:XML = new XML();            
+			
+			public var wsMS:WebService;	
+			
+			private var du:Utils;
+			private var global:Globales;
+			private var fecha:String;
+			public var titulo:String;		
+			
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			
+			private function actualizaListaAcred(ev:Event):void{
+				buscarAcred();
+			}
+			
+			public function buscarAcred():void{
+				if (txtCodAcred.text != "" || txtPaterno.text != "" || txtNombre.text != ""){
+					btnBuscar.setFocus();
+					dgAcred.dataProvider = null;
+					
+					fecha = dtfFecha.text;
+					
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, getAcredDispersion);
+					wsMS.getAcredDispersion.send(Application.application.U_ID, txtCodAcred.text, txtNombre.text, txtPaterno.text, fecha);
+				}	
+			}
+			
+			public function desabilitaEdicion(event:DataGridEvent):void{
+				event.preventDefault();
+			} 
+			
+			private function filtrarRegAcredSel(item:Object):Boolean{
+				return item.REGISTRO;
+			}
+			
+			public function formateaListaAcred():void{
+				var cont:int = _xmlAcred.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				acredObj.removeAll();
+				acredObj.refresh();
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.REGISTRO = false;
+					oItem.CDGCL = _xmlAcred.Table[i].CDGCL;
+					oItem.NOMBREC = _xmlAcred.Table[i].NOMBRE_CL;
+					oItem.CICLO = _xmlAcred.Table[i].CICLO;
+					oItem.CANTAUTOR = _xmlAcred.Table[i].CANTAUTOR;
+					oItem.CDGCO = _xmlAcred.Table[i].CDGCO;
+					item.push(oItem);
+				}
+				acredObj = new ArrayCollection(item);
+			}
+			
+			private function getAcredDispersion(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getAcredDispersion);
+				this._xmlAcred = new XML(event.result);
+				if (this._xmlAcred.elements().length() > 0){
+					formateaListaAcred();
+					dgAcred.dataProvider = acredObj;
+				}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				permisos();
+				titulo = "Registro de Transferencia";
+				lblTitulo.text = titulo.toUpperCase();
+				var fec:Date = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 	
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			public function muestraFormTrans():void{
+				var codigo:String = dgAcred.selectedItem.CDGCL;
+				var acred:String = dgAcred.selectedItem.NOMBREC;
+				var ciclo:String = dgAcred.selectedItem.CICLO;
+				var monto:Number = dgAcred.selectedItem.CANTAUTOR;
+				var comMttoTrans:MttoTransferencia = new MttoTransferencia();
+				comMttoTrans = MttoTransferencia(PopUpManager.createPopUp(this,MttoTransferencia,true));
+				comMttoTrans.init(codigo, acred, ciclo, monto, fecha);
+				comMttoTrans.addEventListener(Event.REMOVED_FROM_STAGE, actualizaListaAcred);
+				PopUpManager.centerPopUp(comMttoTrans);
+			}
+			
+			public function permisos():void{
+				var perfil_id:String = Application.application.cadPerfil;
+				var i:int;
+				var cont:int;
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="590" height="315">
+		<mx:Canvas x="513.5" y="87" width="61" height="37" styleName="canvasMod" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarAcred()" toolTip="Buscar Acreditado" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas x="12.75" y="87" width="492.75" height="37" styleName="canvasMod" visible="true">
+			<mx:Label id="lblCodAcred" x="6" y="7" text="Código:"/>
+			<mx:Label id="lblAcred" x="317.75" y="7" text="Paterno:"/>
+			<mx:TextInput id="txtPaterno" x="370.75" y="6" width="110" enter="buscarAcred()" maxChars="50"/>
+			<mx:TextInput id="txtCodAcred" x="55" y="6" width="68" enter="buscarAcred()" maxChars="6" restrict="0-9"/>
+			<mx:TextInput id="txtNombre" x="197.75" y="6" width="110" enter="buscarAcred()" maxChars="50"/>
+			<mx:Label id="lblNombre" x="144.75" y="7" text="Nombre:"/>
+		</mx:Canvas>
+		<mx:Label x="12.75" y="67" text="ACREDITADO" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvAcred" x="12.75" y="132" width="564.5" height="140" styleName="canvasMod" visible="true" verticalScrollPolicy="off">
+			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="542.5" height="120"
+				sortableColumns="false" resizableColumns="false" doubleClickEnabled="true" itemDoubleClick="muestraFormTrans()"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="50" editable="false"/>
+					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBREC" width="180" editable="false"/>
+					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50" editable="false"/>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="100" editable="false"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="12.75" y="10" width="338.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="103.75" y="31" width="430.5" height="37" styleName="canvasMod" visible="true">
+			<mx:Label id="lblFecha" x="113.75" y="7" text="Fecha de Entrega:" textAlign="right"/>
+			<mx:DateField id="dtfFecha" x="214.75" y="6" width="100"/>
+		</mx:Canvas>
+		<mx:Label id="lblControl" x="12.75" y="279.95" width="368.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Button id="btnRegistrar" x="537.25" y="278.95" icon="@Embed(source='assets/button_ok.png')" enabled="true" toolTip="Registrar" width="40" click="muestraFormTrans()"/>
+	</mx:Canvas>
+</mx:Canvas>

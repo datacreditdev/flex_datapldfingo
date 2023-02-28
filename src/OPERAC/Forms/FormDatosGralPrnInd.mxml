@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="752" height="180" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
+	</mx:Metadata>
+	
+	<mx:Validator id="fecSolicV" source="{dtfSolicitud}" property="text" 
+	invalid="{dtfSolicitud.setFocus()}" triggerEvent="" requiredFieldError="Fecha de solicitud Requerida"/>
+	 
+	<mx:Validator id="fecEntV" source="{dtfInicio}" property="text" 
+	invalid="{dtfInicio.setFocus()}" triggerEvent="" requiredFieldError="Fecha de inicio Requerida"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.states.State;
+			import mx.events.IndexChangedEvent;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			
+			[Bindable]
+			private var _xmlMoneda:XML =  new XML();
+			
+			public var monedaObj:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosSolic = new DatosSolic();
+			
+			public var wsMS:WebService;	
+			public var du:Utils;
+			public var tipoAccion:int;
+			public var estatus:String;
+			private var global:Globales;
+			
+			public function activaControles(_xmlControl:XML):void{
+				
+			}
+			
+			public function cargaParamsProd(_xmlParam:XML):void{
+				var j:int;
+				
+				for(j = 0; j < monedaObj.length; j++){
+					if(monedaObj[j].id.toString() == _xmlParam.Table[0].CDGMO){
+						cboMoneda.selectedIndex = j;
+						break;	
+					}
+				}
+			}
+			
+			public function desactivaControles():void{
+				cnvFecSolic.enabled = false;
+				cnvMoneda.enabled = false;
+			}
+			
+			public function enviarDatosSolic(formData:DatosSolic):void{
+				var invalidArray:Array = Validator.validateAll([fecSolicV, fecEntV]);
+				var j:int;
+				
+				if(invalidArray.length == 0 && situacion.selection != null){	
+					formData.fecSolic = dtfSolicitud.text;
+					formData.fecEntre = dtfInicio.text;	
+					formData.situacion = situacion.selectedValue.toString();				
+					formData.moneda = cboMoneda.selectedItem.id;
+					formData.entregado = Number(txtEntregado.text);
+					formData.devolucion = 0;
+					formData.guardaDatos = true;
+				}
+				else{
+					formData.guardaDatos = false;
+				}
+				var event:EventSolic = new EventSolic("enviarDatosSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			public function formateaMoneda():void{
+				var i:int;
+				var cont:int = _xmlMoneda.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlMoneda.Table[i].CODIGO;	
+					oItem.nombre = _xmlMoneda.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				monedaObj = new ArrayCollection(item);
+			}
+			
+			public function init(info:DatosSolic, tipoAccion:int, estatus:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				this.tipoAccion = tipoAccion;
+				this.estatus = estatus;
+				global = new Globales();
+				du = new Utils();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();		
+				
+				dtfSolicitud.selectedDate = Application.application._Current_Fecha;
+				dtfInicio.selectedDate = Application.application._Current_Fecha;
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlMoneda = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlMoneda.elements().length() > 0){
+						formateaMoneda();
+						cboMoneda.dataProvider = monedaObj;
+					} 	
+					if (info != null){
+						var j:int;
+						datos = info;
+						
+						if(estatus == "entrega")
+							desactivaControles();
+						
+						dtfSolicitud.text = info.fecSolic;
+						dtfInicio.text = info.fecEntre;
+						txtAutorizado.text = info.autorizado.toString();
+						txtEntregado.text = info.entregado.toString();
+						
+						selSituacion(info.situacion);
+						
+						for(j = 0; j < monedaObj.length; j++){
+							if(monedaObj[j].id.toString() == info.moneda){
+								cboMoneda.selectedIndex = j;
+								break;	
+							}
+						}
+					}	
+				});
+				wsCat.getCatalogoGral.send(14);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function modificaEntregado(event:Event):void{
+				var situacion:String = RadioButton(event.currentTarget).value.toString();
+				if(situacion == "D" || situacion == "T")
+					txtEntregado.text = "0";
+				else if(situacion == "E")
+					txtEntregado.text = txtAutorizado.text;
+			}	
+			
+			public function selSituacion(situacion:String):void{
+				switch(situacion)
+				{
+					case "A":
+					case "T":
+						rdbAutorizado.selected = true;
+						rdbLiquidado.enabled = false;
+						break;
+					case "E":
+						rdbEntregado.selected = true;
+						rdbLiquidado.enabled = false;
+						break;
+					case "D":
+						rdbDevuelto.selected = true;
+						cnvSituacion.enabled = false;
+						txtEntregado.editable = false;
+						break;
+					case "L":
+						rdbLiquidado.selected = true;
+						cnvSituacion.enabled = false;
+						txtEntregado.editable = false;
+						break;			
+				}
+			}
+			
+			public function validaEntrega():void{
+				var fecAct:String = global.formatoFechaYYYYMMDD(Application.application._Current_Fecha);
+				var fecIni:String = global.formatoFechaYYYYMMDD(dtfInicio.selectedDate);
+				var fecSol:String = global.formatoFechaYYYYMMDD(dtfSolicitud.selectedDate);
+				if (fecIni < fecAct){
+					Alert.show("La fecha de entrega debe ser igual o posterior a la fecha actual","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+					if(fecAct > fecSol)
+						dtfInicio.selectedDate = Application.application._Current_Fecha;
+					else
+						dtfInicio.selectedDate = dtfSolicitud.selectedDate;
+				}
+				else{
+					if(fecIni < fecSol){	
+						Alert.show("La fecha de entrega debe ser igual o posterior a la fecha de solicitud","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+						dtfInicio.selectedDate = dtfSolicitud.selectedDate;
+					}
+				}
+			}
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvFecSolic" x="45" y="29" width="267" height="71" styleName="canvasMod">
+		<mx:FormItem id="fechaSolic" label="Fecha de Solicitud" x="21.5" y="7" width="222">
+			<mx:DateField id="dtfSolicitud" x="86.5" y="10" width="109" />
+		</mx:FormItem>
+		<mx:FormItem id="fechaInicio" label="Inicio del Préstamo" x="20.5" y="38" width="222">
+			<mx:DateField id="dtfInicio" x="86.5" y="10" width="109" change="validaEntrega()" disabledDays="{[0,6]}"/>
+		</mx:FormItem>
+		
+	</mx:Canvas>
+	<mx:Canvas id="cnvSituacion" x="320" y="29" width="180" height="88" styleName="canvasMod">
+		<mx:RadioButtonGroup id="situacion"/>
+		<mx:RadioButton id="rdbEntregado" x="49" label="Entregado" groupName="situacion" y="20" value="E" change="modificaEntregado(event)"/>
+		<mx:RadioButton id="rdbLiquidado" x="49" y="60" label="Liquidado" groupName="situacion" width="78" value="L" change="modificaEntregado(event)"/>
+		<mx:RadioButton id="rdbAutorizado" x="49" y="0" label="Autorizado" groupName="situacion" value="T" change="modificaEntregado(event)"/>	
+		<mx:RadioButton id="rdbDevuelto" x="49" label="Devuelto" groupName="situacion" y="40" value="D" change="modificaEntregado(event)"/>
+	</mx:Canvas>
+	<mx:Canvas id="cnvMoneda" x="508" y="29" width="200" height="71" styleName="canvasMod">
+		<mx:ComboBox id="cboMoneda" x="19" y="24" labelField="nombre"></mx:ComboBox>
+	</mx:Canvas>
+	<mx:Canvas id="cnvMonto" x="44" y="125" width="340" height="40" styleName="canvasMod">
+		<mx:FormItem id="entregado" label="Entregado:" x="173" y="6" width="156">
+			<mx:TextInput id="txtEntregado" width="80"/>
+		</mx:FormItem>
+		<mx:FormItem id="autorizado" label="Autorizado:" x="10" y="6" width="157">
+			<mx:TextInput id="txtAutorizado" width="80" editable="false"/>
+		</mx:FormItem>
+	</mx:Canvas>
+	<mx:Label x="320" y="10" text="Situación"/>
+	<mx:Label x="508" y="10" text="Moneda"/>
+	<mx:Label x="44" y="108" text="Montos"/>
+</mx:Canvas>

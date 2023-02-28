@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" title="Búsqueda" showCloseButton="true" 
+	close="cerrar()" layout="absolute" width="450" height="340" creationPolicy="all" creationComplete="init()">
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.collections.IList;
+			import mx.controls.Alert;
+			import mx.core.Application;
+        	import mx.events.*;
+        	import mx.managers.PopUpManager;
+        	import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			
+			[Bindable]
+			public var _xmlPer:XML =  new XML();
+			
+			public var indice:int;
+			private var global:Globales;
+			private var du:Utils;
+			private var titulo:String;
+			
+			private function buscarPersona():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				if (txtCodPers.text != "" || txtPers.text != ""){
+					btnBuscarPers.setFocus();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlPer = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+					});
+					params[0] = txtCodPers.text;
+					params[1] = txtPers.text;
+					wsCat.getListado.send(48, params); 
+				}
+			}
+			
+			private function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function enviar():void{
+				if(validar()){
+					dispatchEvent(new Event("enviar"));
+					cerrar();
+				}
+			}
+			
+			private function init():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Búsqueda de Persona";
+			}
+			
+			public function obtenerCodigo():String{
+				return dgPers.selectedItem.CODIGO;
+			}
+			
+			public function obtenerNombre():String{
+				return dgPers.selectedItem.NOMBRE;
+			}
+			
+			private function validar():Boolean{
+				if(dgPers.selectedIndex < 0){
+					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label x="15" y="12" text="Código:" width="44"/>
+	<mx:Label x="131.5" y="12" text="Nombre:" width="54"/>
+	<mx:TextInput id="txtCodPers" x="62.5" y="10" width="60" maxChars="6" restrict="0-9;%" enter="buscarPersona()"/>
+	<mx:TextInput id="txtPers" x="184.5" y="10" width="200.5" enter="buscarPersona()"/>
+	<mx:Button x="393" y="268" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" id="btnCerrar" width="40"/>
+	<mx:Button id="btnAceptar" x="345" y="268" icon="@Embed(source='assets/button_ok.png')" width="40" click="enviar()"/>
+	<mx:DataGrid id="dgPers" x="14" y="44" width="418" height="216" dataProvider="{_xmlPer.Table}" doubleClickEnabled="true" doubleClick="enviar()">
+		<mx:columns>
+			<mx:DataGridColumn headerText="Código" dataField="CODIGO" width="70"/>
+			<mx:DataGridColumn headerText="Nombre" dataField="NOMBRE"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnBuscarPers" x="393" y="11" icon="@Embed(source='assets/ico_lupa.png')" click="buscarPersona()" toolTip="Buscar Persona" width="40"/>
+</mx:TitleWindow>

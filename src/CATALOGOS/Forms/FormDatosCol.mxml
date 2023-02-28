@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="440" height="182" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosCol", type="Data.EventCol")]
+	</mx:Metadata>
+	 
+	<mx:Validator id="codigoV" source="{txtCodigo}" property="text" 
+	invalid="{txtCodigo.setFocus()}" triggerEvent="" requiredFieldError="Codigo Requerido"/>
+	
+	<mx:Validator id="coloniaV" source="{txtColonia}" property="text" 
+	invalid="{txtColonia.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Colonia Requerido"/>
+	
+	<mx:StringValidator id="codPostalV" source="{txtCodPostal}" property="text" minLength="5" maxLength="5" 
+	invalid="{txtCodPostal.setFocus()}" triggerEvent="" requiredFieldError="Código Postal Requerido" tooShortError="Código Postal Incorrecto"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import Data.Globales;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import Data.DatosCol;
+			import Data.EventCol;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			
+			public var du:Utils;
+			private var global:Globales;
+			
+			public function enviarDatosCol(formData:DatosCol):void{
+				var invalidArray:Array = Validator.validateAll([codigoV, coloniaV, codPostalV]);
+				
+				if(invalidArray.length == 0){	
+					formData.codigo = txtCodigo.text;
+					formData.colonia = txtColonia.text;
+					formData.codPostal = txtCodPostal.text;
+					if(pobreza.selection != null) 
+						formData.pobreza = pobreza.selectedValue.toString(); 
+					formData.guarda = true;
+				}
+				else{
+					formData.guarda = false;
+				}
+				var event:EventCol = new EventCol("enviarDatosCol", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(info:DatosCol):void{
+				global = new Globales();
+				du = new Utils();
+				txtCodigo.setFocus();
+				if (info != null){
+					txtCodigo.text = info.codigo;
+					txtCodigo.editable = false;
+					txtColonia.text = info.colonia;
+					txtCodPostal.text = info.codPostal;
+					pobreza.selectedValue = info.pobreza;	
+				}
+			}
+	]]>
+	</mx:Script>
+	<mx:FormItem label="Código:" id="codigo" visible="true">
+		<mx:TextInput id="txtCodigo" maxChars="4" width="50" restrict="0-9"/>
+	</mx:FormItem>
+	<mx:FormItem label="Colonia:" id="colonia" visible="true" width="410">
+		<mx:TextInput id="txtColonia" width="280" maxChars="100"/>
+	</mx:FormItem>
+	<mx:FormItem label="Código Postal:" id="codPostal" visible="true" width="170">
+		<mx:TextInput id="txtCodPostal" width="70" maxChars="5" restrict="0-9"/>
+	</mx:FormItem>
+	<mx:FormItem label="Pobreza:" visible="true" width="330">
+		<mx:Canvas width="237" height="65" styleName="canvasMod">
+			<mx:RadioButtonGroup id="pobreza"/>
+			<mx:RadioButton id="rdbNula" label="Pobreza Nula" groupName="pobreza" x="16.5" y="5" value="1"/>
+			<mx:RadioButton id="rdbPobre" label="Pobre" x="118.5" groupName="pobreza"  y="5" value="3"/>	
+			<mx:RadioButton id="rdbMedia" x="16.5" y="37" label="Clase Media" groupName="pobreza" value="2"/>
+			<mx:RadioButton id="rdbExtrema" x="118.5" y="37" label="Extrema Pobreza" groupName="pobreza" value="4"/>
+		</mx:Canvas>	
+	</mx:FormItem>
+</mx:Form>

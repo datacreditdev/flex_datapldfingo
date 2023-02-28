@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="190" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
+	</mx:Metadata>
+	 
+	<mx:Script>
+		<![CDATA[
+			import OPERAC.ExcepcionAcred;
+			import mx.states.State;
+			import mx.events.IndexChangedEvent;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.core.DragSource;
+        	import mx.events.*;
+            import mx.managers.DragManager;
+            import mx.collections.IList;
+			
+			private var _xmlAcred:XML =  new XML();
+			private var _xmlGrupo:XML =  new XML();
+			private var _xmlExc:XML =  new XML();
+			private var _xmlInfo:XML =  new XML();
+			
+			public var excObj:ArrayCollection = new ArrayCollection();
+			public var grupoObj:ArrayCollection = new ArrayCollection();
+			public var arr:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosSolic = new DatosSolic();
+			
+			public var wsMS:WebService;	
+			public var du:Utils;
+			public var tipoAccion:int;
+			public var estatus:String;
+			private var global:Globales;
+			public var indice:int;
+			private var dropInitiator:String;
+			
+			public function activaControles(_xmlControl:XML):void{
+				
+			}
+			
+			public function actualizarExcAcred(event:Event):void{
+				var comExcAcred:ExcepcionAcred = event.currentTarget as ExcepcionAcred;
+				if(comExcAcred.contSel == 0){
+					 IList(dgExc.dataProvider).addItem(IList(destGrid.dataProvider).getItemAt(indice));
+					 IList(destGrid.dataProvider).removeItemAt(indice);
+				}
+				else{
+					arr = comExcAcred.formateaRegAcred(arr);
+				}
+			}
+			
+			public function desactivaControles():void{
+				cnvExcepcion.enabled = false;
+			}
+			
+			public function enviarDatosSolic(formData:DatosSolic):void{
+				var i:int;
+				var listaExc:ArrayCollection;
+				
+				listaExc = destGrid.dataProvider as ArrayCollection;
+				formData.excepcion = new Array;
+				formData.excAcred = new Array;
+				formData.lstAcred = new Array;
+				formData.obsAcred = new Array;	
+				
+				if(listaExc.length > 0){	
+					for(i = 0; i < listaExc.length; i++){
+						formData.excepcion[i] = listaExc[i].id;
+					}
+					formData.observacion = txtObservacion.text;
+					//Informacion de las excepciones asignadas a cada acreditado
+					for(i = 0; i < arr.length; i++){
+						formData.excAcred[i] = arr[i].CDGEXC;
+						formData.lstAcred[i] = arr[i].CDGCL;
+						formData.obsAcred[i] = arr[i].OBSERV;
+					}	
+				}
+				else{
+					formData.excepcion[0] = "000";
+					formData.observacion = "";
+					formData.excAcred[0] = "";
+					formData.lstAcred[0] = "";
+					formData.obsAcred[0] = "";
+				}
+				formData.guardaExc = true;
+				
+				var event:EventSolic = new EventSolic("enviarDatosSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			public function formateaExcepcion():void{
+				var i:int;
+				var cont:int = _xmlExc.elements().length();
+				var oItem:Object;
+		
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlExc.Table[i].CODIGO;	
+					oItem.descripcion = _xmlExc.Table[i].DESCRIPCION;
+					excObj.addItem(oItem);
+				}
+			}
+			
+			public function formateaRegAcred():void{
+				var i:int;
+				var cont:int = _xmlAcred.elements().length();
+				var oItem:Object;
+		
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.CDGEXC = _xmlAcred.Table[i].CDGEXC;
+					oItem.CDGCL = _xmlAcred.Table[i].CDGCL;
+					oItem.OBSERV = _xmlAcred.Table[i].OBSERVACION;
+					arr.addItem(oItem);
+				}
+			}
+			
+			public function init(info:DatosSolic, tipoAccion:int, estatus:String):void{
+				var ind:int;
+				var oItem:Object;
+				this.tipoAccion = tipoAccion;
+				this.estatus = estatus;
+				global = new Globales();
+				du = new Utils();
+						
+				destGrid.dataProvider = new ArrayCollection([]);
+				
+				if (info != null){
+					var i:int;
+					var j:int;
+					datos = info;
+					
+					datos.excepcion = new Array;
+							
+					if(info.situacion == 'R')
+						desactivaControles();
+			
+					initConexion();
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlExc = XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						if(_xmlExc.elements().length() > 0){
+							formateaExcepcion();
+							dgExc.dataProvider = excObj;
+							
+							initConexion();
+							du.sCursor();
+							
+							du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+								_xmlInfo = XML(evt.result.toString());
+								
+								du.rCursor();
+								du.closeWs(wsMS);
+								
+								if(_xmlInfo.elements().length() > 0){
+									txtObservacion.text = _xmlInfo.Table[0].OBSERVACION;
+									var cont:int = _xmlInfo.elements().length();
+									
+									for(i = 0; i < excObj.length; i++){
+										for(j = 0; j < cont; j++){
+											if(_xmlInfo.Table[j].CDGEXC.toString() == excObj[i].id.toString()){
+												IList(destGrid.dataProvider).addItem(IList(dgExc.dataProvider).getItemAt(i));
+												IList(dgExc.dataProvider).removeItemAt(i);	
+											}
+										}
+									}
+									
+									initConexion();
+									du.sCursor();
+									
+									du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+										_xmlAcred = XML(evt.result.toString());
+										
+										du.rCursor();
+										du.closeWs(wsMS);
+										
+										if(_xmlAcred.elements().length() > 0){
+											formateaRegAcred();
+										}
+									});
+									wsMS.getListaExcepcionAcred.send(datos.cdgGrupo, datos.ciclo);
+								}
+							});
+							wsMS.getListaExcepcionGrupo.send(datos.cdgGrupo, datos.ciclo);
+						}
+					});
+					wsMS.getExcepcion.send();							
+				}			
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function setDragInitator(event:MouseEvent, id:String):void{
+                dropInitiator = id;
+            }
+            
+            private function doDragEnter(event:DragEvent):void {
+            	var dropTarget:DataGrid = DataGrid(event.currentTarget);
+                var dataInfo:ArrayCollection = dropTarget.dataProvider as ArrayCollection;
+                var items:Array = event.dragSource.dataForFormat("items") as Array;
+                   
+                var drop:Boolean = true;
+                
+                if(dropInitiator != dropTarget.id){
+                	if (dataInfo != null){
+                    	for(var i:int = 0; i < dataInfo.length; i++)
+                        	if(dataInfo[i].descripcion == items[0].descripcion) 
+                        		drop = false;
+                 	}
+					if(drop)
+                    {
+                        DragManager.showFeedback(DragManager.MOVE);
+                        DragManager.acceptDragDrop(dropTarget);
+                    }
+                }
+            }
+
+            private function doDragDrop(event:DragEvent):void{   
+            	var i:int;     
+	            var dropTarget:DataGrid = DataGrid(event.currentTarget);
+	           	doDragExit(event);  
+	            var items:Array = event.dragSource.dataForFormat("items") as Array;
+	            var dropLoc:int = dropTarget.calculateDropIndex(event); 
+					
+				indice = dropLoc;
+					
+	            for(i = 0; i < items.length; i++){                 
+	            	IList(dropTarget.dataProvider).addItemAt(items[i], dropLoc);
+	            }
+	            //solo se asiganaran excepciones indivuduales cuando se desplace hacia la 
+	            //lista de excepciones asignadas
+	            if(dropInitiator == "dgExc"){
+		       		var comExcAcred:ExcepcionAcred = new ExcepcionAcred();
+	                comExcAcred = ExcepcionAcred(PopUpManager.createPopUp(this,ExcepcionAcred,true));
+					comExcAcred.addEventListener(Event.REMOVED_FROM_STAGE, actualizarExcAcred);
+					comExcAcred.init(items[0].id, datos.cdgGrupo, datos.ciclo, 1);
+					PopUpManager.centerPopUp(comExcAcred);
+	            }
+	            else if(dropInitiator == "destGrid"){
+	            	for(i = 0; i < arr.length; i++){
+	            		if(arr[i].CDGEXC == items[0].id.toString()){
+	            			arr.removeItemAt(i);
+	            			i--;
+	            		}			
+	            	}
+	            }
+            }
+            
+            private function doDragExit(event:DragEvent):void{
+                var dropTarget:DataGrid = DataGrid(event.currentTarget);          
+                dropTarget.hideDropFeedback(event);
+            }
+            
+            public function muestraAcredExc():void{
+            	var comExcAcred:ExcepcionAcred = new ExcepcionAcred();
+	            comExcAcred = ExcepcionAcred(PopUpManager.createPopUp(this,ExcepcionAcred,true));
+				comExcAcred.addEventListener(Event.REMOVED_FROM_STAGE, actualizarExcAcred);
+				indice = destGrid.selectedIndex;
+				comExcAcred.init(destGrid.selectedItem.id, datos.cdgGrupo, datos.ciclo, 2, arr);
+				PopUpManager.centerPopUp(comExcAcred);
+            }
+
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvExcepcion" x="10" y="20" width="780" height="160" styleName="canvasMod">
+		<mx:DataGrid id="dgExc" x="10" y="7" width="260" height="141"
+			sortableColumns="false" allowMultipleSelection="false"  
+		    dragMoveEnabled="true" mouseDown="setDragInitator(event, 'dgExc')" 
+		    dragEnter="doDragEnter(event);"
+		    dragExit="doDragExit(event);"                    
+		    dragDrop="doDragDrop(event);"        
+		    dragEnabled="true">
+			<mx:columns>
+				<mx:DataGridColumn headerText="EXCEPCIONES DISPONIBLES" dataField="descripcion" width="70"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:DataGrid id="destGrid" x="278" y="7" height="141" width="260" 
+			allowMultipleSelection="true" sortableColumns="false"  
+		    dragMoveEnabled="true" mouseDown="setDragInitator(event, 'destGrid')"
+		    dragEnter="doDragEnter(event);"          
+		    dragExit="doDragExit(event);"          
+		    dragDrop="doDragDrop(event);" 
+		    dragEnabled="true" doubleClickEnabled="true"
+		    doubleClick="muestraAcredExc()" >
+			<mx:columns>
+				<mx:DataGridColumn headerText="EXCEPCIONES ASIGNADAS" dataField="descripcion" width="70"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label id="lblObservacion" x="548" y="7" text="Observaciones:"/>
+		<mx:TextArea id="txtObservacion" x="548" y="26" height="122" width="220" maxChars="256" restrict="A-Z;a-z;ñ;Ñ; ;"/>
+	</mx:Canvas>
+	<mx:Label x="10" y="0" text="Excepciones"/>
+</mx:Canvas>

@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" xmlns:Administracion="Administracion.*" height="100%">
+	<mx:states>
+		<mx:State name="evaluacion">
+			<mx:SetProperty target="{canvas1}" name="width" value="110"/>
+			<mx:SetProperty target="{canvas1}" name="x" value="621"/>
+		</mx:State>
+	</mx:states>
+	
+	<!--Componente de mantenimiento de entrega de prestamos Individuales-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;  
+			import mx.events.*;  
+			import Data.Globales;
+			import mx.controls.ComboBox;
+			import mx.events.FlexEvent;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.formatters.NumberFormatter;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.CloseEvent;	
+			import mx.events.ListEvent;	
+			import mx.core.Application;
+			import mx.containers.TitleWindow;
+			import mx.managers.PopUpManager;
+			import mx.controls.*;
+			import mx.collections.ArrayCollection;
+			import mx.effects.easing.Elastic;
+			import mx.events.ValidationResultEvent;            
+
+			public var _xmlGrupos:XML = new XML();
+			public var _xmlSolic:XML = new XML();
+			public var _xmlAcred:XML = new XML();
+			public var dPermisos:XML = new XML();	
+			
+			public var objMtto:Sprite = new Sprite();
+			
+			public var wsMS:WebService;	
+			public var du:Utils;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionSolic:int;
+			public var indSolic:int;
+			public var vScroll:Number;
+			public var res:String;
+			
+			//variables que indican las opciones disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			public var comMttoFecha:MttoSelFecha;
+			public var comMttoAgrega:MttoAgregaAcred;
+			public var comMttoBusq:MttoBusqAcred;
+			public var comMttoProyecto:MttoProyecto;
+					
+			public function activarContSolic(band:Boolean):void{
+				btnDatosSolic.enabled = band;
+			}
+			
+			public function actualizarAcred(event:Event):void{
+				//buscarListaAcredSolic(1);
+			}
+			
+			public function actualizarPrn(event:Event):void{
+				buscarListaPrn(1);
+			}
+			
+			public function buscarAcred():void{
+				if (txtCodAcred.text != "" || txtPaterno.text != "" || txtMaterno.text != ""){
+					btnBuscar.setFocus();
+					dgAcred.dataProvider = null;
+					initConexion();
+					Application.application.bloquear();
+					du.sCursor();
+					wsMS.addEventListener(ResultEvent.RESULT, getAcredInd);
+					wsMS.getAcredInd.send(Application.application.U_ID, txtCodAcred.text, txtPaterno.text, txtMaterno.text);
+				}	
+			}
+			
+			public function buscarListaPrn(tipo:int):void{
+				var acred:String = dgAcred.selectedItem.CODIGO;
+				initConexion();
+			 	if(tipo == 1)
+			 		Application.application.bloquear();
+				du.sCursor();
+				wsMS.addEventListener(ResultEvent.RESULT, getListaPrnInd);
+				wsMS.getListaPrnInd.send(acred);
+			}
+			
+			private function getAcredInd(event:ResultEvent):void{
+				wsMS.disconnect();
+				Application.application.desbloquear();
+				du.rCursor();
+				wsMS.removeEventListener(ResultEvent.RESULT, getAcredInd);
+				this._xmlAcred = new XML(event.result);
+				if (this._xmlAcred.elements().length() > 0){
+					dgAcred.dataProvider = _xmlAcred.Table;
+				}
+				seleccionaAcred();
+			}
+			
+			private function getListaPrnInd(event:ResultEvent):void{
+				wsMS.disconnect();
+				Application.application.desbloquear();
+				du.rCursor();
+				wsMS.removeEventListener(ResultEvent.RESULT, getListaPrnInd);
+				this._xmlSolic = new XML(event.result);
+				dgSolic.dataProvider = null;
+				if (this._xmlSolic.elements().length() > 0){
+					dgSolic.dataProvider = _xmlSolic.Table;
+					if (accionSolic == 2){
+						dgSolic.validateNow();
+						dgSolic.verticalScrollPosition = vScroll;
+						dgSolic.selectedIndex = indSolic;
+						this.accionSolic = 0;
+					}
+				}
+				seleccionaSolic();
+			}
+			
+			public function iniVar():void{
+				this.indSolic = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			public function mostrarFormPrn(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var acred:String;
+				var nomAcred:String;
+				var coord:String;
+				var nomCoord:String;
+				var promotor:String;
+				var munic:String;
+				var indAcred:int;
+				var ciclo:String;
+				if(edicion == true){
+					var comMttoPrn:MttoPrestamoInd = new MttoPrestamoInd();
+					//indAcred = dgAcred.selectedIndex;
+					acred = dgAcred.selectedItem.CODIGO;
+					nomAcred = dgAcred.selectedItem.NOMBRE_CL;
+					coord = dgAcred.selectedItem.CDGCO;
+					nomCoord = dgAcred.selectedItem.NOMCO;
+					promotor = dgAcred.selectedItem.CDGPRPE;
+					munic = dgAcred.selectedItem.MUNIC;
+					switch(tipo){
+						case 2: 
+							if (dgSolic.selectedIndex >= 0){
+								accionSolic = tipo;					
+								comMttoPrn = MttoPrestamoInd(PopUpManager.createPopUp(this,MttoPrestamoInd,true));  
+								comMttoPrn.addEventListener(Event.REMOVED_FROM_STAGE, actualizarPrn);
+								PopUpManager.centerPopUp(comMttoPrn);
+								iniVar();
+								this.vScroll = dgSolic.verticalScrollPosition;		
+								this.indSolic = dgSolic.selectedIndex;
+								ciclo = dgSolic.selectedItem.CICLO;
+								comMttoPrn.cargaInfoPrn(acred, nomAcred, ciclo, munic, coord, nomCoord, promotor);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Solicitud","Mantenimiento de Solicitud",4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}
+			
+			public function permisos():void{
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var i:int;
+				var cont:int;
+				
+				wsMS = new WebService();
+				wsMS = du.initWs(wsMS);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(i = 0; i < cont; i++)
+					{
+						switch(dPermisos.Table[i].OPCION.toString())
+						{
+							case "C":
+								consulta = true;
+								if (global.permisosModSolic(Application.application.PERFIL_ID)){
+									borrado = true;
+									alta = true;
+									edicion = true;
+								}
+								break;	
+							/*case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;*/
+						}
+					}
+					du.rCursor();
+					du.closeWs(wsMS);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}		
+			
+			public function seleccionaAcred():void{
+				dgSolic.dataProvider = null;
+				if (dgAcred.selectedIndex >= 0){
+					activarContSolic(true);
+				}
+				else
+					activarContSolic(false);
+			}
+			
+			public function seleccionaSolic():void{
+				/*if (dgSolic.selectedIndex >= 0)
+					//activarContModSolic(true);
+				else
+					//activarContModSolic(false);*/
+			}
+			
+			public function validaSituacionSolic(grupo:String):void{
+				initConexion();
+				du.sCursor();
+							
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					res = evt.result.toString();
+								
+					du.rCursor();
+					du.closeWs(wsMS);	
+								
+				});
+				wsMS.getSituacionSolic.send(grupo);	//Método que indica las opciones disponibles para el usuario
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas width="800" height="735" backgroundColor="#FFFFFF" backgroundAlpha="1.0">
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="763.5" height="194" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="741.5" height="172" sortableColumns="false"
+				resizableColumns="false" verticalScrollPolicy="auto" horizontalScrollPolicy="auto" itemClick="seleccionaAcred()" 
+				doubleClickEnabled="true" itemDoubleClick="buscarListaPrn(1)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="250"/>
+					<mx:DataGridColumn headerText="SUCURSAL" dataField="COORD" width="80"/>
+					<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="170"/>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CDGPRPE" width="70"/>
+					<mx:DataGridColumn headerText="OFICIAL DE CREDITO" dataField="PROMOTOR" width="200"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="10" text="ACREDITADO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="721" y="39" width="61" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarAcred()" toolTip="Buscar Acreditado" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas x="18" y="39" width="695" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodAcred" x="6" y="7" text="Código:" width="53" textAlign="right"/>
+			<mx:Label id="lblPaterno" x="130" y="7" text="Apellido Paterno:" width="122" textAlign="right"/>
+			<mx:TextInput id="txtPaterno" x="257" y="5" width="150" enter="buscarAcred()" maxChars="50"/>
+			<mx:TextInput id="txtCodAcred" x="64" y="5" width="68" enter="buscarAcred()" maxChars="6" restrict="0-9"/>
+			<mx:Label id="lblMaterno" x="406" y="7" text="Apellido Materno:" width="122" textAlign="right"/>
+			<mx:TextInput id="txtMaterno" x="533" y="5" width="150" enter="buscarAcred()" maxChars="50"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle0" x="18.5" y="337" width="763.5" height="162" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
+			<Data:RowColorDataGrid id="dgSolic" x="10" y="10" width="741.5" height="140" sortableColumns="false" resizableColumns="false" 
+				verticalScrollPolicy="auto" itemClick="seleccionaSolic()" doubleClickEnabled="true" itemDoubleClick="mostrarFormPrn(2)" 
+				horizontalScrollPolicy="on"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
+					<mx:DataGridColumn headerText="SOLICITUD" dataField="FSOLICITUD" width="90"/>
+					<mx:DataGridColumn headerText="FECHA DE ENTREGA" dataField="INICIO" width="140"/>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="140"/>
+					<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="CANTENTRE" width="140"/>
+					<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION" width="100"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="721" y="292" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
+			<mx:Button id="btnDatosSolic" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaPrn(1)" enabled="false" toolTip="Solicitudes del Acreditado" width="40"/>
+		</mx:Canvas>
+		<mx:Label x="18.5" y="308" text="LINEA DE CRÉDITO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvDetalle1" x="18.5" y="558" width="763.5" height="162" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
+			<Data:RowColorDataGrid id="dgSolic0" x="10" y="10" width="741.5" height="140" sortableColumns="false" resizableColumns="false" 
+				verticalScrollPolicy="auto" itemClick="seleccionaSolic()" doubleClickEnabled="true" itemDoubleClick="mostrarFormPrn(2)" 
+				horizontalScrollPolicy="on"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
+					<mx:DataGridColumn headerText="SOLICITUD" dataField="FSOLICITUD" width="90"/>
+					<mx:DataGridColumn headerText="FECHA DE ENTREGA" dataField="INICIO" width="140"/>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="140"/>
+					<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="CANTENTRE" width="140"/>
+					<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION" width="100"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="621" y="513" width="110" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas0">
+			<mx:Button id="btnEditarSolic0" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormPrn(2)" toolTip="Editar Solicitud" width="40"/>
+			<mx:Button id="btnDatosSolic0" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaPrn(1)" enabled="false" toolTip="Solicitudes del Acreditado" width="40"/>
+		</mx:Canvas>
+		<mx:Label x="18.5" y="529" text="DISPOSICIÓN" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Image x="739" y="507" width="43" height="43" source="assets/notepad.png"/>
+	</mx:Canvas>
+</mx:Canvas>

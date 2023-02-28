@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="auto" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente que permite observar el instrumento de credito-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;    				
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+		
+			[Bindable]
+			public var _xmlInst:XML = new XML();
+			[Bindable]
+			public var _xmlTasa:XML = new XML();
+			[Bindable]
+			public var dPermisos:XML = new XML();
+			[Bindable]
+			public var dpTasa:XMLList = new XMLList();		
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionInst:int;
+			public var accionTasa:int;
+			public var indInst:int;
+			public var indTasa:int;
+			public var vScroll:Number;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			public function activarContTasa(band:Boolean):void{
+				if(alta == true)
+					btnAgregarTasa.enabled = band;
+				btnDatosTasa.enabled = band;
+			}
+			
+			public function activarContModTasa(band:Boolean):void{
+				if(borrado == true)
+					btnEliminarTasa.enabled = band;
+				if(edicion == true)	
+					btnEditarTasa.enabled = band;
+			}
+		
+			public function activarContInst(band:Boolean):void{
+				if(edicion == true)
+					btnEditar.enabled = band;
+				if(borrado == true)
+					btnEliminar.enabled = band;
+			}
+			
+			public function actualizarTasa(event:Event):void{
+				buscarListaTasa(1);
+			}
+			
+			public function actualizarInst(event:Event):void{
+				buscarInst(1);
+			}
+			
+			public function buscarInst(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				if (txtCodInst.text != "" || txtInstrumento.text != ""){
+					btnBuscar.setFocus();
+					dgInstrumento.dataProvider = null;
+					du.initWsCat(wsCat);
+					du.sCursor();
+					if(tipo == 1)
+						Application.application.bloquear();
+						
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{	
+						_xmlInst = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+						
+						if (_xmlInst.elements().length() > 0){
+							dgInstrumento.dataProvider = _xmlInst.Table;
+							
+							if(accionInst == 2){
+								dgInstrumento.validateNow();
+								dgInstrumento.verticalScrollPosition = vScroll;
+								dgInstrumento.selectedIndex = indInst;
+								this.accionInst = 0;
+							}
+						}
+					});
+					params[0] = txtCodInst.text;
+					params[1] = txtInstrumento.text;
+					wsCat.getListado.send(28, params);
+				}	
+			}
+			
+			public function buscarListaTasa(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var codInst:String = dgInstrumento.selectedItem.CODIGO;
+				dgTasa.dataProvider = null;
+				du.initWsCat(wsCat);
+				du.sCursor();
+			 	if (tipo == 1)
+					Application.application.bloquear();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
+					_xmlTasa = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+				
+					if (_xmlTasa.elements().length() > 0){
+						dgTasa.dataProvider = _xmlTasa.Table;
+						
+						if(accionTasa == 2){
+							dgTasa.validateNow();
+							dgTasa.verticalScrollPosition = vScroll;
+							dgTasa.selectedIndex = indTasa;
+							this.accionTasa = 0;
+						}
+					}
+					seleccionaTasa();
+				});
+				params[0] = codInst;
+				wsCat.getListado.send(29, params);
+			}
+			
+			public function eliminarTasa():void{
+				Alert.show("¿Desea eliminar la Tasa de Interes?", "Mantenimiento de Tasa", Alert.YES|Alert.NO,null, manejadorEliminarTasa,global.iQuest);
+			}
+			
+			public function eliminarInst():void{
+				Alert.show("¿Desea eliminar el Instrumento de Crédito?", "Mantenimiento de Instrumento de Crédito", Alert.YES|Alert.NO,null, manejadorEliminarInst,global.iQuest);
+			}
+			
+			public function iniVar():void{
+				this.indInst = -1;
+				this.indTasa = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				wsMS = new WebService();
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function manejadorEliminarTasa(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codInst:String = dgInstrumento.selectedItem.CODIGO;
+					var codTasa:String = dgTasa.selectedItem.CODIGO;  
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionTasa);
+					wsMS.setAccionTasa.send(3, codInst, codTasa, "", "", "",
+                                 			 "", "", "", "", "");
+			    } 
+			}
+			
+			public function manejadorEliminarInst(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codInst:String = dgInstrumento.selectedItem.CODIGO;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionInst);
+					wsMS.setAccionInst.send(3, codInst, "", "", "", "", "", "", "", "");
+			    } 
+			}
+			
+			public function mostrarFormTasa(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion == true){
+					var codInst:String = dgInstrumento.selectedItem.CODIGO; 
+					var instrumento:String = dgInstrumento.selectedItem.DESCRIPCION;
+					var comMttoTasa:MttoTasa = new MttoTasa();
+					comMttoTasa = MttoTasa(PopUpManager.createPopUp(this,MttoTasa,true));
+					switch(tipo){
+						case 1: 
+							comMttoTasa.init();
+							comMttoTasa.addEventListener(Event.REMOVED_FROM_STAGE, actualizarTasa);
+							PopUpManager.centerPopUp(comMttoTasa);
+							comMttoTasa.registraInfoTasa(codInst, instrumento);
+							break;
+						case 2: 
+							if (dgTasa.selectedIndex >= 0){
+								accionTasa = tipo; 
+								var tasa:Number = Number(dgTasa.selectedItem.TASA);
+								var valDesde:String = dgTasa.selectedItem.FVALDESDE;
+								var indice:int = dgTasa.selectedIndex;
+								iniVar();
+								this.indTasa = indice;
+								this.vScroll = dgTasa.verticalScrollPosition;
+								comMttoTasa.init();
+								comMttoTasa.addEventListener(Event.REMOVED_FROM_STAGE, actualizarTasa);
+								PopUpManager.centerPopUp(comMttoTasa);
+								comMttoTasa.cargaInfoTasa(codInst, instrumento, tasa, valDesde);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Tasa","Mantenimiento de Tasa",4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			public function mostrarFormInst(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoInst:MttoInstrumento = new MttoInstrumento();
+				comMttoInst = MttoInstrumento(PopUpManager.createPopUp(this,MttoInstrumento,true)); 
+				if(edicion == true){
+					switch(tipo){
+						case 1: 
+							comMttoInst.init();
+							comMttoInst.addEventListener(Event.REMOVED_FROM_STAGE, actualizarInst);
+							comMttoInst.registraInstrumento();
+							PopUpManager.centerPopUp(comMttoInst);
+							break;
+						case 2: 
+							if (dgInstrumento.selectedIndex >= 0){
+								accionInst = tipo;
+								var codInst:String = dgInstrumento.selectedItem.CODIGO;
+								var instrumento:String = dgInstrumento.selectedItem.DESCRIPCION;
+								var tipoInst:String = dgInstrumento.selectedItem.TIPO;
+								var indice:int = dgInstrumento.selectedIndex;
+								iniVar();
+								this.indInst = indice;
+								this.vScroll = dgInstrumento.verticalScrollPosition;
+								comMttoInst.init();
+								comMttoInst.addEventListener(Event.REMOVED_FROM_STAGE, actualizarInst);	
+								comMttoInst.cargaInstrumento(codInst, instrumento, tipoInst);
+								PopUpManager.centerPopUp(comMttoInst);
+							}
+							else
+								Alert.show("Debe seleccionar el registro del Instrumento de Crédito","Mantenimiento de Instrumento de Crédito",4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}
+			
+			public function permisos():void{
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var i:int;
+				var cont:int;
+				
+				wsMS = du.initWs(wsMS);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(i = 0; i < cont; i++)
+					{
+						switch(dPermisos.Table[i].OPCION.toString())
+						{
+							case "C":
+								consulta = true;
+								if (global.permisosRegionales(Application.application.PERFIL_ID)){
+									borrado = true;
+									alta = true;
+									edicion = true;
+								}
+								break;	
+							/*case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;	*/			
+						}
+					}
+					btnAgregar.enabled = alta;
+					du.rCursor();
+					du.closeWs(wsMS);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			public function seleccionaTasa():void{
+				if (dgTasa.selectedIndex >= 0){
+					activarContModTasa(true);
+				}
+				else{
+					activarContModTasa(false);
+				}
+			}
+			
+			public function selecciona():void{
+				dgTasa.dataProvider = null;
+				activarContModTasa(false);
+				if (dgInstrumento.selectedIndex >= 0){
+					activarContInst(true);
+					activarContTasa(true);
+				}
+				else{
+					activarContInst(false);
+					activarContTasa(false);
+				}
+			}
+			
+			private function setAccionTasa(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionTasa);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarListaTasa(1);
+				else
+					Alert.show(res.substr(2,res.length-1), "Mantenimiento de Tasa",4,null,null,global.iAlert);
+			}
+
+			private function setAccionInst(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionInst);
+				var res:String = new String(event.result);
+				if (res.substr(0,1) == "1")
+					buscarInst(1);
+				else
+					Alert.show("Error en el proceso: " + res, "Mantenimiento de Instrumentos de Crédito",4,null,null,global.iAlert);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="760" height="530">
+		<mx:Label x="18" y="10" text="INSTRUMENTO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Label x="18.5" y="254" text="TASA" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="31.5" y="39" width="500.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodInst" x="15" y="6" text="Código:"/>
+			<mx:Label id="lblInstrumento" x="137.5" y="6" text="Descripción:"/>
+			<mx:TextInput id="txtCodInst" x="64" y="5" width="50" enter="buscarInst(1)" maxChars="3"/>
+			<mx:TextInput id="txtInstrumento" x="210.5" y="5" width="276" enter="buscarInst(1)" maxChars="50"/>
+		</mx:Canvas>
+		<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarInst(1)" toolTip="Buscar Instrumento" width="40" />
+			<mx:Button id="btnEditar" x="57" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormInst(2)" toolTip="Editar Instrumento" width="40"/>
+			<mx:Button id="btnAgregar" x="105" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormInst(1)" toolTip="Registrar Instrumento" width="40"/>
+			<mx:Button id="btnEliminar" x="153" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarInst()" enabled="false" toolTip="Eliminar Instrumento" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="726.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgInstrumento" x="10" y="10" width="700.5" height="124"
+				sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on" 
+				itemClick="selecciona()" itemDoubleClick="mostrarFormInst(2)" doubleClickEnabled="true"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="75"/>
+					<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="200"/>
+					<mx:DataGridColumn headerText="TIPO" dataField="DESCTIPO" width="75"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="540" y="238" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnDatosTasa" x="12" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaTasa(1)" enabled="false" toolTip="Tasas" width="40"/>
+			<mx:Button id="btnEditarTasa" x="60" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormTasa(2)" toolTip="Editar Tasa" width="40"/>
+			<mx:Button id="btnAgregarTasa" x="105" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormTasa(1)" toolTip="Agregar Tasa" width="40"/>
+			<mx:Button id="btnEliminarTasa" x="153" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarTasa()" toolTip="Eliminar Tasa" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvTasa" x="18.5" y="283" width="726.5" height="234" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgTasa" x="10" y="10" width="704.5" height="212"
+				sortableColumns="false" draggableColumns="false" resizableColumns="false" verticalScrollPolicy="on" 
+				itemClick="seleccionaTasa()" doubleClickEnabled="true" doubleClick="mostrarFormTasa(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="VALOR" dataField="TASA" width="75"/>
+					<mx:DataGridColumn headerText="VALIDO DESDE" dataField="FVALDESDE" width="75"/>
+					<mx:DataGridColumn headerText="VALIDO HASTA" dataField="FVALHASTA" width="75"/>
+					<mx:DataGridColumn headerText="USADO EN PRESTAMOS" dataField="DESCUSOPR" width="75"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

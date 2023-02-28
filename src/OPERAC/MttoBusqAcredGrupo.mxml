@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" showCloseButton="true" close="cerrar()" layout="absolute" width="450" 
+	height="340" creationPolicy="all" creationComplete="initApp()">
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.managers.CursorManager;
+			import mx.controls.*;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.core.Application;
+			import mx.collections.ArrayCollection;
+			import mx.core.DragSource;
+        	import mx.events.*;
+            import mx.managers.DragManager;
+            import mx.collections.IList;
+			
+			[Bindable]
+			public var _xmlAcred:XML =  new XML();
+			
+			public var global:Globales; 
+			public var wsMS:WebService;
+			public var du:Utils;	
+			public var titulo:String;
+			public var grupo:String;
+			
+			public var acredObj:ArrayCollection = new ArrayCollection();			
+						
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function enviar():void{
+				if(validar()){
+					dispatchEvent(new Event("enviar"));
+					PopUpManager.removePopUp(this);
+				}
+			}
+			
+			private function getListaAcred(event:ResultEvent):void{
+				wsMS.disconnect();
+				CursorManager.removeBusyCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getListaAcred);
+				this._xmlAcred = new XML(event.result);
+			}
+			
+			public function init(grupo:String):void{
+				this.grupo = grupo;
+				dgAcred.dataProvider = null;
+				Application.application.bloquear();
+				initConexion();
+			 	CursorManager.setBusyCursor();
+				wsMS.addEventListener(ResultEvent.RESULT, getListaAcred);
+				wsMS.getListaAcred.send(this.grupo);
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Acreditados de Grupo";
+				this.title = titulo;
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function manejadorCerrar(e:CloseEvent):void{
+				if(e.detail == Alert.OK)
+					PopUpManager.removePopUp(this);
+			}
+			
+			public function validar():Boolean{
+				if(dgAcred.selectedIndex < 0){
+					Alert.show("No se ha seleccionado .",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Button id="btnCerrar" x="370" y="268" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:Button id="btnAceptar" x="298" y="268" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:DataGrid id="dgAcred" x="16" y="10" width="418" height="250" dataProvider="{_xmlAcred.Table}" sortableColumns="false"
+	 	doubleClickEnabled="true" itemDoubleClick="enviar()">
+		<mx:columns>
+			<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+			<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE_CL"/>
+		</mx:columns>
+	</mx:DataGrid>
+</mx:TitleWindow>

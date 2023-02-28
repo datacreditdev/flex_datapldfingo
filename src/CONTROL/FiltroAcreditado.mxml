@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="180" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;		
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			private var global:Globales;
+			public var wsMS:WebService;
+			public var rep:String;
+			public var titulo:String;
+			private var du:Utils;
+			
+			public function ejecuta():void{
+				btnGenerar.setFocus();
+				//rep = 0 indica que el control es utilizado para extraer 
+				//los valores de sus controles
+				if(rep == "0")
+					enviar();
+				//rep <> 0 indica que el control es utilizado para generar 
+				//el reporte indicado en esta variable
+				else if(rep != "0")
+					generar();
+			}
+			
+			public function enviar():void{
+				dispatchEvent(new Event("enviar"));
+			}
+			
+			//funcion que invoca la generacion de reportes en formato PDF
+			public function generar():void{
+				if(valida() == true){
+					var id:String = "&id=" + rep;
+					var acred:String = "&acred=" + txtAcred.text;
+					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var nomUsuario:String = "&nomUsuario=" + Application.application.NOM_U_ID;
+					var consulta:String = global.urlPdf + id + acred + usuario + nomUsuario;
+					Application.application.muestraPdf(consulta);
+				}
+				else
+					Alert.show("No es posible generar el documento del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);	
+			}			
+						
+			public function init(rep:String, titulo:String):void{
+				this.rep = rep;
+				this.titulo = titulo;
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				txtAcred.text = "";
+				txtAcred.setFocus();
+			}
+				
+			public function valida():Boolean{
+				if(txtAcred.text == ""){
+					Alert.show("Capture el código de Cliente.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="16.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="247.54999" height="74.5" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblAcred" x="10" y="27.5" text="Codigo de Cliente:" width="98.5" height="20"/>
+		<mx:TextInput id="txtAcred" x="108.5" y="25.5" maxChars="6" restrict="0-9" enter="ejecuta()"/>
+	</mx:Canvas>
+	<mx:Label x="16.5" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:Button x="65" y="146" label="Generar" click="ejecuta()"  id="btnGenerar"/>
+	<mx:Button x="144" y="146" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+</mx:Canvas>

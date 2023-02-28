@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="490" height="268" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosProy", type="Data.EventProy")]
+	</mx:Metadata>
+		
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import Data.Globales;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import Data.DatosProy;
+			import Data.EventProy;
+			import mx.collections.ArrayCollection;
+			import Data.Globales;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+		
+			public var datos:DatosProy = new DatosProy();
+			
+			public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS	
+			public var ws:WebService = new WebService();     //variable utilizada en las llamadas sincronas de WS
+			public var du:Utils;
+			private var global:Globales;
+			
+			public function enviarDatosProy(formData:DatosProy):void{
+				if (rdgTamano.selection != null)
+					var tamano:String = rdgTamano.selectedValue.toString();
+				if (rdgTipo.selection != null)					
+					var tipo:String = rdgTipo.selectedValue.toString(); 
+				formData.empresa = txtEmpresa.text;
+				formData.rfc = txtRfc.text;
+				formData.tamano = tamano;
+				formData.tipo = tipo;
+				formData.guardaEmp = true;
+			
+				var event:EventProy = new EventProy("enviarDatosProy", formData);
+				dispatchEvent(event);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+	]]>
+	</mx:Script>
+	
+	<mx:Canvas x="10" y="10" width="470" height="245" styleName="canvasMod">
+		<mx:FormItem label="Nombre de la empresa:" id="empresa" visible="true" x="17" y="10" width="441">
+			<mx:TextInput id="txtEmpresa" width="305" maxChars="100"/>
+		</mx:FormItem>
+		<mx:FormItem label="RFC:" id="rfc" visible="true" x="105" y="42" width="190">
+			<mx:TextInput id="txtRfc" maxChars="13" width="140"/>
+		</mx:FormItem>
+		<mx:Canvas x="17" y="93" width="144" height="137" styleName="canvasMod">
+			<mx:RadioButtonGroup id="rdgTamano"/>
+			<mx:RadioButton x="39.5" y="10" label="Micro" groupName="rdgTamano" value="M"/>
+			<mx:RadioButton x="39.5" y="42" label="Pequeña" groupName="rdgTamano" value="P"/>
+			<mx:RadioButton x="39.5" y="74" label="Mediana" groupName="rdgTamano" value="D"/>
+		</mx:Canvas>
+		<mx:Canvas x="185" y="93" width="266" height="137" styleName="canvasMod">
+			<mx:RadioButtonGroup id="rdgTipo"/>
+			<mx:RadioButton x="92" y="103" label="No registrada" groupName="rdgTipo" value="NO"/>
+			<mx:RadioButton x="10" y="10" label="A.C." groupName="rdgTipo" value="AC"/>
+			<mx:RadioButton x="10" y="42" label="S.A." groupName="rdgTipo" value="SA"/>
+			<mx:RadioButton x="10" y="74" label="S.C." groupName="rdgTipo" value="SC"/>
+			<mx:RadioButton x="10" y="103" label="S.d.R.L." groupName="rdgTipo" value="SD"/>
+			<mx:RadioButton x="92" y="10" label="S.P.R" groupName="rdgTipo" value="NR"/>
+			<mx:RadioButton x="92" y="42" label="Cooperativas" groupName="rdgTipo" value="CO"/>
+			<mx:RadioButton x="92" y="74" label="Personas físicas registradas" groupName="rdgTipo" value="PR"/>
+		</mx:Canvas>
+		<mx:Label x="17" y="74" text="Tamaño:"/>
+		<mx:Label x="185" y="74" text="Tipo:"/>
+	</mx:Canvas>
+</mx:Canvas>

@@ -1,0 +1,641 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" xmlns:control="control.*" 
+	width="100%" height="100%" creationComplete="init()" creationPolicy="all" 
+	xmlns:Forms="OPERAC.Forms.*" xmlns:Control="OPERAC.Control.*" xmlns:CONTROL="CONTROL.*">
+	<mx:states>
+		<mx:State name="control">
+			<mx:SetProperty target="{canvas1}" name="width" value="950"/>
+			<mx:SetProperty target="{canvas1}" name="height" value="950"/>
+			<mx:RemoveChild target="{btnBusqLimpiar}"/>
+			<mx:RemoveChild target="{txtBusqSem}"/>
+			<mx:RemoveChild target="{btnBuscar}"/>
+			<mx:RemoveChild target="{txtBusqCiclo}"/>
+			<mx:RemoveChild target="{lblBusqSem}"/>
+			<mx:RemoveChild target="{lblBusqCiclo}"/>
+			<mx:RemoveChild target="{txtBusqGrupo}"/>
+			<mx:RemoveChild target="{lblBusqGrupo}"/>
+			<mx:RemoveChild target="{label1}"/>
+			<mx:RemoveChild target="{lblTitulo}"/>
+			<mx:RemoveChild target="{canvas2}"/>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Button id="btnLimpiar" label="Limpiar" x="872" y="469" click="limpiar()"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Button id="btnAceptar" label="Registrar" x="787" y="469" click="enviar()"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Canvas x="215" y="10" width="520" height="45" styleName="canvasMod">
+					<mx:Label x="149" y="12" text="Grupo:"/>
+					<mx:TextInput id="txtGrupo" x="195" y="10" width="199" editable="false"/>
+					<mx:Label id="lblCiclo" x="402" y="12" text="Ciclo:"/>
+					<mx:TextInput x="441" y="10" width="45" id="txtCiclo" editable="false"/>
+					<mx:TextInput id="txtCodGrupo" x="69" y="10" width="72" editable="false"/>
+					<mx:Label id="lblCodigo" x="20" y="12" text="Código:"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Canvas x="10" y="82" width="930" height="209" styleName="canvasMod" id="canvas0">
+					<mx:DataGrid id="dgAcred" x="19.5" y="10" width="898.5" height="187" horizontalScrollPolicy="off"
+					    editable="true" sortableColumns="false">
+						<mx:columns>
+							<mx:DataGridColumn headerText="NO." editable="false" headerWordWrap="true" dataField="numero" width="30"/>
+							<mx:DataGridColumn headerText="PTO." editable="false" headerWordWrap="true" dataField="puesto" width="35"/>
+							<mx:DataGridColumn headerText="CODIGO" editable="false" headerWordWrap="true" dataField="codigo" width="55"/>
+							<mx:DataGridColumn headerText="ACREDITADO" editable="false" headerWordWrap="true" dataField="nombre" width="210"/>
+							<mx:DataGridColumn headerText="PAGO TEORICO" editable="false" headerWordWrap="true" dataField="pagoTeo" width="70"/>	
+							<mx:DataGridColumn headerText="PAGO REAL" dataField="pagoReal" headerWordWrap="true" width="70" editable="true">	
+								<mx:itemEditor>
+									<mx:Component>
+										<mx:TextInput width="30" fontSize="10" verticalCenter="0" focusOut="outerDocument.actualizaPagoReal(event)" change="outerDocument.validaMonto(event)" restrict="0-9;."/> 
+									</mx:Component>
+								</mx:itemEditor>
+							</mx:DataGridColumn>
+							<mx:DataGridColumn headerText="DIF." editable="false" headerWordWrap="true" dataField="diferencia" width="70"/>
+							<mx:DataGridColumn headerText="APORT." editable="true" headerWordWrap="true" dataField="aport" width="70">
+								<mx:itemEditor>
+									<mx:Component>
+										<mx:TextInput width="30" fontSize="10" verticalCenter="0" focusOut="outerDocument.calculaAport()" change="outerDocument.validaMonto(event)" restrict="0-9;."/> 
+									</mx:Component>
+								</mx:itemEditor>
+							</mx:DataGridColumn>
+							<mx:DataGridColumn headerText="DEV." editable="true" headerWordWrap="true" dataField="devolucion" width="70">
+								<mx:itemEditor>
+									<mx:Component>
+												<mx:TextInput width="30" fontSize="10" verticalCenter="0" focusOut="outerDocument.calculaDev()" change="outerDocument.validaMonto(event)" restrict="0-9;."/> 
+											</mx:Component>
+								</mx:itemEditor>
+							</mx:DataGridColumn>
+							<mx:DataGridColumn headerText="AHORRO" editable="true" headerWordWrap="true" dataField="ahorro" width="70">
+								<mx:itemEditor>
+									<mx:Component>
+												<mx:TextInput width="30" fontSize="10" verticalCenter="0" focusOut="outerDocument.calculaAhorro()" change="outerDocument.validaMonto(event)" restrict="0-9;."/> 
+											</mx:Component>
+								</mx:itemEditor>
+							</mx:DataGridColumn>
+							<mx:DataGridColumn headerText="ASISTENCIA" editable="true" headerWordWrap="true" dataField="asistencia" editorDataField="selectedItem" width="90">
+								<mx:itemEditor>
+									<mx:Component>
+												<mx:ComboBox initialize="outerDocument.iniciaAsistencia(event)" width="90" fontSize="10" verticalCenter="0"/> 
+											</mx:Component>
+								</mx:itemEditor>
+							</mx:DataGridColumn>
+						</mx:columns>
+					</mx:DataGrid>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Label id="lblSemana" x="300" y="58" width="350" textAlign="center" fontStyle="italic" fontSize="13" fontWeight="bold"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Canvas x="10" y="319" width="340" height="165" styleName="canvasMod">
+					<mx:Label id="lblAhorro" x="194" y="72" text="Ahorro:"/>
+					<mx:TextInput id="txtAhorro" x="244" y="70" width="72" editable="false"/>
+					<mx:Label id="lblAport" x="20" y="72" text="Aportación:"/>
+					<mx:TextInput id="txtAport" x="89" y="70" width="72" editable="false"/>
+					<mx:Label id="lblDev" x="20" y="102" text="Devolución:"/>
+					<mx:TextInput id="txtDev" x="89" y="100" width="72" editable="false"/>
+					<mx:Label id="lblPagoTeo" x="10" y="12" text="Pago Teórico:"/>
+					<mx:TextInput id="txtPagoTeo" x="89" y="10" width="72" editable="false"/>
+					<mx:Label id="lblPagoReal" x="25" y="42" text="Pago Real:"/>
+					<mx:TextInput id="txtPagoReal" x="89" y="40" width="72" editable="false"/>
+					<mx:Label id="lblMora" x="49" y="132" text="Mora:"/>
+					<mx:TextInput id="txtMora" x="89" y="130" width="72" editable="false"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Canvas x="358" y="319" width="582" height="142" styleName="canvasMod">
+					<mx:TextArea id="txtObs" height="120" width="560" maxChars="256" restrict="A-Z;a-z;ñ;Ñ; ;" x="10" y="10"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Label x="10" y="299" text="Resumen" width="124.25"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Label x="358" y="299" text="Observación" width="124.25"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<CONTROL:EstadoCuentaFijo id="comEdoCuentaFijo" x="10" y="492"/>
+			</mx:AddChild>
+			
+		</mx:State>
+	</mx:states>
+	
+	<mx:transitions>
+		<mx:Transition toState="control">		
+			<mx:Sequence>
+				<mx:WipeRight duration="1000" target="{canvas1}"/>
+			</mx:Sequence>			
+		</mx:Transition>
+		<mx:Transition toState="">		
+			<mx:Sequence>
+				<mx:Fade duration="500" target="{canvas1}"/>
+			</mx:Sequence>			
+		</mx:Transition>
+	</mx:transitions>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.charts.chartClasses.NumericAxis;
+			import mx.events.MoveEvent;
+			import mx.events.FlexEvent;
+			import mx.events.CollectionEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.events.DataGridEvent;
+			import mx.events.DataGridEventReason;
+			import mx.events.ItemClickEvent;
+			import mx.events.ListEvent;
+			import mx.events.CalendarLayoutChangeEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.collections.ArrayCollection;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;	
+			import mx.managers.CursorManager;		
+			import mx.managers.PopUpManager;
+			import mx.controls.*;
+			import mx.effects.*;
+			import flash.external.*;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			[Bindable]
+			private var _xmlControl:XML =  new XML();
+			[Bindable]
+			private var _xmlAcred:XML =  new XML();
+			[Bindable]	
+			public var activaSituacion:Boolean = true; //variable que controla el estatus de los Checks de situacion
+			
+			//arreglos para almacenar la informacion individual de los acreditados
+			public var acred:Array;
+			public var pagoTeo:Array; 
+			public var pagoReal:Array;
+			public var aport:Array;
+			public var devolucion:Array;
+			public var ahorro:Array;
+			public var asist:Array;
+	
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			public var asistObj:ArrayCollection = new ArrayCollection();
+			
+			public var asistencia:Array = new Array();
+			
+			private var vResult:ValidationResultEvent;
+			
+			public var wsMS:WebService;
+			public var bandMod:Boolean;	
+			public var tipoAccion:int;
+			public var indAcred:int;
+			public var semana:int;
+			public var coord:String;
+			public var grupo:String;
+			public var titulo:String;
+			public var du:Utils;
+			private var global:Globales;
+			public var openEffect:Effect = new Fade();
+			
+			public function actualizaPagoReal(event:Event):void{
+				calculaPagoReal();
+				calculaDif();	
+			}
+			
+			public function buscaControl():void{
+				if(validaBusqueda() == true){
+					var grupo:String = txtBusqGrupo.text;
+					var ciclo:String = txtBusqCiclo.text;
+					semana = int(txtBusqSem.text);
+					
+					initConexion();
+					du.sCursor();
+						
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlControl = new XML(evt.result);			
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+	
+						if(_xmlControl.elements().length() > 0){
+							currentState = "control";
+							tipoAccion = _xmlControl.Table[0].ACCION;
+							llenaRegistros();
+							
+							initConexion();
+							du.sCursor();
+								
+							du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+								_xmlAcred = new XML(evt.result);			
+								
+								du.rCursor();
+								du.closeWs(wsMS);
+							
+								if(_xmlAcred.elements().length() > 0){
+								 	formateaAcred();
+									dgAcred.dataProvider = acredObj;
+									calculaPagoTeorico();	
+									calculaDif();
+									calculaMora();	
+									comEdoCuentaFijo.init();
+									comEdoCuentaFijo.cargaEdoCuenta(grupo, ciclo);		
+								}
+								else
+									Alert.show("No se encontraron registros de acreditados que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							});
+							wsMS.getInfoControlAcred.send(tipoAccion, grupo, ciclo, semana, Application.application.U_ID);	
+						}
+						else 
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					});
+					wsMS.getInfoControlSemanal.send(grupo, ciclo, semana, Application.application.U_ID);
+				}
+			}
+			
+			public function calculaAport():void{
+				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
+				var i:int;
+				var aport:Number = 0;
+				for (i = 0; i < acred.length; i++){
+					aport += Number(acred[i].aport);
+				}
+				txtAport.text = aport.toString();	
+				calculaMora();
+			}
+			
+			public function calculaDif():void{
+				var indAcred:int = dgAcred.selectedIndex;
+				var vScroll:Number = dgAcred.verticalScrollPosition;
+				
+				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
+				var i:int;
+				var pagoTeo:Number;
+				var pagoReal:Number;
+				var dif:Number = 0;
+				
+				for (i = 0; i < acred.length; i++){
+					pagoTeo = Number(acred[i].pagoTeo);
+					pagoReal = Number(acred[i].pagoReal);
+					dif = pagoTeo - pagoReal;
+					acredObj[i].diferencia = global.formatoDecimalSinSep(dif.toString());
+				}
+				dgAcred.validateNow();
+				dgAcred.selectedItem = indAcred;
+				dgAcred.verticalScrollPosition = vScroll;		
+			}
+			
+			public function calculaDev():void{
+				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
+				var i:int;
+				var devolucion:Number = 0;
+				for (i = 0; i < acred.length; i++){
+					devolucion += Number(acred[i].devolucion);
+				}
+				txtDev.text = devolucion.toString();	
+			}
+			
+			public function calculaMora():void{
+				var mora:Number = 0;
+				mora = Number(txtPagoTeo.text) - Number(txtPagoReal.text) - Number(txtAport.text);
+				txtMora.text = global.formatoDecimalSinSep(mora.toString());	
+			}
+			
+			public function calculaPagoReal():void{
+				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
+				var i:int;
+				var pagoReal:Number = 0;
+				for (i = 0; i < acred.length; i++){
+					pagoReal += Number(acred[i].pagoReal);
+				}
+				txtPagoReal.text = pagoReal.toString();
+				calculaMora();
+			}
+						
+			public function calculaPagoTeorico():void{
+				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
+				var i:int;
+				var pagoTeo:Number = 0;
+				for (i = 0; i < acred.length; i++){
+					pagoTeo += Number(acred[i].pagoTeo);
+				}
+				txtPagoTeo.text = global.formatoDecimalSinSep(pagoTeo.toString());
+			}
+			
+			public function calculaAhorro():void{
+				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
+				var i:int;
+				var ahorro:Number = 0;
+				for (i = 0; i < acred.length; i++){
+					ahorro += Number(acred[i].ahorro);
+				}
+				txtAhorro.text = ahorro.toString();	
+			}
+			
+			public function cargaCiclo():void{
+				var wsMS:WebService = new WebService();
+				wsMS = du.initWsMS(wsMS);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					var ciclo:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					
+					txtCiclo.text = ciclo;
+					wsMS = null; 	
+				});
+				wsMS.getNvoCicloSolicESIA.send(grupo);		
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function desactivaControles():void{
+				if(currentState == null)
+					dgAcred.editable = false;
+				activaSituacion = false; //variable que controla el estatus de los CheckBox de situacion
+			}
+			
+			public function enviar():void{
+				//almacena el control semanal
+				if(valida() == true)
+					guardaControlSemanal();			
+			}
+			
+			//funcion que realiza la carga de datos 
+			public function formateaAcred():void{
+				var i:int;
+				var cont:int = _xmlAcred.elements().length();
+				var oItem:Object;
+				
+				acredObj.removeAll();
+				
+				for(i = 0; i < cont; i++)
+				{
+					oItem = new Object();
+					oItem.numero = i + 1;
+					oItem.puesto = _xmlAcred.Table[i].PUESTO;
+					oItem.codigo = _xmlAcred.Table[i].CDGCL;
+					oItem.nombre = _xmlAcred.Table[i].CLIENTE;
+					oItem.pagoTeo = _xmlAcred.Table[i].PARCIALIDAD;
+					
+					if(tipoAccion == 1){
+						oItem.pagoReal = 0;
+						oItem.diferencia = null;//(-1) * Number(_xmlAcred.Table[i].PARCIALIDAD);
+						oItem.aport = 0;
+						oItem.devolucion = 0;
+						oItem.ahorro = 0;
+						oItem.asistencia = null;
+					}
+					else if(tipoAccion == 2){
+						oItem.pagoReal = _xmlAcred.Table[i].PAGOREAL;
+						oItem.diferencia = null;
+						oItem.aport = _xmlAcred.Table[i].APORT;
+						oItem.devolucion = _xmlAcred.Table[i].DEVOLUCION;
+						oItem.ahorro = _xmlAcred.Table[i].AHORRO;
+						oItem.asistencia = _xmlAcred.Table[i].ASIST;
+					}
+					acredObj.addItem(oItem);
+				}
+			}
+			
+			//funcion que da formato a la informacion que sera almacenada
+			public function formateaRegAcred():Boolean{
+				var listaAcred:ArrayCollection;
+				
+				listaAcred = dgAcred.dataProvider as ArrayCollection;
+					
+				if (listaAcred != null){
+					acred = new Array;
+					pagoTeo = new Array;
+					pagoReal = new Array;
+					aport = new Array;
+					devolucion = new Array;
+					ahorro = new Array;
+					asist = new Array;
+
+					var cont:int = listaAcred.length;
+					var contAux:int;
+					var i:int;
+					var j:int; 
+						
+					for(i = 0; i < cont; i++){
+						acred[i] = listaAcred[i].codigo;
+						pagoTeo[i] = Number(listaAcred[i].pagoTeo);
+						pagoReal[i] = Number(listaAcred[i].pagoReal);
+						aport[i] = Number(listaAcred[i].aport);
+						devolucion[i] = Number(listaAcred[i].devolucion);
+						ahorro[i] = Number(listaAcred[i].ahorro);
+						
+						contAux = asistObj.length;
+						for(j = 0; j < contAux; j++){
+		   					if (asistObj[j].descripcion.toString() == listaAcred[i].asistencia)
+		   						asist[i] = asistObj[j].id.toString();
+		   				}
+					}
+					return true;
+				}
+				return false;
+			}
+			
+			private function formateaAsistencia():void{
+				var oItem:Object;
+				
+				oItem = new Object();
+				oItem.descripcion = "Asistencia";
+				oItem.id = "A";
+				asistObj.addItem(oItem);
+				
+				oItem = new Object();
+				oItem.descripcion = "Retardo";
+				oItem.id = "R";
+				asistObj.addItem(oItem);
+				
+				oItem = new Object();
+				oItem.descripcion = "Falta";
+				oItem.id = "F";
+				asistObj.addItem(oItem);
+				
+				oItem = new Object();
+				oItem.descripcion = "Permiso";
+				oItem.id = "P";
+				asistObj.addItem(oItem);
+				
+				oItem = new Object();
+				oItem.descripcion = "Mandó Pago";
+				oItem.id = "MP";
+				asistObj.addItem(oItem);
+				
+				asistencia[0] = "Asistencia";
+				asistencia[1] = "Retardo";
+				asistencia[2] = "Falta";
+				asistencia[3] = "Permiso";
+				asistencia[4] = "Mandó Pago";
+			}
+			
+			public function guardaControlSemanal():void{
+				if(formateaRegAcred() == true){ //valida que todos los clientes cuenten con su asistencia registrada
+					initConexion();
+					Application.application.bloquear();
+					CursorManager.setBusyCursor();
+					//Servicio invocado en la etapa de registro del control semanal
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionControlSemanal);
+					wsMS.setAccionControlSemanal.send(tipoAccion, txtCodGrupo.text, txtCiclo.text, semana, Number(txtPagoTeo.text), Number(txtPagoReal.text),
+													  Number(txtAport.text), Number(txtDev.text), Number(txtAhorro.text), Number(txtMora.text), 
+													  txtObs.text, acred, pagoTeo, pagoReal, aport, devolucion, ahorro, asist, Application.application.U_ID);
+				}
+			}
+			
+			public function iniciaAsistencia(event:FlexEvent):void{
+				ComboBox(event.currentTarget).dataProvider = asistencia;
+			}
+			
+			public function init():void{
+				openEffect.duration = 500;
+				openEffect.play([this]);
+				titulo = "Control Semanal";
+				lblTitulo.text = titulo.toUpperCase();
+				txtBusqGrupo.setFocus();
+				global = new Globales();
+				du = new Utils();
+				formateaAsistencia();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function limpiar():void{
+				//modifica el estado actual
+				if(currentState == "control"){
+					dgAcred.dataProvider = null;
+					txtCodGrupo.text = "";
+					txtGrupo.text = "";
+					txtCiclo.text = "";
+					txtPagoReal.text = "";
+					txtAport.text = "";
+					txtDev.text = "";
+					txtMora.text = "";
+					txtAhorro.text = "";
+					txtObs.text = "";
+				}
+				
+				currentState = null;
+				
+				txtBusqGrupo.setFocus();
+				txtBusqGrupo.text = "";
+				txtBusqCiclo.text = "";
+				txtBusqSem.text = "";
+			}
+			
+			public function llenaRegistros():void{
+				txtCodGrupo.text = _xmlControl.Table[0].CDGNS;
+				txtGrupo.text = _xmlControl.Table[0].GRUPO;
+				txtCiclo.text = _xmlControl.Table[0].CICLO;
+				
+				lblSemana.text = "SEMANA " + _xmlControl.Table[0].SEMANA;
+				
+				if(tipoAccion == 1){
+					txtPagoReal.text = "0";
+					txtAport.text = "0";
+					txtDev.text = "0";
+					txtMora.text = "0";
+					txtAhorro.text = "0";
+					txtObs.text = "";
+				}
+				else if(tipoAccion == 2){
+					txtPagoReal.text = _xmlControl.Table[0].PAGOREAL;
+					txtAport.text = _xmlControl.Table[0].APORT;
+					txtDev.text = _xmlControl.Table[0].DEVOLUCION;
+					txtMora.text = _xmlControl.Table[0].MORA;
+					txtAhorro.text = _xmlControl.Table[0].AHORRO;
+					txtObs.text = _xmlControl.Table[0].OBSERVACION; 
+				}
+			} 
+			
+			private function setAccionControlSemanal(event:ResultEvent):void{
+				wsMS.disconnect();
+				CursorManager.removeBusyCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionControlSemanal);
+				var res:String = event.result.toString();
+				if (res.substr(0,1) == "1"){
+					Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+					limpiar();
+				}	
+				else
+					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+			}
+			
+			public function valida():Boolean{
+				var cont:int;
+				var listaAcred:ArrayCollection;
+				
+				listaAcred = dgAcred.dataProvider as ArrayCollection;
+				cont = listaAcred.length;
+				
+				for(var i:int = 0; i < cont; i++)
+				{
+					if(listaAcred[i].asistencia == null){
+						Alert.show("La asistencia del acreditado " + listaAcred[i].nombre + " no fue registrada.\n\nCapture los datos requeridos.",titulo,4,null,null,global.iAlert);
+						return false;
+					}
+				}
+				return true;
+			}
+			
+			public function validaBusqueda():Boolean{
+				if(txtBusqGrupo.text == ""){
+					Alert.show("Capture el código de grupo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtBusqCiclo.text == ""){
+					Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtBusqSem.text == ""){
+					Alert.show("Capture la semana del préstamo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(Number(txtBusqSem.text) < 1){
+					Alert.show("Número de semana no válido.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function validaMonto(event:Event):void{	
+				numVal.source = TextInput(event.currentTarget);
+				vResult = numVal.validate();
+
+				if (vResult.type!=ValidationResultEvent.VALID)
+                	TextInput(event.currentTarget).text = "";
+			}
+		
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2"
+	        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator="," required="false"/>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="280" height="212" id="canvas1">
+		<mx:Label id="lblTitulo" x="16.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="16.5" y="53.5" width="247" height="116.5" styleName="canvasMod" id="canvas2">
+			<mx:Label id="lblBusqCiclo" x="9.95" y="44" text="Ciclo:" width="95.3" height="20" textAlign="right"/>
+			<mx:Label id="lblBusqGrupo" x="9.95" y="12" text="Grupo:" width="95.3" height="20" textAlign="right"/>
+			<mx:TextInput id="txtBusqGrupo" x="113.25" y="10" maxChars="6" restrict="0-9" enter="buscaControl()"/>
+			<mx:TextInput id="txtBusqCiclo" x="113.25" y="42" width="45" maxChars="2" restrict="0-9" enter="buscaControl()"/>
+			<mx:Label id="lblBusqSem" x="9.95" y="76" text="Semana:" width="95.3" height="20" textAlign="right"/>
+			<mx:TextInput id="txtBusqSem" x="113.25" y="74" width="45" maxChars="2" restrict="0-9" enter="buscaControl()"/>
+		</mx:Canvas>
+		<mx:Label x="16.5" y="34" text="Criterios de Selección" width="124.25" id="label1"/>
+		<mx:Button x="65" y="178" label="Buscar" click="buscaControl()" id="btnBuscar"/>
+		<mx:Button x="144" y="178" label="Limpiar" width="71" height="24" click="limpiar()" id="btnBusqLimpiar"/>
+	</mx:Canvas>
+</mx:Canvas>

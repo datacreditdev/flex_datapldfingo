@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente de administración de ordenes de pago-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import Data.TxtExport;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;				
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;  
+			import mx.controls.ComboBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.DataGridEvent;				
+			import mx.events.CloseEvent;	
+			import mx.events.ListEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;  
+			import mx.validators.Validator;
+			            
+			[Bindable]
+			public var _xmlAcred:XML = new XML();
+			[Bindable]
+			private var _xmlCta:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var titulo:String;
+			private var global:Globales;
+			
+			public var acred:Array;
+			public var cheque:Array;
+			
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			public var ctaObj:ArrayCollection =  new ArrayCollection();
+			public var movObj:ArrayCollection =  new ArrayCollection();
+			
+			//funcion que permite buscar las ordenes de pago entregadas
+			public function buscarOrdenPago():void{
+				if(valida()){
+					dgAcred.dataProvider = null;
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, getAcredOrdenPago);
+					wsMS.getAcredOrdenPago.send(cboBanco.selectedItem.CODIGO, dtfFecha.text);
+				}	
+			}
+			
+			public function cargaBanco():void{
+				initConexion();
+				du.sCursor();
+				//bloquear();		
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlCta = XML(evt.result.toString());
+						
+					du.rCursor();
+					du.closeWs(wsMS);	
+					//desbloquear();
+					if(_xmlCta.elements().length() > 0){
+						formateaCuenta(evt.result.toString());
+						cboBanco.dataProvider = ctaObj;
+					}
+				});
+				wsMS.getInfoCuenta.send(0, "", "", Application.application.U_ID);
+			}
+			
+			public function cargaTipoMov():void{
+				if(cboBanco.selectedIndex > 0){
+					var oItem:Object;
+					
+					movObj.removeAll();
+					movObj.refresh();
+					
+					oItem = new Object();
+					oItem.CODIGO = "-1";
+					oItem.MOV = "--Seleccionar--";
+					movObj.addItemAt(oItem,0);	
+					
+					if(cboBanco.selectedItem.CANCELA == "1"){
+						oItem = new Object();
+						oItem.CODIGO = "1";
+						oItem.MOV = "Cancelación";
+						movObj.addItemAt(oItem,1);    
+					}                   
+					if(cboBanco.selectedItem.MODIFICA == "1"){
+						oItem = new Object();
+						oItem.CODIGO = "2";
+						oItem.MOV = "Modificación";
+						movObj.addItemAt(oItem,2);
+					}
+					cboTipoMov.dataProvider = movObj;
+					cboTipoMov.selectedIndex = 0;
+				}
+				else
+					cboTipoMov.dataProvider = null;
+			}
+			
+			public function enviar():void{
+				//if(valida() == true){
+				var grupo:String = dgAcred.selectedItem.CDGNS;
+				var ciclo:String = dgAcred.selectedItem.CICLO;
+				var cuenta:String = cboBanco.selectedItem.CODIGO;
+				var fecha:String = dtfFecha.text;
+				var tipo:int = int(cboTipoMov.selectedItem.CODIGO)
+				var mov:String = cboTipoMov.selectedItem.MOV.toString();
+				formateaRegAcred();
+					
+				initConexion();
+				du.sCursor();
+							
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+					var res:String = evt.result.toString();
+						
+					du.rCursor();
+					du.closeWs(wsMS);	
+						
+					if(res.substr(0,2) != "-1"){
+						var tituloRep:String = res.substring(0, res.indexOf("|",0));
+						res = res.substring(res.indexOf("|",0) + 1, res.length);
+						var exp:TxtExport = new TxtExport();
+						exp.cargaCadena(res, tituloRep);	
+						limpiar();
+					}
+					else	
+						Alert.show("No es posible generar el documento de " + mov + " de Órdenes de Pago.\n\nVerifique los criterios de selección.",titulo,4,null,null,global.iAlert);	
+				});
+				wsMS.setAccionModOrdenPago.send(tipo, grupo, ciclo, acred, cheque, fecha, Application.application.U_ID, cuenta);
+			}
+			
+			public function formateaCuenta(cadInfo:String):void{
+				var oItem:Object;
+				var array:Array;
+				
+				oItem = new Object();
+				oItem.CDGIB = "0";                       
+				oItem.NUMERO = "0";
+                oItem.TIPO = "0";
+				oItem.CODIGO = "0";
+				oItem.BANCO = "--Seleccionar--";
+				oItem.CANCELA = "0";
+				oItem.MODIFICA = "0";			
+							
+				var xml:XMLDocument = new XMLDocument(cadInfo); 
+     			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+     			var data:Object = decoder.decodeXML(xml);  
+				array = ArrayUtil.toArray(data.NewDataSet.Table);   
+				ctaObj = new ArrayCollection(array);
+				ctaObj.addItemAt(oItem,0);	
+			}
+			
+			public function formateaListaAcred(info:String):void{
+				var i:int;
+				var j:int;
+				var cont:int = _xmlAcred.elements().length();
+				
+				acredObj.removeAll();
+				acredObj.refresh();
+				
+				for (i = 0; i < cont; i++)
+				{
+					var oItem:Object = new Object();
+					oItem.REGISTRO = false;
+					oItem.REFERENCIA = _xmlAcred.Table[i].REFERENCIA;
+					oItem.NOCHEQUE = _xmlAcred.Table[i].NOCHEQUE;
+					oItem.CODIGO = _xmlAcred.Table[i].CDGCL;
+					oItem.NOMBRE = _xmlAcred.Table[i].NOMBREC;
+					oItem.CANTIDAD = _xmlAcred.Table[i].CANTIDAD;	
+					oItem.CDGNS = _xmlAcred.Table[i].CDGNS;
+					oItem.GRUPO = _xmlAcred.Table[i].GRUPO;
+					oItem.CICLO = _xmlAcred.Table[i].CICLO;
+				
+					acredObj.addItem(oItem);
+				}
+			}
+			
+			public function formateaRegAcred():void{
+				var i:int;
+				var n:int;
+				var cont:int;
+				var listaAcred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;  
+				
+				cont = listaAcred.length;
+				acred = new Array;
+				cheque = new Array;
+				
+				n = 0;
+				
+				for(i = 0; i < cont; i++){
+					if (listaAcred[i].REGISTRO == true){
+						acred[n] = listaAcred[i].CODIGO;
+						cheque[n] = listaAcred[i].NOCHEQUE;		
+						n++;
+					}
+				}
+			}
+			
+			private function getAcredOrdenPago(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getAcredOrdenPago);
+				_xmlAcred = XML(event.result.toString());
+				if(_xmlAcred.elements().length() > 0){
+					formateaListaAcred(event.result.toString());
+					dgAcred.dataProvider = acredObj;
+				}
+				else
+					Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Administración de Órdenes de Pago";
+				lblTitulo.text = titulo.toUpperCase();
+				var fec:Date = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				cargaBanco();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function limpiar():void{
+				var fec:Date;
+				dtfFecha.selectedDate = Application.application._Current_Fecha;
+				dgAcred.dataProvider = null;
+				cboBanco.selectedIndex = 0;
+				cargaTipoMov();
+			}
+			
+			public function valida():Boolean{
+				if(cboBanco.selectedIndex <= 0){	
+					Alert.show("Seleccione la Institución Bancaria.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cboTipoMov.selectedIndex <= 0){	
+					Alert.show("Seleccione el Tipo de Movimiento.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha de entrega del Crédito.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="650" height="520">
+		<mx:Canvas id="cnvDetalle" x="9.75" y="152" width="630.25" height="310" styleName="canvasMod" visible="true">
+			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="608.25" height="285" editable="true"
+				sortableColumns="false" resizableColumns="false" verticalScrollPolicy="on" horizontalScrollPolicy="on"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="" dataField="REGISTRO" textAlign="center" rendererIsEditor="true" width="50" editorDataField="selected">
+					<mx:itemRenderer>
+						<mx:Component>
+		  					<mx:CheckBox width="30" fontSize="10" verticalCenter="0"/> 
+		  				</mx:Component>
+					</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="REFERENCIA" dataField="REFERENCIA" width="120" editable="false"/>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60" editable="false"/>
+					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE" width="220" editable="false"/>
+					<mx:DataGridColumn headerText="MONTO" dataField="CANTIDAD" width="60" editable="false"/>
+					<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="60" editable="false"/>
+					<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="150" editable="false"/>
+					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="60" editable="false"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="370.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvCriterios" styleName="canvasMod" width="480" height="105" x="85" y="39">
+			<mx:Button id="btnBuscar" x="389.2" y="41" icon="@Embed(source='assets/ico_lupa.png')" click="buscarOrdenPago()" toolTip="Buscar Órdenes de Pago" />
+			<mx:Label id="lblBanco" x="104.05" y="13" text="Banco:" width="55.5" textAlign="right"/>
+			<mx:ComboBox id="cboBanco" labelField="BANCO" x="167.5" y="10" width="206.5"  change="cargaTipoMov()"></mx:ComboBox>
+			<mx:Label id="lblFecha" x="48.8" y="42" text="Fecha de Entrega:" width="110.75" textAlign="right"/>
+			<mx:DateField id="dtfFecha" x="167.55" y="40" width="100"/>
+			<mx:Label id="lblTipoMov" x="48.8" y="74" text="Tipo de Movimiento:" width="110.75" textAlign="right"/>
+			<mx:ComboBox id="cboTipoMov" labelField="MOV" x="167.55" y="71" width="163.85"></mx:ComboBox>
+		</mx:Canvas>
+		<mx:Button id="btnAceptar" x="560.25" y="475" icon="@Embed(source='assets/button_ok.png')" click="enviar()" enabled="true" toolTip="Aceptar" width="80"/>
+	</mx:Canvas>
+</mx:Canvas>

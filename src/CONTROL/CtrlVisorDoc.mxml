@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="845" height="785" layout="absolute" 
+	showCloseButton="true" close="cerrar()" creationPolicy="all" creationComplete="initApp()">
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+    
+	<!--Componente que permite mostrar los documentos de un acreditado-->
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Image;
+			import mx.controls.Button;
+			import Data.ImageCreator;
+			import Data.Globales;
+			import Data.Utils;
+			import flash.display.*;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CollectionEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.core.IFlexDisplayObject;
+
+			private var _xmlTabla:XML = new XML();
+			
+			public var imagenes:ArrayCollection;
+			
+			private var global:Globales;
+			private var du:Utils;
+			private var titulo:String;
+			public var contenedor:Sprite;
+			
+			private function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				
+				/*Alert.show("nada");
+				var myCircle:Shape = new Shape();
+        
+				myCircle.graphics.beginFill(0xFF0000); //red
+				myCircle.graphics.drawCircle(25, 25, 50);
+				myCircle.graphics.endFill();
+        
+				this.addChild(myCircle);*/
+				/*Alert.show("Agregado");
+				 var ldr:Loader = new Loader();
+				 ldr.mask = rect;
+				 var url:String = "assets/login.png";
+				 var urlReq:URLRequest = new URLRequest(url);
+				 ldr.load(urlReq);
+				 contenedor.addChild(ldr);*/
+				
+			
+				
+				/*addChild(contenedor);
+				Alert.show(this.toString());
+				contenedor.x = 10;
+				contenedor.y = 10;
+				
+				contenedor.addChild();
+				
+				var miTexto:TextField = new TextField(); // Creo el campo de texto
+				miTexto.text = "Hola @#♦*•#"; // Escribo lo que quiero que diga
+				obj.addChild(miTexto);
+				
+				var carga:Loader = new Loader(); // Creamos el contenedor de carga
+				carga.load(new URLRequest()); // Le damos el archivo a cargar
+				carga.contentLoaderInfo.addEventListener(Event.COMPLETE,function(){
+					//addChild(contenedor);
+					obj.addChild(carga);
+					Alert.show("termino la carga");
+					carga.x = 10;
+					carga.y = 10;
+					carga.width = 100;
+					carga.height = 100;
+				});*/
+				try{
+				
+					/*var button:Button = new Button();
+					button.label="close";
+					addChild(button);	
+					
+					var image:Image = new Image();
+					image.source = "assets/brushedMetal.JPG";
+					addChild(image);*/
+				
+					var zoom:ImageCreator = new ImageCreator(Application.application._Current_URL + "assets/brushedMetal.JPG", 100, 100, 2);
+					zoom.x = 150;
+					zoom.y = 300;
+					addChild(zoom);
+				}
+				catch(error:Error){
+					Alert.show("Error: " + error.message);
+				}	
+			}
+			
+		]]>
+	</mx:Script>
+	<!--<mx:Canvas width="353.5" height="76" styleName="canvasMod" x="477.5" y="10">
+		<mx:Label x="48" y="42" text="Tipo:"/>
+		<mx:Label x="84" y="42" id="lblCodigo" textAlign="right"/>
+		<mx:Label x="28" y="10" text="Registro:"/>
+		<mx:Label x="84" y="10" id="lblCodigo0" textAlign="right"/>
+	</mx:Canvas>
+	<mx:Button id="btnCerrar" x="390" y="712" label="Cerrar" click="cerrar()"/>
+	<mx:Canvas id="cnvContenedor" x="12" y="94" width="819" height="610">
+	</mx:Canvas>-->
+</mx:TitleWindow>

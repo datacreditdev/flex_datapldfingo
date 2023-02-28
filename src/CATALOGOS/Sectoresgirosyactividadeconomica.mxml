@@ -1,0 +1,575 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" height="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*">
+	
+	<!--Componente que permite observar el listado de Sectores, Giros y Actividades Economicas disponibles-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;    
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			
+			[Bindable]
+			public var _xmlSec:XML = new XML();
+			[Bindable]
+			public var _xmlGiro:XML = new XML();
+			[Bindable]
+			public var _xmlAct:XML = new XML();
+			[Bindable]
+			public var dPermisos:XML = new XML();
+			
+			public var wsMS:WebService;	
+			public var wsCat:WebService;
+			public var tituloSec:String;
+			public var tituloGiro:String;
+			public var tituloAct:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionSec:int;
+			public var accionGiro:int;
+			public var accionAct:int;
+			public var indSec:int;
+			public var indGiro:int;
+			public var indAct:int;
+			public var vScroll:Number;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			public function activarContActividad(band:Boolean):void{
+				if(alta)
+					btnAgregarAct.enabled = band;
+				btnDatosAct.enabled = band;
+			}
+			
+			public function activarContGiro(band:Boolean):void{
+				if(alta)
+					btnAgregarGiro.enabled = band;
+				btnDatosGiro.enabled = band;
+			}
+			
+			public function activarContModActividad(band:Boolean):void{
+				if(borrado)
+					btnEliminarAct.enabled = band;
+				if(edicion)	
+					btnEditarAct.enabled = band;
+			}
+			
+			public function activarContModGiro(band:Boolean):void{
+				if(borrado)
+					btnEliminarGiro.enabled = band;
+				if(edicion)	
+					btnEditarGiro.enabled = band;
+			}
+			
+			public function activarContSector(band:Boolean):void{
+				if(edicion)
+					btnEditar.enabled = band;
+				if(borrado)
+					btnEliminar.enabled = band;
+			}
+			
+			public function actualizarActividad(event:Event):void{
+				buscarListaActividad(1);
+			}
+			
+			public function actualizarGiro(event:Event):void{
+				buscarListaGiro(1);
+			}
+			
+			public function actualizarSector(event:Event):void{
+				buscarSector(1);
+			}
+			
+			public function buscarListaActividad(tipo:int):void{
+				var codSec:String = dgSector.selectedItem.CODIGO;
+				var codGiro:String = dgGiro.selectedItem.CODIGO;
+				wsCat = new WebService;
+				var params:Array = new Array;
+				
+				dgActividad.dataProvider = null;
+				du.initWsCat(wsCat);
+				du.sCursor();
+			 	
+			 	if (tipo == 1)
+					Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {	
+					_xmlAct = new XML(evt.result);
+						
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+				
+					if (_xmlAct.elements().length() > 0){
+						dgActividad.dataProvider = _xmlAct.Table;
+						
+						if(accionAct == 2){
+							dgActividad.validateNow();
+							dgActividad.verticalScrollPosition = vScroll;
+							dgActividad.selectedIndex = indAct;
+							this.accionAct = 0;
+						}
+					}
+					seleccionarActividad();
+				});
+				params[0] = codSec;
+				params[1] = codGiro;
+				wsCat.getListado.send(54, params);
+			}
+			
+			public function buscarListaGiro(tipo:int):void{
+				var codSec:String = dgSector.selectedItem.CODIGO;
+				wsCat = new WebService;
+				var params:Array = new Array;
+				
+				dgGiro.dataProvider = null;
+				du.initWsCat(wsCat);
+				du.sCursor();
+			 	if (tipo == 1)
+					Application.application.bloquear();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {
+					_xmlGiro = new XML(evt.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+				
+					if (_xmlGiro.elements().length() > 0){
+						dgGiro.dataProvider = _xmlGiro.Table;
+						
+						if(accionGiro == 2){
+							dgGiro.validateNow();
+							dgGiro.verticalScrollPosition = vScroll;
+							dgGiro.selectedIndex = indGiro;
+							this.accionGiro = 0;
+						}
+					}
+					seleccionarGiro();
+				});
+				params[0] = codSec;
+				wsCat.getListado.send(53, params);
+			}
+			
+			public function buscarSector(tipo:int):void{
+				wsCat = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodSector.text != "" || txtSector.text != ""){
+					btnBuscar.setFocus();
+					
+					dgSector.dataProvider = null;
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					if(tipo == 1)
+						Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {		
+						_xmlSec = new XML(evt.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+						
+						if (_xmlSec.elements().length() > 0){
+							dgSector.dataProvider = _xmlSec.Table;
+							
+							if(accionSec == 2){
+								dgSector.validateNow();
+								dgSector.verticalScrollPosition = vScroll;
+								dgSector.selectedIndex = indSec;
+								this.accionSec = 0;
+							}
+						}
+						seleccionarSector();
+					});
+					params[0] = txtCodSector.text;
+					params[1] = txtSector.text;
+					wsCat.getListado.send(52, params);
+				}	
+			}
+
+			public function eliminarActividad():void{
+				Alert.show("¿Desea eliminar la Actividad Económica seleccionada?", tituloAct, Alert.YES|Alert.NO,null, manejadorEliminarActividad,global.iQuest);
+			}
+			
+			public function eliminarGiro():void{
+				Alert.show("¿Desea eliminar el Giro seleccionado?", tituloGiro, Alert.YES|Alert.NO,null, manejadorEliminarGiro,global.iQuest);
+			}
+			
+			public function eliminarSector():void{
+				Alert.show("¿Desea eliminar el Sector seleccionado?", tituloSec, Alert.YES|Alert.NO,null, manejadorEliminarSector,global.iQuest);
+			}
+			
+			public function iniVar():void{
+				this.indSec = -1;
+				this.indGiro = -1;
+				this.indAct = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				wsMS = new WebService();
+				tituloSec = "Mantenimiento Sector";
+				tituloGiro = "Mantenimiento Giro";
+				tituloAct = "Mantenimiento Actividad Economica";
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function manejadorEliminarActividad(e:CloseEvent):void{
+				if(e.detail == Alert.YES){
+					var codSec:String = dgSector.selectedItem.CODIGO;
+					var codGiro:String = dgGiro.selectedItem.CODIGO;  
+					var codAct:String = dgActividad.selectedItem.CODIGO;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionActividad);
+					wsMS.setAccionActividad.send(3, codSec, codGiro, codAct, Application.application.U_ID);
+			    } 
+			}
+			
+			public function manejadorEliminarGiro(e:CloseEvent):void{
+				if(e.detail == Alert.YES){
+					var codSec:String = dgSector.selectedItem.CODIGO;
+					var codGiro:String = dgGiro.selectedItem.CODIGO;  
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionGiro);
+					wsMS.setAccionGiro.send(3, codSec, codGiro, Application.application.U_ID);
+			    } 
+			}
+			
+			public function manejadorEliminarSector(e:CloseEvent):void{
+				if(e.detail == Alert.YES){
+					var codSec:String = dgSector.selectedItem.CODIGO;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionSector);
+					wsMS.setAccionSector.send(3, codSec, Application.application.U_ID);
+			    } 
+			}
+			
+			public function mostrarFormActividad(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion){
+					var codSec:String = dgSector.selectedItem.CODIGO;
+					var sector:String = dgSector.selectedItem.NOMBRE;
+					var codGiro:String = dgGiro.selectedItem.CODIGO;
+					var giro:String = dgGiro.selectedItem.NOMBRE;
+					var comMttoAct:MttoActividad = new MttoActividad();
+					switch(tipo){
+						case 1: 
+							comMttoAct = MttoActividad(PopUpManager.createPopUp(this,MttoActividad,true)); 
+							comMttoAct.addEventListener(Event.REMOVED_FROM_STAGE, actualizarActividad);
+							comMttoAct.init(tipo, codSec, sector, codGiro, giro);
+							PopUpManager.centerPopUp(comMttoAct);
+							break;
+						case 2: 
+							if (dgActividad.selectedIndex >= 0){
+								accionAct = tipo;
+								comMttoAct = MttoActividad(PopUpManager.createPopUp(this,MttoActividad,true)); 
+								var codAct:String = dgActividad.selectedItem.CODIGO;
+								var indice:int = dgActividad.selectedIndex;
+								iniVar();
+								this.indAct = indice;
+								this.vScroll = dgActividad.verticalScrollPosition;
+								comMttoAct.addEventListener(Event.REMOVED_FROM_STAGE, actualizarActividad);
+								comMttoAct.init(tipo, codSec, sector, codGiro, giro, codAct);
+								PopUpManager.centerPopUp(comMttoAct);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Actividad Económica",tituloAct,4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			public function mostrarFormGiro(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion){
+					var codSec:String = dgSector.selectedItem.CODIGO;
+					var sector:String = dgSector.selectedItem.NOMBRE;
+					var comMttoGiro:MttoGiro = new MttoGiro();
+					switch(tipo){
+						case 1: 
+							comMttoGiro = MttoGiro(PopUpManager.createPopUp(this,MttoGiro,true)); 
+							comMttoGiro.addEventListener(Event.REMOVED_FROM_STAGE, actualizarGiro);
+							comMttoGiro.init(tipo, codSec, sector);
+							PopUpManager.centerPopUp(comMttoGiro);
+							break;
+						case 2: 
+							if (dgGiro.selectedIndex >= 0){
+								accionGiro = tipo;
+								comMttoGiro = MttoGiro(PopUpManager.createPopUp(this,MttoGiro,true)); 
+								var codGiro:String = dgGiro.selectedItem.CODIGO;
+								var giro:String = dgGiro.selectedItem.NOMBRE;
+								var indice:int = dgGiro.selectedIndex;
+								iniVar();
+								this.indGiro = indice;
+								this.vScroll = dgGiro.verticalScrollPosition;
+								comMttoGiro.addEventListener(Event.REMOVED_FROM_STAGE, actualizarGiro);
+								comMttoGiro.init(tipo, codSec, sector, codGiro);
+								PopUpManager.centerPopUp(comMttoGiro);	
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Giro",tituloGiro,4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			public function mostrarFormSector(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoSec:MttoSector = new MttoSector();
+				comMttoSec = MttoSector(PopUpManager.createPopUp(this,MttoSector,true)); 
+				if(edicion){
+					switch(tipo){
+						case 1: 
+							comMttoSec.addEventListener(Event.REMOVED_FROM_STAGE, actualizarSector);
+							comMttoSec.init(tipo);
+							PopUpManager.centerPopUp(comMttoSec);
+							break;
+						case 2: 
+							if (dgSector.selectedIndex >= 0){
+								accionSec = tipo;
+								var codSec:String = dgSector.selectedItem.CODIGO;
+								var sector:String = dgSector.selectedItem.NOMBRE;
+								var indice:int = dgSector.selectedIndex;
+								iniVar();
+								this.indSec = indice;
+								this.vScroll = dgSector.verticalScrollPosition;
+								comMttoSec.addEventListener(Event.REMOVED_FROM_STAGE, actualizarSector);
+								comMttoSec.init(tipo, codSec);	
+								PopUpManager.centerPopUp(comMttoSec);	
+							}
+							else
+								Alert.show("Debe seleccionar el registro del Sector",tituloSec,4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}
+			
+			public function permisos():void{
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var i:int;
+				var cont:int;
+				
+				wsMS = du.initWs(wsMS);
+				du.sCursor();
+				//bloquear();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(i = 0; i < cont; i++)
+					{
+						switch(dPermisos.Table[i].OPCION.toString())
+						{
+							case "C":
+								consulta = true;
+								break;	
+							case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;				
+						}
+					}
+					btnAgregar.enabled = alta;
+					//desbloquear();
+					du.rCursor();
+					du.closeWs(wsMS);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			public function seleccionarActividad():void{
+				if (dgActividad.selectedIndex >= 0){
+					activarContModActividad(true);
+				}
+				else{
+					activarContModActividad(false);
+				}
+			}
+			
+			public function seleccionarGiro():void{
+				dgActividad.dataProvider = null;
+				activarContModActividad(false);
+				if (dgGiro.selectedIndex >= 0){
+					activarContModGiro(true);
+					activarContActividad(true);
+				}
+				else{
+					activarContModGiro(false);
+					activarContActividad(false);
+				}
+			}
+			
+			public function seleccionarSector():void{
+				dgGiro.dataProvider = null;
+				dgActividad.dataProvider = null;
+				activarContModGiro(false);
+				if (dgSector.selectedIndex >= 0){
+					activarContSector(true);
+					activarContGiro(true);
+				}
+				else{
+					activarContSector(false);
+					activarContGiro(false);
+					activarContActividad(false);
+				}
+			}
+			
+			private function setAccionActividad(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionActividad);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarListaActividad(1);
+				else
+					Alert.show(res.substr(2,res.length-1),tituloAct,4,null,null,global.iAlert);
+			}
+			
+			private function setAccionGiro(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionGiro);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarListaGiro(1);
+				else
+					Alert.show(res.substr(2,res.length-1), tituloGiro,4,null,null,global.iAlert);
+			}
+
+			private function setAccionSector(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionSector);
+				var res:String = new String(event.result);
+				if (res.substr(0,1) == "1")
+					//Alert.show("Grupo Eliminado","Mantenimiento de Grupo",4,null,null,global.iInfo);
+					buscarSector(1);
+				else
+					Alert.show(res.substr(2,res.length-1), tituloSec,4,null,null,global.iAlert);
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas width="765" height="690" styleName="canvasComp">	
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="726.5" height="125" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgSector" x="10" y="10" width="700.5" height="100" sortableColumns="true" 
+			 	resizableColumns="true" verticalScrollPolicy="on" itemClick="seleccionarSector()" 
+				itemDoubleClick="mostrarFormSector(2)" doubleClickEnabled="true"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+					<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="250"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="10" text="SECTORES" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarSector(1)" toolTip="Buscar Sector" width="40"/>
+			<mx:Button id="btnAgregar" x="106" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormSector(1)" toolTip="Registrar Sector" width="40"/>
+			<mx:Button id="btnEliminar" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarSector()" enabled="false" toolTip="Eliminar Sector" width="40"/>
+			<mx:Button id="btnEditar" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormSector(2)" toolTip="Editar Sector" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas x="18.5" y="39" width="513.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodOF" x="15" y="6" text="Código:"/>
+			<mx:Label id="lblOF" x="132.5" y="6" text="Nombre:"/>
+			<mx:TextInput id="txtSector" x="185.5" y="5" width="316" enter="buscarSector(1)" maxChars="50"/>
+			<mx:TextInput id="txtCodSector" x="64" y="5" width="50" enter="buscarSector(1)" maxChars="4"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvProdCred" x="19.25" y="262" width="726.5" height="175" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgGiro" x="10" y="10" width="704.5" height="153" draggableColumns="false" verticalScrollPolicy="on" 
+				horizontalScrollPolicy="auto" itemClick="seleccionarGiro()" doubleClickEnabled="true" itemDoubleClick="mostrarFormGiro(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60"/>
+					<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="100"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18.5" y="233" text="GIROS" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="540" y="217" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnAgregarGiro" x="106" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormGiro(1)" toolTip="Agregar Giro" width="40"/>
+			<mx:Button id="btnEliminarGiro" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarGiro()" toolTip="Eliminar Giro" width="40"/>
+			<mx:Button id="btnEditarGiro" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormGiro(2)" toolTip="Editar Giro" width="40"/>
+			<mx:Button id="btnDatosGiro" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaGiro(1)" enabled="false" toolTip="Giros" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle1" x="19.25" y="490" width="726.5" height="175" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgActividad" x="10" y="10" width="704.5" height="153" sortableColumns="true" resizableColumns="true" verticalScrollPolicy="on" 
+				itemClick="seleccionarActividad()" doubleClickEnabled="true" doubleClick="mostrarFormActividad(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+					<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="300"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="19.25" y="461" text="ACTIVIDADES ECONÓMICAS" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="540" y="445" width="205.75" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnAgregarAct" x="106" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormActividad(1)" toolTip="Agregar Actividad" width="40"/>
+			<mx:Button id="btnEliminarAct" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarActividad()" toolTip="Eliminar Actividad" width="40"/>
+			<mx:Button id="btnEditarAct" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormActividad(2)" toolTip="Editar Actividad" width="40"/>
+			<mx:Button id="btnDatosAct" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaActividad(1)" enabled="false" toolTip="Actividades Enonómicas" width="40"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="550" height="240">
+	
+	<mx:Metadata>
+		[Event(name="enviarDatosProd", type="Data.EventProd")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;		
+			import Data.EventProd;
+			import Data.DatosProd;
+			import mx.controls.Alert;
+			import mx.effects.*;
+			import mx.events.EffectEvent;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.core.Application;
+			
+			public var datos:DatosProd = new DatosProd();
+			
+			public var global:Globales;	
+			public var wsMS:WebService;	
+			public var tipoAccion:int;
+			public var du:Utils;
+			
+			public function enviarDatosProd(formData:DatosProd):void{
+				formData.formaEntre = entrega.selectedValue.toString();
+				if(chkEntrega.selected == true)
+					formData.fijaEnt = "S";				
+				else if(chkEntrega.selected == false)
+					formData.fijaEnt = "N";
+				formData.guardaEntre = true;
+				
+				var event:EventProd = new EventProd("enviarDatosProd", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(info:DatosProd, tipoAccion:int):void{
+				global = new Globales();
+				du = new Utils();
+				this.tipoAccion = tipoAccion;
+				
+				if (info != null){
+					datos = info;
+					
+					entrega.selectedValue = info.formaEntre;	
+					//Indicador de edicion del metodo de cobro
+					if(info.fijaEnt == "S")
+						chkEntrega.selected = true;
+					else if(info.fijaEnt == "N")
+						chkEntrega.selected = false;																						
+				}		
+			}	
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+				
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas id="cnvEntrega" x="95" y="50" width="360" height="148" styleName="canvasMod">
+		<mx:RadioButtonGroup id="entrega"/>
+		<mx:RadioButton id="rdbEfectivo" x="28" y="10" label="Efectivo" groupName="entrega" value="E"/>
+		<mx:RadioButton id="rdbChequeClien" x="28" y="42" label="Cheque" groupName="entrega" value="C"/>
+		<mx:RadioButton id="rdbTransElect" x="28" y="74" label="Transferencia electrónica" groupName="entrega" value="T"/>
+		<mx:RadioButton id="rdbDispersion" x="28" y="106" label="Dispersión de fondos" groupName="entrega" value="D"/>
+		<mx:CheckBox id="chkEntrega" x="215" y="54" label="No Permitir modificar"/>
+	</mx:Canvas>
+	<mx:Label x="95" y="30" text="Forma de entrega"/>
+</mx:Canvas>

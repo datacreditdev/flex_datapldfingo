@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="750" 
+	height="380" creationPolicy="all" xmlns:Forms="CATALOGOS.Forms.*">
+	
+	<mx:Script>
+	<![CDATA[
+		import Data.DatosProd;
+		import Data.EventProd;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		
+		[Bindable]
+		private var info:DatosProd;
+		private var _xmlProd:XML =  new XML();
+		
+		public var prodObj:ArrayCollection = new ArrayCollection();
+	
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var codTipoProd:String;
+		public var codProd:String;
+		public var prod:String; 
+		public var titulo:String;
+		public var du:Utils;
+		
+		public function cargaInfoProd(codTipoProd:String, codProd:String, prod:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			tipoAccion = 2;
+			this.title = "Edición";
+			this.codTipoProd = codTipoProd;
+			this.codProd = codProd;
+			this.prod = prod;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlProd = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if (_xmlProd.elements().length() > 0){
+					llenaRegistros();		
+				} 	
+			});
+			params[0] = codTipoProd;
+			params[1] = codProd;
+			wsCat.getInfoRegistro.send(1, params);
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			info = new DatosProd();
+			formDatosGralProd.enviarDatosProd(info);
+			formCalendarioProd.enviarDatosProd(info);
+			formCapIntProd.enviarDatosProd(info);
+			formTasasProd.enviarDatosProd(info);
+			formRecargosProd.enviarDatosProd(info);
+			formEntregaProd.enviarDatosProd(info);
+			formCondicionesProd.enviarDatosProd(info);
+			formComisiones.enviarDatosProd(info);
+			formPrelacion.enviarDatosProd(info);
+			validaFinal();
+		}
+		
+		public function efectoInicial(event:EffectEvent):void{
+			
+		}
+		
+		private function guardaProd():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionProd);
+			wsMS.setAccionProd.send(tipoAccion, codTipoProd, info.cdgProd, info.nombreProd, info.moneda, info.tipoCred,
+									info.valido, info.montoMin, info.montoMax, info.baseCalc, info.periodicidad, info.multPerio,
+									info.diaEsp, info.pagoCapital, info.pagoInteres, info.duracion, info.fijaPer, info.fijaMultPer, 
+									info.fijaPGC, info.fijaPGI, info.fijaPlazo, info.perPagoCap, info.fijaPagoCap,
+									info.perCapital, info.multPerCap, info.metodoCobro, info.formaDist, info.instrumento, 
+									info.interes, info.fijaMCI, info.fijaFDI, info.fijaTas, info.tasaFija, info.factorTasa, 
+									info.aplican, info.metodoAplic, info.fijaMAP, info.fijaRec, info.formaEntre, info.fijaEnt, 
+									info.sexo, info.edadMin, info.edadMax, info.plazoMin, info.plazoMax, info.tipoMov, 
+									info.montoCom, info.porcCom, info.tipoCargo, info.opcional, info.orden, info.artefacto);			
+		}
+	
+		public function init():void{
+			global = new Globales();
+			du = new Utils();
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			titulo = "Mantenimiento de Producto de Crédito";
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function llenaRegistros():void{
+			info = new DatosProd();
+			
+			//Datos generales del Producto de Credito
+			info.cdgProd = this.codProd;
+			info.nombreProd = this.prod;
+			info.cdgTipoProd = _xmlProd.Table[0].CDGTPC;
+			info.moneda = _xmlProd.Table[0].CDGMO;
+			info.tipoCred = _xmlProd.Table[0].CDGTCR;
+			info.montoMin = _xmlProd.Table[0].MONTOMIN;
+			info.montoMax = _xmlProd.Table[0].MONTOMAX;
+			info.valido = _xmlProd.Table[0].VIGENCIA;
+			info.baseCalc = _xmlProd.Table[0].CDGBC;
+			
+			//Datos de periodicidad y calendario del producto
+			info.periodicidad = _xmlProd.Table[0].PERIODICIDAD;
+			info.fijaPer = _xmlProd.Table[0].FIJAPER;
+			info.multPerio = _xmlProd.Table[0].MULTPER;
+			info.diaEsp = _xmlProd.Table[0].DIAESP;
+			info.fijaMultPer = _xmlProd.Table[0].FIJAMULTPER;
+			info.duracion = _xmlProd.Table[0].PLAZO;
+			info.fijaPlazo = _xmlProd.Table[0].FIJAPLA;
+			info.pagoCapital = _xmlProd.Table[0].PERIGRCAP;
+			info.fijaPGC = _xmlProd.Table[0].FIJAPGC;
+			info.pagoInteres = _xmlProd.Table[0].PERIGRINT;
+			info.fijaPGI = _xmlProd.Table[0].FIJAPGI;
+			
+			//Datos de periodicidad de Capital
+			info.perPagoCap = _xmlProd.Table[0].PERPAGOCAP;
+			info.perCapital = _xmlProd.Table[0].PERCAPITAL;
+			info.multPerCap = _xmlProd.Table[0].MULTPERCAP;
+			info.fijaPagoCap = _xmlProd.Table[0].FIJAPAGOCAP;
+			info.capInt = _xmlProd.Table[0].CDGDV;
+			
+			//Datos de las tasas del producto
+			info.metodoCobro = _xmlProd.Table[0].CDGMCI;
+			info.fijaMCI = _xmlProd.Table[0].FIJAMCI;
+			info.formaDist = _xmlProd.Table[0].CDGFDI;
+			info.fijaFDI = _xmlProd.Table[0].FIJAFDI;
+			info.instrumento = _xmlProd.Table[0].CDGTI;
+			info.interes = _xmlProd.Table[0].TASA;
+			info.fijaTas = _xmlProd.Table[0].FIJATAS;
+			
+			//Datos de los Recargos del producto
+			info.tasaFija = _xmlProd.Table[0].TASARECFIJ;
+			info.factorTasa = _xmlProd.Table[0].TASARECTAS;
+			info.aplican = _xmlProd.Table[0].MODOAPLIRECA;
+			info.metodoAplic = _xmlProd.Table[0].METRECA;
+			info.fijaMAP = _xmlProd.Table[0].FIJAMAP;
+			info.fijaRec = _xmlProd.Table[0].FIJAREC;
+			
+			//Datos de la entrega del producto
+			info.formaEntre = _xmlProd.Table[0].FORMAENTREGA;
+			info.fijaEnt = _xmlProd.Table[0].FIJAFEN;
+			
+			//Datos de las condiciones del producto
+			info.sexo = _xmlProd.Table[0].SEXO;
+			info.edadMin = _xmlProd.Table[0].EDADMIN;
+			info.edadMax = _xmlProd.Table[0].EDADMAX;
+			info.plazoMin = _xmlProd.Table[0].PLAZOMIN;
+			info.plazoMax = _xmlProd.Table[0].PLAZOMAX;
+
+			formDatosGralProd.init(info, tipoAccion);
+			formCalendarioProd.init(info, tipoAccion);
+			formCapIntProd.init(info, tipoAccion);
+			formTasasProd.init(info, tipoAccion);
+			formRecargosProd.init(info, tipoAccion);
+			formEntregaProd.init(info, tipoAccion);
+			formCondicionesProd.init(info, tipoAccion);
+			formComisiones.init(info, tipoAccion);
+			formPrelacion.init(info,tipoAccion);
+		}
+		
+		public function registraInfoProd(codTipoProd:String):void{
+			tipoAccion = 1;
+			this.title = "Nuevo";
+			this.codTipoProd = codTipoProd;
+			
+			info = null;
+			
+			formDatosGralProd.init(info, tipoAccion);
+			formCalendarioProd.init(info, tipoAccion);
+			formCapIntProd.init(info, tipoAccion);
+			formTasasProd.init(info, tipoAccion);
+			formRecargosProd.init(info, tipoAccion);
+			formEntregaProd.init(info, tipoAccion);
+			formCondicionesProd.init(info, tipoAccion);
+			formComisiones.init(info, tipoAccion);
+			formPrelacion.init(info, tipoAccion);
+		}
+		
+		private function setAccionProd(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionProd);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1")
+				cerrar();
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function validaDatosProd(event:EventProd):void{
+			info = event.customProp;
+		}
+		
+		private function validaFinal():void{
+			if (info.guarda == true && info.guardaCalendario == true && info.guardaTasas == true 
+			 	&& info.guardaRecargos == true && info.guardaEntre == true && info.guardaCapInt == true 
+			 	&& info.guardaCom == true && info.guardaPre == true)
+				guardaProd();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+	]]>
+	</mx:Script>
+	<mx:Button id="btnAceptar" x="647.95" y="306" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="696" y="306" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:TabNavigator x="10" y="10" width="731" height="288">
+		<mx:Canvas label="Datos Generales" width="100%" height="100%">
+			<Forms:FormDatosGralProd id="formDatosGralProd" x="89.5" y="0">
+			</Forms:FormDatosGralProd>
+		</mx:Canvas>
+		<mx:Canvas label="Periodicidad y Calendario" width="100%" height="100%">
+			<Forms:FormCalendarioProd id="formCalendarioProd" x="89.5" y="0">
+			</Forms:FormCalendarioProd>
+		</mx:Canvas>
+		<mx:Canvas label="Tasas" width="100%" height="100%">
+			<Forms:FormTasasProd id="formTasasProd" x="89.5" y="0">
+			</Forms:FormTasasProd>
+		</mx:Canvas>
+		<mx:Canvas label="Recargos" width="100%" height="100%">
+			<Forms:FormRecargosProd id="formRecargosProd" x="89.5" y="0">
+			</Forms:FormRecargosProd>
+		</mx:Canvas>
+		<mx:Canvas label="Entrega" width="100%" height="100%">
+			<Forms:FormEntregaProd id="formEntregaProd" x="89.5" y="0">
+			</Forms:FormEntregaProd>
+		</mx:Canvas>
+		<mx:Canvas label="Condiciones" width="100%" height="100%">
+			<Forms:FormCondicionesProd id="formCondicionesProd" x="89.5" y="0">
+			</Forms:FormCondicionesProd>
+		</mx:Canvas>
+		<mx:Canvas label="Capital" width="100%" height="100%">
+			<Forms:FormCapitalInteresProd id="formCapIntProd" x="74.5" y="10">
+			</Forms:FormCapitalInteresProd>
+		</mx:Canvas>
+		<mx:Canvas label="Comisiones" width="100%" height="100%">
+			<Forms:FormComisiones id="formComisiones" x="14.5" y="10">
+			</Forms:FormComisiones>
+		</mx:Canvas>
+		<mx:Canvas label="Prelación" width="100%" height="100%">
+			<Forms:FormPrelacion id="formPrelacion" x="174.5" y="10">
+			</Forms:FormPrelacion>
+		</mx:Canvas>
+	</mx:TabNavigator>
+</mx:TitleWindow>

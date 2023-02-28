@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="544" height="290" 
+	creationPolicy="all" xmlns:Forms="OPERAC.Forms.*">
+	
+	<mx:Script>
+	<![CDATA[
+		import mx.events.IndexChangedEvent;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.events.ValidationResultEvent;	
+		import mx.managers.PopUpManager;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.events.ResultEvent;
+		import mx.validators.Validator;
+		
+		private var _xmlTipo:XML = new XML();
+		
+		private var comObj:ArrayCollection = new ArrayCollection();
+		private var tipoObj:ArrayCollection = new ArrayCollection();
+		
+		public var global:Globales;
+		public var wsMS:WebService;	
+		public var titulo:String;
+		public var du:Utils;
+		private var codTipoMov:String;
+		private var indice:int;
+		private var vResult:ValidationResultEvent;
+		
+		private function actualizaTipoMov(event:Event):void{
+			var comMttoTipoMov:MttoTipoMovComision = event.currentTarget as MttoTipoMovComision;
+			codTipoMov = comMttoTipoMov.dgTipo.selectedItem.CODIGO;
+			txtMov.text = comMttoTipoMov.dgTipo.selectedItem.NOMBRE;
+		}
+		
+		private function cargaComision():void{
+			this.title = "Edición";
+			codTipoMov = comObj[indice].tipoMov;
+			txtMov.text = comObj[indice].nomMov;
+			txtMonto.text = comObj[indice].monto;
+			txtPorcentaje.text = comObj[indice].porc;
+			for(var i:int = 0; i < tipoObj.length; i++){
+				if(comObj[indice].formaAfec.toString() == tipoObj[i].id.toString()){
+					cboTipoCargo.selectedIndex = i;
+					break;
+				}
+			}
+			opcional.selectedValue = comObj[indice].opcional;
+		}
+		
+		public function cerrar():void{
+			PopUpManager.removePopUp(this);
+		}
+	
+	 	private function enviar():void{
+			if(valida() == true)
+				guardaComision();
+		}
+		
+		private function formateaTipo():void{
+			var i:int;
+			var cont:int = _xmlTipo.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			oItem = new Object();
+			oItem.id = "";	
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);
+				
+			for(i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.id = _xmlTipo.Table[i].CODIGO;
+				oItem.desc = _xmlTipo.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			tipoObj = new ArrayCollection(item);
+		}
+		
+		private function guardaComision():void{
+			//condicion que permite editar un registro del arreglo 
+			if(indice >= 0){
+				comObj[indice].tipoMov = codTipoMov;
+				comObj[indice].nomMov = txtMov.text;
+				comObj[indice].monto = txtMonto.text;
+				comObj[indice].porc = txtPorcentaje.text;
+				comObj[indice].formaAfec = cboTipoCargo.selectedItem.id;
+				comObj[indice].descForma = cboTipoCargo.selectedLabel;
+				comObj[indice].opcional = opcional.selectedValue;
+				comObj[indice].descOpc = opcional.selection.label;
+			}
+			//condicion que agrega un nuevo registro al arreglo
+			else{
+				var oItem:Object = new Object;
+				var item:Array = new Array;
+				oItem.tipoMov = codTipoMov;
+				oItem.nomMov = txtMov.text;  
+				oItem.monto = txtMonto.text;
+				oItem.porc = txtPorcentaje.text;
+				oItem.formaAfec = cboTipoCargo.selectedItem.id;
+				oItem.descForma = cboTipoCargo.selectedLabel;
+				oItem.opcional = opcional.selectedValue;
+				oItem.descOpc = opcional.selection.label;
+				item.push(oItem);
+				comObj.source = comObj.source.concat(item);
+			}
+			cerrar();
+		}
+	
+		public function init(tipo:int, comObj:ArrayCollection, indice:int):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			global = new Globales();
+			du = new Utils();
+			titulo = "Mantenimiento de Comisión";
+			this.comObj = comObj;
+			this.indice = indice;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlTipo = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if (_xmlTipo.elements().length() > 0){
+					formateaTipo();
+					cboTipoCargo.dataProvider = tipoObj;
+				} 	
+				if(tipo == 1)
+					registraComision();
+				else if(tipo == 2)
+					cargaComision();
+			});
+			//Consulta los tipos de cargo o forma de afectacion de las comisiones
+			wsCat.getCatalogoGral.send(34);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+			
+		private function mostrarFormTipoMov():void{
+			//Permite seleccionar el control padre del objeto contenedor para centrar el formulario al desplegarlo
+		 	var obj:DisplayObject = this.parentApplication.parent;
+			var comMttoTipoMov:MttoTipoMovComision = new MttoTipoMovComision();
+			comMttoTipoMov = MttoTipoMovComision(PopUpManager.createPopUp(obj,MttoTipoMovComision,true)); 
+			comMttoTipoMov.addEventListener("enviar", actualizaTipoMov);
+			PopUpManager.centerPopUp(comMttoTipoMov);		
+		}	
+		
+		private function registraComision():void{
+			this.title = "Registro";
+		}	
+			
+		private function valida():Boolean{
+			if(txtMov.text == ""){
+				Alert.show("Debe seleccionar el tipo de Movimiento de la Comisión.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cboTipoCargo.selectedIndex == 0){
+				Alert.show("Debe seleccionar la Forma de Afectación de la Comisión.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(txtMonto.text == "" && txtPorcentaje.text == ""){
+				Alert.show("Debe registrar el monto o el porcentaje de la comisión.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			else{
+				if(txtMonto.text != "" && txtPorcentaje.text != ""){
+					Alert.show("Debe registrar el monto o el porcentaje de la comisión.",titulo,4,null,null,global.iAlert);
+					return false;
+				}	
+			}
+			if(opcional.selectedValue == null){
+				Alert.show("Debe seleccionar el tipo de Comisión.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}
+		
+		private function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+               	TextInput(event.currentTarget).text = "";
+		}
+		
+		private function validaPorc(event:Event):void{
+			porcVal.source = TextInput(event.currentTarget);
+			vResult = porcVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+               	TextInput(event.currentTarget).text = "";
+		}
+	]]>
+	</mx:Script>
+
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+        
+    <mx:NumberValidator id="porcVal" property="text" precision="5" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+        
+	<mx:Canvas x="10" y="10" width="524" height="150" styleName="canvasMod">
+		<mx:Label id="lblMov" x="126.5" y="15" text="Movimiento:"/>
+		<mx:TextInput id="txtMov" x="195.5" y="13" width="222" editable="false"/>
+		<mx:Label id="lblMonto" x="150.5" y="47" text="Monto:"/>
+		<mx:TextInput id="txtMonto" x="195.5" y="45" width="90" maxChars="11" restrict="0-9;,;." change="validaMonto(event)"/>
+		<mx:Label id="lblPorcentaje" x="128.5" y="79" text="Porcentaje:"/>
+		<mx:TextInput id="txtPorcentaje" x="195.5" y="77" width="58" maxChars="7" restrict="0-9;." change="validaPorc(event)"/>
+		<mx:Label id="lblForma" x="78.5" y="112" text="Forma de Afectación:"/>
+		<mx:ComboBox id="cboTipoCargo" x="195.5" y="109" width="270" labelField="desc"/>
+		<mx:Button id="btnBusqTipo" x="425.5" y="14" icon="@Embed(source='assets/ico_lupa.png')" click="mostrarFormTipoMov()" toolTip="Buscar Tipo de Movimiento" width="40"/>
+	</mx:Canvas>
+	<mx:Button id="btnCancelar" x="494" y="216" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="446" y="216" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Canvas x="101" y="168" width="342" height="35" styleName="canvasMod">
+		<mx:RadioButtonGroup id="opcional"/>
+		<mx:RadioButton x="91.4" y="5" label="Obligatorio" groupName="opcional" value="B"/>
+		<mx:RadioButton x="181.4" y="5" label="Opcional" groupName="opcional" value="P"/>
+	</mx:Canvas>
+</mx:TitleWindow>

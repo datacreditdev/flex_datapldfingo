@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="370" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsRep:WebService;
+			public var du:Utils;
+			public var fecIni:String;
+			public var titulo:String;
+			private var global:Globales;
+		
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				dgE.loadDGInExcel(dgReporte,null,titulo + " del " + fecIni);		
+			}
+		
+			public function generar():void{
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+						
+				du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsRep);
+					Application.application.desbloquear();
+					
+					dgReporte.dataProvider = null;
+					btnExportar.enabled = false;
+												
+					if(_xmlRep.elements().length() > 0){
+						var cantSolic:Number = 0;
+						var cantAutor:Number = 0;
+						var registro:int = 0;
+						var cont:int = _xmlRep.elements().length();
+						var etiqueta:String;
+						btnExportar.enabled = true;
+						cantSolic = Number(_xmlRep.dtPrefondeo[cont-1].CANTSOLIC);
+						cantAutor = Number(_xmlRep.dtPrefondeo[cont-1].CANTAUTOR);
+						registro = Number(_xmlRep.dtPrefondeo[cont-1].NOMCLNS);   
+						etiqueta = " Movimiento(s) Cantidad Solicitada: " + global.formatoDecimal(cantSolic.toString()) + " Cantidad Autorizada: " + global.formatoDecimal(cantAutor.toString());					
+						lblTotal.text = registro + etiqueta;
+						//delete _xmlRep.dtPrefondeo[cont-1];   
+						dgReporte.dataProvider = _xmlRep.dtPrefondeo;
+						fecIni = dtfFecha.text;
+					}
+					else{
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						lblTotal.text = "";
+					}
+				});
+				wsRep.getRepPrefondeoAgrup.send(dtfFecha.text);	
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Prefondeo";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+			
+			public function initConexion():void{				
+				wsRep = new WebService();			
+				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsRep.loadWSDL();
+			}	
+		
+			private function limpiar():void{
+				var fec:Date;
+				dgReporte.dataProvider = null;
+				btnExportar.enabled = false;
+				lblTotal.text = "";
+				fec = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			}
+				
+			private function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha de inicio.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="140.04999" height="68.5" styleName="canvasMod">
+		<mx:Label x="13.5" y="10" text="Fecha Inicio" width="81" height="20"/>
+		<mx:DateField id="dtfFecha" x="13.5" y="28.5" width="111"/>
+	</mx:Canvas>
+	<mx:Button x="71.25" y="130" label="Generar" click="generar()"/>
+	<mx:Button x="149.75" y="130" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:DataGrid id="dgReporte" x="17.95" y="166" width="763.05" visible="true" height="165" horizontalScrollPolicy="on">
+		<mx:columns>
+			<mx:DataGridColumn headerText="CODIGO" dataField="CDGCLNS" width="170"/>
+			<mx:DataGridColumn headerText="NOMBRE" dataField="NOMCLNS" width="150"/>
+			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
+			<mx:DataGridColumn headerText="INICIO" dataField="INICIO" width="80"/>
+			<mx:DataGridColumn headerText="TIPO" dataField="CLNS" width="80"/>
+			<mx:DataGridColumn headerText="CUENTA" dataField="CDGCB" width="60"/>
+			<mx:DataGridColumn headerText="NUM. CUENTA" dataField="NUMCUENTA" width="100"/>
+			<mx:DataGridColumn headerText="BANCO" dataField="BANCO" width="100"/>
+			<mx:DataGridColumn headerText="DESEMBOLSO" dataField="DESEMBOLSO" width="110"/>
+			<mx:DataGridColumn headerText="SITUACION" dataField="SITUA" width="100"/>
+			<mx:DataGridColumn headerText="CANT SOLICITADA" dataField="CANTSOLIC" width="120"/>
+			<mx:DataGridColumn headerText="CANT AUTORIZADA" dataField="CANTAUTORDESC" width="125"/>			
+			<!--<mx:DataGridColumn headerText="SUCURSAL" dataField="CDGCO" width="100"/>-->
+			<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="COORD" width="150"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnExportar" x="678" y="130" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Label id="lblTotal" x="17.95" y="339" width="680.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+</mx:Canvas>

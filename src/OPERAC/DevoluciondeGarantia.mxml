@@ -1,0 +1,480 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente de Devolucion de Garantia-->
+	<mx:Script>
+		<![CDATA[
+			import mx.messaging.AbstractConsumer;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.events.CloseEvent;	
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;	
+			import mx.events.ValidationResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;				
+			import mx.managers.PopUpManager;
+			import mx.collections.ArrayCollection;
+			import mx.effects.easing.Elastic;
+			import mx.utils.ArrayUtil;  
+			            
+			[Bindable]
+			public var _xmlAcred:XML = new XML();	            
+			[Bindable]
+			public var _xmlGL:XML = new XML();
+			[Bindable]
+			public var _xmlGrupo:XML = new XML();
+			[Bindable]
+			public var _xmlCta:XML = new XML();
+			[Bindable]
+			public var _xmlMesa:XML = new XML();
+			[Bindable]
+			public var _xmlMovs:XML = new XML();
+			[Bindable]
+			public var _xmlChq:XML = new XML();
+			
+			public var wsMS:WebService;	
+			public var du:Utils;
+			public var titulo:String;
+			public var rep:String;
+			public var secPago:String;
+			public var banco:String;
+			public var ciclo:String;
+			public var codGrupo:String;
+			public var coord:String;
+			public var estatus:String;
+			private var global:Globales;
+			private var vResult:ValidationResultEvent;
+		
+			public var listaObj:ArrayCollection = new ArrayCollection();
+			public var movsObj:ArrayCollection = new ArrayCollection();
+			public var acredObj:ArrayCollection = new ArrayCollection();
+							
+			public function activarControles():void{
+				if(global.permisosBusqAcred(Application.application.PERFIL_ID) == true){
+					txtCodAcred.editable = true;
+					btnBusqAcred.visible = true;
+					//dtfFecha.enabled = true;
+				}
+			}				
+							
+			public function actualizarAcred(event:Event):void{
+				var comAcredGrupo:MttoBusqAcredGrupo = event.currentTarget as MttoBusqAcredGrupo;
+				txtCodAcred.text = comAcredGrupo.dgAcred.selectedItem.CODIGO;
+				txtAcred.text = comAcredGrupo.dgAcred.selectedItem.NOMBRE_CL;	
+				comAcredGrupo.removeEventListener("enviar", actualizarAcred);			
+			}
+			
+			public function actualizarCta(event:Event):void{
+				var comMttoCta:MttoCuenta = event.currentTarget as MttoCuenta;
+				txtCodCuenta.text = comMttoCta.dgCuenta.selectedItem.CODIGO;
+				//txtCuenta.text = comMttoCta.dgCuenta.selectedItem.BANCO;	
+				buscarCuenta();		
+			}
+			
+			public function actualizarRangoCheque():void{
+				if (_xmlChq.elements().length() > 0){
+					var cheque:Number = Number(_xmlChq.Table[0].CHQSIG);
+					txtCheque.text = cheque.toString();
+				}
+				else
+					txtCheque.text = "";
+			}
+			
+			public function buscarAcred(event:FlexEvent):void{
+				if(event.currentTarget.text != "" && event.currentTarget.length == 6){ 
+					var acred:String = event.currentTarget.text;
+					var grupo:String = txtCodGrupo.text;
+					
+					initConexion();
+					du.sCursor();
+						
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlAcred = new XML(evt.result);
+							
+						du.rCursor();
+						du.closeWs(wsMS);
+								
+						if(_xmlAcred.elements().length() > 0){
+							txtAcred.text = _xmlAcred.Table[0].NOMBRE_CL;							
+						}
+						else{
+							Alert.show("Código de cliente incorrecto.\n\nVerifique el dato capturado.",titulo,4,null,null,global.iAlert);
+							txtAcred.text = "";
+						}					
+					});
+					//metodo que verifica que el cliente pertenezca al grupo
+					wsMS.getAcred.send(grupo, acred, "");
+				}
+				else{
+					Alert.show("Capture el código de acreditado.",titulo,4,null,null,global.iAlert);
+					txtAcred.text = "";
+				}
+			}
+			
+			public function buscarCuenta():void{
+				if (txtCodCuenta.text != ""){
+					txtCuenta.setFocus();
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, getInfoCuenta);
+					wsMS.getInfoCuenta.send(4, txtCodCuenta.text, "", Application.application.U_ID, coord);
+				}	
+			}
+			
+			public function buscarGrupo():void{
+				if (txtCodGrupo.text != ""){
+					btnBuscar.setFocus();
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, getGLGrupo);
+					wsMS.getGLGrupo.send(txtCodGrupo.text, Application.application.U_ID);
+				}	
+			}
+			
+			public function buscarSigCheque():void{
+				if(txtCodCuenta.text != "" && txtCuenta.text != ""){
+					var codCuenta:String = txtCodCuenta.text;
+					
+					initConexion();
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						_xmlChq = new XML(evt.result);
+							
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						actualizarRangoCheque();
+					});
+					wsMS.getInfoSigCheque.send(codCuenta, coord);
+				}
+			}
+			
+			public function enviar():void{
+				if(valida() == true){
+					var grupo:String = txtCodGrupo.text;
+					var cuenta:String = txtCodCuenta.text;
+					var fecha:String = dtfFecha.text;
+					var codAcred:String = txtCodAcred.text;
+					var acred:String = txtAcred.text;
+					var cheque:String = txtCheque.text;
+					//var devolucion:String = cboDevolucion.selectedItem.id;
+					var monto:Number = Number(txtMonto.text);
+					
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();
+						
+						if(res.substr(0,1) == "1"){	
+							
+							du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+							var res:String = evt.result.toString();
+						
+								du.rCursor();
+								du.closeWs(wsMS);
+							
+								if(res.substr(0,1) == "1"){	
+									var id:String = "&id=" + rep;
+									var grupo:String = "&grupo=" + txtCodGrupo.text;
+									//Se sustituyo la variable ciclo por la secuencia de pago para 
+									//hacer mas precisa la consulta del registro a imprimir
+									var ciclo:String = "&ciclo=" + secPago;
+									var consCuenta:String = "&cuenta=" + cuenta;
+									var consCheque:String = "&chqIni=" + cheque;
+									var consulta:String = global.urlPdf + id + grupo + ciclo + consCuenta + consCheque;
+									Application.application.muestraPdf(consulta);
+								}
+								else{
+									Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+								}
+							});
+							//Se sustituyo la variable ciclo por la secuencia de pago para hacer mas precisa
+							//la actualizacion del registro de garantia 
+							wsMS.setDevGarantia.send(grupo, Number(secPago), fecha, monto, estatus, cuenta, cheque, 
+													 codAcred, acred, Application.application.U_ID);
+						}
+						else{
+							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+							du.rCursor();
+							du.closeWs(wsMS);
+						}
+					});
+					wsMS.getValidaRangoCheques.send(coord, cuenta, cheque);
+				}
+			}
+			
+			public function formateaListaMovsGL(cadInfo:String):void{
+				var oItem:Object;
+				var array:Array;			
+							
+				listaObj.removeAll();
+				listaObj.refresh();
+							
+				var xml:XMLDocument = new XMLDocument(cadInfo); 
+     			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+     			var data:Object = decoder.decodeXML(xml);  
+				array = ArrayUtil.toArray(data.NewDataSet.Table);   
+				listaObj = new ArrayCollection(array);	
+			}
+			
+			public function formateaMovsGL():void{
+				var i:int;
+				var cont:int = _xmlMovs.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				movsObj.removeAll();
+				movsObj.refresh();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.descripcion = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlMovs.Table[i].CODIGO;
+					oItem.descripcion = _xmlMovs.Table[i].DESCRIPCION;		
+					item.push(oItem);
+				}
+				movsObj = new ArrayCollection(item);
+			}
+			
+			private function getGLGrupo(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				wsMS.removeEventListener(ResultEvent.RESULT, getGLGrupo);
+				_xmlGrupo = new XML(event.result);
+				limpiar();
+				
+				if (this._xmlGrupo.elements().length() > 0){
+					codGrupo = txtCodGrupo.text;
+					txtGrupo.text = _xmlGrupo.Table[0].NOMBRE;
+					txtMonto.text = _xmlGrupo.Table[0].MONTO;
+					txtDevolucion.text = _xmlGrupo.Table[0].DESCRIPCION;
+					dtfFecha.selectedDate = global.convCadenaFecha(_xmlGrupo.Table[0].FECHA);
+					coord = _xmlGrupo.Table[0].CDGCO;
+					ciclo = _xmlGrupo.Table[0].CICLO;
+					secPago = _xmlGrupo.Table[0].SECPAGO;
+					estatus = _xmlGrupo.Table[0].ESTATUS;
+			
+					lblInfoGL.text = global.formatoMoneda(_xmlGrupo.Table[0].SALDOGL);
+					
+					txtCodCuenta.editable = true;
+					btnBusqCta.visible = true;
+					activarControles();
+					
+					initConexion();
+					du.sCursor();
+						
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlMesa = XML(evt.result.toString());		
+						
+						if(_xmlMesa.elements().length() > 0){
+							txtCodAcred.text = _xmlMesa.Table[0].TESORERO;
+							txtAcred.text = _xmlMesa.Table[0].NOMTESO;
+						}
+						else
+							Alert.show("No se encontró el registro del tesorero del grupo.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						
+						du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlGL = XML(evt.result.toString());
+					
+							Application.application.desbloquear();
+							du.rCursor();
+							du.closeWs(wsMS);
+							
+							if(_xmlGL.elements().length() > 0){
+								formateaListaMovsGL(evt.result.toString());
+								dgMovsGL.dataProvider = listaObj;		
+							}	
+						});//METODO QUE CONSULTA LOS REGISTROS DE LOS MOVIMIENTOS DE GARANTIA REALIZADOS
+						wsMS.getListaMovsGarantia.send(codGrupo);
+						
+					});
+					wsMS.getMesaDirectiva.send(codGrupo, ciclo);
+				}
+				else{
+					Application.application.desbloquear();
+					txtGrupo.text = "";
+					lblInfoGL.text = "";
+					Alert.show("No se ha encontrado información del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+				}
+			}
+			
+			private function getInfoCuenta(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getInfoCuenta);
+				this._xmlCta = new XML(event.result);
+				if (this._xmlCta.elements().length() > 0){
+					banco = _xmlCta.Table[0].CDGIB;
+					txtCuenta.text = _xmlCta.Table[0].BANCO;
+					buscarSigCheque();
+				}
+				else{
+					txtCuenta.text = "";
+					Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+				}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				rep = "25";
+				titulo = "Devolución de Garantía";
+				lblTitulo.text = titulo.toUpperCase();
+				var fec:Date = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				
+				/*initConexion();
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlMovs = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					
+					if (_xmlMovs.elements().length() > 0){
+						formateaMovsGL();
+						cboDevolucion.dataProvider = movsObj;
+					}
+					else{
+						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+					}
+				});
+				wsMS.getMovsGarantia.send();*/
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			public function limpiar():void{
+				txtCodAcred.text = "";
+				txtAcred.text = "";
+				txtCodAcred.editable = false;
+				btnBusqAcred.visible = false;
+				dtfFecha.enabled = false;
+				txtCodCuenta.editable = false;
+				btnBusqCta.visible = false;
+			}
+			
+			public function mostrarBusqAcred():void{
+				//txtCodAcred.dispatchEvent(new FlexEvent(FlexEvent.ENTER, true, false));
+				var comAcredGrupo:MttoBusqAcredGrupo = new MttoBusqAcredGrupo();
+				comAcredGrupo = MttoBusqAcredGrupo(PopUpManager.createPopUp(this,MttoBusqAcredGrupo,true));
+				PopUpManager.centerPopUp(comAcredGrupo);
+				comAcredGrupo.init(txtCodGrupo.text);
+				comAcredGrupo.addEventListener("enviar", actualizarAcred);
+			}
+			
+			public function muestraFormCta():void{
+				var comMttoCta:MttoCuenta = new MttoCuenta();
+				comMttoCta = MttoCuenta(PopUpManager.createPopUp(this,MttoCuenta,true));
+				comMttoCta.init(5);
+				comMttoCta.addEventListener("enviar", actualizarCta);
+				PopUpManager.centerPopUp(comMttoCta);
+			}
+			
+			public function valida():Boolean{
+				if(txtCodGrupo.text == "" || txtGrupo.text == ""){
+					Alert.show("Debe capturar la información del grupo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				/*if(cboDevolucion.selectedIndex == 0){
+					Alert.show("Debe seleccionar la causa de devolución.",titulo,4,null,null,global.iAlert);
+					return false;
+				}*/
+				if(txtMonto.text == "" || Number(txtMonto.text) <= 0){
+					Alert.show("Debe capturar el monto de la devolución.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtCuenta.text == ""){
+					Alert.show("Debe seleccionar la Cuenta Bancaria.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtCheque.text == ""){
+					Alert.show("Debe capturar el número de cheque.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function validaMonto(event:Event):void{	
+				numVal.source = TextInput(event.currentTarget);
+				vResult = numVal.validate();
+
+				if (vResult.type!=ValidationResultEvent.VALID)
+                	TextInput(event.currentTarget).text = "";
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator="," required="false"/>
+	
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="610" height="510">
+		<mx:Canvas id="cnvDetalle" x="10" y="84" width="590" height="386" styleName="canvasMod" visible="true" enabled="true">
+			<mx:Label id="lblFecha" x="97.3" y="73" text="Fecha:" width="50" textAlign="right"/>
+			<mx:Label x="97.3" y="41" text="Cliente:" width="50" textAlign="right"/>
+			<mx:Label x="221.3" y="41" text="Nombre:" width="54" textAlign="right"/>
+			<mx:Label id="lblEtiqCuenta" x="97.3" y="171" text="Cuenta:" width="50" textAlign="right"/>
+			<mx:Label id="lblMonto" x="97.3" y="107" text="Monto:" width="50" textAlign="right"/>
+			<mx:Label id="lblCheque" x="57.3" y="203" text="Num. Cheque:" width="90" textAlign="right"/>
+			<mx:Label id="lblDevolucion" x="32.15" y="140" text="Causa de Devolución:" width="115.15" textAlign="right"/>
+			<mx:Label id="lblGL" x="32.15" y="10" text="Saldo de Garantía:" width="115.5" fontSize="12" fontWeight="bold" fontStyle="italic" textAlign="right"/>
+			<mx:Label id="lblInfoGL" x="155.65" y="10" width="247.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+			<mx:TextInput id="txtCodAcred" x="155.3" y="39" width="60" maxChars="6" restrict="0-9" enter="{buscarAcred(event)}" editable="false"/>
+			<mx:TextInput id="txtAcred" x="283.3" y="39" width="200.5" editable="false"/>
+			<mx:TextInput id="txtDevolucion" x="155.3" y="137" width="297.5" editable="false"/>
+			<mx:Button id="btnBusqAcred" x="491.8" y="39" icon="@Embed(source='assets/ico_lupa.png')" toolTip="Buscar Cliente" click="mostrarBusqAcred()" visible="false"/>
+			<mx:DateField id="dtfFecha" x="155.3" y="71" width="100" enabled="false"/>
+			<mx:TextInput id="txtMonto" x="155.3" y="105" width="100" maxChars="9" restrict="0-9;." change="validaMonto(event)" editable="false"/>
+			<!--<mx:ComboBox id="cboDevolucion" labelField="descripcion" x="155.3" y="137" width="297.5"></mx:ComboBox>-->
+			<mx:TextInput id="txtCodCuenta" x="155.3" y="169" width="45" maxChars="2" restrict="0-9" enter="buscarCuenta()" editable="false"/>
+			<mx:TextInput id="txtCuenta" x="221.3" y="169" width="231.5" editable="false"/>
+			<mx:Button id="btnBusqCta" x="491.8" y="169" icon="@Embed(source='assets/ico_lupa.png')" click="muestraFormCta()" toolTip="Buscar Cuenta" visible="false"/>
+			<mx:TextInput id="txtCheque" x="155.3" y="201" width="100" maxChars="2" editable="false"/>
+			<Data:RowColorDataGrid id="dgMovsGL" x="21.05" y="238" width="545.85" height="132" sortableColumns="false"
+				resizableColumns="true" verticalScrollPolicy="auto" horizontalScrollPolicy="on"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="NUMERO" dataField="NUMERO" width="65"/>
+					<mx:DataGridColumn headerText="FECHA MOV." dataField="FECHA" width="90"/>
+					<mx:DataGridColumn headerText="REFERENCIA" dataField="REFERENCIA" width="90"/>
+					<mx:DataGridColumn headerText="CUENTA" dataField="CDGCB" width="60"/>
+					<mx:DataGridColumn headerText="MONTO" dataField="CANTIDAD" width="60"/>
+					<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="300"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="508.5" y="39" width="81.5" height="37" styleName="canvasMod" visible="true">
+			<mx:Button id="btnBuscar" x="8" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarGrupo()" toolTip="Buscar Grupo" />
+		</mx:Canvas>
+		<mx:Canvas x="10" y="39" width="490.5" height="37" styleName="canvasMod" visible="true">
+			<mx:Label id="lblCodGrupo" x="10" y="7" text="Código:" width="53" textAlign="right"/>
+			<mx:Label id="lblGrupo" x="137" y="7" text="Grupo:" width="52.5"/>
+			<mx:TextInput id="txtCodGrupo" x="64" y="5" width="68" enter="buscarGrupo()" maxChars="6" restrict="0-9"/>
+			<mx:TextInput id="txtGrupo" x="187" y="5" width="290.5" maxChars="50" editable="false"/>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="380.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Button id="btnAceptar" x="520" y="478" icon="@Embed(source='assets/button_ok.png')" click="enviar()" enabled="true" toolTip="Aceptar" width="80"/>
+	</mx:Canvas>
+</mx:Canvas>

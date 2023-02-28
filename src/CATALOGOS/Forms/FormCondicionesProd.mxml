@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="550" height="230">
+	<mx:Metadata>
+		[Event(name="enviarDatosProd", type="Data.EventProd")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;		
+			import Data.EventProd;
+			import Data.DatosProd;
+			import mx.controls.Alert;
+			import mx.effects.*;
+			import mx.events.EffectEvent;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.core.Application;
+			
+			public var sexoObj:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosProd = new DatosProd();
+			
+			public var global:Globales;	
+			public var wsMS:WebService;	
+			public var tipoAccion:int;
+			public var du:Utils;
+			
+			public function enviarDatosProd(formData:DatosProd):void{
+				formData.sexo = cboSexo.selectedItem.id;
+				formData.edadMin = Number(txtEdadMin.text);
+				formData.edadMax = Number(txtEdadMax.text);
+				formData.plazoMin = Number(txtPlazoMin.text);
+				formData.plazoMax = Number(txtPlazoMax.text);
+				formData.guardaCond = true;
+				
+				var event:EventProd = new EventProd("enviarDatosProd", formData);
+				dispatchEvent(event);
+			}
+			
+			public function formateaSexo():void{
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "M";	
+				oItem.nombre = "Masculino";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "F";	
+				oItem.nombre = "Femenino";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "";	
+				oItem.nombre = "Ambos";
+				item.push(oItem);
+				
+				sexoObj = new ArrayCollection(item);
+			}
+			
+			public function init(info:DatosProd, tipoAccion:int):void{
+				global = new Globales();
+				du = new Utils();
+				this.tipoAccion = tipoAccion;
+				
+				formateaSexo();
+				cboSexo.dataProvider = sexoObj;
+			
+				if (info != null){
+					var j:int;
+					datos = info;
+															
+					for(j = 0; j < sexoObj.length; j++){
+						if(sexoObj[j].id.toString() == info.sexo){
+							cboSexo.selectedIndex = j;
+							break;	
+						}
+					}					
+					txtEdadMin.text = info.edadMin.toString();
+					txtEdadMax.text = info.edadMax.toString();		
+					txtPlazoMin.text = info.plazoMin.toString();
+					txtPlazoMax.text = info.plazoMax.toString();				
+				}	
+			}	
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		]]>
+	</mx:Script>
+
+	<mx:Canvas x="14.75" y="29" width="520.5" height="180" styleName="canvasMod">
+		<mx:Label id="lblSexo" x="163.25" y="23" text="Sexo:"/>
+		<mx:ComboBox id="cboSexo" x="204.25" y="20" width="153" labelField="nombre"></mx:ComboBox>
+		<mx:Label id="lblEdad" x="104.5" y="54" text="Edad"/>
+		<mx:Canvas x="104.5" y="73" width="158" height="80" styleName="canvasMod">
+			<mx:Label id="lblEdadMin" x="22.5" y="13" text="Edad Mínima:"/>
+			<mx:Label id="lblEdadMax" x="18.5" y="45" text="Edad Máxima:"/>
+			<mx:TextInput id="txtEdadMin" x="97.5" y="11" width="40" restrict="0-9"/>
+			<mx:TextInput id="txtEdadMax" x="97.5" y="43" width="40" restrict="0-9"/>
+		</mx:Canvas>		
+		<mx:Label id="lblPlazo" x="280.5" y="54" text="Plazo"/>
+		<mx:Canvas x="280.5" y="72" width="158" height="80" styleName="canvasMod">
+			<mx:Label id="lblPlazoMin" x="20.5" y="13" text="Plazo Mínimo:"/>
+			<mx:Label id="lblPlazoMax" x="16.5" y="45" text="Plazo Máximo:"/>
+			<mx:TextInput id="txtPlazoMin" x="97.5" y="11" width="40" restrict="0-9"/>
+			<mx:TextInput id="txtPlazoMax" x="97.5" y="43" width="40" restrict="0-9"/>
+		</mx:Canvas>
+	</mx:Canvas>
+	<mx:Label x="14.75" y="10" text="Datos" width="100"/>
+</mx:Canvas>

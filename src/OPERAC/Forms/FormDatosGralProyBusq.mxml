@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="542" height="242" xmlns:control="CONTROL.*">
+	
+	<mx:Metadata>
+		[Event(name="enviarDatosProy", type="Data.EventProy")]
+	</mx:Metadata>
+ 
+	<mx:Validator id="actEcoV" source="{comActEcoGrid.txtDato}" property="text"
+	invalid="{comActEcoGrid.setFocus()}" triggerEvent="" requiredFieldError="Actividad Económica Requerida"/>
+	 
+	<mx:Validator id="nombreV" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Nombre Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosProy;
+			import Data.EventProy;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ArrayUtil;
+			import mx.validators.Validator;
+			
+			[Bindable]
+			private var _xmlInfo:XML =  new XML();
+			[Bindable]
+			private var _xmlProy:XML =  new XML();
+			[Bindable]
+			private var _xmlActEco:XML =  new XML();
+			
+			public var sectorObj:ArrayCollection = new ArrayCollection();
+			public var giroObj:ArrayCollection = new ArrayCollection();
+			public var actEcoObj:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosProy = new DatosProy();
+			
+			public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS	
+			public var du:Utils;
+			public var sector:String;
+			public var giro:String;
+			public var actEco:String;
+			private var global:Globales;
+			
+			public function enviarDatosProy(formData:DatosProy):void{
+				var invalidArray:Array = Validator.validateAll([actEcoV, nombreV]);
+				
+				if(invalidArray.length == 0){	
+					formData.codigo = datos.codigo;
+					formData.cdgSector = sector;
+					formData.cdgGiro = giro;
+					formData.cdgActEco = actEco;
+					formData.nombre = txtNombre.text;
+					formData.texto = txtTexto.text;
+					//formData.actualiza = dtfActualiza.text;
+					formData.guardaDatos = true;
+				}
+				else{
+					formData.guardaDatos = false;
+				}
+				var event:EventProy = new EventProy("enviarDatosProy", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(cdgAcred:String):void{
+				var wsCat:WebService = new WebService();
+				var params:Array;
+				global = new Globales();
+				du = new Utils();
+			
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlProy = new XML(evt.result.toString());
+				
+					if (_xmlProy.elements().length() > 0){
+						txtCodigo.text = _xmlProy.Table[0].CODIGO;
+						datos.codigo = _xmlProy.Table[0].CODIGO;	
+					}
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlActEco = new XML(evt.result.toString());
+					
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+					
+						if (_xmlActEco.elements().length() > 0){
+							comActEcoGrid.init(_xmlActEco, 130, 380);
+							comActEcoGrid.addEventListener("seleccionar",selecActEco);
+							comActEcoGrid.addEventListener("verificar",verifActEco);
+						} 	
+					});
+					params = new Array();
+					params[0] = "";
+					params[1] = "";
+					wsCat.getCatalogoGral.send(9, params);
+				});
+				params = new Array();
+				params[0] = cdgAcred;
+				//Obtiene el siguiente codigo de Proyecto del Acreditado
+				wsCat.getInfoAcred.send(4, params);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function selecActEco(event:Event):void{
+				var wsCat:WebService = new WebService();
+				var params:Array = new Array();
+				var codigo:String = event.currentTarget.codigo;
+				var info:Array = codigo.split("|");
+				actEco = info[0].toString();
+				sector = info[1].toString();
+				giro = info[2].toString();
+			
+				du.initWsCat(wsCat)
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlInfo = new XML(evt.result.toString());
+				
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlInfo.elements().length() > 0){
+						lblSector.text = _xmlInfo.Table[0].NOMSE;
+						lblGiro.text = _xmlInfo.Table[0].NOMGI;	
+					}
+				});
+				params[0] = sector;
+				params[1] = giro;
+				params[2] = actEco;
+				//Obtiene informacion de la actividad Economica
+				wsCat.getCatalogoGral.send(10, params);
+			}
+			
+			public function verifActEco(event:Event):void{
+				if(comActEcoGrid.codigo == ""){	
+					giro = "";
+					sector = "";
+					lblGiro.text = "";
+					lblSector.text = ""; 
+				}
+			}
+	]]>
+	</mx:Script>
+	<mx:Canvas styleName="canvasMod" x="10" y="28" width="522" height="180">
+		<mx:Label id="lblGiro" x="126" y="105" width="384"/>
+		<mx:Label id="lblSector" x="125" y="77" width="385"/>
+		<mx:TextArea id="txtTexto" width="330" height="94" maxChars="2500" visible="false"/>
+		<mx:Label x="77" y="15" text="Código:"/>
+		<mx:Label x="10" y="47" text="Actividad Económica:"/>
+		<mx:Label x="90" y="105" text="Giro:"/>
+		<mx:Label x="77" y="77" text="Sector:"/>
+		<mx:Label x="73" y="135" text="Nombre:"/>
+		<mx:TextInput id="txtCodigo" maxChars="12" editable="false" width="50" x="126" y="13"/>
+		<control:TextGridSim id="comActEcoGrid" x="125" y="45" height="24" width="385"/>
+		<mx:TextInput id="txtNombre" x="126" y="133" width="384" maxChars="100"/>
+	</mx:Canvas>
+</mx:Canvas>

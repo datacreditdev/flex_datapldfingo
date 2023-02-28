@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="220" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	xmlns:Data="Data.*" xmlns:control="CONTROL.*">
+	<mx:states>
+		<mx:State name="resultado">
+			<mx:SetProperty name="width" value="550"/>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas id="cnvTotal" x="280" y="40" width="260" height="140" styleName="canvasMod">
+					<mx:Label id="lblEtiqTotal" x="10" y="10" text="TOTAL A PAGAR:" width="189" fontSize="20"/>
+					<mx:Label id="lblTotal" x="5" y="54" width="248" height="48" textAlign="center" fontSize="32"/>
+				</mx:Canvas>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Parallel>
+				<mx:Blur duration="500" target="{this.cnvTotal}"/>
+				<mx:Resize duration="500" target="{this}"/> 
+			</mx:Parallel>
+		</mx:Transition>
+	</mx:transitions>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;	
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;
+			
+			private var _xmlRep:XML =  new XML();
+		
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+						
+			private function generar(event:Event):void{
+				if(comFiltroGrupoCiclo.valida()){
+					var wsMS:WebService = new WebService();
+					du.initWsMS(wsMS);
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+							
+						currentState = "resultado";							
+						if(_xmlRep.elements().length() > 0)
+							lblTotal.text = global.formatoMoneda(_xmlRep.Table[0].TOTAL_A_PAGAR);	
+						else
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					});
+					wsMS.getSimulacion.send(comFiltroGrupoCiclo.obtieneCodigo(), comFiltroGrupoCiclo.obtieneCiclo(), "I",
+											comFiltroGrupoCiclo.obtieneFecha());	
+				}
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Simulador de Cobro";
+				comFiltroGrupoCiclo.init("0", titulo.toUpperCase(), "fecha");
+				comFiltroGrupoCiclo.addEventListener("enviar",generar);
+				comFiltroGrupoCiclo.addEventListener("limpiar",limpiar);
+			}	
+			
+			private function limpiar(event:Event):void{
+				currentState = "";
+			}	
+		]]>
+	</mx:Script>	
+	<control:FiltroGrupoCiclo id="comFiltroGrupoCiclo"/>
+</mx:Canvas>

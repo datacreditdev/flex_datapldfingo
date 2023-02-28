@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="490" height="394">
+	<mx:states>
+		<mx:State name="prendaria">
+			<mx:RemoveChild target="{formitem1}"/>
+		</mx:State>
+	</mx:states>
+
+	<mx:Metadata>
+		[Event(name="enviarGarantia", type="Data.EventGarantia")]
+	</mx:Metadata>
+	
+	<mx:NumberValidator id="nominalV" source="{txtValorNominal}" property="text" 
+	triggerEvent="" invalid="{txtValorNominal.setFocus()}" decimalPointCountError="Capture correctamente la cantidad" precision="2" precisionError="Capture correctamente la cantidad" requiredFieldError="Valor Nominal Requerido"/>
+	
+	<mx:NumberValidator id="contableV" source="{txtValorContable}" property="text" 
+	triggerEvent="" invalid="{txtValorContable.setFocus()}"  decimalPointCountError="Capture correctamente la cantidad" precision="2" precisionError="Capture correctamente la cantidad" required="false"/>
+	
+	<mx:Validator id="descripcionV" source="{txtDescripcion}" property="text" 
+	 invalid="{txtDescripcion.setFocus()}" triggerEvent="" requiredFieldError="Descripción Requerida"/>
+	
+	<mx:Validator id="documentoV" source="{txtDocumento}" property="text" 
+	invalid="{txtDocumento.setFocus()}" triggerEvent="" requiredFieldError="Dato Requerido"/>
+	
+	<mx:Validator id="depositarioV" source="{txtDepositario}" property="text" 
+	 invalid="{txtDepositario.setFocus()}" triggerEvent="" requiredFieldError="Dato Requerido"/>
+	
+	<mx:Validator id="dirDepositarioV" source="{txtDirDepositario}" property="text" 
+	invalid="{txtDirDepositario.setFocus()}" triggerEvent="" requiredFieldError="Dato Requerido"/>
+	
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.DatosGarantia;
+			import Data.EventGarantia;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			
+			private var global:Globales = new Globales();
+			
+			private function enviarGarantia(formData:DatosGarantia):void{
+				var formData:DatosGarantia = new DatosGarantia();
+				var invalidArray:Array;
+				
+				if (gpoTipo.selectedValue != null && gpoTipo.selectedValue == 1)
+					invalidArray = Validator.validateAll([nominalV, contableV, descripcionV, documentoV]);
+				else
+					invalidArray = Validator.validateAll([depositarioV, dirDepositarioV, nominalV, contableV, descripcionV, documentoV]);
+				if(invalidArray.length == 0 && gpoTipo.selectedValue != null){	
+					/*formData.tipo = Number(gpoTipo.selectedValue);
+					formData.depositario = txtDepositario.text;
+					formData.dirDepositario = txtDirDepositario.text;
+					formData.valorNominal = Number(txtValorNominal.text);
+					formData.valorContable = Number(txtValorContable.text);
+					formData.propiedad = gpoPropiedad.selection.label;
+					formData.descripcion = txtDescripcion.text;
+					formData.doc = txtDocumento.text;*/
+					//formData.guardar = true;
+				}
+				else{
+					//formData.guardar = false;
+					Alert.show("Debe capturar los datos requeridos","Administración de Garantías",4,null,null,global.iAlert);
+				}
+				var event:EventGarantia = new EventGarantia("enviarGtias", formData);
+					dispatchEvent(event);
+			}
+			
+			public function limpiaCampos():void{
+				if (gpoTipo.selectedValue != null)
+					gpoTipo.selection.selected = false;
+				if (gpoPropiedad.selectedValue != null)
+					gpoPropiedad.selection.selected = false;
+				depositario.visible = false;
+				direccion.visible = false;
+				depositario.height = 0;
+				direccion.height = 0;
+				txtValorNominal.text = "";
+				txtValorContable.text = "";
+				txtDescripcion.text = "";
+				txtDocumento.text = "";
+			}
+			
+			public function muestraContDep():void{
+				if (gpoTipo.selectedValue == 1){ 
+					currentState = "";
+				}
+				else if (gpoTipo.selectedValue == 2){
+					currentState = "prendaria";
+				}
+				/*if (gpoTipo.selectedValue == 1)
+				{ 
+					depositario.visible = false;
+					direccion.visible = false;
+					depositario.height = 0;
+					direccion.height = 0;
+				}
+				else if (gpoTipo.selectedValue == 2)
+				{
+					depositario.visible = true;
+					direccion.visible = true;
+					depositario.height = 22;
+					direccion.height = 44;
+				}*/
+			}
+	]]>
+	</mx:Script>
+	
+	
+	<mx:FormItem label="Tipo:" height="51" borderStyle="none" width="234">
+		<mx:RadioButtonGroup id="gpoTipo" change="muestraContDep()"/>
+			<mx:RadioButton label="Hipotecario" value="1" groupName="gpoTipo"/>
+			<mx:RadioButton label="Prendario" value="2" groupName="gpoTipo"/>
+	</mx:FormItem>
+	<mx:FormItem id="depositario" label="Depositario:" height="0" visible="false">
+		<mx:TextInput id="txtDepositario"/>
+	</mx:FormItem>
+	<mx:FormItem id="direccion" label="Dirección:" height="0" visible="false">
+		<mx:TextArea id="txtDirDepositario" maxChars="250" width="335"/>
+	</mx:FormItem>
+	<mx:FormItem label="Nombre:">
+		<mx:TextInput id="txtNombre" maxChars="50" width="300"/>
+	</mx:FormItem>
+	<mx:FormItem label="Valor Nominal:">
+		<mx:TextInput id="txtValorNominal" maxChars="12" restrict="0-9\."/>
+	</mx:FormItem>
+	<mx:FormItem label="Valor Contable:">
+		<mx:TextInput id="txtValorContable" maxChars="12" restrict="0-9\."/>
+	</mx:FormItem>
+	<mx:FormItem label="Propiedad:" height="51" borderStyle="none" width="300" id="formitem1">
+		<mx:RadioButtonGroup id="gpoPropiedad" />
+		<mx:RadioButton label="Residencial" groupName="gpoPropiedad"/>
+		<mx:RadioButton label="Comercial" groupName="gpoPropiedad"/>
+	</mx:FormItem>
+	<mx:FormItem label="Descripción" height="66">
+		<mx:TextArea id="txtDescripcion" width="334" maxChars="250" height="66"/>
+	</mx:FormItem>
+	<mx:FormItem label="No. Escritura / Factura">
+		<mx:TextInput id="txtDocumento" maxChars="50"/>
+	</mx:FormItem>
+	<mx:FormItem label="Activa">
+		<mx:CheckBox id="chkActiva"/>
+	</mx:FormItem>
+</mx:Form>

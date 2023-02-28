@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" 
+	creationPolicy="all" creationComplete="initApp()" horizontalScrollPolicy="auto"
+	verticalScrollPolicy="auto" xmlns:Data="Data.*" xmlns:control="CONTROL.*">
+	
+	<mx:states>
+		<mx:State name="resultado">
+			<mx:RemoveChild target="{comFiltroRepAsesor}"/>
+			<mx:SetProperty name="width" value="850" target="{cnvCont}"/>
+			<mx:SetProperty name="height" value="310" target="{cnvCont}"/>
+			<mx:AddChild relativeTo="{cnvCont}" position="lastChild">
+				<Data:RowColorDataGrid id="dgReporte" sortableColumns="true" x="15" y="42" width="820" 
+					visible="true" height="229" horizontalScrollPolicy="auto" verticalScrollPolicy="auto">
+					<Data:columns>
+						<mx:DataGridColumn headerText="REGION" dataField="COD_REG" width="70"/>
+						<mx:DataGridColumn headerText="NOMBRE REGION" dataField="REGION" width="150"/>
+						<mx:DataGridColumn headerText="SUCURSAL" dataField="COD_SUC" width="80"/>
+						<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="SUCURSAL" width="150"/>
+						<mx:DataGridColumn headerText="GRUPO" dataField="COD_GPO" width="70"/>
+						<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="180"/>
+						<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="60"/>
+						<mx:DataGridColumn headerText="ASESOR" dataField="COD_ASESOR" width="80"/>
+						<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="ASESOR" width="180"/>
+						<mx:DataGridColumn headerText="CLIENTE" dataField="COD_CTE" width="80"/>
+						<mx:DataGridColumn headerText="PATERNO" dataField="PATERNO" width="110"/>
+						<mx:DataGridColumn headerText="MATERNO" dataField="MATERNO" width="110"/>
+						<mx:DataGridColumn headerText="NOMBRES" dataField="NOMBRE_S" width="150"/>
+						<mx:DataGridColumn headerText="FECHA NACIMIENTO" dataField="FECHA_NACIMIENTO" width="130"/>
+						<mx:DataGridColumn headerText="SEXO" dataField="SEXO" width="70"/>
+						<mx:DataGridColumn headerText="EDAD" dataField="EDAD" width="70"/>
+						<mx:DataGridColumn headerText="ESTADO CIVIL" dataField="EDO_CIVIL" width="110"/>
+						<mx:DataGridColumn headerText="CALLE" dataField="CALLE" width="110"/>
+						<mx:DataGridColumn headerText="MUNICIPIO" dataField="MUNICIPIO" width="110"/>
+						<mx:DataGridColumn headerText="ENTIDAD" dataField="ENTIDAD_F" width="100"/>
+						<mx:DataGridColumn headerText="COD POSTAL" dataField="CDGPOSTAL" width="90"/>
+						<mx:DataGridColumn headerText="TELEFONO" dataField="TELEFONO" width="90"/>
+						<mx:DataGridColumn headerText="ESCOLARIDAD" dataField="ESCOLARIDAD" width="100"/>
+						<mx:DataGridColumn headerText="RFC" dataField="RFC" width="120"/>
+						<mx:DataGridColumn headerText="CURP" dataField="CURP" width="170"/>
+						<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANT_ENTRE" width="140"/>
+						<mx:DataGridColumn headerText="LOCALIDAD" dataField="LOCALIDAD" width="100"/>
+						<mx:DataGridColumn headerText="COLONIA" dataField="COLONIA" width="130"/>
+						<mx:DataGridColumn headerText="PROYECTO" dataField="PROYECTO" width="110"/>
+					</Data:columns>
+				</Data:RowColorDataGrid>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvCont}" position="lastChild">
+				<mx:Button id="btnExportar" x="732" y="10" label="Exportar Excel" click="exportar()" enabled="false"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvCont}" position="lastChild">
+				<mx:Label id="lblTotal" x="9.95" y="279" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{cnvCont}" position="lastChild">
+				<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="">		
+			<mx:Parallel>
+				<mx:Resize duration="1000" target="{cnvCont}"/> 
+			</mx:Parallel>
+		</mx:Transition>
+		<mx:Transition fromState="*" toState="resultado">		
+			<mx:Parallel>
+				
+				<mx:Resize duration="1000" target="{cnvCont}"/> 
+			</mx:Parallel>
+		</mx:Transition>
+	</mx:transitions>
+	
+	<!--Componente de Reporte de Clientes-->
+	<mx:Script>
+		<![CDATA[
+			import Data.DataGridExporter;
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;	
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;
+			
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsRep:WebService;
+			public var du:Utils;
+			public var titulo:String;
+			public var fecha:String;
+			private var global:Globales;
+						
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo);		
+			}			
+						
+			public function generar(event:Event):void{
+				if(comFiltroRepAsesor.valida() == true){
+					var region:String;
+					var coord:String;
+					var asesor:String;
+					
+					region = comFiltroRepAsesor.cboRegion.selectedItem.codigo;
+					coord = comFiltroRepAsesor.cboCoord.selectedItem.codigo;
+					asesor = comFiltroRepAsesor.cboAsesor.selectedItem.codigo;
+					
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsRep);
+						
+						var cont:Number = _xmlRep.elements().length()
+															
+						if(_xmlRep.elements().length() > 0){
+							currentState = "resultado";
+							lblTitulo.text = titulo.toUpperCase();
+							dgReporte.dataProvider = _xmlRep.Table;
+							btnExportar.enabled = true;
+							lblTotal.text = cont.toString() + " Registro(s)"; 
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							lblTotal.text = "";
+						}
+					});
+					wsRep.getRepClientes.send(region, coord, asesor);	
+				}
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Clientes";
+				//el valor true indica que el control permitira seleccionar a todos los asesores de una sucursal
+				comFiltroRepAsesor.init("0", titulo, "", true);
+				comFiltroRepAsesor.addEventListener("enviar",generar);
+				comFiltroRepAsesor.addEventListener("limpiar",limpiar);
+			}		
+			
+			public function initConexion():void{				
+				wsRep = new WebService();			
+				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsRep.loadWSDL();
+			}	
+			
+			private function limpiar(event:Event):void{
+				dgReporte.dataProvider = null;
+				lblTotal.text = "";
+				btnExportar.enabled = false;
+				currentState = null;
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="310" height="272" id="cnvCont">
+		<control:FiltroRepAsesor id="comFiltroRepAsesor" x="10"/>
+	</mx:Canvas>
+</mx:Canvas>

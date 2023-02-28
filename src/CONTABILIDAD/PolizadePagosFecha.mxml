@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="300" height="170" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" xmlns:Data="Data.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.TxtExport;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			
+			public var wsMS:WebService;
+			public var titulo:String;
+			private var fecIni:String;
+			private var fecFin:String;
+			private var info:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var infoObj:ArrayCollection = new ArrayCollection();
+			private var _xmlRes:XML = new XML();
+			
+			private function exportar():void{
+				var exp:TxtExport = new TxtExport();
+				exp.cargaCadena(info, "POLIZA DE PAGOS");
+			}
+			
+			private function exportarXls():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				dgE.setIsXls(true);
+				dgE.hideHeader(true);
+				//dgE.loadDGInExcel(dgReporte, null, "PolizaPagos" + global.formatoFecha(dtfFecFin.selectedDate,"DDMMMYYYY"));
+				dgE.loadDGInExcel(dgReporte, null, "PolizaPagos" + global.formatoFecha(dtfFecFin.selectedDate,"DDMMMYYYY"));		
+			}
+			
+			private function formatearInfo():void{
+				var cont:int = _xmlRes.elements().length(); 
+				var oItem:Object;
+				var item:Array = new Array();
+				info = "";
+						
+				for(var i:int = 0; i < cont; i++){
+					var cadena:String = _xmlRes.Table[i].CADENAFINAL;
+					var subStr:Array = cadena.split("|");
+					
+					oItem = new Object();				
+					oItem.COL1 = subStr[0] != null ? subStr[0] : "";
+					oItem.COL2 = subStr[1] != null ? "'" + subStr[1] : "";
+					oItem.COL3 = subStr[2] != null ? subStr[2] : "";
+					oItem.COL4 = subStr[3] != null ? subStr[3] : "";
+					oItem.COL5 = subStr[4] != null ? subStr[4] : "";
+					oItem.COL6 = subStr[5] != null ? subStr[5] : "";
+					oItem.COL7 = subStr[6] != null ? subStr[6] : "";
+					oItem.COL8 = subStr[7] != null ? subStr[7] : "";
+					oItem.COL9 = subStr[8] != null ? subStr[8] : "";
+					oItem.COL10 = subStr[9] != null ? subStr[9] : "";
+					item.push(oItem);
+				}
+				infoObj = new ArrayCollection(item);
+			}
+			
+			private function generar():void{
+				if(validar()){			
+					fecIni = dtfFecIni.text;
+					fecFin = dtfFecFin.text;
+					
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
+						_xmlRes = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						Application.application.desbloquear();
+						
+						if(_xmlRes.elements().length() >0){
+							formatearInfo();
+							dgReporte.dataProvider = infoObj;
+							exportarXls();
+						}
+						else{
+							Alert.show("No se pudo generar la póliza requerida.",titulo,4,null,null,global.iAlert);	
+						}
+					});
+					wsMS.getPolizaDesembolsosFecha.send(fecIni, fecFin, "1", Application.application.U_ID); 
+				}
+			} 
+				
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Póliza de Pagos";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+			
+			private function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRepCont.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			private function limpiar():void{
+				var fec:Date;
+				fec = Application.application._Current_Fecha;
+				dtfFecIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			}
+				
+			private function validar():Boolean{
+				if(dtfFecIni.text == ""){
+					Alert.show("Seleccione la fecha inicial.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(dtfFecIni.text == ""){
+					Alert.show("Seleccione la fecha final.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}	
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="264" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53" width="264.05" height="73.5" styleName="canvasMod">
+		<mx:Label x="25.5" y="11" text="Fecha Inicio:" textAlign="right"/>
+		<mx:DateField id="dtfFecIni" x="98.5" y="10" width="111"/>
+		<mx:Label x="35.5" y="39.5" text="Fecha Fin:" textAlign="right"/>
+		<mx:DateField id="dtfFecFin" x="98.5" y="38.5" width="111"/>
+	</mx:Canvas>
+	<mx:Button x="76.5" y="134.5" label="Generar" click="generar()"/>
+	<mx:Button x="155.5" y="135" label="Limpiar" click="limpiar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección"/>
+	<Data:RowColorDataGrid id="dgReporte" visible="false" width="10" height="10">
+		<Data:columns>
+			<mx:DataGridColumn headerText="COL1" dataField="COL1" width="100"/>
+			<mx:DataGridColumn headerText="COL2" dataField="COL2" width="180"/>
+			<mx:DataGridColumn headerText="COL3" dataField="COL3" width="60"/>
+			<mx:DataGridColumn headerText="COL4" dataField="COL4" width="60"/>
+			<mx:DataGridColumn headerText="COL5" dataField="COL5" width="60"/>
+			<mx:DataGridColumn headerText="COL6" dataField="COL6" width="60"/>
+			<mx:DataGridColumn headerText="COL7" dataField="COL7" width="60"/>
+			<mx:DataGridColumn headerText="COL8" dataField="COL8" width="60"/>
+			<mx:DataGridColumn headerText="COL9" dataField="COL9" width="60"/>
+			<mx:DataGridColumn headerText="COL10" dataField="COL10" width="60"/>
+		</Data:columns>	
+	</Data:RowColorDataGrid>
+</mx:Canvas>

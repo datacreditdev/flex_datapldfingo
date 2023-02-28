@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="380" height="230" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosProd", type="Data.EventProd")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.events.IndexChangedEvent;
+			import CATALOGOS.MttoArtefacto;
+			import Data.DatosProd;
+			import Data.EventProd;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.validators.Validator;
+			
+			private var _xmlPre:XML =  new XML();
+			
+			[Bindable]
+			public var preObj:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosProd = new DatosProd();
+			
+			public var wsMS:WebService;   					
+			public var du:Utils;
+			private var titulo:String;
+			private var global:Globales;
+			private var tipoAccion:int;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			private var accionPre:int;
+			private var indPre:int;
+			private var vScroll:Number;
+			
+			private function actualizarPrelacion(event:Event):void{
+				var comArt:MttoArtefacto = event.currentTarget as MttoArtefacto;
+				var nvoReg:String = comArt.dgArtefacto.selectedItem.id;
+				var agregar:Boolean = true;
+				
+				for(var i:int; i < preObj.length; i++){
+					if(nvoReg == preObj[i].artefacto){
+						agregar = false;
+						break;
+					}
+				}
+				if(agregar){
+					var oItem:Object = new Object;
+					oItem.orden = preObj.length + 1;
+					oItem.codArt = nvoReg;
+					oItem.descArt = comArt.dgArtefacto.selectedItem.desc
+					preObj.addItem(oItem);
+				}
+				else
+					Alert.show("Artefacto de Crédito duplicado.",titulo,4,null,null,global.iAlert);
+					
+				dgPrelacion.dataProvider = null;
+				dgPrelacion.dataProvider = preObj;
+				if(indPre >= 0){
+					dgPrelacion.validateNow();
+					dgPrelacion.verticalScrollPosition = vScroll;
+					dgPrelacion.selectedIndex = indPre;
+				}
+			}
+			
+			private function eliminarPrelacion():void{
+				var indice:int = dgPrelacion.selectedIndex;
+				preObj.removeItemAt(indice);
+				preObj.refresh();	
+				dgPrelacion.dataProvider = preObj;
+				selecPrelacion();
+			}
+			
+			public function enviarDatosProd(formData:DatosProd):void{
+				var listaPre:ArrayCollection;
+				
+				listaPre = dgPrelacion.dataProvider as ArrayCollection;
+				formData.orden = new Array;
+				formData.artefacto = new Array;
+				
+				if(listaPre != null && listaPre.length > 0){	
+					for(var i:int = 0; i < listaPre.length; i++){
+						formData.orden[i] = listaPre[i].orden;
+						formData.artefacto[i] = listaPre[i].codArt;
+					}	
+				}
+				else{
+					formData.orden[0] = "";
+					formData.artefacto[0] = "";
+				}
+				formData.guardaPre = true;
+				
+				var event:EventProd = new EventProd("enviarDatosProd", formData);
+				dispatchEvent(event);
+			}
+			
+			private function formateaPrelacion():void{
+				var cont:int = _xmlPre.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				preObj.removeAll();
+				preObj.refresh();
+				
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object;
+					oItem.orden = _xmlPre.Table[i].ORDEN;
+					oItem.codArt = _xmlPre.Table[i].CDGAR;
+					oItem.descArt = _xmlPre.Table[i].ARTDESC;
+					item.push(oItem);
+				}
+				preObj = new ArrayCollection(item);
+			}
+			
+			public function init(info:DatosProd, tipoAccion:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				this.tipoAccion = tipoAccion;
+				
+				if (info != null){
+					datos = info;
+																
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlPre = new XML(evt.result.toString()); 
+							
+						du.rCursor();
+						du.closeWs(wsCat);
+							
+						if (_xmlPre.elements().length() > 0)
+							formateaPrelacion();
+						dgPrelacion.dataProvider = preObj;
+						selecPrelacion();
+					});
+					//Consulta la lista de artefactos que forman parte de la prelacion del producto
+					params[0] = info.cdgTipoProd;
+					params[1] = info.cdgProd;
+					wsCat.getListado.send(46, params);										
+				}	
+			}	
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function iniVar():void{
+				this.indPre = -1;
+				this.vScroll = -1;
+			}
+			
+			private function mostrarFormArtefacto(tipo:int):void{
+				//Permite seleccionar el control padre del objeto contenedor para centrar el formulario al desplegarlo
+			 	var obj:DisplayObject = this.parentApplication.parent;
+				var comMttoArt:MttoArtefacto = new MttoArtefacto();
+				
+				switch(tipo){
+					case 1: 
+						this.indPre = -1;
+						comMttoArt = MttoArtefacto(PopUpManager.createPopUp(obj,MttoArtefacto,true)); 
+						comMttoArt.addEventListener("enviar", actualizarPrelacion);
+						PopUpManager.centerPopUp(comMttoArt);
+						break;
+				}	
+			}
+			
+			private function selecPrelacion():void{
+				if(dgPrelacion.selectedIndex >= 0){
+					btnEliminar.enabled = true;
+					btnSubir.enabled = true;
+					btnBajar.enabled = true;
+				}
+				else{
+					btnEliminar.enabled = false;
+					btnSubir.enabled = false;
+					btnBajar.enabled = false;
+				}
+			}
+		
+			private function aumentarOrden():void{
+				var ind:int = ind = dgPrelacion.selectedIndex;;
+				vScroll = dgPrelacion.verticalScrollPosition;
+				if(ind > 0){
+					preObj.addItemAt(preObj.getItemAt(ind),(ind - 1));
+					preObj[ind - 1].orden = ind;
+					preObj[ind].orden = ind + 1;
+					preObj.removeItemAt(ind + 1);
+					preObj.refresh();
+					dgPrelacion.dataProvider = preObj;
+					dgPrelacion.validateNow();
+					dgPrelacion.verticalScrollPosition = vScroll;
+					dgPrelacion.selectedIndex = ind - 1;
+				}
+			}
+			
+			private function disminuirOrden():void{
+				var ind:int = dgPrelacion.selectedIndex;
+				var cont:int = preObj.length;
+				vScroll = dgPrelacion.verticalScrollPosition;
+				if(ind < (cont - 1)){
+					preObj.addItemAt(preObj.getItemAt(ind),(ind + 2));
+					preObj[ind + 2].orden = ind + 2;
+					preObj[ind + 1].orden = ind + 1; 
+					preObj.removeItemAt(ind);
+					preObj.refresh();
+					dgPrelacion.dataProvider = preObj;
+					dgPrelacion.validateNow();
+					dgPrelacion.verticalScrollPosition = vScroll;
+					dgPrelacion.selectedIndex = ind + 1;
+				}
+			}
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvCont" styleName="canvasMod" x="10" y="25" width="360" height="150">
+		<mx:DataGrid id="dgPrelacion" x="13.7" y="10" height="125" width="330.65" doubleClickEnabled="true" itemClick="selecPrelacion()">
+			<mx:columns>
+				<mx:DataGridColumn headerText="ORDEN" dataField="orden" width="70"/>
+				<mx:DataGridColumn headerText="DESCRIPCION" dataField="descArt"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Canvas>
+	<mx:Canvas x="170" y="183" width="200" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:Button id="btnAgregar" x="8" y="3.65" icon="@Embed(source='assets/add.png')" click="mostrarFormArtefacto(1)" toolTip="Agregar Artefacto" width="40"/>
+		<mx:Button id="btnEliminar" x="56" y="3.65" icon="@Embed(source='assets/delete-icon.png')" click="eliminarPrelacion()" enabled="false" toolTip="Eliminar Artefacto" width="40"/>
+		<mx:Button id="btnSubir" x="104" y="3.65" icon="@Embed(source='assets/arriba.png')" enabled="false" toolTip="Subir" width="40" click="aumentarOrden()"/>
+		<mx:Button id="btnBajar" x="152" y="3.65" icon="@Embed(source='assets/abajo.png')" enabled="false" toolTip="Bajar" width="40" click="disminuirOrden()"/>
+	</mx:Canvas>
+	<mx:Label x="10" y="6" text="Prelación"/>
+</mx:Canvas>

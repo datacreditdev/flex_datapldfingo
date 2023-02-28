@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="390" height="220" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			[Bindable]
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var fecIni:String;
+			public var grupo:String;
+			public var ciclo:String;
+			public var acred:String;
+			public var titulo:String;
+			public var rep:String;
+			private var global:Globales;
+		
+			private function exportar():void{
+				if(valida() == true){
+					grupo = txtGrupo.text;
+					ciclo = txtCiclo.text;
+					acred = txtAcred.text;
+					
+					Application.application.bloquear();
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						Application.application.desbloquear();
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						dgReporte.dataProvider = null;
+													
+						if(_xmlRep.elements().length() > 0){
+							var cont:int = _xmlRep.elements().length();
+							dgReporte.dataProvider = _xmlRep.Table;
+							fecIni = dtfFecha.text;
+							var dgE:ExcelExportXls = new ExcelExportXls(); 
+							dgE.loadDGInExcel(dgReporte,null,titulo + " al " + fecIni);	
+						}
+						else
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);	
+					});
+					wsMS.getRepControlPagosAcred.send(grupo, ciclo, acred, dtfFecha.text, Application.application.U_ID,
+												      Application.application.PUESTO);
+				}	
+			}
+		
+			public function generar():void{	
+				if(valida() == true){
+					var consulta:String;
+					var id:String = "&id=" + rep;
+					var fecha:String = "&fecha=" + global.formatoFechaSep(dtfFecha.selectedDate,"-");
+					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var nomUsuario:String = "&nomUsuario=" + Application.application.NOM_U_ID;
+					var puesto:String = "&puesto=" + Application.application.PUESTO;
+					var grupo:String = "&grupo=" + txtGrupo.text;
+					var ciclo:String = "&ciclo=" + txtCiclo.text;
+					var acred:String = "&acred=" + txtAcred.text;
+					consulta = global.urlPdf + id + fecha + usuario + nomUsuario + puesto + grupo + ciclo + acred;					
+					Application.application.muestraPdf(consulta);
+				}
+			}						
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				rep = "32";
+				titulo = "Reporte de Control de Pagos Individual";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			private function limpiar():void{
+				var fec:Date;
+				dgReporte.dataProvider = null;
+				fec = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				txtGrupo.text = "";
+				txtCiclo.text = "";
+				txtAcred.text = "";
+			}
+				
+			private function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha del reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtGrupo.text == ""){
+					Alert.show("Capture el código de grupo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtCiclo.text == ""){
+					Alert.show("Capture el ciclo del crédito.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtAcred.text == ""){
+					Alert.show("Capture el código de acreditado.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="340" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Button x="117.5" y="144" label="Generar" click="generar()"/>
+	<mx:Button x="201.5" y="144" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:DataGrid id="dgReporte" x="18.45" y="180" width="763.05" visible="false" height="185" horizontalScrollPolicy="on">
+		<mx:columns>
+			<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="COORD" width="160" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="ASESOR" dataField="ASESOR" width="200" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="70" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="150" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="100" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMBRE_CL" width="180" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="INICIO" dataField="FINICIO" width="80" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="FIN" dataField="FFIN" width="80" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANTENTRE" width="125" headerWordWrap="true"/>			
+			<mx:DataGridColumn headerText="FECHA PAGO" dataField="FPAGO" width="100" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="TIPO" dataField="TIPOREG" width="100" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="PAGO REAL CAPTURADO" dataField="PAGOREAL" width="100" headerWordWrap="true"/>
+			<!--<mx:DataGridColumn headerText="PAGO TEORICO" dataField="PAGOTEORICO" width="100" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="MORA" dataField="MORA" width="80" headerWordWrap="true"/>-->
+			<mx:DataGridColumn headerText="SOLIDARIO" dataField="APORT" width="100" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="DEVOLUCION" dataField="DEVOLUCION" width="100" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="AHORRO" dataField="AHORRO" width="80" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="MULTA" dataField="MULTA" width="80" headerWordWrap="true"/>
+			<mx:DataGridColumn headerText="ASISTENCIA" dataField="ASIST" width="90" headerWordWrap="true"/>				
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnExportar" x="143.5" y="180" label="Exportar Excel" click="exportar()" visible="true"/>
+	<mx:Canvas x="18" y="53" width="350" height="83" styleName="canvasMod" id="canvas2">
+		<mx:Label id="lblCiclo" x="168.3" y="12" text="Ciclo:" width="50" height="20" textAlign="right"/>
+		<mx:Label id="lblGrupo" x="30" y="13" text="Grupo:" width="50" height="20" textAlign="right"/>
+		<mx:TextInput id="txtGrupo" x="88.3" y="11" maxChars="6" restrict="0-9" enter="generar()"/>
+		<mx:TextInput id="txtCiclo" x="226.6" y="10" width="45" maxChars="2" restrict="0-9" enter="generar()"/>
+		<mx:TextInput id="txtAcred" x="88.3" y="47" width="72" maxChars="6" restrict="0-9" enter="generar()"/>
+		<mx:Label id="lblAcred" x="10" y="49" text="Acreditado:" width="70.3" height="20" textAlign="right"/>
+		<mx:Label id="lblFecha" x="168.3" y="49" text="Fecha:" width="50" height="20" textAlign="right"/>
+		<mx:DateField id="dtfFecha" x="226.6" y="47" width="111"/>
+	</mx:Canvas>
+</mx:Canvas>

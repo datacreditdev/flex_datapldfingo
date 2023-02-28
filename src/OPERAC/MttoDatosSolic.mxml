@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" title="Datos de la solicitud" layout="absolute" width="580" height="500" creationPolicy="all" xmlns:Forms="OPERAC.Forms.*">
+	<mx:Script>
+	<![CDATA[
+		import mx.collections.ArrayCollection;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.core.Application;
+		import mx.containers.TitleWindow;			
+		import mx.managers.PopUpManager;
+		import mx.controls.Alert;
+		import mx.effects.easing.Elastic;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.events.FaultEvent;
+		import mx.utils.ObjectUtil;
+		
+		[Bindable]
+		private var _xmlProy:XML =  new XML();
+		
+		public var Arr:ArrayCollection = new ArrayCollection();
+		public var acredObj:ArrayCollection = new ArrayCollection();
+		public var proyObj:ArrayCollection = new ArrayCollection();
+			
+		public var wsMS:WebService;
+		public var indAcred:int;	
+		public var cdgGrupo:String;
+		public var nomGrupo:String;
+		public var du:Utils;
+		private var global:Globales;
+		
+		public function actualizaEmpl():void{
+			var i:int;
+			for(i = 0; i < acredObj.length; i++){
+				if(acredObj[i].codigo.toString() == txtCdgAcred.text){ 	
+					acredObj[i].emplGenH = txtEGHombres.text;
+					acredObj[i].emplGenM = txtEGMujeres.text;
+					acredObj[i].emplSostH = txtESHombres.text;
+					acredObj[i].emplSostM = txtESMujeres.text;
+				}
+			}
+		}
+		
+		public function actualizaProy(event:Event):void{
+			cargaInfo(txtCdgAcred.text, txtAcreditado.text, proyObj[0].codigo, txtMontosSolic.text, txtEGHombres.text, txtEGMujeres.text, txtESHombres.text, txtESMujeres.text);
+			if(proyObj[0].codigo != "")
+				selecProy(proyObj[0].codigo);
+		}
+		
+		public function cargaInfo(cdgAcred:String, acred:String, proyecto:String, cantSolic:String, 
+								  emplGenH:String, emplGenM:String, emplSostH:String, emplSostM:String):void{
+			var wsMS:WebService = new WebService();
+			
+			wsMS = du.initWsMS(wsMS);
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlProy = new XML(evt.result.toString());
+					
+				du.rCursor();
+				du.closeWs(wsMS);
+					
+				if (_xmlProy.elements().length() > 0){
+					formateaProy();
+					cboProyecto.dataProvider = Arr;
+				} 	
+				//carga el proyecto seleccionado para el acreditado
+				var i:int; 
+				for(i = 0; i < Arr.length; i++)
+				{
+					if(Arr[i].codigo == proyecto){ 	
+						cboProyecto.selectedIndex = i;
+					}
+				}
+				txtCdgAcred.text = cdgAcred;
+				txtAcreditado.text = acred;
+				txtMontosSolic.text = cantSolic;
+				txtEGHombres.text = emplGenH;
+				txtEGMujeres.text = emplGenM;
+				txtESHombres.text = emplSostH;
+				txtESMujeres.text = emplSostM;
+				
+				wsMS = null;
+			});
+			wsMS.getProyAcred.send(cdgAcred);
+		}
+		
+		public function cerrar():void{
+			PopUpManager.removePopUp(this);
+		}
+
+		public function formateaProy():void{
+			var i:int;
+			var cont:int = _xmlProy.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			Arr.removeAll();	
+			Arr.refresh();
+				
+			for(i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlProy.Table[i].PROYECTO;
+				oItem.nombre = _xmlProy.Table[i].NOMBRE;
+				oItem.desc = _xmlProy.Table[i].PROYECTO + " " + _xmlProy.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			Arr = new ArrayCollection(item);
+		}
+
+		public function guardaDatosSolic():void{
+			cerrar();
+		}
+		
+		public function init(cdgGrupo:String, nomGrupo:String, fecha:String, indice:int, acredObj:ArrayCollection):void{
+			du = new Utils();
+			global = new Globales();
+			this.indAcred = indice;
+			this.cdgGrupo = cdgGrupo;
+			this.nomGrupo = nomGrupo; 
+			this.acredObj = acredObj;
+			txtFecha.text = fecha;
+			var cdgAcred:String = acredObj[indAcred].codigo;
+			var acred:String = acredObj[indAcred].nombre;
+			var proyecto:String = acredObj[indAcred].proyecto; 
+			var cantSolic:String = acredObj[indAcred].cantSolic;
+			var emplGenH:String = acredObj[indAcred].emplGenH;
+			var emplGenM:String = acredObj[indAcred].emplGenM;
+			var emplSostH:String = acredObj[indAcred].emplSostH; 
+			var emplSostM:String = acredObj[indAcred].emplSostM;
+			cargaInfo(cdgAcred, acred, proyecto, cantSolic, emplGenH, emplGenM, emplSostH, emplSostM)
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function mostrarFormProy():void{
+			var cdgAcred:String = txtCdgAcred.text; 
+			var acred:String = txtAcreditado.text; 
+			var fecha:String = txtFecha.text;
+			var oItem:Object;
+			oItem = new Object();
+			oItem.codigo = "";
+			proyObj.addItem(oItem);
+			var comMttoProy:MttoProyecto = new MttoProyecto();
+			comMttoProy = MttoProyecto(PopUpManager.createPopUp(this,MttoProyecto,true)); 
+			comMttoProy.addEventListener(Event.REMOVED_FROM_STAGE, actualizaProy);
+			PopUpManager.centerPopUp(comMttoProy);
+			comMttoProy.init(cdgGrupo, nomGrupo, cdgAcred, acred, fecha, proyObj);		
+		}
+		
+		public function mueveRegistro(desp:int):void{
+				var indAnt:int = indAcred;
+				switch(desp){
+					case 0:
+						indAcred = 0;
+						break;
+					case 1:
+						if (indAcred < acredObj.length - 1)
+							indAcred++;
+						break;
+					case -1:
+						if (indAcred > 0)
+							indAcred--;
+						break;
+					case 2:
+						indAcred = acredObj.length - 1;
+						break;
+				}
+				if (indAnt != indAcred){
+					var cdgAcred:String = acredObj[indAcred].codigo;
+					var acred:String = acredObj[indAcred].nombre;
+					var proyecto:String = acredObj[indAcred].proyecto; 
+					var cantSolic:String = acredObj[indAcred].cantSolic;
+					var emplGenH:String = acredObj[indAcred].emplGenH;
+					var emplGenM:String = acredObj[indAcred].emplGenM;
+					var emplSostH:String = acredObj[indAcred].emplSostH; 
+					var emplSostM:String = acredObj[indAcred].emplSostM;
+					cargaInfo(cdgAcred, acred, proyecto, cantSolic, emplGenH, emplGenM, emplSostH, emplSostM)
+				}	
+			}	
+				
+		public function selecProy(codigo:String):void{
+			var i:int; 
+			if(codigo == "000"){
+				acredObj[i].datos = "";
+				acredObj[i].proyecto = "";
+			}
+			else{
+				for(i = 0; i < acredObj.length; i++)
+				{
+					if(acredObj[i].codigo.toString() == txtCdgAcred.text){ 	
+						acredObj[i].datos = "OK";
+						acredObj[i].proyecto = codigo;
+					}
+				}
+			}
+		}
+		
+		public function validar():void{
+			//if (dtfFecha.text == "" && rdbExistente.selected == true)
+			//	Alert.show("Debe seleccionar la fecha de Alta", "Alta Acreditados", 4,null,null,global.iAlert);
+		}
+	]]>
+	</mx:Script>
+
+	<mx:Canvas x="64.5" y="10" width="451" height="47" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblCliente" x="17.5" y="12" text="Cliente:"/>
+		<mx:TextInput id="txtAcreditado" editable="false" x="131.5" y="10" width="300"/>
+		<mx:TextInput id="txtCdgAcred" editable="false" x="65.5" y="10" width="58"/>
+	</mx:Canvas>
+	<mx:Label x="12" y="68" text="Fecha de solicitud:"/>
+	<mx:TextInput id="txtFecha" x="115" y="66" width="80"/>
+	<mx:Label x="208.5" y="68" text="Proyecto de inversión:"/>
+	<mx:ComboBox id="cboProyecto" x="328" y="65" width="160" labelField="desc" change="selecProy(cboProyecto.selectedItem.codigo)"></mx:ComboBox>
+	<mx:Button id="btnAgregar" x="496" y="66" label="Agregar" width="72" click="mostrarFormProy()"/>
+	<mx:Canvas x="39" y="116" width="150" height="70" styleName="canvasMod">
+		<mx:Label id="lblEGHombres" x="10" y="10" text="Hombres:"/>
+		<mx:Label id="lblEGMujeres" x="15" y="38" text="Mujeres:"/>
+		<mx:TextInput id="txtEGHombres" x="69" y="8" width="69" maxChars="3" restrict="0-9" change="actualizaEmpl()"/>
+		<mx:TextInput id="txtEGMujeres" x="69" y="36" width="69" maxChars="3" restrict="0-9" change="actualizaEmpl()"/>
+	</mx:Canvas>
+	<mx:Label x="39" y="96" text="Empleos generados"/>
+	<mx:Canvas x="214" y="116" width="150" height="70" styleName="canvasMod">
+		<mx:Label id="lblESHombres" x="10" y="10" text="Hombres:"/>
+		<mx:Label id="lblESMujeres" x="15" y="38" text="Mujeres:"/>
+		<mx:TextInput id="txtESHombres" x="69" y="8" width="69" maxChars="3" restrict="0-9" change="actualizaEmpl()"/>
+		<mx:TextInput id="txtESMujeres" x="69" y="36" width="69" maxChars="3" restrict="0-9" change="actualizaEmpl()"/>
+	</mx:Canvas>
+	<mx:Label x="214" y="96" text="Empleos sostenidos"/>
+	<mx:Canvas x="391" y="116" width="150" height="70" styleName="canvasMod">
+		<mx:Label id="lblMontosSolic" x="10" y="23" text="Solicitado:"/>
+		<mx:TextInput id="txtMontosSolic" x="65" y="21" width="67" editable="false"/>
+	</mx:Canvas>
+	<mx:Label x="391" y="96" text="Montos"/>
+	<mx:Canvas x="12" y="213" width="558" height="195" styleName="canvasMod">
+		<mx:Canvas x="10" y="141" width="205" height="33" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="false">
+			<mx:Button id="btnPrimero" x="10" y="3" icon="@Embed(source='assets/hide.png')" toolTip="Buscar Grupo" />
+			<mx:Button id="btnSig" x="105" y="3" toolTip="Registrar Grupo"/>
+			<mx:Button id="btnUltimo" x="153" y="3" icon="@Embed(source='assets/show.png')" toolTip="Eliminar Grupo"/>
+			<mx:Button id="btnEditar" x="57" y="3" toolTip="Editar Grupo"/>
+		</mx:Canvas>
+		<mx:DataGrid id="dgProg" x="10" y="10" height="120" width="536">
+			<mx:columns>
+				<mx:DataGridColumn headerText="Tipo / Concepto" dataField="col1" width="350"/>
+				<mx:DataGridColumn headerText="Porcentaje" dataField="col2"/>
+				<mx:DataGridColumn headerText="Monto" dataField="col3"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label x="332" y="137" text="Programado:"/>
+		<mx:Label x="321" y="165" text="Por programar:"/>
+		<mx:TextInput id="txtPorcProg" x="406" y="135" width="46"/>
+		<mx:TextInput id="txtPorcPorProg" x="406" y="163" width="46"/>
+		<mx:Label x="453" y="137" text="%"/>
+		<mx:Label x="453" y="165" text="%"/>
+		<mx:TextInput id="txtProg" x="478" y="135" width="68"/>
+		<mx:TextInput id="txtPorProg" x="478" y="163" width="68"/>
+	</mx:Canvas>
+	<mx:Label x="12" y="194" text="Programación de la inversión"/>
+	<mx:Canvas x="277" y="416" width="205" height="34" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:Button id="btnAcredPrim" x="10" y="3" icon="@Embed(source='assets/primero.png')" toolTip="Primero" click="mueveRegistro(0)" width="40"/>
+		<mx:Button id="btnAcredSig" x="105" y="3" icon="@Embed(source='assets/siguiente.png')" toolTip="Acreditado siguiente" click="mueveRegistro(1)" width="40"/>
+		<mx:Button id="btnAcredUlt" x="153" y="3" icon="@Embed(source='assets/ultimo.png')" toolTip="Ultimo" click="mueveRegistro(2)" width="40"/>
+		<mx:Button id="btnAcredAnt" x="57" y="3" icon="@Embed(source='assets/anterior.png')" toolTip="Acreditado anterior" click="mueveRegistro(-1)" width="40"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="491" y="422" label="Aceptar" width="78" click="guardaDatosSolic()"/>
+	
+</mx:TitleWindow>

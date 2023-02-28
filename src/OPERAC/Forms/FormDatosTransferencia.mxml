@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="490" height="220" creationComplete="initApp()">
+	
+	<mx:Metadata>
+		[Event(name="enviaDispersion", type="Data.EventDispersion")]
+	</mx:Metadata>
+	
+	<mx:NumberValidator id="montoV" source="{txtMonto}" property="text" 
+	triggerEvent="" invalid="{txtMonto.setFocus()}" decimalPointCountError="Capture correctamente la cantidad" precision="2" precisionError="Capture correctamente la cantidad" required="false"/>
+	
+	<mx:Validator id="cuentaV" source="{txtCuenta}" property="text" 
+	 invalid="{txtCuenta.setFocus()}" triggerEvent="" requiredFieldError="Dato Requerido"/>
+	
+	<mx:Validator id="conceptoV" source="{txtConcepto}" property="text" 
+	invalid="{txtConcepto.setFocus()}" triggerEvent="" requiredFieldError="Dato Requerido"/>
+	
+	<mx:Validator id="nomCuentaV" source="{txtNomCuenta}" property="text" 
+	invalid="{txtNomCuenta.setFocus()}" triggerEvent="" requiredFieldError="Dato Requerido"/>
+
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import Data.DatosDispersion;
+			import Data.EventDispersion;
+			import Data.Globales;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.validators.Validator;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			
+			private var global:Globales;
+			private var du:Utils;
+			private var titulo:String;
+			
+			public var _xmlCta:XML = new XML();
+			public var _xmlBanco:XML = new XML();
+			
+			public var bancoObj:ArrayCollection = new ArrayCollection();
+			
+			private function buscaCuenta():void{
+				if (txtCodCuenta.text != ""){
+					var wsCat:WebService = new WebService;
+					var params:Array = new Array;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlCta = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);	
+						Application.application.desbloquear();	
+						
+						if (_xmlCta.elements().length() > 0){
+							txtNomCuenta.text = _xmlCta.Table[0].BANCO;
+						}
+						else{
+							txtNomCuenta.text = "";
+							Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.","Entrega",4,null,null,global.iAlert);
+						}		
+					});
+					params[0] = "4";
+					params[1] = txtCodCuenta.text;
+					params[2] = "";
+					params[3] = Application.application.U_ID;
+					params[4] = "";
+					wsCat.getInfoRegistro.send(3, params);
+				}	
+			}
+			
+			private function initApp():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				global = new Globales();
+				du = new Utils();
+				titulo = "Registro de Transferencia";
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlBanco = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);	
+					
+					if (_xmlBanco.elements().length() > 0){
+						formateaBanco();
+						cboBanco.dataProvider = bancoObj;
+					}		
+				});
+				wsCat.getCatalogoGral.send(38, params);	
+			}
+			
+			public function enviaTransferencia(formData:DatosDispersion):void{
+				var invalidArray:Array = Validator.validateAll([cuentaV, conceptoV, montoV, nomCuentaV]);
+				
+				if(invalidArray.length == 0){	
+					formData.cdgMetodo = "T";
+					formData.cdgBanco = cboBanco.selectedItem.id;
+					formData.cuenta = txtCuenta.text;
+					formData.concepto = txtConcepto.text;
+					formData.monto = Number(txtMonto.text);
+					formData.fecha = dtfFecha.text;
+					formData.cdgMotivo = "DE";
+					formData.cdgCuenta = txtCodCuenta.text;
+					formData.reportado = "N";
+					formData.guarda = true;	
+				}
+				else
+					formData.guarda = false;
+			}
+			
+			private function formateaBanco():void{
+				var cont:int = _xmlBanco.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlBanco.Table[i].CODIGO;	
+					oItem.nombre = _xmlBanco.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				bancoObj = new ArrayCollection(item);
+			}
+	]]>
+	</mx:Script>
+	<mx:FormItem label="Banco:" width="314">
+		<mx:ComboBox id="cboBanco" labelField="nombre" width="189"/>
+	</mx:FormItem>
+	<mx:FormItem label="Clabe:">
+		<mx:TextInput id="txtCuenta" maxChars="18" restrict="0-9" width="150"/>
+	</mx:FormItem>
+	<mx:FormItem label="Concepto:">
+		<mx:TextArea id="txtConcepto" maxChars="30" width="300"/>
+	</mx:FormItem>
+	<mx:FormItem label="Monto:">
+		<mx:TextInput id="txtMonto" maxChars="12" width="82" restrict="0-9\."/>
+	</mx:FormItem>
+	<mx:FormItem label="Fecha:">
+		<mx:DateField id="dtfFecha" width="100"/>
+	</mx:FormItem>
+	<mx:FormItem label="Cuenta Desembolso:" direction="horizontal">
+		<mx:TextInput id="txtCodCuenta" width="45" maxChars="3" restrict="0-9" enter="buscaCuenta()"/>
+		<mx:TextInput id="txtNomCuenta" width="231.5" editable="false"/>
+		<mx:Button id="btnCuenta" label="Buscar"/>
+	</mx:FormItem>
+</mx:Form>

@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="110" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
+	<mx:states>
+		<mx:State name="desautoriza">
+			<mx:SetProperty name="height" value="240"/>
+			<mx:AddChild position="lastChild">
+				<mx:Label x="16.25" y="106" text="Parámetros" width="124.25"/>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas x="16.25" y="125.5" width="247.54999" height="70.5" styleName="canvasMod" id="cnvPrestamo">
+					<mx:Label id="lblCiclo" x="142.5" y="10" text="Ciclo" width="81" height="20"/>
+					<mx:Label id="lblAcred" x="29.5" y="10" text="Acreditado" width="72" height="20"/>
+					<mx:TextInput id="txtAcred" x="29.5" y="28.5" maxChars="6" restrict="0-9" enter="ejecuta()"/>
+					<mx:TextInput id="txtCiclo" x="142.5" y="28.5" width="45" maxChars="2" restrict="0-9" enter="ejecuta()"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Button x="65" y="204" label="Aceptar" click="ejecuta()" id="btnAceptar"/>
+			</mx:AddChild>
+			<mx:AddChild position="last|																									1Child">
+				<mx:Button x="144" y="204" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+			</mx:AddChild>
+		</mx:State>
+		<mx:State name="desembolso" basedOn="desautoriza">
+			<mx:SetProperty name="height" value="290"/>
+			<mx:SetProperty target="{btnAceptar}" name="y" value="256"/>
+			<mx:SetProperty target="{btnLimpiar}" name="y" value="256"/>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas x="16.25" y="204" width="247.5" height="42" styleName="canvasMod" id="cnvFecha">
+					<mx:DateField id="dtfFecha" x="90.25" y="8" width="111"/>
+					<mx:Label x="44.25" y="10" text="Fecha:" id="lblFecha"/>
+				</mx:Canvas>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="" toState="*">		
+			<mx:Parallel>
+				<mx:Resize duration="500" target="{this}"/> 
+			</mx:Parallel>
+		</mx:Transition>
+		<mx:Transition fromState="desautoriza" toState="*">		
+			<mx:Parallel>
+				<mx:Resize duration="500" target="{this}"/> 
+			</mx:Parallel>
+		</mx:Transition>
+		<mx:Transition fromState="desembolso" toState="*">		
+			<mx:Parallel>
+				<mx:Resize duration="500" target="{this}"/> 
+			</mx:Parallel>
+		</mx:Transition>
+	</mx:transitions>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;	
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var global:Globales;
+			public var wsMS:WebService;
+			public var titulo:String;
+			private var du:Utils;
+			
+			private var tipoMovObj:ArrayCollection = new ArrayCollection();
+			
+			//funcion que ejecuta el proceso de modificacion de prestamo
+			public function ejecuta():void{
+				if(valida() == true){
+					initConexion();
+					du.sCursor();
+					
+					var tipo:int = int(cboTipoMov.selectedItem.tipo);
+					var acred:String = txtAcred.text;
+					var ciclo:String = txtCiclo.text;
+					var fecha:String;
+					
+					if(this.currentState == "desautoriza")
+						fecha = "";
+					else if(this.currentState == "desembolso")
+						fecha = dtfFecha.text;
+					
+					Application.application.bloquear();
+						
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						var res:String = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						Application.application.desbloquear();
+						
+						if(res.substr(0,1) == "1"){
+							limpiar();
+							Alert.show("Modificación realizada exitosamente.",titulo,4,null,null,global.iInfo);
+						}
+						else
+							Alert.show(res.substr(2, res.length),titulo,4,null,null,global.iAlert);		
+					});
+					wsMS.setAccionModPrn.send(tipo, acred, ciclo, "I", fecha, Application.application.U_ID);
+				}
+			}
+			
+			public function formateaTipoMov():void{
+				var perfil:String = Application.application.cadPerfil;
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.tipo = 0;
+				oItem.state = "";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				if(global.permisosDesautoriza(Application.application.PERFIL_ID)){
+					oItem = new Object();
+					oItem.tipo = 1;
+					oItem.id = "desautoriza";	
+					oItem.nombre = "Desautorización";
+					item.push(oItem);
+				}
+				
+				if(global.permisosModFecDes(Application.application.PERFIL_ID)){
+					oItem = new Object();
+					oItem.tipo = 2;
+					oItem.id = "desembolso";	
+					oItem.nombre = "Modificación Fecha";
+					item.push(oItem);
+				}
+				tipoMovObj = new ArrayCollection(item);
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Módulo de Correcciones";
+				lblTitulo.text = titulo.toUpperCase();
+				formateaTipoMov();
+				cboTipoMov.dataProvider = tipoMovObj;
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				txtAcred.text = "";
+				txtCiclo.text = "";
+				txtAcred.setFocus();
+				if(currentState == "desembolso")
+					dtfFecha.selectedDate = null;
+				cboTipoMov.selectedIndex = 0;
+				modificaEstado(); 
+			}
+			
+			public function modificaEstado():void{
+				this.currentState = cboTipoMov.selectedItem.id;
+			}
+				
+			public function valida():Boolean{
+				if(txtAcred.text == ""){
+					Alert.show("Capture el número de acreditado.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtCiclo.text == ""){
+					Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(this.currentState == "desembolso" && dtfFecha.selectedDate == null){
+					Alert.show("Capture la nueva fecha de desembolso.",titulo,4,null,null,global.iAlert);
+					return false;
+				} 
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="16.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="16.5" y="57" width="247.5" height="41" id="cnvTipoMov" styleName="canvasMod">
+		<mx:ComboBox id="cboTipoMov" x="10" y="7" width="227.5" labelField="nombre" change="modificaEstado()">	
+		</mx:ComboBox>
+	</mx:Canvas>
+	<mx:Label x="16.5" y="39" text="Tipo de Movimiento" width="124.25"/>
+</mx:Canvas>

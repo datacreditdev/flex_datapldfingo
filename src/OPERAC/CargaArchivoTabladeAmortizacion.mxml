@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="650" height="594" backgroundAlpha="1.0" 
+	creationPolicy="all" creationComplete="initApp()" backgroundColor="#FFFFFF" xmlns:Data="Data.*" 
+	x="12.5" y="42" xmlns:local="*" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+	
+	<mx:Script>    
+    <![CDATA[
+    	import as3xls.xls.Cell;
+        import as3xls.xls.ExcelFile;
+        import as3xls.xls.Sheet;
+    	import Data.ExcelExportXls;
+    	import Data.Globales;
+    	import Data.Utils; 
+    	import mx.collections.ArrayCollection;
+        import mx.controls.Alert; 
+        import mx.controls.dataGridClasses.DataGridColumn;
+        import mx.core.Application; 	
+        import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService; 
+		import flash.external.ExternalInterface;
+
+      	private var fileReference:FileReference;
+      	private var du:Utils;
+      	private var global:Globales;
+      	private var sheet:Sheet;
+      	private var wsMS:WebService;
+      	private var titulo:String;
+		
+        private var arrCodigo:Array;
+        private var arrNombre:Array;
+        private var arrCiclo:Array;
+        private var arrNoPago:Array;
+        private var arrFecha:Array;
+        private var arrImporte:Array;        
+        private var arrCapital:Array;
+        private var arrInteres:Array;
+       
+      	[Bindable]
+        private var infoObj:ArrayCollection = new ArrayCollection();
+		private var _xmlRes:XML = new XML();
+      	 
+       	private function buscarArchivo():void{
+       		var fileFilter:FileFilter = new FileFilter("Excel (.xls)", "*.xls;");
+       		
+       		try{
+	       		fileReference = new FileReference();
+	            fileReference.addEventListener(Event.SELECT,fileReference_Select);
+	            fileReference.addEventListener(Event.CANCEL,fileReference_Cancel);
+	            fileReference.browse([fileFilter]);
+	    	}
+         	catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	} 
+        }
+        
+        private function buscarNombre():void{
+        	var params:Array = new Array;
+        	var wsCat:WebService = new WebService;
+        	
+        	du.initWsCat(wsCat);
+			du.sCursor();
+						
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
+				var _xmlAcred:XML = XML(evt.result.toString());
+					
+				du.rCursor();
+				du.closeWs(wsCat);	
+					
+				if(_xmlAcred.elements().length() > 0){
+					lblNombre.text = _xmlAcred.Table[0].NOMBRE1;
+					txtCodigo.editable = false;
+					btnBuscarAcred.enabled = false;
+				}		
+				else
+					Alert.show("Código de acreditado no registrado.",titulo,4,null,null,global.iAlert);	
+					
+			});
+			params[0] = txtCodigo.text;
+			wsCat.getInfoAcred.send(1, params);
+        }
+        
+        private function cargarInfo():void{	        	        
+        	if(valida()){
+	        	formateaInfo();
+	        	initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setCargaTablaAmort);
+			    wsMS.setCargaTablaAmort.send(txtCodigo.text, txtCiclo.text, arrNoPago, arrFecha, arrImporte, arrCapital, arrInteres, Application.application.U_ID);
+        	}
+        }
+        
+		public function exportar():void{
+			var dgE:ExcelExportXls = new ExcelExportXls();
+			dgE.loadDGInExcel(dgInfo,null,titulo);		
+		}
+        
+        private function formateaInfo():void{
+            var info:ArrayCollection = dgInfo.dataProvider as ArrayCollection;
+            var max:int;
+            
+            arrNoPago = new Array;
+            arrFecha = new Array;
+			arrImporte = new Array;
+			arrCapital = new Array;
+			arrInteres = new Array;
+			
+			if(info.length <= 10000)
+		 		max = info.length;
+		 	else
+		 		max = 10000;
+		    
+			for(var i:int = 0; i < max ; i++){
+			    arrNoPago[i] = info[i].NOPAGO;
+			    arrFecha[i] = info[i].FECHA;
+				arrImporte[i] = info[i].IMPORTE;
+				arrCapital[i] = info[i].CAPITAL;
+				arrInteres[i] = info[i].INTERES;
+			}   				 			 
+        }
+        
+        private function fileReference_Select(event:Event):void{
+        	dgInfo.dataProvider = null;	
+        	lblResultado.text = "Cargando registros, espere un momento..."
+	    	fileReference.addEventListener(ProgressEvent.PROGRESS,fileReference_Progress);
+	        fileReference.addEventListener(Event.COMPLETE,fileReference_Complete);
+	        fileReference.addEventListener(IOErrorEvent.IO_ERROR, onLoadError);
+	        fileReference.load(); 
+	        txtArchivo.text = fileReference.name;
+        }
+        
+        private function fileReference_Cancel(event:Event):void{
+            fileReference = null;
+        }
+        
+        private function fileReference_Progress(event:ProgressEvent):void{
+        }
+        
+        private function onLoadError():void{
+        }
+        
+        private function fileReference_Complete(event:Event):void{
+        	try{
+	            dgInfo.dataProvider = null;
+	            infoObj.removeAll();
+	            infoObj.refresh();
+	            btnCargar.visible = true;
+	            btnExportar.visible = false;
+	            
+	            var fileData:ByteArray  = fileReference.data;
+	            var excelFile:ExcelFile = new ExcelFile();
+	            var numFilas:int;
+	            var numCol:int;
+	            
+	            if(fileData != null && fileData.length > 0){
+	            	excelFile.loadFromByteArray(fileData);
+	                var sheet:Sheet = excelFile.sheets[0];
+	                if(sheet!=null){
+	            	    numFilas = sheet.rows;
+	                    numCol = sheet.cols;
+	                    for(var row:int = 1; row < numFilas; row++){
+	                	    var cellObject:Object = {};
+	                        for(var col:int = 0; col < numCol; col++){
+	                    	    var cell:Cell = new Cell();
+	                            var cellValue:String = new String();
+	                            cell = sheet.getCell(row,col);
+	                            if(cell != null){
+	                            	cellValue = (cell.value).toString();
+	                                addProperty(cellObject, col, cellValue);
+	                            }
+	                     	} 
+	                     	cellObject.ESTATUS = ""; 
+	                        infoObj.addItem(cellObject);
+	                        dgInfo.dataProvider = infoObj;
+	                    } 
+	                    lblResultado.text = numFilas - 1 + " Registro(s) Encontrado(s)";
+	                }    
+	            } 
+	            dgInfo.includeInLayout = true;
+	            dgInfo.visible = true;
+	            fileReference = null;
+	            btnCargar.enabled = true;
+            }
+            catch(error:Error){
+  				Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		return;
+         	}       		        		        
+        }  
+        
+        private function addProperty(cellObject:Object,index:int,cellValue:String):void{
+            if(index == 0)
+                cellObject.NOPAGO = cellValue;
+            else if(index == 1)
+                cellObject.FECHA = global.formatoFechaExcel(Number(cellValue));
+            else if(index == 2)
+                cellObject.IMPORTE = global.formatoDecimalSinSep(cellValue);
+            else if(index == 3)
+                cellObject.CAPITAL = global.formatoDecimalSinSep(cellValue);
+            else if(index == 4)
+                cellObject.INTERES = global.formatoDecimalSinSep(cellValue);               
+        }
+        
+        private function complete(event:Event):void {
+        	var count:int = infoObj.length - 1;
+        	if(count == 1)
+        		lblResultado.text = infoObj.length + " Registro Encontrado";
+        	else
+ 				lblResultado.text = count + " Registros Encontrados";
+        	btnCargar.enabled = true;
+		}
+              
+      	private function initApp():void{ 
+	    	global = new Globales();
+	    	du = new Utils();
+	        titulo = "Carga Archivo Tabla de Amortización";
+	      	lblTitulo.text = titulo.toUpperCase(); 
+	      	limpiar();
+	    }    
+	    
+	    public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsMS.loadWSDL();
+		}
+		
+		private function getGridPositionFor(codigo:String, ciclo:String):int{
+			for(var i:int = 0; i < infoObj.length; i++ ){
+				if(infoObj[i].CODIGO == codigo && infoObj[i].CICLO == ciclo)
+					return i;
+			}
+			return -1;
+		}	
+		
+		private function limpiar():void{
+			txtCodigo.editable = true;
+			txtCodigo.text = "";
+			lblNombre.text = "";
+			txtCiclo.text = "";
+			btnBuscarAcred.enabled = true;
+			dgInfo.dataProvider = null;	
+			txtArchivo.text = "";	
+			lblResultado.text = "";
+			btnCargar.enabled = false;
+		}
+
+	    private function setCargaTablaAmort(event:ResultEvent):void{
+			var res:String;
+			
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setCargaTablaAmort);
+			wsMS = null;
+			res = event.result.toString();		
+			if (res.substr(0,1) == "1"){
+				Alert.show("Datos cargados exitosamente.",titulo,4,null,null,global.iInfo);
+				limpiar();
+			}						
+			else
+				Alert.show(res.substr(2, res.length - 1),titulo,4,null,null,global.iError);
+		}
+		
+		private function valida():Boolean{
+			var info:ArrayCollection = dgInfo.dataProvider as ArrayCollection;
+			
+			if(lblNombre.text == ""){
+				Alert.show("Debe consultar el dato de acreditado.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(txtCiclo.text == ""){
+				Alert.show("Debe capturar el ciclo del crédito.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(info.length == 0){
+				Alert.show("Debe cargar el archivo correspondiente.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}
+	     
+    ]]>
+  	</mx:Script>
+  	<mx:Button id="btnBuscarAcred" x="583" y="66" icon="@Embed(source='assets/ico_lupa.png')" click="buscarNombre()" toolTip="Buscar Nombre Acreditado" width="40" />
+  	<mx:Canvas styleName="canvasMod" x="75" y="39" width="500" height="74.9">
+  		<mx:Label id="lblCodigo" x="32" y="11" text="Código:"/>
+		<mx:TextInput id="txtCodigo" x="81" y="10" width="70" maxChars="6" enter="buscarNombre()"/>
+		<mx:Label id="lblNombre" x="159" y="11" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Label id="lblCiclo" x="42" y="40" text="Ciclo:"/>
+		<mx:TextInput id="txtCiclo" x="81" y="39" width="30" maxChars="2"/>
+  	</mx:Canvas>
+  	<mx:Canvas x="10" y="121.9" width="625" height="459.05" styleName="canvasMod" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+		<mx:DataGrid id="dgInfo" x="11.5" y="10" width="600" height="341" horizontalScrollPolicy="auto">
+			<mx:columns>
+				<mx:DataGridColumn headerText="NUMERO PAGO" dataField="NOPAGO" width="110"/>
+				<mx:DataGridColumn headerText="FECHA" dataField="FECHA" width="110"/>
+				<mx:DataGridColumn headerText="IMPORTE" dataField="IMPORTE" width="110"/>
+				<mx:DataGridColumn headerText="CAPITAL" dataField="CAPITAL" width="110"/>
+				<mx:DataGridColumn headerText="INTERES" dataField="INTERES" width="110"/>			
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label id="lblResultado" x="48.4" y="358.95" width="526.15" fontStyle="italic" fontWeight="bold" fontSize="12" textAlign="center"/>
+		<mx:Button label="Exportar Excel" id="btnExportar" visible="false" x="292" y="435" click="exportar()"/>
+		<mx:Button label="Cargar Archivo" id="btnCargar" enabled="false" x="257.5" y="419.95" click="cargarInfo()"/>
+		<mx:Button label="Limpiar" id="btnLimpiar" x="402.6" y="387.95" click="limpiar()"/>
+		<mx:Button label="Buscar" id="btnBuscar" enabled="true" click="buscarArchivo()" x="330.6" y="387.95"/>
+		<mx:TextInput id="txtArchivo" editable="false" enabled="true" x="152.35" y="387.95" width="160"/>
+  	</mx:Canvas>
+	<mx:Label id="lblTitulo" x="10" y="10" width="368" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+</mx:Canvas>

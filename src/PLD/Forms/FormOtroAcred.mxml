@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="300" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosAcred", type="Data.EventAcred")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import Data.EventAcred;
+			import Data.DatosAcred;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.validators.Validator;
+			import mx.events.ValidationResultEvent;	
+			
+			private var _xmlOtro:XML =  new XML();
+			private var _xmlNivelEsc:XML =  new XML();
+			
+			public var nivelEscObj:ArrayCollection = new ArrayCollection();
+			public var datos:DatosAcred = new DatosAcred();
+			
+			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS
+			public var du:Utils;
+			public var causa:String;
+			private var global:Globales;
+			private var vResult:ValidationResultEvent;
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function formateaNivel():void{
+				var i:int;
+				var cont:int = _xmlNivelEsc.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.id = "-1";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "C";	
+				oItem.nombre = "Carrera Corta";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "O";	
+				oItem.nombre = "Doctorado";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "L";	
+				oItem.nombre = "Licenciatura";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "R";	
+				oItem.nombre = "Maestría";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "N";	
+				oItem.nombre = "Ninguna";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "B";	
+				oItem.nombre = "Preparatoria";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "P";	
+				oItem.nombre = "Primaria";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "S";	
+				oItem.nombre = "Secundaria";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "T";	
+				oItem.nombre = "Técnico";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "U";	
+				oItem.nombre = "Técnico Superior";
+				item.push(oItem);
+				
+				nivelEscObj = new ArrayCollection(item);
+			}
+			
+			public function init(info:DatosAcred):void{
+				var i:int;
+				causa = "";
+				global = new Globales();
+				du = new Utils();
+				formateaNivel();
+				cboNivelEsc.dataProvider = nivelEscObj;
+				
+				if (info != null){
+					var j:int;
+					switch(info.edoCivil){
+						case "S":  
+							rdbSoltero.selected = true;
+							break;
+						case "C":
+							rdbCasado.selected = true;
+							break;
+						case "D":
+							rdbDivorciado.selected = true;
+							break;
+						case "V":
+							rdbViudo.selected = true;
+							break;
+						case "U":
+							rdbUnion.selected = true;
+							break;		
+					}
+					for(i = 0; i < nivelEscObj.length; i++){
+						if (nivelEscObj[i].id == info.nivelEsc){
+							cboNivelEsc.selectedIndex = i;
+							break;
+						}
+					}
+					txtDependientes.text = info.depend.toString();
+				}
+			}						
+	]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+     allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:FormItem label="Estado Civil:" id="edoCivil" visible="true" width="320" height="79">
+		<mx:Canvas width="171" height="76" styleName="canvasMod">
+			<mx:RadioButton id="rdbCasado" label="Casado" x="94" y="0"/>
+			<mx:RadioButton id="rdbDivorciado" label="Divorciado" x="10" y="24"/>
+			<mx:RadioButton id="rdbViudo" label="Viudo" x="94" y="24"/>
+			<mx:RadioButton id="rdbUnion" label="Unión Libre" x="10" y="49"/>
+			<mx:RadioButton id="rdbSoltero" label="Soltero" x="10" y="0"/>
+		</mx:Canvas>
+		
+	</mx:FormItem>
+	<mx:FormItem label="Nivel Escolar:" id="nivelEscolar" visible="true">
+		<mx:ComboBox id="cboNivelEsc" labelField="nombre"/>
+	</mx:FormItem>
+	<mx:FormItem label="Número de Dependientes:" id="dependientes" visible="true">
+		<mx:TextInput id="txtDependientes" width="50" restrict="0-9" maxChars="2"/>
+	</mx:FormItem>
+</mx:Form>

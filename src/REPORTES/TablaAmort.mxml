@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" showCloseButton="true" close="cerrar()" width="510" height="492" title="Tabla de Amortización" creationComplete="init()" verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
+
+	<!--Componente que permite simular la aplicación de los pagos capturados por el usuario-->
+	<mx:Script>
+		<![CDATA[
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import Data.Globales;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.managers.CursorManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import flash.external.*;
+			import mx.collections.ArrayCollection;
+			import mx.controls.*;
+
+			[Bindable]
+			public var _xmlCuenta:XML = new XML();
+			[Bindable]
+			public var _xmlEnc:XML = new XML();
+			
+			public var ArrPagos:ArrayCollection;
+			
+			public var myPattern:RegExp = /,/g;
+			public var wsMS:WebService;	
+			private var global:Globales;
+			private var loading:pLoading;
+			
+			public var grupo:String;
+			public var ciclo:String;
+			public var fecha:String;
+			
+			public function bloquear():void{
+				loading = pLoading(PopUpManager.createPopUp(this, pLoading, true));
+				PopUpManager.centerPopUp(loading);							
+			}
+			
+			public function calculaSaldo():void{
+				initConexion();
+				CursorManager.setBusyCursor();
+				wsMS.addEventListener(ResultEvent.RESULT, getEncTablaAmort);
+				wsMS.getEncTablaAmort.send(grupo, ciclo, fecha);
+			}
+				
+			public function cargaTablaAmort(grupo:String, ciclo:String, fecha:String):void{
+				this.grupo = grupo;
+				this.ciclo = ciclo;
+				this.fecha = fecha;
+				initConexion();
+				bloquear();
+				CursorManager.setBusyCursor();
+				wsMS.addEventListener(ResultEvent.RESULT, getEdoCuenta);
+				wsMS.getTablaAmort.send(grupo, ciclo);
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function desbloquear():void{
+				PopUpManager.removePopUp(loading)	
+			}	
+			
+			public function formateaPagos():void{
+				var cont:int = _xmlCuenta.elements().length();
+				
+				ArrPagos = new ArrayCollection();
+				
+				for(var i:int = 0; i < cont; i++){
+					var oItem:Object = new Object();
+					oItem.NUMERO = _xmlCuenta.Table[i].NOPAGO;
+					oItem.FECHA = _xmlCuenta.Table[i].FFECHA;
+					oItem.CARGO = global.formatoDecimal(_xmlCuenta.Table[i].CARGO);
+					oItem.ABONO = global.formatoDecimal(_xmlCuenta.Table[i].ABONO);
+					ArrPagos.addItem(oItem);
+				}
+				dgPagos.dataProvider = ArrPagos;
+			}
+			
+			private function getEdoCuenta(event:ResultEvent):void{
+				wsMS.disconnect();
+				CursorManager.removeBusyCursor();
+				wsMS.removeEventListener(ResultEvent.RESULT, getEdoCuenta);
+				this._xmlCuenta = new XML(event.result);	
+				if (_xmlCuenta.elements().length() > 0){
+					formateaPagos();
+					modificaColor();
+					calculaSaldo();
+				}	
+			}
+			
+			private function getEncTablaAmort(event:ResultEvent):void{
+				wsMS.disconnect();
+				desbloquear();
+				CursorManager.removeBusyCursor();
+				wsMS.removeEventListener(ResultEvent.RESULT, getEncTablaAmort);
+				this._xmlEnc = new XML(event.result);	
+				if (_xmlEnc.elements().length() > 0){
+					lblPagoComp.text = global.formatoMoneda(_xmlEnc.Table[0].DEUDAVENCIDA);
+					lblPagoEfec.text = global.formatoMoneda(_xmlEnc.Table[0].CANTIDAD);
+					lblMora.text = global.formatoMoneda(_xmlEnc.Table[0].SALDO);
+					lblPeriTran.text = _xmlEnc.Table[0].PERITRAN;
+					lblPeriPag.text = _xmlEnc.Table[0].PERIPAG;
+				}	
+			}
+			
+			public function indicaAmortVenc(indice:int):Boolean{
+				var Pagos:ArrayCollection = dgPagos.dataProvider as ArrayCollection;
+				var sumAbono:Number = 0;
+				var sumCargo:Number = 0;
+				
+				for(var i:int = 0; i <= indice; i++){
+					sumCargo += Number(global.formatoNumerico(Pagos[i].CARGO.toString()));
+					sumAbono += Number(global.formatoNumerico(Pagos[i].ABONO.toString()));
+				}
+				if(sumCargo > sumAbono)
+					return true;
+				return false;
+			}
+			
+			public function init():void{
+				global = new Globales();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function modificaColor():void{
+				dgPagos.rowColorFunction = seleccionaColor; 
+			}
+			
+			private function seleccionaColor(datagrid:DataGrid, rowIndex:int, color:uint):uint
+			{
+				var Pagos:ArrayCollection = dgPagos.dataProvider as ArrayCollection;
+				var rColor:uint;
+				var fecReg:Date = DateField.stringToDate(Pagos[rowIndex].FECHA, "DD/MM/YYYY");
+				if (fecReg < Application.application._Current_Fecha){ 
+					//rColor = 0xd03737;
+					if(Pagos[rowIndex].NUMERO != 0)
+						if(indicaAmortVenc(rowIndex) == true)
+							rColor = 0xD37272;
+						else
+							rColor = 0xDAECF3;
+					else
+						rColor = 0xDAECF3;
+				}
+				else{
+					rColor = color;
+				} 
+				return rColor;
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Button x="425.5" y="418" label="Cerrar" click="cerrar()"/>
+	<Data:RowColorDataGrid id="dgPagos" x="27.5" y="101" width="460" height="310" alpha="1.0" sortableColumns="false">
+		<Data:columns>
+			<mx:DataGridColumn headerText="NO." dataField="NUMERO" width="40"/>
+			<mx:DataGridColumn headerText="FECHA" dataField="FECHA"/>
+			<mx:DataGridColumn headerText="CARGO" dataField="CARGO"/>
+			<mx:DataGridColumn headerText="ABONO" dataField="ABONO"/>
+		</Data:columns>
+	</Data:RowColorDataGrid>
+	<mx:Canvas x="27.5" y="10" width="460" height="83" styleName="canvasMod">
+		<mx:Label x="10" y="7" text="Pagos Comprometidos:"/>
+		<mx:Label x="29" y="31" text="Pagos Efectuados:"/>
+		<mx:Label x="93" y="55" text="Mora:"/>
+		<mx:Label x="149" y="7" id="lblPagoComp" textAlign="right"/>
+		<mx:Label x="149" y="31" id="lblPagoEfec" textAlign="right"/>
+		<mx:Label x="149" y="55" id="lblMora" textAlign="right"/>
+		<mx:Label x="271" y="7" text="Periodos Transcurridos:"/>
+		<mx:Label x="297" y="31" text="Periodos Pagados:"/>
+		<mx:Label x="400" y="7" id="lblPeriTran"/>
+		<mx:Label x="400" y="31" id="lblPeriPag"/>
+	</mx:Canvas>
+</mx:TitleWindow>

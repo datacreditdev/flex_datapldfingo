@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" height="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all">
+	
+	<!--Componente que permite observar el mantenimiento de las cuentas bancarias-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;    
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			
+			[Bindable]
+			public var _xmlIB:XML = new XML();
+			[Bindable]
+			public var _xmlSB:XML = new XML();
+			[Bindable]
+			public var _xmlCB:XML = new XML();
+			[Bindable]
+			public var dPermisos:XML = new XML();
+			
+			public var wsMS:WebService;	
+			public var tituloIB:String;
+			public var tituloSB:String;
+			public var tituloCB:String;
+			public var du:Utils;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionIB:int;
+			public var accionSB:int;
+			public var accionCB:int;
+			public var indIB:int;
+			public var indSB:int;
+			public var indCB:int;
+			public var vScroll:Number;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			public function activarContCB(band:Boolean):void{
+				if(alta == true)
+					btnAgregarCB.enabled = band;
+				btnDatosCB.enabled = band;
+			}
+			
+			public function activarContSB(band:Boolean):void{
+				if(alta == true)
+					btnAgregarSB.enabled = band;
+				btnDatosSB.enabled = band;
+			}
+			
+			public function activarContModCB(band:Boolean):void{
+				if(borrado == true)
+					btnEliminarCB.enabled = band;
+				if(edicion == true)	
+					btnEditarCB.enabled = band;
+			}
+			
+			public function activarContModSB(band:Boolean):void{
+				if(borrado == true)
+					btnEliminarSB.enabled = band;
+				if(edicion == true)	
+					btnEditarSB.enabled = band;
+			}
+			
+			public function activarContIB(band:Boolean):void{
+				if(edicion == true)
+					btnEditar.enabled = band;
+				if(borrado == true)
+					btnEliminar.enabled = band;
+			}
+			
+			public function actualizarCB(event:Event):void{
+				buscarListaCB(1);
+			}
+			
+			public function actualizarSB(event:Event):void{
+				buscarListaSB(1);
+			}
+			
+			public function actualizarIB(event:Event):void{
+				buscarIB(1);
+			}
+			
+			public function buscarListaCB(tipo:int):void{
+				var codIB:String = dgIB.selectedItem.CODIGO;
+				var codSB:String = dgSB.selectedItem.CODIGO;
+				dgCB.dataProvider = null;
+				initConexion();
+				du.sCursor();
+			 	if (tipo == 1)
+					Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, getListaCuentaBancaria);
+				wsMS.getListaCuentaBancaria.send(codIB, codSB);
+			}
+			
+			public function buscarListaSB(tipo:int):void{
+				var codIB:String = dgIB.selectedItem.CODIGO;
+				dgSB.dataProvider = null;
+				initConexion();
+				du.sCursor();
+			 	if (tipo == 1)
+					Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, getListaSucBancaria);
+				wsMS.getListaSucBancaria.send(codIB);
+			}
+			
+			public function buscarIB(tipo:int):void{
+				if (txtCodIB.text != "" || txtIB.text != ""){
+					btnBuscar.setFocus();
+					dgIB.dataProvider = null;
+					initConexion();
+					du.sCursor();
+					if(tipo == 1)
+						Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, getInstBancaria);
+					wsMS.getInstBancaria.send(txtCodIB.text, txtIB.text);
+				}	
+			}
+
+			public function eliminarCB():void{
+				Alert.show("¿Desea eliminar la Cuenta Bancaria seleccionada?", tituloCB, Alert.YES|Alert.NO,null, manejadorEliminarCB,global.iQuest);
+			}
+			
+			public function eliminarSB():void{
+				Alert.show("¿Desea eliminar la Sucursal Bancaria seleccionada?", tituloSB, Alert.YES|Alert.NO,null, manejadorEliminarSB,global.iQuest);
+			}
+			
+			public function eliminarIB():void{
+				Alert.show("¿Desea eliminar la Institución Bancaria seleccionada?", tituloIB, Alert.YES|Alert.NO,null, manejadorEliminarIB,global.iQuest);
+			}
+			
+			private function getListaCuentaBancaria(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getListaCuentaBancaria);
+				this._xmlCB = new XML(event.result);
+				
+				if (this._xmlCB.elements().length() > 0){
+					dgCB.dataProvider = _xmlCB.Table;
+					
+					if(accionCB == 2){
+						dgCB.validateNow();
+						dgCB.verticalScrollPosition = vScroll;
+						dgCB.selectedIndex = indCB;
+						this.accionCB = 0;
+					}
+				}
+				seleccionarCB();
+			}
+			
+			private function getListaSucBancaria(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getListaSucBancaria);
+				this._xmlSB = new XML(event.result);
+				
+				if (this._xmlSB.elements().length() > 0){
+					dgSB.dataProvider = _xmlSB.Table;
+					
+					if(accionSB == 2){
+						dgSB.validateNow();
+						dgSB.verticalScrollPosition = vScroll;
+						dgSB.selectedIndex = indSB;
+						this.accionSB = 0;
+					}
+				}
+				seleccionarSB();
+			}
+			
+			private function getInstBancaria(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getInstBancaria);
+				this._xmlIB = new XML(event.result);
+				if (this._xmlIB.elements().length() > 0){
+					dgIB.dataProvider = _xmlIB.Table;
+					
+					if(accionIB == 2){
+						dgIB.validateNow();
+						dgIB.verticalScrollPosition = vScroll;
+						dgIB.selectedIndex = indIB;
+						this.accionIB = 0;
+					}
+				}
+				seleccionarIB();
+			}
+			
+			public function iniVar():void{
+				this.indIB = -1;
+				this.indSB = -1;
+				this.indCB = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				wsMS = new WebService();
+				tituloIB = "Mantenimiento de Institución Bancaria";
+				tituloSB = "Mantenimiento de Sucursal Bancaria";
+				tituloCB = "Mantenimiento de Cuenta Bancaria";
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function manejadorEliminarCB(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codIB:String = dgIB.selectedItem.CODIGO;
+					var codSB:String = dgSB.selectedItem.CODIGO;  
+					var codCB:String = dgCB.selectedItem.CODIGO;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionCuentaBancaria);
+					wsMS.setAccionCuentaBancaria.send(3, codIB, codSB, codCB, "", "", "", 0, 0, "", "", 0, 0, 
+												   	  Application.application.U_ID);
+			    } 
+			}
+			
+			public function manejadorEliminarSB(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codIB:String = dgIB.selectedItem.CODIGO;
+					var codSB:String = dgSB.selectedItem.CODIGO;  
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionSucBancaria);
+					wsMS.setAccionSucBancaria.send(3, codIB, codSB, "", "", "", 0, 0, 0, 0, "", "", 0, 0, "", "", "",
+								 	     		  Application.application.U_ID);
+			    } 
+			}
+			
+			public function manejadorEliminarIB(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codIB:String = dgIB.selectedItem.CODIGO;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionInstBancaria);
+					wsMS.setAccionInstBancaria.send(3, codIB, "", "", "", "", "", "", "", "", 
+								 	   		   	    "", "", Application.application.U_ID);
+			    } 
+			}
+			
+			public function mostrarFormCB(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion == true){
+					var codIB:String = dgIB.selectedItem.CODIGO;
+					var instBanc:String = dgIB.selectedItem.NOMBRE;
+					var codSB:String = dgSB.selectedItem.CODIGO;
+					var sucBanc:String = dgSB.selectedItem.NOMBRE;
+					var comMttoCtaBancaria:MttoCtaBancaria = new MttoCtaBancaria();
+					switch(tipo){
+						case 1: 
+							comMttoCtaBancaria = MttoCtaBancaria(PopUpManager.createPopUp(this,MttoCtaBancaria,true)); 
+							comMttoCtaBancaria.addEventListener(Event.REMOVED_FROM_STAGE, actualizarCB);
+							comMttoCtaBancaria.init(tipo, codIB, instBanc, codSB, sucBanc);
+							PopUpManager.centerPopUp(comMttoCtaBancaria);
+							break;
+						case 2: 
+							if (dgCB.selectedIndex >= 0){
+								accionCB = tipo;
+								comMttoCtaBancaria = MttoCtaBancaria(PopUpManager.createPopUp(this,MttoCtaBancaria,true)); 
+								var codCB:String = dgCB.selectedItem.CODIGO;
+								var indice:int = dgCB.selectedIndex;
+								iniVar();
+								this.indCB = indice;
+								this.vScroll = dgCB.verticalScrollPosition;
+								comMttoCtaBancaria.addEventListener(Event.REMOVED_FROM_STAGE, actualizarCB);
+								comMttoCtaBancaria.init(tipo, codIB, instBanc, codSB, sucBanc, codCB);
+								PopUpManager.centerPopUp(comMttoCtaBancaria);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de la Cuenta Bancaria",tituloCB,4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			public function mostrarFormSB(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion == true){
+					var codIB:String = dgIB.selectedItem.CODIGO;
+					var instBanc:String = dgIB.selectedItem.NOMBRE;
+					var comMttoSB:MttoSucBancaria = new MttoSucBancaria();
+					switch(tipo){
+						case 1: 
+							comMttoSB = MttoSucBancaria(PopUpManager.createPopUp(this,MttoSucBancaria,true)); 
+							comMttoSB.addEventListener(Event.REMOVED_FROM_STAGE, actualizarSB);
+							comMttoSB.init(tipo, codIB, instBanc);
+							PopUpManager.centerPopUp(comMttoSB);
+							break;
+						case 2: 
+							if (dgSB.selectedIndex >= 0){
+								accionSB = tipo;
+								comMttoSB = MttoSucBancaria(PopUpManager.createPopUp(this,MttoSucBancaria,true)); 
+								var codSB:String = dgSB.selectedItem.CODIGO;
+								var sucBanc:String = dgSB.selectedItem.NOMBRE;
+								var indice:int = dgSB.selectedIndex;
+								iniVar();
+								this.indSB = indice;
+								this.vScroll = dgSB.verticalScrollPosition;
+								comMttoSB.addEventListener(Event.REMOVED_FROM_STAGE, actualizarSB);
+								comMttoSB.init(tipo, codIB, instBanc, codSB);
+								PopUpManager.centerPopUp(comMttoSB);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de la Sucursal Bancaria",tituloSB,4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			public function mostrarFormIB(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoIB:MttoInstBancaria = new MttoInstBancaria();
+				comMttoIB = MttoInstBancaria(PopUpManager.createPopUp(this,MttoInstBancaria,true)); 
+				if(edicion == true){
+					switch(tipo){
+						case 1: 
+							comMttoIB.addEventListener(Event.REMOVED_FROM_STAGE, actualizarIB);
+							comMttoIB.init();
+							comMttoIB.registraInfoInstBancaria();
+							PopUpManager.centerPopUp(comMttoIB);
+							break;
+						case 2: 
+							if (dgIB.selectedIndex >= 0){
+								accionIB = tipo;
+								var codIB:String = dgIB.selectedItem.CODIGO;
+								var instBanc:String = dgIB.selectedItem.NOMBRE;
+								var indice:int = dgIB.selectedIndex;
+								iniVar();
+								this.indIB = indice;
+								this.vScroll = dgIB.verticalScrollPosition;
+								comMttoIB.addEventListener(Event.REMOVED_FROM_STAGE, actualizarIB);
+								comMttoIB.init();	
+								comMttoIB.cargaInfoInstBancaria(codIB, instBanc);
+								PopUpManager.centerPopUp(comMttoIB);	
+							}
+							else
+								Alert.show("Debe seleccionar el registro de la Institución Bancaria",tituloIB,4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}
+			
+			public function permisos():void{
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var i:int;
+				var cont:int;
+				
+				wsMS = du.initWs(wsMS);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(i = 0; i < cont; i++)
+					{
+						switch(dPermisos.Table[i].OPCION.toString())
+						{
+							case "C":
+								consulta = true;
+								break;	
+							case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;				
+						}
+					}
+					btnAgregar.enabled = alta;
+					du.rCursor();
+					du.closeWs(wsMS);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			public function seleccionarCB():void{
+				if (dgCB.selectedIndex >= 0){
+					activarContModCB(true);
+				}
+				else{
+					activarContModCB(false);
+				}
+			}
+			
+			public function seleccionarSB():void{
+				dgCB.dataProvider = null;
+				activarContModCB(false);
+				if (dgSB.selectedIndex >= 0){
+					activarContModSB(true);
+					activarContCB(true);
+				}
+				else{
+					activarContModSB(false);
+					activarContCB(false);
+				}
+			}
+			
+			public function seleccionarIB():void{
+				dgSB.dataProvider = null;
+				dgCB.dataProvider = null;
+				activarContModSB(false);
+				if (dgIB.selectedIndex >= 0){
+					activarContIB(true);
+					activarContSB(true);
+				}
+				else{
+					activarContIB(false);
+					activarContSB(false);
+					activarContCB(false);
+				}
+			}
+			
+			private function setAccionCuentaBancaria(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionCuentaBancaria);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarListaCB(1);
+				else
+					Alert.show(res.substr(2,res.length-1),tituloCB,4,null,null,global.iAlert);
+			}
+			
+			private function setAccionSucBancaria(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionSucBancaria);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarListaSB(1);
+				else
+					Alert.show(res.substr(2,res.length-1), tituloSB,4,null,null,global.iAlert);
+			}
+
+			private function setAccionInstBancaria(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionInstBancaria);
+				var res:String = new String(event.result);
+				if (res.substr(0,1) == "1")
+					buscarIB(1);
+				else
+					Alert.show(res.substr(2,res.length-1), tituloIB,4,null,null,global.iAlert);
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas width="765" height="630" styleName="canvasComp">	
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="726.5" height="125" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgIB" x="10" y="10" width="700.5" height="100" sortableColumns="true" 
+			 	resizableColumns="true" verticalScrollPolicy="on" itemClick="seleccionarIB()" 
+				itemDoubleClick="mostrarFormIB(2)" doubleClickEnabled="true"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+					<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="250"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="10" text="INSTITUCIÓN BANCARIA" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" width="40" icon="@Embed(source='assets/ico_lupa.png')" click="buscarIB(1)" toolTip="Buscar Institución Bancaria"/>
+			<mx:Button id="btnAgregar" x="106" y="3" width="40" icon="@Embed(source='assets/add.png')" click="mostrarFormIB(1)" toolTip="Registrar Institución Bancaria"/>
+			<mx:Button id="btnEliminar" x="154" y="3" width="40" icon="@Embed(source='assets/delete-icon.png')" click="eliminarIB()" enabled="false" toolTip="Eliminar Institución Bancaria"/>
+			<mx:Button id="btnEditar" x="58" y="3" width="40" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormIB(2)" toolTip="Editar Institución Bancaria"/>
+		</mx:Canvas>
+		<mx:Canvas x="18.5" y="39" width="513.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodIB" x="10" y="7" text="CODIGO:" width="53"/>
+			<mx:Label id="lblIB" x="127" y="7" text="NOMBRE:" width="59.5"/>
+			<mx:TextInput id="txtIB" x="185.5" y="5" width="316" enter="buscarIB(1)" maxChars="50"/>
+			<mx:TextInput id="txtCodIB" x="64" y="5" width="50" enter="buscarIB(1)" maxChars="4"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvProdCred" x="19.25" y="262" width="726.5" height="140" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgSB" x="10" y="10" width="704.5" height="118"
+			    draggableColumns="false" verticalScrollPolicy="on" 
+				horizontalScrollPolicy="auto" itemClick="seleccionarSB()" doubleClickEnabled="true"
+				itemDoubleClick="mostrarFormSB(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60"/>
+					<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="170"/>
+					<mx:DataGridColumn headerText="GERENTE" dataField="GERENTE" width="170"/>
+					<mx:DataGridColumn headerText="EJECUTIVO" dataField="EJECUTIVO" width="170"/>
+					<mx:DataGridColumn headerText="LABORA SÁBADOS" dataField="LABSAB" width="130"/>
+					<mx:DataGridColumn headerText="TELÉFONO" dataField="TELEFONO" width="80"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18.5" y="233" text="SUCURSAL BANCARIA" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="540" y="217" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnAgregarSB" x="106" y="3" width="40" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormSB(1)" toolTip="Agregar Suc. Bancaria"/>
+			<mx:Button id="btnEliminarSB" x="154" y="3" width="40" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarSB()" toolTip="Eliminar Suc. Bancaria"/>
+			<mx:Button id="btnEditarSB" x="58" y="3" width="40" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormSB(2)" toolTip="Editar Suc. Bancaria"/>
+			<mx:Button id="btnDatosSB" x="10" y="3" width="40" icon="@Embed(source='assets/folder.png')" click="buscarListaSB(1)" enabled="false" toolTip="Sucursales Bancarias"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle1" x="19.25" y="455" width="726.5" height="165" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgCB" x="10" y="10" width="704.5" height="143"
+				sortableColumns="true" resizableColumns="true" verticalScrollPolicy="on" 
+				itemClick="seleccionarCB()" doubleClickEnabled="true" doubleClick="mostrarFormCB(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60"/>
+					<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="170"/>
+					<mx:DataGridColumn headerText="NUMERO" dataField="NUMERO" width="70"/>
+					<mx:DataGridColumn headerText="TIPO" dataField="TIPOCTA" width="80"/>
+					<!--<mx:DataGridColumn headerText="CUENTA CONTABLE" dataField="CTACONTABLE" width="120"/>
+					<mx:DataGridColumn headerText="DIVISION" dataField="DIVISION" width="80"/>
+					<mx:DataGridColumn headerText="DEPTO" dataField="DEPTO" width="70"/>-->
+					<mx:DataGridColumn headerText="ACTIVA" dataField="ACTIVA" width="70"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="19.25" y="426" text="CUENTA BANCARIA" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="541" y="410" width="204.75" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnAgregarCB" x="106" y="3" width="40" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormCB(1)" toolTip="Agregar Cuenta Bancaria"/>
+			<mx:Button id="btnEliminarCB" x="154" y="3" width="40" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarCB()" toolTip="Eliminar Cuenta Bancaria"/>
+			<mx:Button id="btnEditarCB" x="58" y="3" width="40" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormCB(2)" toolTip="Editar Cuenta Bancaria"/>
+			<mx:Button id="btnDatosCB" x="10" y="3" width="40" icon="@Embed(source='assets/folder.png')" click="buscarListaCB(1)" enabled="false" toolTip="Cuentas Bancarias"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

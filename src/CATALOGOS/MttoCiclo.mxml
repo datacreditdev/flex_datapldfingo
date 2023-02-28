@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="294" height="306">
+	
+	<mx:Validator id="cicloV" source="{txtCiclo}" property="text" 
+	invalid="{txtCiclo.setFocus()}" triggerEvent="" requiredFieldError="Ciclo Requerido"/>
+	
+	<mx:Validator id="plazoV" source="{txtPlazo}" property="text" 
+	invalid="{txtPlazo.setFocus()}" triggerEvent="" requiredFieldError="Plazo Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosCiclo;
+		import Data.EventCiclo;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		[Bindable]
+		private var info:DatosCiclo;
+		private var _xmlCiclo:XML =  new XML();
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var du:Utils;
+		
+		public function cargaInfoCiclo(tipo:int, codTipoProd:String, codProd:String, ciclo:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			tipoAccion = tipo; 
+			this.title = "Edición";
+			//Datos del Ciclo
+			info.cdgTipoProd = codTipoProd;
+			info.cdgProd = codProd;
+			info.ciclo = ciclo;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlCiclo = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if (_xmlCiclo.elements().length() > 0){
+					llenaRegistros();
+				} 	
+			});
+			params[0] = codTipoProd;
+			params[1] = codProd;
+			params[2] = ciclo;
+			//Informacion del Ciclo del Producto seleccionado
+			wsCat.getInfoRegistro.send(2, params);
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			var invalidArray:Array = Validator.validateAll([cicloV, plazoV]);
+				
+			if(invalidArray.length == 0){	
+				info.ciclo = txtCiclo.text;
+				info.plazo = Number(txtPlazo.text);
+				info.tasa = Number(txtTasa.text);
+				info.montoMax = Number(txtMontoMax.text);
+				info.cumpMonto = cumpMonto.selectedValue.toString();
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+		
+		public function guardaCiclo():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionCiclo);
+			wsMS.setAccionCiclo.send(tipoAccion, info.cdgTipoProd, info.cdgProd, info.ciclo, info.plazo,
+								 	 info.montoMax, info.tasa, info.cumpMonto);	
+		}
+	
+		public function init(tipo:int, codTipoProd:String, codProd:String, ciclo:String = null):void{
+			global = new Globales(); 
+			du = new Utils();
+			info = new DatosCiclo();
+			titulo = "Mantenimiento de Ciclo";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			if(tipo == 1)
+				registraInfoCiclo(tipo, codTipoProd, codProd);
+			else if(tipo == 2)
+				cargaInfoCiclo(tipo, codTipoProd, codProd, ciclo);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+			txtCiclo.setFocus();
+			txtCiclo.editable = false;
+			
+			txtCiclo.text = _xmlCiclo.Table[0].CICLO;
+			txtPlazo.text = _xmlCiclo.Table[0].DURACION;
+			txtMontoMax.text = _xmlCiclo.Table[0].MONTOMAX;
+			txtTasa.text = _xmlCiclo.Table[0].TASA;
+			cumpMonto.selectedValue = _xmlCiclo.Table[0].OBLIGAMM;
+		}
+			
+		public function registraInfoCiclo(tipo:int, codTipoProd:String, codProd:String):void{
+			tipoAccion = tipo;
+			this.title = "Nuevo";
+			info.cdgTipoProd = codTipoProd;
+			info.cdgProd = codProd;
+			
+			txtCiclo.setFocus();
+			txtCiclo.editable = true;
+		}
+		
+		private function setAccionCiclo(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCiclo);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validaDatosCiclo(event:EventCiclo):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			if (info.guarda == true)
+				guardaCiclo();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="10" width="274" height="150" styleName="canvasMod">
+		<mx:Label id="lblCiclo" x="80.75" y="15" text="Ciclo:"/>
+		<mx:Label id="lblPlazo" x="80.75" y="47" text="Plazo:"/>
+		<mx:TextInput id="txtCiclo" x="122.75" y="13" width="50" maxChars="2"/>
+		<mx:TextInput id="txtPlazo" x="122.75" y="45" width="50"/>
+		<mx:Label id="lblMontoMax" x="38.75" y="79" text="Monto Máximo:"/>
+		<mx:Label id="lblTasa" x="82.75" y="111" text="Tasa:"/>
+		<mx:TextInput id="txtMontoMax" x="122.75" y="77" width="110.5"/>
+		<mx:TextInput id="txtTasa" x="122.75" y="109" width="50"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="187" width="274" height="30" styleName="canvasMod">
+		<mx:RadioButtonGroup id="cumpMonto"/>
+		<mx:RadioButton x="47.5" y="2" label="Restricción" groupName="cumpMonto" value="S"/>
+		<mx:RadioButton x="141.5" y="2" label="Advertencia" groupName="cumpMonto" value="N"/>
+	</mx:Canvas>
+	<mx:Label x="10" y="168" text="Cumplimiento de Monto Máximo" width="210.25"/>
+	<mx:Button id="btnAceptar" x="96.5" y="225" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="153.5" y="225" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+</mx:TitleWindow>

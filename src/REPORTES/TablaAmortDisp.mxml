@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" showCloseButton="true" 
+	close="cerrar()" width="510" height="492" title="Tabla de Amortización de Disposición" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*" xmlns:control="CONTROL.*">
+
+	<!--Componente que contiene el control que muestra la tabla de amortizacion de la disposicion-->
+	<mx:Script>
+		<![CDATA[
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import Data.Globales;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.managers.CursorManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import flash.external.*;
+			import mx.collections.ArrayCollection;
+			import mx.controls.*;
+
+			[Bindable]
+			public var _xmlCuenta:XML = new XML();
+			[Bindable]
+			public var _xmlEnc:XML = new XML();
+			
+			public var wsMS:WebService;	
+			private var global:Globales;
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function init(orgFond:String, nomOF:String, lineaCred:String, nomLC:String, disp:String, nomDisp:String):void{
+				global = new Globales();
+				contAmortDisp.cargaTablaAmort(orgFond, nomOF, lineaCred, nomLC, disp, nomDisp);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Button x="425.5" y="418" label="Cerrar" click="cerrar()"/>
+	<control:CtrlAmortDisp id="contAmortDisp" />
+</mx:TitleWindow>

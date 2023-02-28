@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationPolicy="all" 
+	creationComplete="initApp()" verticalScrollPolicy="auto" horizontalScrollPolicy="auto">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;		
+			import mx.managers.PopUpManager;
+			import mx.formatters.NumberFormatter;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsRep:WebService;
+			public var du:Utils;
+			public var fecIni:String;
+			public var fecFin:String;
+			public var titulo:String;
+			private var global:Globales;
+		
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				dgE.loadDGInExcel(dgReporte,null,titulo + " del " + fecIni + " al " + fecFin);		
+			}
+		
+			public function generar():void{
+				if(valida()){
+					var noIden:int = chkNoIden.selected == true ? 1: 0; 
+					var iden:int = chkIden.selected == true ? 1: 0;
+					
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsRep);
+						
+						dgReporte.dataProvider = null;
+						btnExportar.enabled = false;
+													
+						if(_xmlRep.elements().length() - 1 > 0)
+						{
+							var cantidad:Number = 0;
+							var cont:int = _xmlRep.elements().length() - 1;
+							btnExportar.enabled = true;
+							dgReporte.dataProvider = _xmlRep.Table;
+							cantidad = Number(_xmlRep.Table[cont].CANTIDAD);
+							lblTotal.text = cont + " Pagos No Identificados $" + global.formatoDecimal(cantidad.toString());   
+							fecIni = dtfFecha.text;
+							fecFin = dtfFechaFinal.text;
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							lblTotal.text = "";
+						}
+					});
+					wsRep.getRepPDI.send(dtfFecha.text, dtfFechaFinal.text, noIden, iden);
+				}	
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Pagos No Identificados";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+			
+			public function initConexion():void{				
+				wsRep = new WebService();			
+				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsRep.loadWSDL();
+			}	
+		
+			private function limpiar():void{
+				var fec:Date;
+				dgReporte.dataProvider = null;
+				btnExportar.enabled = false;
+				lblTotal.text = "";
+				fec = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFechaFinal.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				chkNoIden.selected = true;
+			}
+				
+			private function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha inicial del reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(dtfFechaFinal.text == ""){
+					Alert.show("Seleccione la fecha final del reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(chkNoIden.selected == false && chkIden.selected == false){
+					Alert.show("Debe seleccionar al menos un tipo de pago.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			private function validaFecha():void{
+				if(currentState == null)
+					dtfFecha.selectedDate = global.validaFecha(dtfFecha.selectedDate, dtfFechaFinal.selectedDate,titulo);
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas width="800" height="420" backgroundColor="#ffffff" backgroundAlpha="1.0">
+		<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="17.95" y="53.5" width="264.05" height="120.5" styleName="canvasMod">
+			<mx:Label x="10" y="10" text="Fecha Inicial" width="81" height="20"/>
+			<mx:Label x="141.05" y="10" text="Fecha Final" width="81" height="20"/>
+			<mx:DateField id="dtfFecha" x="10" y="28.5" width="111" change="validaFecha()"/>
+			<mx:DateField id="dtfFechaFinal" x="141.05" y="28.5" width="111" change="validaFecha()"/>
+			<mx:Label x="10" y="60.5" text="Tipo" width="81" height="20"/>
+			<mx:Canvas x="10" y="80.5" width="242.04999" height="30" styleName="canvasMod">
+				<mx:RadioButtonGroup id="tipoPago"/>
+				<mx:CheckBox id="chkNoIden"  x="22" y="2" label="No Identificados"/>
+				<mx:CheckBox id="chkIden" x="132" y="2" label="Identificados"/>
+			</mx:Canvas>
+		</mx:Canvas>
+		<mx:Button x="71.75" y="182" label="Generar" click="generar()"/>
+		<mx:Button x="150.25" y="182" label="Limpiar" width="71" height="24" click="limpiar()"/>
+		<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+		<mx:DataGrid id="dgReporte" x="18.45" y="218" width="763.05" visible="true" height="165" horizontalScrollPolicy="auto">
+			<mx:columns>
+				<mx:DataGridColumn headerText="FECHA" dataField="FECHA" width="90"/>
+				<mx:DataGridColumn headerText="REFERENCIA" dataField="REFERENCIA"/>
+				<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="70"/>
+				<mx:DataGridColumn headerText="BANCO" dataField="BANCO"/>
+				<mx:DataGridColumn headerText="COD CUENTA" dataField="CDGCB" width="90"/>
+				<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA" width="80"/>
+				<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="200"/>
+				<mx:DataGridColumn headerText="SECUENCIA" dataField="SECUENCIA" width="80"/>
+				<mx:DataGridColumn headerText="GRUPO" dataField="CDGCLNS" width="50"/>
+				<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="NOMCLNS" width="150"/>
+				<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
+				<mx:DataGridColumn headerText="IDENTIFICO" dataField="CDGPE_IDEN" width="75"/>
+				<mx:DataGridColumn headerText="NOMBRE IDENTIFICO" dataField="NOMPE_IDEN" width="220"/>
+				<mx:DataGridColumn headerText="FEC IDENTIFICO" dataField="FECHAIDEN" width="100"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Button id="btnExportar" x="678.5" y="182" label="Exportar Excel" click="exportar()" enabled="false"/>
+		<mx:Label id="lblTotal" x="18.45" y="391" width="290.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+	</mx:Canvas>
+</mx:Canvas>

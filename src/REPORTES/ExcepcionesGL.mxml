@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="390" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;	
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsRep:WebService;
+			public var du:Utils;
+			public var titulo:String;
+			public var fecha:String;
+			private var global:Globales;
+		
+			public function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				dgE.loadDGInExcel(dgReporte,null,titulo + " al " + fecha);		
+			}
+		
+			public function generar():void{
+				var tipo:int;
+				
+				if(chkFecha.selected == true){
+					tipo = 2;
+					fecha = global.formatoFechaSep(dtfFecha.selectedDate,"/");	
+				}
+				else{
+					tipo = 1;
+					fecha = global.formatoFechaSep(Application.application._Current_Fecha,"/");
+				}
+				
+				initConexion();
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsRep);
+					
+					dgReporte.dataProvider = null;
+					btnExportar.enabled = false;
+												
+					if(_xmlRep.elements().length() > 0){
+						var i:int;
+						var cantidad:Number = 0;
+						var cont:int = _xmlRep.elements().length();
+						btnExportar.enabled = true;
+						dgReporte.dataProvider = _xmlRep.Table;
+						for(i = 0; i < cont; i++)
+							cantidad += Number(_xmlRep.Table[i].FALTANTE);
+						lblTotal.text = cont + " Registros. Total Faltante $" + global.formatoEntero(cantidad.toString());   
+					}
+					else{
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						lblTotal.text = "";
+					}
+				});
+				wsRep.getRepExcepGL.send(tipo, fecha, situacion.selectedValue);	
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Excepciones de Garantía Líquida";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+			
+			public function initConexion():void{				
+				wsRep = new WebService();			
+				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsRep.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				dgReporte.dataProvider = null;
+				btnExportar.enabled = false;
+				lblTotal.text = "";
+				fec = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+			}
+				
+			public function valida():Boolean{
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha inicial del reporte.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="400" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="149.5" height="89.5" styleName="canvasMod">
+		<mx:Label x="18.25" y="36" text="Fecha Inicio" width="81" height="20"/>
+		<mx:DateField id="dtfFecha" x="18.25" y="54.5" width="111" enabled="false"/>
+		<mx:CheckBox id="chkFecha" x="18.25" y="10" label="Habilita Fecha" change="{dtfFecha.enabled = chkFecha.selected}" />
+	</mx:Canvas>
+	<mx:Button x="18.45" y="151" label="Generar" click="generar()"/>
+	<mx:Button x="96.95" y="151" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:DataGrid id="dgReporte" x="18.45" y="187" width="763.05" visible="true" height="165" horizontalScrollPolicy="on">
+		<mx:columns>
+			<mx:DataGridColumn headerText="CODIGO" dataField="CDGNS" width="60"/>
+			<mx:DataGridColumn headerText="GRUPO" dataField="GRUPO" width="150"/>
+			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
+			<mx:DataGridColumn headerText="INICIO" dataField="INICIO" width="70"/>
+			<mx:DataGridColumn headerText="MONTO EXIGIBLE" dataField="MONTO" width="110"/>
+			<mx:DataGridColumn headerText="SALDO GL" dataField="SALDO_GL" width="70"/>
+			<mx:DataGridColumn headerText="FALTANTE" dataField="FALTANTE" width="70"/>
+			<mx:DataGridColumn headerText="SUCURSAL" dataField="CDGCO" width="70"/>
+			<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="120"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnExportar" x="678.5" y="151" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Label id="lblTotal" x="18.45" y="360" width="380.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+	<mx:Canvas x="175.45" y="53.5" width="132.55" height="89.5" styleName="canvasMod">
+		<mx:RadioButtonGroup id="situacion" />
+		<mx:RadioButton x="18.25" y="16" label="Aut. Tesorería" groupName="situacion" value="T" selected="true"/>
+		<mx:RadioButton x="18.25" y="50" label="Entregados" groupName="situacion" value="E"/>
+	</mx:Canvas>
+	<mx:Label x="175" y="34" text="Situación"/>
+</mx:Canvas>

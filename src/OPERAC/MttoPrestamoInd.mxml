@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="844" height="390" 
+	title="Edición" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import CONTROL.CtrlTablaAmort;
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.events.MoveEvent;
+			import mx.events.FlexEvent;
+			import mx.events.CollectionEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.events.DataGridEvent;
+			import mx.events.DataGridEventReason;
+			import mx.events.ItemClickEvent;
+			import mx.events.ListEvent;
+			import mx.events.CalendarLayoutChangeEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.controls.DateField;
+			import mx.controls.RadioButtonGroup;
+			import mx.effects.*;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			[Bindable]
+			private var info:DatosSolic;
+			private var _xmlPrn:XML =  new XML();
+			private var _xmlAcred:XML =  new XML();
+			[Bindable]
+			private var _xmlControl:XML =  new XML();	
+			[Bindable]	
+			public var activaSituacion:Boolean = true; //variable que controla el estatus de los Checks de situacion
+			
+			//arreglos para almacenar la informacion individual de los acreditados
+			public var acred:Array;
+			public var cantEntreAcred:Array;
+			public var situacionAcred:Array;
+			
+			public var Arr:ArrayCollection = new ArrayCollection();
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			
+			private var vResult:ValidationResultEvent;
+			
+			public var wsMS:WebService;
+			public var bandMod:Boolean;	
+			public var tipoAccion:int;
+			public var indAcred:int;
+			public var coord:String;
+			public var cdgAcred:String;
+			public var ciclo:String;
+			public var tipoCred:String;
+			public var montoMin:Number;
+			public var montoMax:Number;
+			public var promotor:String;
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			public var openEffect:Effect = new Fade();
+			
+			public function actualizaListaAcred(fecSolic:String):void{
+				cargaAcred(cdgAcred, txtCiclo.text, fecSolic);
+			}
+			
+			public function actualizaListaProd(event:CollectionEvent):void{
+				activaControles(info.cdgProdCred, 2);
+			}
+			
+			public function actualizaProdCred(event:ListEvent):void{
+				activaControles(ComboBox(event.currentTarget).selectedItem.id, 1);
+			}
+			
+			//Funcion que actualiza la situacion de la solicitud
+			public function actualizaSituacion(situacion:String):void{
+				var cont:int = _xmlAcred.elements().length();
+				
+				for(var i:int = 0; i < cont; i++){
+					Arr[i].situacion = situacion;
+				}
+			}
+			
+			private function actualizaTablaAmort(event:Event):void{
+				var ctrlAmort:CtrlTablaAmort = event.currentTarget as CtrlTablaAmort;
+				//amortObj = ctrlAmort.pagos;
+				//totalAmort = calculaTotalAmort();
+			}
+			
+			//funcion que permite activar los controles que integran la captura de la solicitud
+			public function activaControles(prodCred:String, tipo:int):void{
+				//tipo = 1   CARGA PARAMETROS DEL PRODUCTO Y ACTIVA CONTROLES CAPTURA
+				//tipo = 2   SOLO ACTIVA LOS CONTROLES DE CAPTURA
+				initConexion();
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlControl = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					
+					if (_xmlControl.elements().length() > 0){
+						montoMin = Number(_xmlControl.Table[0].MONTOMIN);
+						montoMax = Number(_xmlControl.Table[0].MONTOMAX);
+						if(currentState == null){
+							formDatosGralPrn.activaControles(_xmlControl);
+							formCalendarioSolic.activaControles(_xmlControl);
+							formTasasSolic.activaControles(_xmlControl);
+							formRecargosSolic.activaControles(_xmlControl);
+							formEntregaSolic.activaControles(_xmlControl);						
+							if(tipo == 1){
+								formDatosGralPrn.cargaParamsProd(_xmlControl);
+								formCalendarioSolic.cargaParamsProd(_xmlControl);
+								formTasasSolic.cargaParamsProd(_xmlControl);	
+								formRecargosSolic.cargaParamsProd(_xmlControl);
+								formEntregaSolic.cargaParamsProd(_xmlControl);
+							}
+						}
+					} 	
+				});
+				wsMS.getActivaContSolicESIA.send(prodCred);
+			}
+			
+			public function cargaAcred(grupo:String, ciclo:String, fecSolic:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				initConexion();
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlAcred = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					
+					if (_xmlAcred.elements().length() > 0){
+						formateaAcred(ciclo, fecSolic);
+						//asigna la lista de acreditados a los formularios que la implementan
+						formEntregaSolic.cargaAcred(acredObj);
+					} 	
+				});
+				wsMS.getListaAcredPrn.send(grupo, ciclo);
+			}
+			
+			public function cargaInfoPrn(cdgAcred:String, nomAcred:String, ciclo:String, munic:String, coord:String, nomCoord:String, promotor:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				bandMod = true;
+				init();
+				this.coord = coord;
+				this.cdgAcred = cdgAcred;
+				this.ciclo = ciclo;
+				this.promotor = promotor;
+				txtAcred.text = nomAcred;
+				txtCiclo.text = ciclo;
+				txtSucursal.text = nomCoord;
+				
+				tabNav.selectedIndex= 1;
+				
+				initConexion();
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					var res:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					
+					if (res.substr(0,1) != "1"){
+						Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
+						desactivaControles();
+					}
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlPrn = new XML(evt.result);
+					
+						du.rCursor();
+						du.closeWs(wsCat);
+					
+						if (_xmlPrn.elements().length() > 0){
+							cargaAcred(cdgAcred, ciclo, _xmlPrn.Table[0].FECSOLIC);
+							llenaRegistros();
+						}
+						else
+							Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+					});
+					params[0] = cdgAcred;
+					params[1] = ciclo;
+					wsCat.getInfoAcred.send(18, params);
+				});
+				wsMS.getValidaSituacionCredito.send(cdgAcred, ciclo, "I");	
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function desactivaControles():void{
+				bandMod = false;
+				activaSituacion = false; //variable que controla el estatus de los CheckBox de situacion
+			}
+			
+			public function enviar():void{
+				if(bandMod){
+					//eventos enviar de los formularios incluidos
+					formDatosGralPrn.enviarDatosSolic(info);
+					if(validaEntregado())
+						validaFinal();
+				}
+				else{
+					Alert.show("No es posible modificar el registro del préstamo.",titulo,4,null,null,global.iAlert);
+				}
+			}
+			
+			//funcion que realiza la carga de datos 
+			public function formateaAcred(ciclo:String, fecSolic:String):void{
+				var i:int;
+				var cont:int = _xmlAcred.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				Arr.removeAll();
+				acredObj.removeAll();
+				
+				for(i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlAcred.Table[i].CDGCL;
+					oItem.nombre = _xmlAcred.Table[i].NOMBREC;
+					oItem.solicitud = _xmlAcred.Table[i].FECSOL;
+					oItem.situacion = _xmlAcred.Table[i].SITUACIONC;
+					oItem.sitAcred = _xmlAcred.Table[i].SITUACION.toString(); 					
+					oItem.cantAutor = _xmlAcred.Table[i].CANTAUTOR;
+					oItem.cantEntre = _xmlAcred.Table[i].CANTENTRE;
+					oItem.modifica = false;
+					
+					oItem.autorizado = false;
+					oItem.entregado = false;
+					oItem.devuelto = false;
+					oItem.liquidado = false;
+					switch(oItem.sitAcred){
+						case "A":
+							oItem.autorizado = true;
+							break;
+						case "T":
+							oItem.autorizado = true;
+							break;
+						case "E":
+							oItem.entregado = true;
+							break;
+						case "D":
+							oItem.devuelto = true;
+							break;
+						case "L":
+							oItem.liquidado = true;
+							break;
+					}
+					item.push(oItem);
+				}
+				Arr = new ArrayCollection(item);
+				acredObj = new ArrayCollection(item);
+			}
+			
+			//funcion que da formato a la informacion que sera almacenada
+			public function formateaRegAcred():Boolean{
+				acred = new Array;
+				situacionAcred = new Array;
+				cantEntreAcred = new Array;
+							
+				acred[0] = cdgAcred;
+				cantEntreAcred[0] = Number(info.entregado);
+				situacionAcred[0] = info.situacion;
+				return true;
+			}
+			
+			public function guardaPrn():void{
+				if(formateaRegAcred() == true){ //valida que todos los clientes se hayan registrado con montos validos
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					//Servicio invocado en la etapa de registro del prestamo
+					if(info.situacion == 'T')
+						tipoAccion = 1;
+					else if(info.situacion == 'E')
+						tipoAccion = 2
+					else if(info.situacion == 'D')
+						tipoAccion = 3
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionPrn);
+					wsMS.setAccionPrn.send(tipoAccion, Application.application.U_ID, cdgAcred, null, cdgAcred, txtCiclo.text, "I", info.entregado, 
+											   info.devolucion, info.situacion, info.fecEntre, info.fecSolic, acred, cantEntreAcred, situacionAcred, "", "");
+				}
+			}
+			
+			public function init():void{
+				openEffect.duration = 1000;
+				openEffect.play([this]);
+				global = new Globales();
+				du = new Utils();
+				titulo = "Mantenimiento de Préstamo";
+				tipoCred = "I";
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function limpiaSituacion(indice:int):void{
+				Arr[indice].autorizado = false;
+				Arr[indice].entregado = false;
+				Arr[indice].devuelto = false;
+			}
+			
+			public function llenaRegistros():void{
+				var estatus:String = "entrega";
+				info = new DatosSolic();
+				//Datos de producto de la solicitud
+				info.cdgTipoProd = _xmlPrn.Table[0].CDGTPC;
+				info.cdgProdCred = _xmlPrn.Table[0].CDGPCR;
+				info.autorCrr = _xmlPrn.Table[0].FAUTORCRR;
+				
+				//Datos generales de la solicitud
+				info.fecSolic = _xmlPrn.Table[0].FECSOLIC;
+				info.fecEntre = _xmlPrn.Table[0].FECINICIO;
+				info.situacion = _xmlPrn.Table[0].SITUACION;
+				info.entregado = _xmlPrn.Table[0].CANTENTRE;
+				info.autorizado = _xmlPrn.Table[0].CANTAUTOR;
+				info.devolucion = _xmlPrn.Table[0].CANTDEVOL;
+				info.devoluciones = _xmlPrn.Table[0].SUMADEV;
+				info.moneda = _xmlPrn.Table[0].CDGMO;
+				
+				//Datos del calendario de la solicitud
+				info.periodicidad = _xmlPrn.Table[0].PERIODICIDAD;
+				info.diaJunta = _xmlPrn.Table[0].DIAJUNTA;
+				info.diasGracia = _xmlPrn.Table[0].DESFASEPAGO;
+ 				info.duracion = _xmlPrn.Table[0].PLAZO; 
+				info.pagoCapital = _xmlPrn.Table[0].PERIGRCAP;
+				info.pagoInteres = _xmlPrn.Table[0].PERIGRINT;
+				info.multPerio = _xmlPrn.Table[0].MULTPER;
+				info.horario = _xmlPrn.Table[0].HORARIO;
+				
+				//Tasas de la solicitud
+				info.metodoCobro = _xmlPrn.Table[0].CDGMCI;
+				info.formaDist = _xmlPrn.Table[0].CDGFDI;
+				info.instrumento = _xmlPrn.Table[0].CDGTI;
+				info.interes = _xmlPrn.Table[0].TASA;
+				
+				//Datos de recargos de la solicitud
+				info.aplican = _xmlPrn.Table[0].MODOAPLIRECA;
+				info.metodoAplic = _xmlPrn.Table[0].METRECA;				
+				info.tasaFija = _xmlPrn.Table[0].TASARECFIJ;
+				info.factorTasa = _xmlPrn.Table[0].TASARECTAS;
+				
+				//Datos de la mesa directiva del grupo
+				info.presidente = _xmlPrn.Table[0].PRESIDENTE;
+				info.secretario = _xmlPrn.Table[0].SECRETARIO;
+				info.tesorero = _xmlPrn.Table[0].TESORERO;
+				
+				//Datos de entrega de la solicitud
+				info.formaEntre = _xmlPrn.Table[0].FORMAENTREGA;
+				info.nombreCheq = _xmlPrn.Table[0].NOMBRECH;
+				
+				//bandMod indica si la informacion de la solicitud puede modificarse
+				formProdSolic.init(cdgAcred, info, 2);
+				formDatosGralPrn.init(info, 2, estatus);
+				formCalendarioSolic.init(info, 2, estatus);
+				formTasasSolic.init(info, 2, estatus);
+				formRecargosSolic.init(info, 2, estatus);
+				formEntregaSolic.init(info, 2, estatus);
+				//validaSituacionInicial();
+			}
+			
+			private function muestraTablaAmort(editable:Boolean = false):void{
+				var obj:DisplayObject = this.parentApplication.parent;
+				var comTablaAmort:CtrlTablaAmort = new CtrlTablaAmort;
+				comTablaAmort = CtrlTablaAmort(PopUpManager.createPopUp(obj,CtrlTablaAmort,true));
+				comTablaAmort.addEventListener("enviar", actualizaTablaAmort);
+				PopUpManager.centerPopUp(comTablaAmort);
+				comTablaAmort.init(cdgAcred, txtAcred.text, txtCiclo.text, tipoCred, editable);
+			}
+			
+			private function registraCausaRechazo(event:ListEvent):void{
+				Arr[indAcred].rechazo = ComboBox(event.currentTarget).selectedItem.id
+			}
+			
+			public function selSituacion(event:ItemClickEvent):void{
+				var situacion:String = RadioButtonGroup(event.currentTarget).selection.label;
+				actualizaSituacion(situacion);
+			}
+			
+			private function setAccionPrn(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionPrn);
+				var res:String = event.result.toString();
+				if (res.substr(0,1) == "1")
+					cerrar();
+				else
+					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+			}
+			
+			public function validaEntregado():Boolean{
+				if(info.situacion == "E" && info.entregado == 0){
+					Alert.show("La préstamo del acreditado fue entregado sin monto.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;	
+			}
+			
+			public function validaFinal():void{
+				if (info.guardaDatos == true)
+					guardaPrn();
+				else
+					Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+			}
+			
+			public function validaMonto(event:Event):void{	
+				numVal.source = TextInput(event.currentTarget);
+				vResult = numVal.validate();
+
+				if (vResult.type!=ValidationResultEvent.VALID)
+                	TextInput(event.currentTarget).text = "";
+			}
+		]]>
+	</mx:Script>
+
+	 <mx:NumberValidator id="numVal" property="text" precision="2"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator="," required="false"/>
+
+	<mx:TabNavigator id="tabNav" width="824" height="251" x="10" y="52" creationPolicy="all">
+		<mx:Canvas label="Producto" width="100%" height="100%">
+			<Forms:FormProductoSolicInd id="formProdSolic" x="140" y="39" width="540" height="130"/>
+		</mx:Canvas>
+		<mx:Canvas id="datosGrals" label="Datos Generales" width="100%" height="100%">	
+			<Forms:FormDatosGralPrnInd id="formDatosGralPrn" height="195" width="800" x="10" y="10"/>
+		</mx:Canvas>
+		<mx:Canvas label="Calendario" width="100%" height="100%">	
+			<Forms:FormCalendarioSolicNvo id="formCalendarioSolic" x="75" height="205"/>
+		</mx:Canvas>
+		<mx:Canvas label="Tasas" width="100%" height="100%">	
+			<Forms:FormTasasSolic id="formTasasSolic" x="55" height="195" y="10"/>
+		</mx:Canvas>
+		<mx:Canvas label="Recargos" width="100%" height="100%">	
+			<Forms:FormRecargosSolic id="formRecargosSolic" x="60"/>
+		</mx:Canvas>
+		<mx:Canvas label="Entrega" width="100%" height="100%" id="canvas2">	
+			<Forms:FormEntregaSolic id="formEntregaSolic" x="76" y="29"/>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Button id="btnCancelar" x="794" y="311" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="746" y="311" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Canvas x="62" y="10" width="720" height="36" styleName="canvasMod">
+		<mx:Label x="20" y="6" text="Acreditado:"/>
+		<mx:TextInput id="txtAcred" x="89" y="5" width="238" editable="false"/>
+		<mx:Label x="345" y="6" text="Ciclo:"/>
+		<mx:Label x="455" y="6" text="Sucursal:"/>
+		<mx:TextInput x="516" y="5" width="181" id="txtSucursal" editable="false"/>
+		<mx:TextInput x="384" y="5" width="45" id="txtCiclo" editable="false"/>
+	</mx:Canvas>
+	<mx:Button id="btnTabla" x="10" y="310" label="Tabla Amortización" click="muestraTablaAmort()"/>
+</mx:TitleWindow>

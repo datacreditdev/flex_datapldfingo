@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="290" height="172" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
+	<mx:states>
+		<mx:State name="desembolso">
+			<mx:SetProperty name="height" value="390"/>
+			<mx:SetProperty target="{lblControl}" name="visible" value="true"/>
+			<mx:SetProperty target="{lblControl}" name="y" value="360"/>
+			<mx:AddChild position="lastChild">
+				<Data:RowColorDataGrid id="dgDesembolso" x="18.45" y="169" width="570.5" height="183" editable="true"
+					sortableColumns="false" resizableColumns="false" itemEditBeginning="desabilitaEdicion(event)"> 
+					<Data:columns>
+						<mx:DataGridColumn headerText="" dataField="REGISTRO" textAlign="center" rendererIsEditor="true" width="30" editorDataField="selected">
+							<mx:itemRenderer>
+								<mx:Component>
+											<mx:CheckBox change="outerDocument.seleccionarReg(event)" width="25" fontSize="10" verticalCenter="0"/> 
+										</mx:Component>
+							</mx:itemRenderer>
+						</mx:DataGridColumn>
+						<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="50" editable="false"/>
+						<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBREC" width="180" editable="false"/>
+						<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="40" editable="false"/>
+						<mx:DataGridColumn headerText="CHEQUE" dataField="NOCHEQUE" width="50" editable="false"/>
+						<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="110" editable="false"/>
+					</Data:columns>
+				</Data:RowColorDataGrid>
+			</mx:AddChild>
+			<mx:SetProperty name="width" value="610"/>
+			<mx:AddChild position="lastChild">
+				<mx:Button id="btnImprimir" x="528.95" y="358" icon="@Embed(source='assets/button_ok.png')" click="enviar()" enabled="true" toolTip="Imprimir" width="60"/>
+			</mx:AddChild>
+		</mx:State>
+		<mx:State name="garantia">
+			<mx:SetProperty name="height" value="390"/>
+			<mx:SetProperty target="{lblControl}" name="visible" value="true"/>
+			<mx:SetProperty target="{lblControl}" name="y" value="360"/>
+			<mx:AddChild position="lastChild">
+				<Data:RowColorDataGrid id="dgGarantia" x="18.45" y="169" width="660.5" height="183" editable="true"
+					sortableColumns="false" resizableColumns="false" itemEditBeginning="desabilitaEdicion(event)" 
+					horizontalScrollPolicy="on" > 
+					<Data:columns>
+						<mx:DataGridColumn headerText="" dataField="REGISTRO" textAlign="center" rendererIsEditor="true" width="30" editorDataField="selected">
+							<mx:itemRenderer>
+								<mx:Component>
+											<mx:CheckBox change="outerDocument.seleccionarReg(event)" width="25" fontSize="10" verticalCenter="0"/> 
+										</mx:Component>
+							</mx:itemRenderer>
+						</mx:DataGridColumn>
+						<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="60" editable="false"/>
+						<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBREC" width="180" editable="false"/>
+						<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50" editable="false"/>
+						<mx:DataGridColumn headerText="CHEQUE" dataField="NOCHEQUE" width="60" editable="false"/>
+						<mx:DataGridColumn headerText="MONTO" dataField="CANTIDAD" width="70" editable="false"/>
+						<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="250" editable="false"/>
+					</Data:columns>
+				</Data:RowColorDataGrid>
+			</mx:AddChild>
+			<mx:SetProperty name="width" value="700"/>
+			<mx:AddChild position="lastChild">
+				<mx:Button id="btnImpGarantia" x="618.95" y="358" icon="@Embed(source='assets/button_ok.png')" click="enviar()" enabled="true" toolTip="Imprimir" width="60"/>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Parallel>
+				<mx:Resize duration="1000" target="{this}"/> 
+			</mx:Parallel>
+		</mx:Transition>
+	</mx:transitions>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;	
+			import mx.controls.Alert;
+			import mx.controls.CheckBox;
+			import mx.effects.easing.Elastic;
+			import mx.events.DataGridEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			[Bindable]
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var titulo:String;
+			public var fecha:String;
+			public var cheque:String;
+			public var grupo:String;
+			public var ciclo:String;
+			public var rep:String;
+			public var tipo:String;
+			private var global:Globales;
+			
+			public var regObj:ArrayCollection = new ArrayCollection();
+		
+			public function calculaRegSel():Number{
+				var i:int;
+				var cont:Number = 0;
+				var listaReg:ArrayCollection;
+				
+				if(currentState == "desembolso")
+					listaReg = dgDesembolso.dataProvider as ArrayCollection;
+				else if(currentState == "garantia")
+					listaReg = dgGarantia.dataProvider as ArrayCollection;
+				
+				for (i = 0; i < listaReg.length; i++){
+					if(listaReg[i].REGISTRO == true)
+						cont++;
+				}
+				return cont;
+			}
+		
+			public function consultar():void{
+				if(valida()){
+					grupo = txtGrupo.text;
+					tipo = tipoCheque.selectedValue.toString();
+					
+					initConexion();
+					du.sCursor();
+							
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+											
+						if(_xmlRep.elements().length() > 0){
+							if(tipo == 'D'){
+								formatearRegDesembolso();
+								currentState = "desembolso";
+								dgDesembolso.dataProvider = regObj;
+								lblControl.text = calculaRegSel().toString() + " Registro(s) seleccionado(s)";
+							}
+							else if(tipo == 'G'){
+								formatearRegGarantia();
+								currentState = "garantia";
+								dgGarantia.dataProvider = regObj;
+								lblControl.text = calculaRegSel().toString() + " Registro(s) seleccionado(s)";
+							}   
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							limpiar();
+						}
+					});
+					wsMS.getReimpCheques.send(tipo, grupo, Application.application.U_ID);
+				}	
+			}			
+			
+			public function desabilitaEdicion(event:DataGridEvent):void{
+				event.preventDefault();
+			} 
+			
+			public function enviar():void{
+				if(validaReg()){
+					var consulta:String;
+					formatearReg();
+					
+					var id:String = "&id=" + rep;
+					var tipo:String = "&tipo=" + tipo;
+					var consGrupo:String = "&grupo=" + grupo;
+					var consChqIni:String = "&chqIni=" + cheque;
+					
+					if(currentState == "desembolso"){
+						var consCiclo:String = "&ciclo=" + ciclo;
+						consulta = global.urlPdf + id + tipo + consGrupo + consCiclo + consChqIni;
+					}
+					else if(currentState == "garantia")
+						consulta = global.urlPdf + id + tipo + consGrupo + consChqIni;
+	
+					Application.application.muestraPdf(consulta);
+				}
+			}
+			
+			public function formatearReg():void{
+				var listaReg:ArrayCollection;
+				
+				if(currentState == "desembolso")
+					listaReg = dgDesembolso.dataProvider as ArrayCollection;
+				else if(currentState == "garantia")
+					listaReg = dgGarantia.dataProvider as ArrayCollection;
+					
+				cheque = "";
+				
+				if (listaReg != null){
+					var cont:int = listaReg.length;
+					var i:int; 
+					
+					if(currentState == "desembolso")
+						ciclo = listaReg[0].CICLO;
+						
+					for(i = 0; i < cont; i++){
+						if (listaReg[i].REGISTRO == true){
+							cheque += (cheque != ""? "|" : "") + listaReg[i].NOCHEQUE; 							
+						}
+					}
+				}
+			}	
+						
+			private function formatearRegDesembolso():void{
+				var i:int;
+				var cont:int = _xmlRep.elements().length();
+				
+				regObj.removeAll();
+				regObj.refresh();
+				
+				for (i = 0; i < cont; i++){
+					var oItem:Object = new Object();
+					oItem.REGISTRO = false;
+					oItem.CDGCL = _xmlRep.Table[i].CDGCL;
+					oItem.NOMBREC = _xmlRep.Table[i].NOMBREC;
+					oItem.CICLO = _xmlRep.Table[i].CICLO;
+					oItem.NOCHEQUE = _xmlRep.Table[i].NOCHEQUE;
+					oItem.CANTAUTOR = _xmlRep.Table[i].CANTAUTOR;
+					regObj.addItem(oItem);
+				}
+			}
+			
+			private function formatearRegGarantia():void{
+				var i:int;
+				var cont:int = _xmlRep.elements().length();
+				
+				regObj.removeAll();
+				regObj.refresh();
+				
+				for (i = 0; i < cont; i++){
+					var oItem:Object = new Object();
+					oItem.REGISTRO = false;
+					oItem.CDGCL = _xmlRep.Table[i].CDGCL;
+					oItem.NOMBREC = _xmlRep.Table[i].NOMBREC;
+					oItem.CICLO = _xmlRep.Table[i].CICLO;
+					oItem.NOCHEQUE = _xmlRep.Table[i].NOCHEQUE;
+					oItem.CANTIDAD = _xmlRep.Table[i].CANTIDAD;
+					oItem.DESCRIPCION = _xmlRep.Table[i].DESCRIPCION;
+					regObj.addItem(oItem);
+				}
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				rep = "26";
+				titulo = "Reimpresión de Cheques";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				txtGrupo.text = "";
+				lblControl.text = "";
+				currentState = null;
+			}
+			
+			public function seleccionarReg(event:Event):void{
+				var ind:int;
+				var vScroll:Number;
+				if(currentState == "desembolso"){
+					ind = dgDesembolso.selectedIndex;
+					vScroll = dgDesembolso.verticalScrollPosition;
+					regObj[ind].REGISTRO = CheckBox(event.currentTarget).selected;
+				}
+				else if(currentState == "garantia"){
+					ind = dgGarantia.selectedIndex;
+					vScroll = dgGarantia.verticalScrollPosition;
+					regObj[ind].REGISTRO = CheckBox(event.currentTarget).selected;
+				}
+				lblControl.text = calculaRegSel().toString() + " Registro(s) seleccionado(s)";
+			}	
+				
+			public function valida():Boolean{
+				if(txtGrupo.text == "" || txtGrupo.text.length < 6){
+					Alert.show("Capture el código de grupo.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function validaReg():Boolean{
+				var i:int;
+				var n:int;
+				var cont:int;
+				var listaInfo:ArrayCollection;
+				
+				if(currentState == "desembolso")
+					listaInfo = dgDesembolso.dataProvider as ArrayCollection;
+				else if(currentState == "garantia")
+				  	listaInfo = dgGarantia.dataProvider as ArrayCollection;
+				
+				cont = listaInfo.length;
+				n = 0;
+				
+				for(i = 0; i < cont; i++){
+					if (listaInfo[i].REGISTRO == true)
+						n++;
+				}
+				if(n == 0){
+					Alert.show("Debe seleccionar al menos un registro para iniciar el proceso.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Label id="lblTitulo" x="18" y="10" width="256" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="115.5" height="75.5" styleName="canvasMod">
+		<mx:Label x="20.75" y="10" text="Grupo" width="47.5" height="20"/>
+		<mx:TextInput id="txtGrupo" x="20.75" y="29" maxChars="6" restrict="0-9" enter="consultar()"/>
+	</mx:Canvas>
+	<mx:Button x="51.95" y="136" label="Consultar" click="consultar()"/>
+	<mx:Button x="139.95" y="136" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:Canvas x="141.45" y="53.5" width="132.55" height="75.5" styleName="canvasMod">
+		<mx:RadioButtonGroup id="tipoCheque" />
+		<mx:RadioButton x="20.25" y="11" label="Desembolso" groupName="tipoCheque" value="D" selected="true"/>
+		<mx:RadioButton x="20.25" y="39.5" label="Dev. Garantía" groupName="tipoCheque" value="G"/>
+	</mx:Canvas>
+	<mx:Label x="141.45" y="34" text="Tipo de Cheques"/>
+	<mx:Label id="lblControl" x="17.95" y="168" width="380.05" fontWeight="bold" fontStyle="italic" fontSize="12" visible="false"/>
+</mx:Canvas>

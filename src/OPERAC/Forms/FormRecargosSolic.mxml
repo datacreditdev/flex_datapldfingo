@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="700" height="200" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.controls.Alert;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.validators.Validator;
+			
+			[Bindable]
+			private var _xmlCodigo:XML =  new XML();
+			
+			public var datos:DatosSolic = new DatosSolic();
+			
+			public var wsMS:WebService;
+			public var tipoAccion:int;
+			public var estatus:String;
+			private var global:Globales;
+			private var du:Utils;
+			private var vResult:ValidationResultEvent;
+			
+			public function activaControles(_xmlControl:XML):void{
+				var tipoTasa:String = _xmlControl.Table[0].FIJAREC;
+				var metAplica:String = _xmlControl.Table[0].FIJAMAP;
+				//Tipo de Tasa
+				if(tipoTasa == "S"){
+					cnvTipoTasa.enabled = false;
+					cnvTasaFija.enabled = false;
+				}
+				else if(tipoTasa == "N"){
+					cnvTipoTasa.enabled = true;
+					cnvTasaFija.enabled = true;
+				}
+				//Forma de aplicacion de pagos
+				if(metAplica == "S")
+					cnvMetAplica.enabled = false;
+				else if(metAplica == "N")
+					cnvMetAplica.enabled = true;
+			}
+			
+			public function activaContTasa():void{
+				tasaFija.enabled = false;
+				factorTasa.enabled = false;
+				cnvAplicaDesde.enabled = false;
+				rdbNinguna.selected = true;
+				if(txtTasaFija.text != ""){
+					rdbFijaInd.selected = true;
+					tasaFija.enabled = true;
+					cnvAplicaDesde.enabled = true;
+				}
+				if(txtFactorTasa.text != ""){
+					rdbDependiente.selected = true;
+					factorTasa.enabled = true;
+					cnvAplicaDesde.enabled = true;
+				}
+			}
+			
+			public function cambiaContTasa():void{
+				tasaFija.enabled = false;
+				factorTasa.enabled = false;
+				cnvAplicaDesde.enabled = false;
+				txtTasaFija.text = "";
+				txtFactorTasa.text = "";
+				if(rdbFijaInd.selected == true){
+					tasaFija.enabled = true;
+					cnvAplicaDesde.enabled = true;
+				}
+				if(rdbDependiente.selected == true){
+					factorTasa.enabled = true;
+					cnvAplicaDesde.enabled = true;
+				}
+			}
+			
+			public function cargaParamsProd(_xmlParam:XML):void{
+				txtTasaFija.text = _xmlParam.Table[0].TASARECFIJ;
+				txtFactorTasa.text = _xmlParam.Table[0].TASARECTAS;	
+				aplicaDesde.selectedValue = _xmlParam.Table[0].MODOAPLIRECA;
+				metodoAplica.selectedValue = _xmlParam.Table[0].METRECA;
+				activaContTasa();
+			}
+			
+			public function desactivaControles():void{
+				cnvTipoTasa.enabled = false;
+				cnvTasaFija.enabled = false;
+				cnvAplicaDesde.enabled = false;
+				cnvMetAplica.enabled = false;
+			}
+			
+			public function enviarDatosSolic(formData:DatosSolic):void{
+				//var invalidArray:Array = Validator.validateAll([nombreV, fechaV, coordinacionV, entFedV, municipioV, localidadV, coloniaV]);
+				
+				//if(invalidArray.length == 0){	
+				if(txtTasaFija.text != "")
+					formData.tasaFija = txtTasaFija.text;
+				if(txtFactorTasa.text != "")
+					formData.factorTasa = txtFactorTasa.text;
+				if(aplicaDesde.selection != null)					
+					formData.aplican = aplicaDesde.selectedValue.toString();
+				if(metodoAplica.selection != null)
+					formData.metodoAplic = metodoAplica.selectedValue.toString();
+				formData.guardaRecargos = true;
+				//}
+				//else{
+				//	formData.guardaDatos = false;
+				//}
+				var event:EventSolic = new EventSolic("enviarDatosSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(info:DatosSolic, tipoAccion:int, estatus:String):void{
+				this.tipoAccion = tipoAccion;
+				global = new Globales();
+				du = new Utils();
+					
+				if (info != null){
+					datos = info;
+					
+					//if(info.situacion == 'S')			
+					//	activaContTasa();			
+					txtTasaFija.text = datos.tasaFija;
+					txtFactorTasa.text = datos.factorTasa;
+					aplicaDesde.selectedValue = info.aplican;
+					metodoAplica.selectedValue = info.metodoAplic;
+					activaContTasa();
+					if(info.situacion == 'A' || info.situacion == 'R' || estatus == "evaluacion" || estatus == "entrega")
+						desactivaControles();
+				}	
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function validaMonto(event:Event):void{
+				numVal.source = TextInput(event.currentTarget);
+				vResult = numVal.validate();
+
+				if (vResult.type != ValidationResultEvent.VALID)
+                	TextInput(event.currentTarget).text = "";
+			}
+	]]>
+	</mx:Script>
+	
+	 <mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas id="cnvTipoTasa" x="136" y="28" width="210" height="67" styleName="canvasMod">
+		<mx:RadioButtonGroup id="tipoTasa" itemClick="cambiaContTasa()"/>
+		<mx:RadioButton id="rdbFijaInd" x="11" y="0" label="Fija Independiente" groupName="tipoTasa"/>
+		<mx:RadioButton id="rdbDependiente" x="11" y="20" label="Dependiente de la tasa de interés" groupName="tipoTasa"/>
+		<mx:RadioButton id="rdbNinguna" x="11" y="41" label="Ninguna" groupName="tipoTasa"/>
+	</mx:Canvas>
+	<mx:Canvas id="cnvAplicaDesde" x="354" y="28" width="210" height="67" styleName="canvasMod">
+		<mx:RadioButtonGroup id="aplicaDesde"/>
+		<mx:RadioButton id="rdbPorPeriodo" x="15" y="21" label="Por periodo" groupName="aplicaDesde" value="1"/>
+		<mx:RadioButton id="rdbFinCiclo" x="114" y="21" label="Fin de ciclo" groupName="aplicaDesde" value="2"/>
+	</mx:Canvas>
+	<mx:Canvas id="cnvTasaFija" x="136" y="122" width="210" height="65" styleName="canvasMod">
+		<mx:FormItem id="tasaFija" label="Tasa fija:" x="96" y="5">
+			<mx:TextInput id="txtTasaFija" width="44" restrict="0-9;." change="validaMonto(event)"/>	
+		</mx:FormItem>
+		<mx:FormItem id="factorTasa" label="Factor sobre tasa de interés:" x="1" y="34">
+			<mx:TextInput id="txtFactorTasa" width="44" restrict="0-9;." change="validaMonto(event)"/>	
+		</mx:FormItem>
+	</mx:Canvas>
+	<mx:Canvas id="cnvMetAplica" x="354" y="122" width="279" height="65" styleName="canvasMod"> 
+		<mx:RadioButtonGroup id="metodoAplica"/>
+		<mx:RadioButton id="rdbAplCap" x="10" y="7" label="Los pagos aplican primero a capital" groupName="metodoAplica" value="1"/>
+		<mx:RadioButton id="rdbAplInt" x="10" y="33" label="Los pagos aplican primero a intereses y recargos" groupName="metodoAplica" value="2"/>
+	</mx:Canvas>
+	<mx:Label x="136" y="10" text="Tipo de tasa"/>
+	<mx:Label x="354" y="10" text="Se aplican desde"/>
+	<mx:Label x="354" y="103" text="Método de aplicación de los pagos"/>
+</mx:Canvas>

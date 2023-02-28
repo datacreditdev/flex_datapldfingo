@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="368" height="260" title="Agregar/Editar Perfil" showCloseButton="true" close="cerrar()" creationPolicy="all" creationComplete="init()">
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosPerfil;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.events.CloseEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.mxml.Concurrency;
+		import mx.rpc.soap.WebService;
+		
+		private var info:DatosPerfil;
+		public var ws:WebService;
+		public var du:Utils;
+		public var global:Globales;
+		public var tipoAccion:int;
+		
+		public function cargaInfoPerfil(codigo:String, nombre:String):void{
+			tipoAccion = 2;
+			txtCodigo.text = codigo;
+			txtCodigo.editable = false;
+			txtNombre.text = nombre;
+			txtNombre.setFocus();
+		}
+		
+		public function keyListener(event:KeyboardEvent):void{
+			if (event.keyCode == 13)					
+				guardar();										
+		}				
+		
+		private function guardar():void{
+			if(valida() == false)
+				return;
+			
+			info = new DatosPerfil();							
+			
+			info.codigo = txtCodigo.text;
+			info.nombre	= txtNombre.text;				
+			
+			var aPerfil:Array = new Array();								
+			aPerfil[0] = info.codigo;
+			aPerfil[1] = info.nombre;	
+			
+			ws = new WebService();	
+			ws = du.initWs(ws);
+			du.sCursor();
+			ws = du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
+				var res:String = evt.result.toString();
+				ws = du.closeWs(ws);
+				du.rCursor();
+				
+				if(res.substr(0,1) == "1")	
+				{
+					cerrar();
+					//Params[0] = Application.application.SESSION_ID;
+					//Params[1] = Application.application._Current_Mod_Id;
+					//Params[2] = 4;
+
+					//if(TipoAccion == 1)
+					//{
+					//	du.showExito("Perfil Agregado exitosamente");
+						/*ws = du.initWs(ws);
+						du.sCursor();
+						du.ejecutaWsMethod(ws,function(evt_b:ResultEvent):void{
+							du.rCursor();
+							ws = du.closeWs(ws);
+						});
+						Params[3] = 'Alta de perfil' + txtNombre.text;
+						ws.ESLoginMethods.send(5,Params);*/
+					//	}						
+					//else
+					//{
+					//	du.showExito("Perfil modificado exitosamente");
+						/*ws = du.initWs(ws);
+						du.sCursor();
+						du.ejecutaWsMethod(ws,function(evt_b:ResultEvent):void{
+							du.rCursor();
+							ws = du.closeWs(ws);
+						});
+						Params[3] = 'Modificación de perfil' + txtNombre.text;
+						ws.ESLoginMethods.send(5,Params);*/
+					//}		
+					//Cerrar();				
+				}
+				else
+					Alert.show(res.substr(2,res.length - 1),"Mantenimiento de Perfil",4,null,null,global.iAlert);		
+			});
+			ws.ES_Admin_Perfiles.send(tipoAccion, aPerfil);						
+		}
+		
+		private function init():void{
+			global = new Globales();
+			du = new Utils();
+		}
+		
+		public function registraInfoPerfil():void{
+			tipoAccion = 1;
+			txtCodigo.setFocus();
+		} 
+		
+		private function valida():Boolean
+		{
+			if(txtCodigo.text == ""){
+				Alert.show("Debe capturar el código del perfil","Mantenimiento de Perfil",4,null,null,global.iAlert);
+				return false;
+			}
+			if(txtNombre.text == ''){
+				Alert.show("Debe capturar el nombre del perfil","Mantenimiento de Perfil",4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}
+		
+		private function cerrar():void{		
+			var event:CloseEvent = new CloseEvent('CloseEvent',true);
+			dispatchEvent(event);						
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Label x="26.5" y="10" text="Código de perfil:" fontWeight="bold"/>
+	<mx:Label x="26.5" y="70" text="Nombre:" fontWeight="bold"/>
+	<mx:TextInput x="26.5" y="38" width="315" id="txtCodigo" enter="guardar()" maxChars="5" restrict="A-Z;a-z;Ñ;ñ;"/>
+	<mx:TextInput x="26.5" y="98" width="315" height="66" id="txtNombre" enter="guardar()" maxChars="35" restrict="A-Z;a-z;Ñ;ñ; "/>
+	<mx:Button x="221.5" y="182" label="Guardar" width="120" click="guardar()"/>
+	<mx:Label x="318" y="23" id="lblIdPerfil" text="0" visible="false"/>
+</mx:TitleWindow>

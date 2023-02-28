@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="358" height="172">
+	
+	<mx:Validator id="codigoV" source="{txtCodigo}" property="text" 
+	invalid="{txtCodigo.setFocus()}" triggerEvent="" requiredFieldError="Codigo Requerido"/>
+	
+	<mx:Validator id="nombreV" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Tipo de Producto Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosInstBancaria;
+		import Data.EventInstBancaria;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		[Bindable]
+		private var info:DatosInstBancaria;
+		[Bindable]
+		private var _xmlIB:XML =  new XML();
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var du:Utils;
+		
+		public function cargaInfoInstBancaria(cdgIB:String, instBanc:String):void{
+			tipoAccion = 2; 
+			this.title = "Edición";
+			
+			info = new DatosInstBancaria();
+			//Datos del tipo de Producto
+			info.cdgIB = cdgIB;
+			info.nombreIB = instBanc;
+			
+			llenaRegistros();
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			info = new DatosInstBancaria();
+				
+			var invalidArray:Array = Validator.validateAll([codigoV, nombreV]);
+				
+			if(invalidArray.length == 0){	
+				info.cdgIB = txtCodigo.text;
+				info.nombreIB = txtNombre.text;
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+		
+		public function guardaInstBancaria():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionInstBancaria);
+			wsMS.setAccionInstBancaria.send(tipoAccion, info.cdgIB, info.nombreIB);	
+		}
+	
+		public function init():void{
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Mantenimiento de Institución Bancaria";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+			txtCodigo.setFocus();
+			txtCodigo.editable = false;
+			
+			txtCodigo.text = info.cdgIB;
+			txtNombre.text = info.nombreIB;
+		}
+			
+		public function registraInfoInstBancaria():void{
+			tipoAccion = 1;
+			this.title = "Nuevo";
+			info = null;
+			
+			txtCodigo.setFocus();
+			txtCodigo.editable = true;
+		}
+		
+		private function setAccionInstBancaria(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionInstBancaria);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validaDatosInstBancaria(event:EventInstBancaria):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			if (info.guarda == true)
+				guardaInstBancaria();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Canvas x="10" y="10" width="338" height="80" styleName="canvasMod">
+		<mx:Label id="lblCodigo" x="36.75" y="12" text="Código:"/>
+		<mx:Label id="lblNombre" x="36.75" y="44" text="Nombre:"/>
+		<mx:TextInput id="txtCodigo" x="85.75" y="10" width="50" maxChars="4"/>
+		<mx:TextInput id="txtNombre" x="85.75" y="42" width="213.5" maxChars="50"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="260" y="98" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="308" y="98" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

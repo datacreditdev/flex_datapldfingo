@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="292" height="224" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()">
+	
+	<mx:NumberValidator id="coordV" source="{cboSucursal}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Sucursal Requerida"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;	
+			import mx.validators.Validator;	
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			[Bindable]
+			private var _xmlReg:XML =  new XML();
+			[Bindable]
+			private var _xmlSuc:XMLList =  new XMLList();
+			
+			public var regObj:ArrayCollection = new ArrayCollection();
+			public var sucObj:ArrayCollection = new ArrayCollection();
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var rep:String;
+			private var global:Globales;
+			
+			public function agregaInicial(codigo:String, texto:String):Object{
+				var oItem:Object = new Object();
+				oItem.codigo = codigo;	
+				oItem.nombre = texto;
+				return oItem;
+			}		
+			
+			public function cargaSucursal():void{
+				_xmlSuc = Application.application._xmlCoord.Table.(CDGRG.toString().toLowerCase() == cboRegion.selectedItem.codigo.toString().toLowerCase());
+						
+				sucObj.removeAll();
+				sucObj.refresh();	
+				sucObj.addItem(agregaInicial("000", "--Seleccionar--"))
+					
+				cboSucursal.enabled = true;	
+				formateaSucursal();
+				
+				if(_xmlSuc.length() == 1){
+					cboSucursal.selectedIndex = 1;
+					cboSucursal.enabled = false;
+				}
+			}			
+						
+			public function cargaRegion():void{ 				  
+				_xmlReg = Application.application._xmlReg;
+				
+				if(_xmlReg.elements().length() > 0)
+					formateaRegion();
+				if(_xmlReg.elements().length() == 1){
+					cboRegion.selectedIndex = 1;
+					cboRegion.enabled = false;
+				}
+				cargaSucursal();
+			}				
+						
+			public function formateaSucursal():void{
+				var cont:int = _xmlSuc.length();
+				var oItem:Object;
+				
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlSuc.CODIGO[i].toString();
+					oItem.nombre = _xmlSuc.NOMBRE[i].toString();
+					sucObj.addItem(oItem);
+				}
+			}			
+			
+			public function formateaRegion():void{
+				var cont:int = _xmlReg.elements().length();
+				var oItem:Object;
+				
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlReg.Table[i].CODIGO;
+					oItem.nombre = _xmlReg.Table[i].NOMBRE;
+					regObj.addItem(oItem);
+				}
+			}	
+			
+			public function generar():void{
+				if (valida() == true){					
+					var consulta:String;
+					var periodo:Number;
+					var fecha:String
+					var id:String = "&id=" + rep;
+					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var nomUsuario:String = "&nomUsuario=" + Application.application.NOM_U_ID;
+					var region:String = "&region=" + cboRegion.selectedItem.codigo;
+					var coord:String = "&coord=" + cboSucursal.selectedItem.codigo;
+					var asesor:String = "&asesor=000000";  
+					var fec:Date = Application.application._Current_Fecha;
+					fecha = "&fecha=" + global.formatoFechaSep(fec, "-");
+					
+					//if(currentState == null)
+						consulta = global.urlPdf + id + fecha + usuario + nomUsuario + coord + asesor;
+					Application.application.muestraPdf(consulta);
+				}			
+			}
+						
+			public function init(rep:String, titulo:String, estado:String):void{
+				this.rep = rep;
+				lblTitulo.text = titulo.toUpperCase();
+				currentState = estado;				
+				limpiar();
+			}		
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				cboRegion.enabled = true;
+				cboSucursal.enabled = true;
+				regObj.removeAll();
+				regObj.refresh();
+				regObj.addItem(agregaInicial("000", "--Seleccionar--"));
+				cboRegion.dataProvider = regObj;
+				cboSucursal.dataProvider = sucObj;
+				cargaRegion();		
+			}
+				
+			public function valida():Boolean{
+				var invalidArray:Array = Validator.validateAll([coordV]);
+				
+				if(invalidArray.length > 0){
+					return false;
+				}		
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="264.05" height="124" styleName="canvasMod" id="canvas2">
+		<mx:ComboBox id="cboRegion" x="10" y="27.5" labelField="nombre" change="cargaSucursal()" width="170"/>
+		<mx:ComboBox id="cboSucursal" x="10" y="80" labelField="nombre" width="170"/>
+		<mx:Label x="10" y="10" text="Región" width="61.75" height="20"/>
+		<mx:Label x="10" y="59.5" text="Sucursal" width="81" height="23"/>
+	</mx:Canvas>
+	<mx:Button x="66.75" y="185.5" label="Generar" click="generar()" id="btnGenerar"/>
+	<mx:Button x="154.25" y="185.5" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25" id="lblCriterios"/>
+</mx:Canvas>

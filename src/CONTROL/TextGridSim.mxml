@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="172" height="40" backgroundAlpha="1.0" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	
+	<mx:DataGrid id="dgInfo" x="0" y="0" width="170" visible="false" showHeaders="false" 
+		itemClick="selecRegistro()" keyDown="presDGRegistro(event)">
+		<mx:columns>
+			<mx:DataGridColumn dataField="nombre"/>
+		</mx:columns>	
+	</mx:DataGrid>
+	
+	<mx:Metadata>
+		[Event(name="seleccionar", type="seleccionar")]
+		[Event(name="verificar", type="verificar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		private var _xmlInfo:XML =  new XML();
+		
+		public var infoObj:ArrayCollection = new ArrayCollection();
+
+		public var global:Globales;
+		public var wsMS:WebService;	
+		public var codigo:String;
+		public var indice:int;
+		public var texto:String;
+		public var du:Utils;
+			
+		public function asignaIndice():void{
+			this.parent.setChildIndex(this, indice);
+			txtDato.setFocus();
+		}
+		
+		public function buscaInfo():void{
+			if(txtDato.text != ''){	
+				dgInfo.selectedIndex = -1;
+				texto = txtDato.text;					
+				infoObj.filterFunction = filtraRegistro;
+				infoObj.refresh();
+				if(infoObj.length > 0){
+					dgInfo.validateNow();
+					dgInfo.scrollToIndex(0);
+					dgInfo.selectedIndex = 0;
+					dgInfo.visible = true;
+					dgInfo.x = txtDato.x;
+					dgInfo.y = txtDato.y + txtDato.height;
+					if(indice == -1)
+						indice = this.parent.getChildIndex(this);
+					this.parent.setChildIndex(this, this.parent.numChildren - 1);	
+				}	
+				else
+					dgInfo.visible = false;								
+			}
+			else{
+				infoObj.filterFunction = null;
+				infoObj.refresh();
+				dgInfo.visible = false;
+			}
+		}
+	
+		private function filtraCaptura(item:Object):Boolean{
+			var isMatch:Boolean = false
+			if(texto.toLowerCase().search(item.nombre.toLowerCase()) != -1)
+				isMatch = true 
+			return isMatch; 
+		}
+	
+		public function filtraRegistro(item:Object):Boolean{
+			var isMatch:Boolean = false
+			if(item.nombre.toLowerCase().search(texto.toLowerCase()) != -1)
+				isMatch = true 
+			return isMatch; 
+		}
+		
+		public function formateaInfo():void{
+			var i:int;
+			var cont:int = _xmlInfo.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			infoObj.filterFunction = null;
+			infoObj.refresh();
+			infoObj.removeAll();
+			infoObj.refresh();
+			
+			for (i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.nombre = _xmlInfo.Table[i].NOMBRE;
+				oItem.codigo = _xmlInfo.Table[i].CODIGO;
+				item.push(oItem);
+			}
+			infoObj = new ArrayCollection(item);
+		}	
+		
+		public function init(_xmlInfo:XML, alto:Number, ancho:Number = 0):void{
+			this.height = alto;
+			this._xmlInfo = _xmlInfo;
+			indice = -1;
+			dgInfo.height = alto - 25;
+			dgInfo.dataProvider = null;
+			if(ancho > 0){
+				dgInfo.width = ancho;
+				txtDato.width = ancho;	
+			}
+			formateaInfo();
+			dgInfo.dataProvider = infoObj;
+			txtDato.addEventListener(KeyboardEvent.KEY_DOWN, presRegistro);
+		}
+		
+		public function limpiar():void{
+			txtDato.text = "";
+			codigo = "";
+		}
+			
+		private function presRegistro(event:KeyboardEvent):void{
+			if(event.keyCode == Keyboard.DOWN){
+				dgInfo.setFocus();
+			}				
+		}
+		
+		private function presDGRegistro(event:KeyboardEvent):void{
+			if(event.keyCode == Keyboard.ENTER){
+				selecRegistro();
+				txtDato.setFocus();
+			}					
+		}
+		
+		public function selecRegistro():void{
+			if(dgInfo.selectedIndex >= 0){
+				var indice:int = dgInfo.selectedIndex;
+				
+				if (codigo != infoObj[indice].codigo){			
+					txtDato.text = infoObj[indice].nombre;
+					codigo = infoObj[indice].codigo;
+					dispatchEvent(new Event("seleccionar"));
+				}
+				else{
+					txtDato.text = infoObj[indice].nombre;
+				}
+				dgInfo.visible = false;
+			}
+			asignaIndice();
+		}
+		
+		public function verificaInfo():void{
+			if (dgInfo.selectedIndex < 0 || txtDato.text == ""){
+				dgInfo.visible = false;
+				texto = txtDato.text;
+				infoObj.filterFunction = filtraCaptura;
+				infoObj.refresh();
+				if (infoObj.length == 0){
+					txtDato.text = "";
+					codigo = "";
+					dispatchEvent(new Event("verificar"));
+				}
+				infoObj.filterFunction = null;
+				infoObj.refresh();
+			}
+		}
+			
+		]]>
+	</mx:Script>
+		<mx:TextInput id="txtDato" width="170" x="1" y="1" change="buscaInfo()" enter="selecRegistro()"  focusOut="verificaInfo()" 
+			restrict="A-Z;a-z;Ñ;ñ;0-9; " keyDown="presRegistro(event)"/>
+</mx:Canvas>

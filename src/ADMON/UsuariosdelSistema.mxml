@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationComplete="initApp()" creationPolicy="all">
+	<mx:Label x="10" y="10" text="USUARIOS DEL SISTEMA" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:DataGrid x="10" y="49" width="800" height="259" dataProvider="{dpUsuariosF}" id="dgUsuarios" itemClick="muestraDetalle()" 
+		doubleClickEnabled="true" itemDoubleClick="modifica()" >
+		<mx:columns>
+			<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+			<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE1"/>
+			<mx:DataGridColumn headerText="SEGUNDO NOMBRE" dataField="NOMBRE2"/>
+			<mx:DataGridColumn headerText="APELLIDO PATERNO" dataField="PRIMAPE"/>
+			<mx:DataGridColumn headerText="APELLIDO MATERNO" dataField="SEGAPE"/>
+		</mx:columns>
+	</mx:DataGrid>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import mx.events.CloseEvent;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			
+			public var ind:int;
+			public var vScroll:Number;
+			private var ws:WebService;
+			private var du:Utils;
+			
+			[Bindable]
+			public var dpUsuarios:XML = new XML();
+			[Bindable]
+			public var dpUsuariosF:XMLList = new XMLList();
+			
+			public function activa(_Acciones:XML):void{
+				var v_acciones:int = _Acciones.elements().length();
+				for (var i:int = 0; i < v_acciones; i++){
+					var dObj:DisplayObject;
+					var str:String = _Acciones.Table[i].OBJETO;
+					dObj = getChildByName(_Acciones.Table[i].OBJETO);
+					
+					if (dObj != null)
+						dObj.visible = true;	
+				}
+			}
+			
+			private function cargaUsuario():void{
+				var Params:Array;
+				ws = du.initWs(ws);
+				Application.application.bloquear();
+				du.sCursor();
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
+					dpUsuarios = new XML(evt.result.toString());	
+					buscaUsuario();
+					Application.application.desbloquear();
+					du.rCursor();
+					du.closeWs(ws);	
+				});
+				ws.ES_Admin_Usuarios.send(4,null);
+			}
+			
+			private function initApp():void{
+				du = new Utils();
+				ws = new WebService();
+				cargaUsuario();				
+			}						
+			
+			private function agrega():void{
+				var usrAdd:MttoUsuario = new MttoUsuario();												
+				usrAdd = MttoUsuario(PopUpManager.createPopUp(this,MttoUsuario,true));				
+				usrAdd.registraInfoUsuario();
+				usrAdd.addEventListener('CloseEvent',Recargar);		
+				PopUpManager.centerPopUp(usrAdd);							
+			}
+			
+			private function Recargar(evt:CloseEvent):void{				
+				var obj:MttoUsuario = evt.target as MttoUsuario;				
+				obj.removeEventListener('CloseEvent',Recargar);				
+				PopUpManager.removePopUp(obj);	
+				cargaUsuario();
+			}
+			
+			private function confirmaBorrar():void{
+				if(dgUsuarios.selectedIndex == -1){
+					du.showMsg("Debe seleccionar un usuario");
+					return;
+				}				
+				Alert.show("¿Confirma eliminar el usuario seleccionado?","Eliminar usuario",3,null,eliminaUsuario,du.iQuest,4);				
+			}
+			
+			private function eliminaUsuario(evt:CloseEvent):void{
+				var ID_USR:String = '0';
+				ID_USR = dgUsuarios.selectedItem.CODIGO;
+				if(evt.detail == Alert.YES){
+					ws = du.initWs(ws);
+					du.sCursor();
+					du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
+						var res:String = evt.result.toString();
+						if(res.substr(0,1) == "1"){
+							txtBusqueda.text = "";
+							cargaUsuario();	
+						}
+						else
+							Alert.show(res.substr(2,res.length - 1),"Mantenimiento de Usuarios",4,null,eliminaUsuario,du.iAlert,4);
+						du.closeWs(ws);
+						du.rCursor();
+					});
+					var Params:Array = new Array();
+					Params[0] = ID_USR;
+					ws.ES_Admin_Usuarios.send(3,Params);
+				}
+			}
+			
+			private function modificaCriterio():void{
+				txtBusqueda.text = "";
+				buscaUsuario();
+			}
+			
+			private function modifica():void{
+				if(dgUsuarios.selectedIndex == -1){
+					du.showMsg("Debe seleccionar un usuario");
+					return;
+				}
+				
+				ind = dgUsuarios.selectedIndex;
+				vScroll = dgUsuarios.verticalScrollPosition;
+				var usrAdd:MttoUsuario = new MttoUsuario();								
+				usrAdd = MttoUsuario(PopUpManager.createPopUp(this,MttoUsuario,true));								
+				usrAdd.cargaInfoUsuario();
+				usrAdd.UsrInfo = dgUsuarios.selectedItem as XML;
+				usrAdd.addEventListener('CloseEvent',Recargar);
+				PopUpManager.centerPopUp(usrAdd);	
+			}
+			
+			private function muestraDetalle():void{
+				var nomSuc:String = dgUsuarios.selectedItem.SUCURSAL.toString();
+				txtSucursal.text = dgUsuarios.selectedItem.CDGCO.toString() + (nomSuc != ""? " - " + nomSuc: "");
+				//txtPerfil.text = dgUsuarios.selectedItem.PERFIL.toString(); 
+				txtNomina.text = dgUsuarios.selectedItem.TELEFONO.toString();
+				txtNomJefe.text = dgUsuarios.selectedItem.CALLE.toString();				
+			}
+			
+			private function buscaUsuario():void{
+				if(txtBusqueda.text != ''){
+					switch(lstBuscar.text){
+						case "Código":
+							dpUsuariosF = dpUsuarios.Table.(CODIGO.toString().substr(0, txtBusqueda.length).toLowerCase() == txtBusqueda.text.toLowerCase());
+							break;
+						case "Nombre":
+							dpUsuariosF = dpUsuarios.Table.(NOMBRE1.toString().substr(0, txtBusqueda.length).toLowerCase() == txtBusqueda.text.toLowerCase());
+							//dpUsuariosF = dpUsuarios.Table.(NOMBRE1 == txtBusqueda.text.toUpperCase());
+							/*if(dpUsuariosF.elements().length() == 0)
+								dpUsuariosF = dpUsuarios.Table.(NOMBRE2 == txtBusqueda.text);
+							if(dpUsuariosF.elements().length() == 0)
+								dpUsuariosF = dpUsuarios.Table.(PRIMAPE == txtBusqueda.text);
+							if(dpUsuariosF.elements().length() == 0)
+								dpUsuariosF = dpUsuarios.Table.(SEGAPE == txtBusqueda.text);*/								
+							break;
+						case "Apellido Paterno":
+							dpUsuariosF = dpUsuarios.Table.(PRIMAPE.toString().substr(0, txtBusqueda.length).toLowerCase() == txtBusqueda.text.toLowerCase());
+							break;
+					}
+				}
+				else
+					dpUsuariosF = dpUsuarios.elements();
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:TabNavigator x="10" y="351" width="800" height="168">
+		<mx:Canvas label="Detalle de usuario" width="100%" height="100%" id="TabDetalle">
+			<mx:Canvas styleName="canvasMod" width="786" height="120" x="5">
+				<mx:Label x="32" y="9" text="Sucursal:"/>
+				<mx:Text x="91" y="10" width="150" id="txtSucursal"/>
+				<mx:Label text="Nómina:" x="321" y="10"/>
+				<mx:Text x="372" y="10" width="50" id="txtNomina"/>
+				<mx:Label text="Nómina Jefe:" x="297" y="38"/>
+				<mx:Text x="372" y="38" width="50" id="txtNomJefe"/>
+			</mx:Canvas>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:LinkButton x="10" y="316" icon="@Embed(source='assets/add.png')" width="50" toolTip="Agregar Usuario" click="{agrega()}" id="btnAlta" visible="true"/>
+	<mx:LinkButton x="68" y="317" icon="@Embed(source='assets/edit.png')" width="50" toolTip="Editar Usuario" click="{modifica()}" id="btnCambio" visible="true"/>
+	<mx:TextInput x="404" y="17" width="150" id="txtBusqueda" change="buscaUsuario()"/>
+	<mx:Label x="195" y="19" text="Buscar:"/>
+	<mx:ComboBox x="246" y="16" width="150" id="lstBuscar" change="modificaCriterio()">
+		<mx:dataProvider>	            
+			<mx:Object label="Código" data="Codigo"/>	
+	    	<mx:Object label="Nombre" data="Nombre"/>
+	    	<mx:Object label="Apellido Paterno" data="Primape"/>     
+		</mx:dataProvider>  
+	</mx:ComboBox>
+</mx:Canvas>

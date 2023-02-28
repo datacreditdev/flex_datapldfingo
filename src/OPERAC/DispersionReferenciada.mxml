@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="220" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
+	
+	<mx:NumberValidator id="bancoV" source="{cboBanco}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Banco Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.TxtExport;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;
+			import mx.utils.ObjectUtil;
+			import mx.utils.StringUtil;
+			import mx.validators.Validator;
+			
+			[Bindable]
+			private var _xmlCta:XML =  new XML();
+			[Bindable]
+			public var dpGrupo:XMLList = new XMLList();
+			
+			public var ctaObj:ArrayCollection = new ArrayCollection();
+			
+			private var global:Globales;
+			public var wsMS:WebService;
+			public var rep:String;
+			public var titulo:String;
+			private var du:Utils;
+			
+			public function cargaBanco():void{
+				initConexion();
+				du.sCursor();
+				//bloquear();		
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlCta = XML(evt.result.toString());
+						
+					du.rCursor();
+					du.closeWs(wsMS);	
+					//desbloquear();
+					if(_xmlCta.elements().length() > 0){
+						formateaCuenta(evt.result.toString());
+						cboBanco.dataProvider = ctaObj;
+					}
+				});
+				wsMS.getInfoCuenta.send(0, "", "", Application.application.U_ID);
+			}
+			
+			public function formateaCuenta(cadInfo:String):void{
+				var oItem:Object;
+				var array:Array;
+				
+				oItem = new Object();
+				oItem.CDGIB = "0";                       
+				oItem.NUMERO = "0";
+                oItem.TIPO = "0";
+				oItem.CODIGO = "0";
+				oItem.BANCO = "--Seleccionar--";			
+							
+				var xml:XMLDocument = new XMLDocument(cadInfo); 
+     			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+     			var data:Object = decoder.decodeXML(xml);  
+				array = ArrayUtil.toArray(data.NewDataSet.Table);   
+				ctaObj = new ArrayCollection(array);
+				ctaObj.addItemAt(oItem,0);	
+			}
+			
+			//funcion que invoca la generacion de reportes en formato PDF
+			public function generar():void{
+				if(valida() == true){
+					var res:String;
+					initConexion();
+					du.sCursor();
+					
+					//bloquear();
+						
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						res = evt.result.toString();
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						
+						//desbloquear();
+					
+						if(res.substr(0,2) != "-1"){
+							var tituloRep:String = res.substring(0, res.indexOf("|",0));
+							res = res.substring(res.indexOf("|",0) + 1, res.length);
+							var exp:TxtExport = new TxtExport();
+							exp.cargaCadena(res, tituloRep);	
+						}
+						else
+							Alert.show("No es posible generar el documento de Dispersión de Pagos.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+					});
+					wsMS.getOrdenPago.send(cboBanco.selectedItem.CODIGO, dtfFecha.text, Application.application.U_ID);
+				}
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "DISPERSIÓN REFERENCIADA";
+				lblTitulo.text = titulo.toUpperCase();
+				cargaBanco();
+				limpiar();
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				cboBanco.selectedIndex = 0;
+				fec = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 
+			}
+				
+			public function valida():Boolean{
+				var invalidArray:Array = Validator.validateAll([bancoV]);
+			
+				if(invalidArray.length > 0){	
+					Alert.show("Seleccione la Institución Bancaria.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(dtfFecha.text == ""){
+					Alert.show("Seleccione la fecha de aplicación de los Pagos.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="16.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="247.54999" height="70.5" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblBanco" x="20" y="10" text="Banco" width="114.3" height="20"/>
+		<mx:ComboBox id="cboBanco" labelField="BANCO" x="19.5" y="30" width="206.5"></mx:ComboBox>	
+	</mx:Canvas>
+	<mx:Canvas x="17.95" y="131" width="247.5" height="37" styleName="canvasMod" id="canvas0">
+		<mx:DateField id="dtfFecha" x="103.25" y="6" width="111"/>
+		<mx:Label id="lblFecha" text="Fecha Entrega:"  x="20.25" y="7" width="83"/>
+	</mx:Canvas>
+	<mx:Label x="16.5" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:Button id="btnGenerar" x="65" y="181" label="Generar" click="generar()"/>
+	<mx:Button id="btnLimpiar" x="144" y="181" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	
+</mx:Canvas>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" height="100%" width="100%" xmlns:OPERAC="OPERAC.*"
+	 creationPolicy="all" creationComplete="initApp()">
+	
+	<mx:Script>
+		<![CDATA[
+			public function initApp():void{
+				comAsignacionFondeo.init(2);			
+			}		
+		]]>
+	</mx:Script>
+	<OPERAC:ControlAsignaciondeFondeo id="comAsignacionFondeo"/>
+</mx:Canvas>

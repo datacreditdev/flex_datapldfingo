@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" title="Nuevo" layout="absolute" 
+	width="592" height="540" creationPolicy="all" xmlns:Forms="OPERAC.Forms.*">
+	
+	<mx:states>
+		<mx:State name="individual">
+			<mx:RemoveChild target="{lblGrupo}"/>
+			<mx:RemoveChild target="{txtCdgGrupo}"/>
+			<mx:RemoveChild target="{txtGrupo}"/>
+			<mx:SetProperty target="{lblActualiza}" name="y" value="42"/>
+			<mx:SetProperty target="{txtActualiza}" name="y" value="40"/>
+			<mx:SetProperty target="{canvas1}" name="height" value="75"/>
+			<mx:SetProperty target="{tabNav}" name="y" value="93"/>
+			<mx:SetProperty target="{btnAceptar}" name="y" value="441"/>
+			<mx:SetProperty target="{btnCancelar}" name="y" value="441"/>
+			<mx:SetProperty name="height" value="520"/>
+			<mx:RemoveChild target="{canvas2}"/>
+		</mx:State>
+	</mx:states>
+	
+	<mx:Script>
+	<![CDATA[
+		import Data.DatosProy;
+		import Data.EventProy;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.soap.WebService;
+		import mx.rpc.events.ResultEvent;
+		
+		[Bindable]
+		private var info:DatosProy;
+		
+		public var proyObj:ArrayCollection = new ArrayCollection();
+		
+		public var global:Globales;
+		public var wsMS:WebService;
+		public var titulo:String;	
+		public var du:Utils;
+		
+		public function cerrar():void{
+			PopUpManager.removePopUp(this);
+		}
+	
+		public function enviar():void{
+			info = new DatosProy();
+				
+			formDatosGralProy.enviarDatosProy(info);
+			formDatosEmpProy.enviarDatosProy(info);
+			validaFinal();
+		}
+		
+		public function guardaProy():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionProy);
+			wsMS.setAccionProy.send("I", txtCdgAcred.text, info.codigo, info.nombre, info.actualiza,
+										info.texto, info.cdgGiro, info.cdgSector, info.cdgActEco,
+										info.tipo, txtCdgGrupo.text, info.empresa, info.rfc, info.tamano); 			
+		}
+	
+		public function init(cdgGrupo:String, nomGrupo:String, cdgAcred:String, acred:String, fecha:String, proyObj:ArrayCollection):void{
+			global = new Globales();
+			du = new Utils();
+			txtCdgGrupo.text = cdgGrupo;
+			txtGrupo.text = nomGrupo;
+			txtCdgAcred.text = cdgAcred;
+			txtAcreditado.text = acred;
+			txtActualiza.text = fecha;
+			titulo = "Mantenimiento de Proyecto";
+			this.proyObj = proyObj;
+			formDatosGralProy.init(cdgAcred);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function validaDatosProy(event:EventProy):void{
+			info = event.customProp;
+		}
+			
+		public function validaEmpProy(event:EventProy):void{
+			info = event.customProp;
+		}
+			
+		public function validaFinal():void{
+			if (info.guardaDatos == true && info.guardaEmp == true)
+				guardaProy();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		private function setAccionProy(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionProy);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				proyObj[0].codigo = info.codigo;
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+	]]>
+	</mx:Script>
+
+	<mx:Canvas x="34" y="10" width="524" height="101" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblCliente" x="72" y="12" text="Cliente:"/>
+		<mx:Label id="lblGrupo" x="31" y="40" text="Grupo solidario:"/>
+		<mx:Label id="lblActualiza" x="10" y="68" text="Última actualización:"/>
+		<mx:TextInput id="txtCdgAcred" editable="false" x="120" y="10" width="58"/>
+		<mx:TextInput id="txtAcreditado" editable="false" x="186" y="10" width="300"/>
+		<mx:TextInput id="txtCdgGrupo" editable="false" x="120" y="38" width="58"/>
+		<mx:TextInput id="txtGrupo" editable="false" x="186" y="38" width="300"/>
+		<mx:TextInput id="txtActualiza" editable="false" x="120" y="65" width="200"/>
+	</mx:Canvas>
+	<mx:TabNavigator x="10" y="119" width="570" height="340" id="tabNav">
+		<mx:Canvas label="Datos generales" width="100%" height="100%">
+			<Forms:FormDatosGralProyBusq id="formDatosGralProy" x="14" width="540" height="303"/>
+		</mx:Canvas>
+		<mx:Canvas label="Datos empresa" width="100%" height="100%" id="canvas2">
+			<Forms:FormDatosEmpProy id="formDatosEmpProy" x="15" y="17"/>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Button id="btnAceptar" x="492" y="467" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="540" y="467" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	
+</mx:TitleWindow>

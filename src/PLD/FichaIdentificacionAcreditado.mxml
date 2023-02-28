@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:FormsPLD="PLD.Forms.*" layout="absolute" width="540" height="560" 
+	showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*" creationComplete="initApp()" 
+	creationPolicy="all">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosAcred;
+			import Data.Globales;
+			import Data.PdfExport;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;	
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.ListEvent;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			
+			private var info:DatosAcred;
+			private var _xmlAcred:XML = new XML();
+			
+			public var wsMS:WebService;	
+			public var tipoAccion:int;
+			public var band:Boolean;
+			public var grupo:String;
+			public var acred:String;
+			public var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function cargaInfoAcred(acred:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				this.acred = acred;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlAcred = new XML(evt.result);
+						
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+												
+					if (_xmlAcred.elements().length() > 0){
+						llenaRegistros();
+					}
+					else
+						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+				});
+				params[0] = this.acred;
+				wsCat.getInfoAcred.send(1, params);
+			}
+			
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Ficha de Identificación de Acreditado";
+				this.title = titulo;
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function llenaRegistros():void{
+				info = new DatosAcred();
+				//Datos personales del Acreditado
+				info.codigo = _xmlAcred.Table[0].CODIGO;
+				info.nombre = _xmlAcred.Table[0].NOMBRE1;
+				info.segNombre = _xmlAcred.Table[0].NOMBRE2;
+				info.aPaterno = _xmlAcred.Table[0].PRIMAPE;
+				info.aMaterno = _xmlAcred.Table[0].SEGAPE;
+				info.cdgco = _xmlAcred.Table[0].COORD;
+				info.sexo = _xmlAcred.Table[0].SEXO;
+				info.fecha = _xmlAcred.Table[0].NACIMIENTO;
+				info.cdgNacPais = _xmlAcred.Table[0].NACIOPAI;
+				info.cdgNacEntFed = _xmlAcred.Table[0].NACIOEF;
+				info.cdgNac = _xmlAcred.Table[0].NACIONALIDAD;
+				info.rfc = _xmlAcred.Table[0].RFC;	
+				info.curp = _xmlAcred.Table[0].CURP;
+				info.ife = _xmlAcred.Table[0].IFE;
+				
+				//Direccion del Acreditado
+				info.calle = _xmlAcred.Table[0].CALLE;
+				info.entreCalles = _xmlAcred.Table[0].ENTRECALLES;
+				info.telefono = _xmlAcred.Table[0].TELEFONO;
+				info.codPostal = _xmlAcred.Table[0].CDGPOSTAL;
+				info.cdgEntFed = _xmlAcred.Table[0].CDGEF;
+				info.entFed = _xmlAcred.Table[0].ENTFED;
+				info.cdgMun = _xmlAcred.Table[0].CDGMU;
+				info.municipio = _xmlAcred.Table[0].MUNIC;
+ 				info.cdgLoc = _xmlAcred.Table[0].CDGLO; 
+				info.localidad = _xmlAcred.Table[0].LOC;
+				info.cdgCol = _xmlAcred.Table[0].CDGCOL;
+				info.colonia = _xmlAcred.Table[0].COL;
+				
+				//Otra información del Acreditado
+				info.edoCivil = _xmlAcred.Table[0].EDOCIVIL;
+				info.nivelEsc = _xmlAcred.Table[0].NIVESCOLAR;
+				info.depend = _xmlAcred.Table[0].NODEPEND;
+				info.nivelRiesgo = _xmlAcred.Table[0].NIVELRIESGO;
+				info.marca = _xmlAcred.Table[0].MARCA;
+				info.enano = _xmlAcred.Table[0].ENANO;
+				info.cantEnano = _xmlAcred.Table[0].CANTENANO;
+				
+				//Oficial de Crédito
+				info.cdgPr = _xmlAcred.Table[0].CDGOCPE;
+				info.promotor = _xmlAcred.Table[0].PROMOTOR;
+				info.cdgRec = _xmlAcred.Table[0].CDGPRPE;
+				info.recuperador = _xmlAcred.Table[0].RECUPERADOR;
+				
+				//Informacion de PLD
+				info.tipoPers = _xmlAcred.Table[0].CDGTIPOPERS;
+				info.origen = _xmlAcred.Table[0].CDGORIREC;
+				info.destino = _xmlAcred.Table[0].CDGDESREC;
+			
+				formDPAcred.init(info);
+				formDirAcred.init(info);
+				formOtroAcred.init(info);
+				formPLDAcred.init(info);
+				formEvAcred.init(info);
+			}
+		]]>
+	</mx:Script>
+	<mx:TabNavigator id="tabNav" width="520" height="503" x="10" y="10" creationPolicy="all">
+		<mx:Canvas label="Datos Personales" width="100%" height="100%">
+			<Forms:FormDatosPerAcredInd id="formDPAcred" x="39" height="404" width="440" y="28"/>
+		</mx:Canvas>
+		<mx:Canvas label="Dirección" width="100%" height="100%">	
+			<Forms:FormDirAcred id="formDirAcred" x="49" height="370" width="420" y="31"/>
+		</mx:Canvas>
+		<mx:Canvas label="Otros Datos" width="100%" height="100%">	
+			<FormsPLD:FormOtroAcred id="formOtroAcred" x="59" y="31"/> 
+		</mx:Canvas>
+		<mx:Canvas label="Inf. Adicional" width="100%" height="100%">
+			<Forms:FormPLDAcred id="formPLDAcred" x="31.5" width="455" y="44"/>
+		</mx:Canvas>
+		<mx:Canvas label="Evaluación" width="100%" height="100%">
+			<FormsPLD:FormNivelRiesgo id="formEvAcred" x="1" width="516" y="0" height="468"/>
+		</mx:Canvas>
+	</mx:TabNavigator>
+</mx:TitleWindow>

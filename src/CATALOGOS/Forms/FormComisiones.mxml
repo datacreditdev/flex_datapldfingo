@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="700" height="230" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosProd", type="Data.EventProd")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import CATALOGOS.MttoComision;
+			import Data.DatosProd;
+			import Data.EventProd;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.validators.Validator;
+			
+			private var _xmlCom:XML =  new XML();
+			
+			public var comObj:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosProd = new DatosProd();
+			
+			public var wsMS:WebService;   					
+			public var du:Utils;
+			private var titulo:String;
+			private var global:Globales;
+			private var tipoAccion:int;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			private var accionCom:int;
+			private var indCom:int;
+			private var vScroll:Number;
+			
+			private function actualizarComision(event:Event):void{
+				dgComision.dataProvider = null;
+				dgComision.dataProvider = comObj;
+				if(indCom >= 0){
+					dgComision.validateNow();
+					dgComision.verticalScrollPosition = vScroll;
+					dgComision.selectedIndex = indCom;
+				}
+			}
+			
+			private function eliminarComision():void{
+				var indice:int = dgComision.selectedIndex;
+				comObj.removeItemAt(indice);
+				comObj.refresh();	
+				dgComision.dataProvider = comObj;
+				selecComision();
+			}
+			
+			public function enviarDatosProd(formData:DatosProd):void{
+				var i:int;
+				var listaCom:ArrayCollection;
+				
+				listaCom = dgComision.dataProvider as ArrayCollection;
+				formData.tipoMov = new Array;
+				formData.montoCom = new Array;
+				formData.porcCom = new Array;
+				formData.tipoCargo = new Array;	
+				formData.opcional = new Array;
+				
+				if(listaCom != null && listaCom.length > 0){	
+					for(i = 0; i < listaCom.length; i++){
+						formData.tipoMov[i] = listaCom[i].tipoMov;
+						formData.montoCom[i] = listaCom[i].monto;
+						formData.porcCom[i] = listaCom[i].porc;
+						formData.tipoCargo[i] = listaCom[i].formaAfec;
+						formData.opcional[i] = listaCom[i].opcional;
+					}	
+				}
+				else{
+					formData.tipoMov[0] = "";
+					formData.montoCom[0] = "";
+					formData.porcCom[0] = "";
+					formData.tipoCargo[0] = "";
+					formData.opcional[0] = "";
+				}
+				formData.guardaCom = true;
+				
+				var event:EventProd = new EventProd("enviarDatosProd", formData);
+				dispatchEvent(event);
+			}
+			
+			private function formateaComision():void{
+				var i:int;
+				var cont:int = _xmlCom.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				comObj.removeAll();
+				comObj.refresh();
+				
+				for(i = 0; i < cont; i++){
+					oItem = new Object;
+					oItem.sec = _xmlCom.Table[i].SECUENCIA;
+					oItem.tipoMov = _xmlCom.Table[i].CDGTM;
+					oItem.nomMov = _xmlCom.Table[i].NOMMOV;
+					oItem.opcional = _xmlCom.Table[i].OPCIONAL;
+					oItem.descOpc = _xmlCom.Table[i].OPCDESC;
+					oItem.monto = _xmlCom.Table[i].MONTO;
+					oItem.porc = _xmlCom.Table[i].PJE;
+					oItem.formaAfec = _xmlCom.Table[i].TIPOCARGO;
+					oItem.descForma = _xmlCom.Table[i].TCDESC;
+					item.push(oItem);
+				}
+				comObj = new ArrayCollection(item);
+			}
+			
+			public function init(info:DatosProd, tipoAccion:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				global = new Globales();
+				du = new Utils();
+				this.tipoAccion = tipoAccion;
+				
+				if (info != null){
+					datos = info;
+																
+					du.initWsCat(wsCat);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlCom = new XML(evt.result.toString()); 
+							
+						du.rCursor();
+						du.closeWs(wsCat);
+							
+						if (_xmlCom.elements().length() > 0)
+							formateaComision();
+						dgComision.dataProvider = comObj;
+						selecComision();
+					});
+					//Consulta la lista de comisiones registradas para el producto
+					params[0] = info.cdgTipoProd;
+					params[1] = info.cdgProd;
+					wsCat.getListado.send(43, params);										
+				}	
+			}	
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function iniVar():void{
+				this.indCom = -1;
+				this.vScroll = -1;
+			}
+			
+			private function mostrarFormComision(tipo:int):void{
+				//Permite seleccionar el control padre del objeto contenedor para centrar el formulario al desplegarlo
+			 	var obj:DisplayObject = this.parentApplication.parent;
+				var comMttoCom:MttoComision = new MttoComision();
+				
+				switch(tipo){
+					case 1: 
+						this.indCom = -1;
+						comMttoCom = MttoComision(PopUpManager.createPopUp(obj,MttoComision,true)); 
+						comMttoCom.addEventListener(Event.REMOVED_FROM_STAGE, actualizarComision);
+						PopUpManager.centerPopUp(comMttoCom);
+						comMttoCom.init(tipo, comObj, indCom);
+						break;
+					case 2: 
+						if (dgComision.selectedIndex >= 0){
+							var codCom:String;
+							accionCom = tipo;					
+							comMttoCom = MttoComision(PopUpManager.createPopUp(obj,MttoComision,true));  
+							comMttoCom.addEventListener(Event.REMOVED_FROM_STAGE, actualizarComision);
+							PopUpManager.centerPopUp(comMttoCom);
+							iniVar();
+							this.vScroll = dgComision.verticalScrollPosition;		
+							this.indCom = dgComision.selectedIndex;
+							comMttoCom.init(tipo, comObj, indCom);
+						}
+						else
+							Alert.show("Debe seleccionar el registro de Comisión",titulo,4,null,null,global.iAlert); 
+						break;
+				}	
+			}
+			
+			private function selecComision():void{
+				if(dgComision.selectedIndex >= 0){
+					btnEditar.enabled = true;
+					btnEliminar.enabled = true;
+				}
+				else{
+					btnEditar.enabled = false;
+					btnEliminar.enabled = false;
+				}
+			}
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvCont" styleName="canvasMod" x="10" y="25" width="680" height="150">
+		<mx:DataGrid id="dgComision" x="17.1" y="10" height="125" width="643.7" doubleClickEnabled="true" 
+			itemDoubleClick="mostrarFormComision(2)" itemClick="selecComision()">
+			<mx:columns>
+				<mx:DataGridColumn headerText="MOVIMIENTO" dataField="nomMov"/>
+				<mx:DataGridColumn headerText="MONTO" dataField="monto"/>
+				<mx:DataGridColumn headerText="OPCIONAL" dataField="descOpc"/>
+				<mx:DataGridColumn headerText="PORCENTAJE" dataField="porc"/>
+				<mx:DataGridColumn headerText="FORMA AFECTACION" dataField="descForma"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Canvas>
+	<mx:Canvas x="540" y="183" width="150" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:Button id="btnAgregar" x="54" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormComision(1)" toolTip="Registrar Comisión" width="40"/>
+		<mx:Button id="btnEliminar" x="102" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarComision()" enabled="false" toolTip="Eliminar Comisión" width="40"/>
+		<mx:Button id="btnEditar" x="6" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormComision(2)" toolTip="Editar Comisión" width="40"/>
+	</mx:Canvas>
+	<mx:Label x="10" y="6" text="Comisiones"/>
+</mx:Canvas>

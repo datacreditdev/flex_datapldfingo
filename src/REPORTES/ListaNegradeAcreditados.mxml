@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="370" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
+	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;	
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlRep:XML =  new XML();
+			
+			public var wsRep:WebService;
+			public var du:Utils;
+			public var fecIni:String;
+			public var titulo:String;
+			private var global:Globales;
+			
+			public function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls(); 
+				dgE.loadDGInExcel(dgReporte,null,titulo);		
+			}
+		
+			public function generar():void{
+				Application.application.bloquear();
+				initConexion();
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+					
+					Application.application.desbloquear();
+					du.rCursor();
+					du.closeWs(wsRep);
+					
+					dgReporte.dataProvider = null;
+					btnExportar.enabled = false;
+												
+					if(_xmlRep.elements().length() > 0){
+						var cont:int = _xmlRep.elements().length();
+						btnExportar.enabled = true;
+						lblTotal.text = cont.toString() + " Registro(s)";
+						dgReporte.dataProvider = _xmlRep.Table;
+					}
+					else{
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						lblTotal.text = "";
+					}
+				});
+				wsRep.getRepListaNegra.send();	
+			}			
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Lista Negra de Acreditados";
+				lblTitulo.text = titulo.toUpperCase();
+				limpiar();
+			}		
+			
+			public function initConexion():void{				
+				wsRep = new WebService();			
+				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsRep.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				dgReporte.dataProvider = null;
+				btnExportar.enabled = false;
+				lblTotal.text = "";
+			}
+				
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="18" y="10" width="430" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Button x="45.1" y="45" label="Generar" click="generar()"/>
+	<mx:Button x="123.6" y="45" label="Limpiar" width="71" height="24" click="limpiar()"/>
+	<mx:DataGrid id="dgReporte" x="17.95" y="86" width="763.05" visible="true" height="245" horizontalScrollPolicy="on">
+		<mx:columns>
+			<mx:DataGridColumn headerText="SUCURSAL" dataField="COORD" width="100"/>
+			<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
+			<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="ACRED" width="200"/>
+			<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="60"/>
+			<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="150"/>
+			<mx:DataGridColumn headerText="CURP" dataField="CURP" width="140"/>
+			<mx:DataGridColumn headerText="ASESOR" dataField="CDGPE" width="70"/>
+			<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="ASESOR" width="200"/>
+			<mx:DataGridColumn headerText="ALTA" dataField="FALTA" width="70"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnExportar" x="651.85" y="45" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Label id="lblTotal" x="17.95" y="339" width="680.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+</mx:Canvas>

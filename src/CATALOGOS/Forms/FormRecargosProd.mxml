@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="550" height="250">
+	
+	<mx:Metadata>
+		[Event(name="enviarDatosProd", type="Data.EventProd")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosProd;
+			import Data.EventProd;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.*;
+			import mx.events.EffectEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			
+			public var datos:DatosProd = new DatosProd();
+			
+			private var global:Globales;	
+			private var du:Utils;
+			public var wsMS:WebService;	
+			public var tipoAccion:int;
+			
+			public function cambiaContTasa():void{
+				tasaFija.enabled = false;
+				factorTasa.enabled = false;
+				cnvAplicaDesde.enabled = false;
+				txtTasaFija.text = "";
+				txtFactorTasa.text = "";
+				aplicaDesde.selectedValue = 1;
+				if(tipoTasa.selectedValue == 1){
+					tasaFija.enabled = true;
+					cnvAplicaDesde.enabled = true;
+				}
+				else if(tipoTasa.selectedValue == 2){
+					factorTasa.enabled = true;
+					cnvAplicaDesde.enabled = true;
+				}
+				else if(tipoTasa.selectedValue == 3){
+					aplicaDesde.selection = null;
+				}
+			}
+			
+			public function enviarDatosProd(formData:DatosProd):void{
+				formData.tasaFija = txtTasaFija.text;
+				formData.factorTasa = txtFactorTasa.text;
+				formData.aplican = aplicaDesde.selectedValue != null? aplicaDesde.selectedValue.toString(): "";
+				formData.metodoAplic = metodoAplica.selectedValue.toString();
+				
+				//Indicador de edicion del metodo de aplicacion de pagos
+				if(chkMetodo.selected == true)
+					formData.fijaMAP = "S";
+				else if(chkMetodo.selected == false)
+					formData.fijaMAP = "N";			
+				//Indicador de edicion de recargos
+				if(chkRec.selected == true)
+					formData.fijaRec = "S";
+				else if(chkRec.selected == false)
+					formData.fijaRec = "N";
+				
+				formData.guardaRecargos = true;
+				
+				var event:EventProd = new EventProd("enviarDatosProd", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(info:DatosProd, tipoAccion:int):void{
+				global = new Globales();
+				du = new Utils();
+				this.tipoAccion = tipoAccion;
+				
+				if (info != null){
+					datos = info;
+					
+					if(info.tasaFija != "")
+						tipoTasa.selectedValue = 1;
+					else if(info.factorTasa != "")
+						tipoTasa.selectedValue = 2;
+					else
+						tipoTasa.selectedValue = 3;
+					
+					cambiaContTasa();
+					
+					txtTasaFija.text = info.tasaFija;
+					txtFactorTasa.text = info.factorTasa;
+					aplicaDesde.selectedValue = info.aplican;
+					metodoAplica.selectedValue = info.metodoAplic;
+					//Indicador de edicion del metodo de aplicacion de pagos
+					if(info.fijaMAP == "S")
+						chkMetodo.selected = true;
+					else if(info.fijaMAP == "N")
+						chkMetodo.selected = false;
+						
+					//Indicador de edicion de recargos
+					if(info.fijaRec == "S")
+						chkRec.selected = true;
+					else if(info.fijaRec == "N")
+						chkRec.selected = false;																			
+				}		
+			}	
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+				
+		]]>
+	</mx:Script>
+
+	<mx:Canvas id="cnvTipoTasa" x="16.5" y="28" width="210" height="67" styleName="canvasMod">
+		<mx:RadioButtonGroup id="tipoTasa" itemClick="cambiaContTasa()"/>
+		<mx:RadioButton id="rdbFijaInd" x="11" y="0" label="Fija Independiente" groupName="tipoTasa" value="1"/>
+		<mx:RadioButton id="rdbDependiente" x="11" y="20" label="Dependiente de la tasa de interés" groupName="tipoTasa" value="2"/>
+		<mx:RadioButton id="rdbNinguna" x="11" y="41" label="Ninguna" groupName="tipoTasa" value="3"/>
+	</mx:Canvas>
+	<mx:Label x="16.5" y="10" text="Tipo de tasa"/>
+	<mx:Canvas id="cnvTasaFija" x="16.5" y="103" width="210" height="65" styleName="canvasMod">
+		<mx:FormItem id="tasaFija" label="Tasa fija:" x="96" y="5">
+			<mx:TextInput id="txtTasaFija" width="44" restrict="0-9;."/>	
+		</mx:FormItem>
+		<mx:FormItem id="factorTasa" label="Factor sobre tasa de interés:" x="1" y="34">
+			<mx:TextInput id="txtFactorTasa" width="44" restrict="0-9;." />
+		</mx:FormItem>
+	</mx:Canvas>
+	<mx:Label x="234.5" y="10" text="Se aplican desde"/>
+	<mx:Canvas id="cnvAplicaDesde" x="234.5" y="28" width="210" height="67" styleName="canvasMod">
+		<mx:RadioButtonGroup id="aplicaDesde"/>
+		<mx:RadioButton id="rdbPorPeriodo" x="15" y="21" label="Por periodo" groupName="aplicaDesde" value="1"/>
+		<mx:RadioButton id="rdbFinCiclo" x="114" y="21" label="Fin de ciclo" groupName="aplicaDesde" value="2"/>
+	</mx:Canvas>
+	<mx:Canvas x="234.5" y="103" width="299" height="131" styleName="canvasMod">
+		<mx:Canvas id="cnvMetAplica" x="10" y="29" width="279" height="65" styleName="canvasMod"> 
+			<mx:RadioButtonGroup id="metodoAplica"/>
+			<mx:RadioButton id="rdbAplCap" x="10" y="7" label="Los pagos aplican primero a capital" groupName="metodoAplica" value="1"/>
+			<mx:RadioButton id="rdbAplInt" x="10" y="33" label="Los pagos aplican primero a intereses y recargos" groupName="metodoAplica" value="2"/>
+		</mx:Canvas>
+		<mx:Label x="10" y="10" text="Método de aplicación de los pagos"/>
+		<mx:CheckBox id="chkMetodo" x="87" y="102" label="No Permitir modificar"/>
+	</mx:Canvas>
+	<mx:CheckBox id="chkRec" x="60" y="176" label="No Permitir modificar"/>
+</mx:Canvas>

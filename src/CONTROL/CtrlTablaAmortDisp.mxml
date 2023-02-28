@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"  width="379" height="575" layout="absolute" 
+	showCloseButton="true" close="cerrar()">
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+    
+	<!--Componente que permite mostrar la informacion de la tabla de amortizacion de Disposicion-->
+	<mx:Script>
+		<![CDATA[
+			import mx.events.CollectionEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.core.Application;		
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.collections.ArrayCollection;
+
+			private var _xmlTabla:XML = new XML();
+			
+			public var pagos:ArrayCollection;
+			
+			private var global:Globales;
+			private var du:Utils;
+			private var titulo:String;
+			private var codigo:String;
+			private var nombre:String;
+			private var ciclo:String;
+			private var tipoCred:String;
+			private var autorizado:String;
+			private var sec:String;
+			private var total:Number;
+			
+			private function actualizaTotal(event:CollectionEvent):void{
+				calculaTotal();
+			}
+			
+			private function calculaTotal():void{
+				var cont:int = pagos.length;
+				total = 0;
+				
+				for(var i:int = 0; i < cont; i++){
+					total += Number(pagos[i].capital);
+				}
+				lblTotal.text = total.toString();
+			}
+			
+			public function cargaTablaAmort():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+						
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlTabla = new XML(evt.result.toString());
+	
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+					
+					if(_xmlTabla.elements().length() > 0){
+						formateaTablaAmort();
+						dgTablaAmort.dataProvider = pagos;
+					}
+				});
+				params[0] = codigo;
+				params[1] = ciclo;
+				params[2] = tipoCred;
+				params[3] = autorizado;
+				params[4] = sec;
+				//Obtiene el listado de registros de la tabla de Amortización de Disposicion
+ 				wsCat.getListado.send(50, params);
+			}
+			
+			private function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function enviar():void{
+				dispatchEvent(new Event("enviar"));
+				cerrar();
+			}
+			
+			private function formateaTablaAmort():void{
+				var i:int;
+				var cont:int = _xmlTabla.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for(i = 0; i < cont; i++){
+					oItem = new Object;
+					oItem.numero = _xmlTabla.Table[i].NOPAGO;
+					oItem.fecha = _xmlTabla.Table[i].FECHA;
+					oItem.capital = Number(_xmlTabla.Table[i].CAPITAL);
+					item.push(oItem);
+				}
+				pagos = new ArrayCollection(item);
+				pagos.addEventListener(CollectionEvent.COLLECTION_CHANGE,actualizaTotal);
+			}
+			
+			public function init(codigo:String, nombre:String, ciclo:String, tipoCred:String, autorizado:String, sec:String, editable:Boolean = false):void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Tabla de Amortización";
+				this.title = titulo;
+				this.codigo = codigo;
+				this.nombre = nombre;
+				this.ciclo = ciclo;
+				this.tipoCred = tipoCred;
+				this.autorizado = autorizado;
+				this.sec = sec;
+				
+				lblCodigo.text = codigo;
+				lblNombre.text = nombre;
+				lblCiclo.text = ciclo;
+				dgTablaAmort.editable = editable;
+				
+				cargaTablaAmort();
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas width="353.5" height="100" styleName="canvasMod" x="12.75" y="10">
+		<mx:Label x="28" y="10" text="Código:"/>
+		<mx:Label x="24" y="38" text="Nombre:"/>
+		<mx:Label x="38" y="66" text="Ciclo:"/>
+		<mx:Label x="77" y="10" id="lblCodigo" textAlign="right"/>
+		<mx:Label x="77" y="38" id="lblNombre" textAlign="right"/>
+		<mx:Label x="77" y="66" id="lblCiclo" textAlign="right"/>
+	</mx:Canvas>
+	<mx:DataGrid id="dgTablaAmort" width="353.5" height="330" alpha="1.0" sortableColumns="false" x="12.75" y="118">
+		<mx:columns>
+			<mx:DataGridColumn headerText="NO." dataField="numero" width="60" editable="false"/>
+			<mx:DataGridColumn headerText="FECHA" dataField="fecha" editable="false"/>
+			<mx:DataGridColumn headerText="CAPITAL" dataField="capital" editable="true"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Canvas styleName="canvasMod" x="211.25" y="456" width="155" height="37.65">
+		<mx:Label id="lblTotal" x="125" y="7.6000004" textAlign="right"/>
+	</mx:Canvas>
+	<mx:Button id="btnCancelar" x="323" y="501.65" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:Button id="btnAceptar" x="273" y="501.65" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Label x="162.25" y="465" text="Total:" fontSize="14" fontStyle="italic" fontWeight="bold"/>
+</mx:TitleWindow>

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="514" height="462" creationPolicy="all" xmlns:Data="Data.*">
+	<mx:Metadata>
+		[Event(name="enviarDatosAcred", type="Data.EventAcred")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.EventAcred;
+			import Data.DatosAcred;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.validators.Validator;
+			import mx.events.ValidationResultEvent;	
+			
+			private var _xmlReg:XML = new XML();
+			private var _xmlNiv:XML = new XML();
+			
+			private var regObj:ArrayCollection = new ArrayCollection;
+			
+			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS
+			private var du:Utils;
+			private var global:Globales;
+			private var acred:String;
+			private var vResult:ValidationResultEvent;
+			
+			private function formateaRegistro():void{
+				var i:int;
+				var cont:int = _xmlReg.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.fecha = "--Seleccionar--";
+				item.push(oItem);	
+				
+				for(i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.fecha = _xmlReg.Table[i].FECREG;
+					item.push(oItem);
+				}
+				regObj = new ArrayCollection(item);
+			}
+			
+			public function init(info:DatosAcred):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				du = new Utils();
+				global = new Globales();
+				
+				acred = info.codigo;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {
+					_xmlReg = new XML(evt.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					
+					if(_xmlReg.elements().length() > 0){
+						formateaRegistro();
+						cboRegistro.dataProvider = regObj;
+					}
+				});
+				//Obtiene el Listado de los distintos Analisis de Nivel de Riesgo del Acreditado
+				params[0] = acred;
+				wsCat.getListado.send(51, params);	
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function selecNivelRiesgo():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var fecNivel:String;
+				
+				fecNivel = cboRegistro.selectedItem.fecha;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {
+					_xmlNiv = new XML(evt.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+					
+					if(_xmlNiv.elements().length() > 0){
+						lblUbicacion.text = _xmlNiv.Table[0].UBICACION;
+						lblTipoPers.text = _xmlNiv.Table[0].TIPOPERS;
+						lblAntAct.text = _xmlNiv.Table[0].ANTACT; 
+						lblActEco.text = _xmlNiv.Table[0].ACTECO;
+						lblUbicNeg.text = _xmlNiv.Table[0].UBICNEG;
+						lblHist.text = _xmlNiv.Table[0].HISTORIAL;
+						lblMonto.text = _xmlNiv.Table[0].MONTO;
+						lblOrigen.text = _xmlNiv.Table[0].ORIGEN;
+						lblDestino.text = _xmlNiv.Table[0].DESTINO;
+						lblNivel.text = _xmlNiv.Table[0].NIVEL; 	
+					}
+					else{
+						lblUbicacion.text = "";
+						lblTipoPers.text = "";
+						lblAntAct.text = "";
+						lblActEco.text = "";
+						lblUbicNeg.text = "";
+						lblHist.text = "";
+						lblMonto.text = "";
+						lblOrigen.text = "";
+						lblDestino.text = "";
+						lblNivel.text = "";
+					}
+				});
+				//Obtiene informacion del Nivel de Riesgo que se calculo para el Acreditado
+				params[0] = acred;
+				params[1] = fecNivel;
+				wsCat.getInfoRegistro.send(30, params);
+			}
+	]]>
+	</mx:Script>
+	<mx:Label text="Fecha Evaluación:" x="99" y="13"/>
+	<mx:ComboBox id="cboRegistro" labelField="fecha" x="200" y="10" width="140" change="selecNivelRiesgo()"/>
+	<mx:Canvas styleName="canvasMod" x="9" y="42" height="418" width="496"> 
+		<mx:Canvas y="24" styleName="canvasMod" width="482" height="124" x="6">
+			<mx:Form x="1" y="1" width="479" height="121" verticalScrollPolicy="off">
+				<mx:FormItem label="Nacionalidad:" id="ubicacion" visible="true">
+					<mx:Label id="lblUbicacion"/>
+				</mx:FormItem>
+				<mx:FormItem label="Tipo Persona:" id="tipoPers" visible="true">
+					<mx:Label id="lblTipoPers"/>
+				</mx:FormItem>
+				<mx:FormItem label="Antigüedad Actividad:" id="antAct" visible="true">
+					<mx:Label id="lblAntAct"/>
+				</mx:FormItem>
+				<mx:FormItem label="Historial:" id="historial" visible="true">
+					<mx:Label id="lblHist"/>
+				</mx:FormItem>
+			</mx:Form>
+		</mx:Canvas>
+		<mx:Canvas y="175" styleName="canvasMod" width="482" height="76" x="6">
+			<mx:Form x="1" y="1" width="478" height="73" verticalScrollPolicy="off">
+				<mx:FormItem label="Actividad Económica:" id="actEco" visible="true">
+					<mx:Label id="lblActEco"/>
+				</mx:FormItem>
+				<mx:FormItem label="Ubicación Negocio:" id="ubicNeg" visible="true">
+					<mx:Label id="lblUbicNeg"/>
+				</mx:FormItem>
+			</mx:Form>
+		</mx:Canvas>
+		<mx:Canvas y="278" styleName="canvasMod" width="482" height="102" x="6">
+			<mx:Form x="1" y="0" width="478" height="100" verticalScrollPolicy="off">
+				<mx:FormItem label="Monto:" id="monto" visible="true">
+					<mx:Label id="lblMonto"/>
+				</mx:FormItem>
+				<mx:FormItem label="Origen Recursos:" id="oriRec" visible="true">
+					<mx:Label id="lblOrigen"/>
+				</mx:FormItem>
+				<mx:FormItem label="Destino Recursos:" id="desRec" visible="true">
+					<mx:Label id="lblDestino"/>
+				</mx:FormItem>
+			</mx:Form>
+		</mx:Canvas>
+		<mx:Label text="Nivel Riesgo:" visible="true" fontStyle="italic" fontWeight="bold" fontSize="13" x="155" y="387"/>
+		<mx:Label id="lblNivel" fontStyle="italic" fontWeight="bold" fontSize="13" x="249" y="387"/>		
+		<mx:Label text="Información Personal" x="8" y="5"/>
+		<mx:Label text="Actividad Económica" x="7" y="156"/>
+		<mx:Label text="Productos y Servicios" x="7" y="259"/>
+	</mx:Canvas>
+</mx:Canvas>

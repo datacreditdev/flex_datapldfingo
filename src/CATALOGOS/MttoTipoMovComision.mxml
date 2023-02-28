@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" showCloseButton="true" close="cerrar()" layout="absolute" 
+	width="450" height="340" creationPolicy="all" creationComplete="initApp()">
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.collections.IList;
+			import mx.controls.Alert;
+			import mx.core.Application;
+        	import mx.events.*;
+            import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			
+			public var _xmlTipo:XML =  new XML();
+			
+			public var global:Globales; 
+			public var wsMS:WebService;
+			public var du:Utils;	
+			public var titulo:String;
+			public var tipo:int;
+			
+			private var tipoObj:ArrayCollection = new ArrayCollection();			
+			
+			private function buscarTipoMov():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodTipo.text != "" || txtTipo.text != ""){
+					btnBusqTipo.setFocus();
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
+						_xmlTipo = new XML(evt.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						Application.application.desbloquear();
+						
+						if(_xmlTipo.elements().length() > 0){
+							formateaTipo();
+							dgTipo.dataProvider = tipoObj;	
+						}	
+					});
+					params[0] = txtCodTipo.text;
+					params[1] = txtTipo.text;
+					wsCat.getListado.send(44, params);
+				}
+			}
+			
+			private function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function enviar():void{
+				if(validar() == true){
+					dispatchEvent(new Event("enviar"));
+					cerrar();
+				}
+			}
+			
+			private function formateaTipo():void{
+				var i:int;
+				var cont:int = _xmlTipo.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for(i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.CODIGO = _xmlTipo.Table[i].CODIGO;
+					oItem.NOMBRE = _xmlTipo.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				tipoObj = new ArrayCollection(item);
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Tipo de Movimiento";
+				this.title = titulo;
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function manejadorCerrar(e:CloseEvent):void{
+				if(e.detail == Alert.OK)
+					PopUpManager.removePopUp(this);
+			}
+			
+			private function validar():Boolean{
+				if(dgTipo.selectedIndex < 0){
+					Alert.show("No se ha seleccionado el Tipo de Movimiento.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label x="15" y="12" text="Código:" width="44"/>
+	<mx:Label x="131.5" y="12" text="Nombre:" width="54"/>
+	<mx:TextInput id="txtCodTipo" x="62.5" y="10" width="60" maxChars="2" enter="buscarTipoMov()"/>
+	<mx:TextInput id="txtTipo" x="184.5" y="10" width="200.5" enter="buscarTipoMov()"/>
+	<mx:Button id="btnCerrar" x="394" y="268" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="346" y="268" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:DataGrid id="dgTipo" x="16" y="51" width="418" height="209" sortableColumns="false"
+	 	doubleClickEnabled="true" itemDoubleClick="enviar()">
+		<mx:columns>
+			<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+			<mx:DataGridColumn headerText="TIPO MOVIMIENTO" dataField="NOMBRE"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnBusqTipo" x="393" y="10" icon="@Embed(source='assets/ico_lupa.png')" click="buscarTipoMov()" toolTip="Buscar Tipo de Movimiento" width="40"/>
+</mx:TitleWindow>

@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="510" height="211">
+<mx:DataGrid id="dgAcred" x="178" y="27" width="261" visible="false" showHeaders="false" alpha="0.7" itemClick="selecciona()" keyDown="presDGAcred(event)" height="52">
+	<mx:columns>
+		<mx:DataGridColumn dataField="nombre"/>
+	</mx:columns>
+</mx:DataGrid>
+	<mx:Metadata>
+		[Event(name="enviarLugarSolic", type="Data.EventSolic")]
+	</mx:Metadata>
+	
+	<mx:Validator id="calleV" source="{txtCalle}" property="text" 
+	invalid="{txtCalle.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Calle Requerido"/>
+	
+	<mx:Validator id="codPostalV" source="{txtCodPostal}" property="text" 
+	invalid="{txtCodPostal.setFocus()}" triggerEvent="" requiredFieldError="Código Postal Requerido"/>
+	
+	<mx:Validator id="entFedV" source="{txtEntFed}" property="text" 
+	invalid="{txtEntFed.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Entidad Federativa Requerido"/>
+	
+	<mx:Validator id="municipioV" source="{txtMunicipio}" property="text" 
+	invalid="{txtMunicipio.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Municipio Requerido"/>
+	
+	<mx:Validator id="localidadV" source="{txtLocalidad}" property="text" 
+	invalid="{txtLocalidad.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Localidad Requerido"/>
+	
+	<mx:Validator id="coloniaV" source="{txtColonia}" property="text" 
+	invalid="{txtColonia.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Colonia Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import Data.Utils;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			
+			private var _xmlDir:XML =  new XML();
+			
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosSolic = new DatosSolic();
+			
+			public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS	
+			public var du:Utils;
+			public var estatus:String;
+			public var texto:String;
+			private var global:Globales;
+			
+			//Realiza la busqueda de direccion del acreditado utilizando el codigo del mismo
+			public function buscaDireccion():void{ 
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				if (datos.cdgAcred != "" && txtAcred.text != ""){
+					du.initWsCat(wsCat);
+					du.sCursor();
+						
+					_xmlDir = null;
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlDir = new XML(evt.result.toString());
+						
+						limpiaDatosDir();
+							
+						du.rCursor();
+						du.closeWs(wsCat);
+							
+						if(_xmlDir.elements().length() > 0){						
+							txtCalle.text = _xmlDir.Table[0].CALLE;
+							txtEntFed.text = _xmlDir.Table[0].ENTFED;
+							txtMunicipio.text = _xmlDir.Table[0].MUNIC;
+							txtLocalidad.text = _xmlDir.Table[0].LOC;
+							txtColonia.text = _xmlDir.Table[0].COL;
+							txtCodPostal.text = _xmlDir.Table[0].CDGPOSTAL;	
+							
+							datos.cdgLugarEntFed = _xmlDir.Table[0].CDGEF;		
+							datos.cdgLugarMun = _xmlDir.Table[0].CDGMU;
+							datos.cdgLugarLoc = _xmlDir.Table[0].CDGLO;
+							datos.cdgLugarCol = _xmlDir.Table[0].CDGCOL;
+						}
+					});
+					params[0] = datos.cdgAcred;
+					wsCat.getInfoAcred.send(6, params);
+				}
+			}
+			
+			public function buscaAcred():void{
+				if(txtAcred.text != '')
+				{	
+					dgAcred.selectedIndex = -1;
+					texto = txtAcred.text;					
+					acredObj.filterFunction = filtraAcred;
+					acredObj.refresh();
+					if(acredObj.length > 0){
+						dgAcred.validateNow();
+						dgAcred.scrollToIndex(0);
+						dgAcred.selectedIndex = 0;
+						dgAcred.visible = true;
+						this.setChildIndex(dgAcred,this.numChildren - 1);
+					}	
+					else
+						dgAcred.visible = false;								
+				}
+				else{
+					acredObj.filterFunction = null;
+					acredObj.refresh();
+					dgAcred.visible = false;
+				}
+			}
+			
+			public function cargaAcred(Arr:ArrayCollection):void{
+				acredObj = Arr;
+				dgAcred.dataProvider = acredObj;
+			}
+			
+			public function cargaInfoGrupo(grupo:String):void{
+				wsMS = du.initWsMS(wsMS);
+				du.sCursor();
+					
+				_xmlDir = null;
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlDir = new XML(evt.result.toString());
+						
+					limpiaDatosDir();
+						
+					du.rCursor();
+					du.closeWs(wsMS);
+						
+					if(_xmlDir.elements().length() > 0){						
+						txtCalle.text = _xmlDir.Table[0].CALLE;
+						txtEntFed.text = _xmlDir.Table[0].DOMENTFED;
+						txtMunicipio.text = _xmlDir.Table[0].DOMMUNIC;
+						txtLocalidad.text = _xmlDir.Table[0].DOMLOC;
+						txtColonia.text = _xmlDir.Table[0].DOMCOL;
+						txtCodPostal.text = _xmlDir.Table[0].DOMCODPOSTAL;	
+								
+						datos.cdgLugarEntFed = _xmlDir.Table[0].DOMCDGEF;		
+						datos.cdgLugarMun = _xmlDir.Table[0].DOMCDGMU;
+						datos.cdgLugarLoc = _xmlDir.Table[0].DOMCDGLO;
+						datos.cdgLugarCol = _xmlDir.Table[0].DOMCDGCOL;
+					}
+				});
+				wsMS.getInfoGrupo.send(2, grupo);		
+			}
+			
+			public function desactivaControles():void{
+				cnvLugar.enabled = false;	
+			}
+			
+			public function enviarLugarSolic(formData:DatosSolic):void{
+				var invalidArray:Array = Validator.validateAll([calleV, codPostalV, entFedV, municipioV, localidadV, coloniaV]);
+				if(invalidArray.length == 0){	
+					formData.calle = txtCalle.text;
+					formData.cdgLugarEntFed = datos.cdgLugarEntFed;
+					formData.cdgLugarMun = datos.cdgLugarMun;
+					formData.cdgLugarLoc = datos.cdgLugarLoc;
+					formData.cdgLugarCol = datos.cdgLugarCol;
+					formData.guardaLugar = true;
+				}
+				else{
+					formData.guardaLugar = false;
+				}
+				var event:EventSolic = new EventSolic("enviarLugarSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			public function filtraAcred(item:Object):Boolean{
+				var isMatch:Boolean = false
+				if(item.nombre.toString().substr(0, texto.length).toLowerCase() == texto.toLowerCase())
+					isMatch = true 
+				return isMatch; 
+			}
+			
+			private function filtraCaptura(item:Object):Boolean{
+				var isMatch:Boolean = false
+				if(texto.toLowerCase().search(item.nombre.toLowerCase()) != -1)
+					isMatch = true 
+				return isMatch; 
+			}
+
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+						
+			public function init(info:DatosSolic, tipoAccion:int, estatus:String):void{
+				this.estatus = estatus;
+				global = new Globales();
+				du = new Utils();
+				wsMS = new WebService();
+				
+				if(info != null){
+					if(info.situacion == 'A' || info.situacion == 'R' || estatus == "entrega")// || estatus == "evaluacion")
+						desactivaControles();
+				}
+			}
+			
+			public function limpiaDatosDir():void{
+				txtCalle.text = "";
+				txtCodPostal.text = "";
+				txtEntFed.text = "";
+				txtMunicipio.text = "";
+				txtLocalidad.text = "";
+				txtColonia.text = "";	
+						
+				datos.cdgLugarEntFed = "";		
+				datos.cdgLugarMun = "";
+				datos.cdgLugarLoc = "";
+				datos.cdgLugarCol = "";	
+			}			
+			
+			private function presAcred(event:KeyboardEvent):void{
+				if(event.keyCode == Keyboard.DOWN){
+					dgAcred.setFocus();
+				}				
+			}
+			
+			private function presDGAcred(event:KeyboardEvent):void{
+				if(event.keyCode == Keyboard.ENTER){
+					selecciona();
+					txtAcred.setFocus();
+				}					
+			}
+			
+			public function selecciona():void{
+				if(dgAcred.selectedIndex >= 0){
+					var indice:int = dgAcred.selectedIndex;
+					
+					if (datos.cdgAcred != acredObj[indice].codigo){			
+						txtAcred.text = acredObj[indice].nombre;
+						datos.cdgAcred = acredObj[indice].codigo;
+						buscaDireccion();	
+					}
+					else
+						txtAcred.text = acredObj[indice].nombre;
+					dgAcred.visible = false;
+				}
+			}		
+			
+			public function verificaAcred():void{
+				if (dgAcred.selectedIndex < 0){
+					dgAcred.visible = false;
+					texto = txtAcred.text;
+					acredObj.filterFunction = filtraCaptura;
+					acredObj.refresh();
+					if (acredObj.length == 0){
+						txtAcred.text = "";
+						datos.cdgAcred = "";
+						limpiaDatosDir();
+					}
+					acredObj.filterFunction = null;
+					acredObj.refresh();
+				}	
+			}
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvLugar" x="10" y="0" width="490" height="209" styleName="canvasMod">
+		<mx:FormItem label="Acreditado:" id="acreditado" visible="true" x="92.75" y="3" width="340.5">
+			<mx:TextInput id="txtAcred" width="260" change="buscaAcred()" keyDown="presAcred(event)" enter="selecciona()" focusOut="verificaAcred()"/>
+		</mx:FormItem>
+		<mx:FormItem label="Calle:" id="calle" visible="true" x="121.75" y="32" width="250.5">
+			<mx:TextInput id="txtCalle" width="200" editable="false"/>
+		</mx:FormItem>
+		<mx:FormItem label="Codigo Postal:" id="codPostal" visible="true" x="78.75" y="61">
+			<mx:TextInput id="txtCodPostal" width="80" editable="false"/>
+		</mx:FormItem>
+		<mx:FormItem label="Entidad Federativa:" id="entFederativa" visible="true" x="54.75" y="90">
+			<mx:TextInput id="txtEntFed" width="170" editable="false"/>
+		</mx:FormItem>
+		<mx:FormItem label="Municipio:" id="municipio" visible="true" x="99.75" y="120">
+			<mx:TextInput id="txtMunicipio" width="170" editable="false"/>
+		</mx:FormItem>
+		<mx:FormItem label="Localidad:" id="localidad" visible="true" x="98.75" y="150">
+			<mx:TextInput id="txtLocalidad" width="170" editable="false"/>
+		</mx:FormItem>
+		<mx:FormItem label="Colonia:" id="colonia" visible="true" x="108.75" y="180">
+			<mx:TextInput id="txtColonia" width="170" editable="false"/>
+		</mx:FormItem>
+	</mx:Canvas>
+</mx:Canvas>

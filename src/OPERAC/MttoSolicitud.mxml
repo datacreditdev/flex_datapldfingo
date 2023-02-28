@@ -1,0 +1,1030 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" xmlns:control="control.*" layout="absolute" width="844" height="600" title="Edición" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*" xmlns:Control="OPERAC.Control.*">
+	<mx:states>
+		<mx:State name="evaluacion">
+			<mx:RemoveChild target="{dgAcred}"/>
+			<mx:RemoveChild target="{btnGuardarHor}"/>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:DataGrid id="dgAcredEv" x="10" y="10" width="802" height="187" 
+		    	editable="true" sortableColumns="false" itemEditBegin="desactivaEdicion(event)">
+				<mx:columns>
+					<mx:DataGridColumn headerText="CODIGO" editable="false" dataField="codigo" width="40"/>
+					<mx:DataGridColumn headerText="ACREDITADO" editable="false" dataField="nombre" width="140"/>
+					<mx:DataGridColumn headerText="SOLICITUD" editable="false" dataField="solicitud" width="50"/>
+					<mx:DataGridColumn headerText="MONTO SOLICITADO" dataField="cantSolic" width="85" editable="false"/>	
+					<mx:DataGridColumn headerText="SOLICITADO" textAlign="center" rendererIsEditor="true" dataField="solicitado" width="55" editorDataField="selected" editable="false">
+						<mx:itemRenderer>
+							<mx:Component>
+			  					<mx:CheckBox change="outerDocument.selSolicitadoAcredEv(event)" enabled="{outerDocument.activaSituacion}"/> 
+			  				</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="AUTORIZADO" rendererIsEditor="true" textAlign="center" dataField="autorizado" width="55" editorDataField="selected" editable="false">
+						<mx:itemRenderer>
+							<mx:Component>
+			  					<mx:CheckBox change="outerDocument.selAutorizadoAcredEv(event)" enabled="{outerDocument.activaSituacion}"/> 
+			  				</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="RECHAZADO" textAlign="center" rendererIsEditor="true" dataField="rechazado" width="55" editorDataField="selected" editable="false">
+						<mx:itemRenderer>
+							<mx:Component>
+			  					<mx:CheckBox change="outerDocument.selRechazadoAcredEv(event)" enabled="{outerDocument.activaSituacion}"/> 
+			  				</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" editable="true" dataField="cantAutor" width="90">
+						<mx:itemEditor>
+							<mx:Component>
+			  					<mx:TextInput width="30" fontSize="10" verticalCenter="0" focusOut="outerDocument.calculaMontoAutorizado()" change="outerDocument.validaMonto(event)" restrict="0-9;."/> 
+			  				</mx:Component>
+						</mx:itemEditor>
+					</mx:DataGridColumn>
+				</mx:columns>
+		</mx:DataGrid>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Button id="btnGuardar" x="10" y="529" label="Guardar" width="80" click="modificaSolic()"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{tabNav}" position="lastChild">
+				<mx:Canvas label="Excepciones" width="100%" height="100%">
+					<Forms:FormExcepcionEv id="formExcepcionEv" height="195" width="800" x="10" y="10"/>
+				</mx:Canvas>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
+	<mx:Script>
+		<![CDATA[
+			import mx.events.MoveEvent;
+			import mx.events.FlexEvent;
+			import mx.events.CollectionEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.events.DataGridEvent;
+			import mx.events.DataGridEventReason;
+			import mx.events.ItemClickEvent;
+			import mx.events.ListEvent;
+			import mx.events.CalendarLayoutChangeEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.collections.ArrayCollection;
+			import Data.EventSolic;
+			import Data.DatosSolic;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.controls.DateField;
+			import mx.controls.RadioButtonGroup;
+			import mx.effects.*;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			[Bindable]
+			private var info:DatosSolic;
+			[Bindable]
+			private var _xmlSolic:XML =  new XML();
+			[Bindable]
+			private var _xmlAcred:XML =  new XML();
+			[Bindable]
+			private var _xmlCiclo:XML =  new XML();
+			[Bindable]
+			private var _xmlControl:XML =  new XML();	
+			[Bindable]
+			private var _xmlPres:XML =  new XML();
+			[Bindable]	
+			public var activaSituacion:Boolean = true; //variable que controla el estatus de los Checks de situacion
+			
+			public var comMttoDatosSolic:MttoDatosSolic;
+			
+			//arreglos para almacenar la informacion individual de los acreditados
+			public var acred:Array;
+			public var montos:Array; 
+			public var cantAutorAcred:Array;
+			public var situacionAcred:Array;
+			public var rechazo:Array;
+			public var proyInv:Array;
+			public var emplGenH:Array;
+			public var emplGenM:Array;
+			public var emplSostH:Array;
+			public var emplSostM:Array;
+			
+			public var Arr:ArrayCollection = new ArrayCollection();
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			
+			private var vResult:ValidationResultEvent;
+			
+			public var wsMS:WebService;
+			public var bandMod:Boolean;	
+			public var tipoAccion:int;
+			public var indAcred:int;
+			public var coord:String;
+			public var grupo:String;
+			public var montoMin:Number;
+			public var montoMax:Number;
+			public var promotor:String;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			public var openEffect:Effect = new Fade();
+			
+			public function actualizaDatos(event:Event):void{
+				dgAcred.dataProvider = Arr;
+			}
+			
+			public function actualizaFecEntre(event:CalendarLayoutChangeEvent):void{
+				var fecSel:Date = DateField(event.currentTarget).selectedDate;
+				//formCalendarioSolic.actualizaDiaPago(fecSel.getDay().toString());
+				formCalendarioSolic.actualizaDiaJunta(fecSel.getDay().toString());
+			}
+			
+			public function actualizaFecSolic(event:CalendarLayoutChangeEvent):void{
+				var fecSolic:String = global.formatoFecha(DateField(event.currentTarget).selectedDate);
+				actualizaListaAcred(fecSolic);
+			}
+			
+			public function actualizaListaAcred(fecSolic:String):void{
+				if(tipoAccion == 1)
+					cargaAcred(grupo, "", fecSolic);
+				else if(tipoAccion == 2)
+					cargaAcred(grupo, txtCiclo.text, fecSolic);
+			}
+			
+			public function actualizaListaProd(event:CollectionEvent):void{
+				activaControles(info.cdgProdCred, 2);
+			}
+			
+			public function actualizaProdCred(event:ListEvent):void{
+				activaControles(ComboBox(event.currentTarget).selectedItem.id, 1);
+			}
+			
+			//Funcion que actualiza la situacion de la solicitud
+			public function actualizaSituacion(situacion:String):void{
+				var i:int;
+				var cont:int = _xmlAcred.elements().length();
+				
+				for(i = 0; i < cont; i++){
+					Arr[i].situacion = situacion;
+				}
+				dgAcred.dataProvider = Arr;
+			}
+			
+			//funcion que permite activar los controles que integran la captura de la solicitud
+			public function activaControles(prodCred:String, tipo:int):void{
+				//tipo = 1   CARGA PARAMETROS DEL PRODUCTO Y ACTIVA CONTROLES CAPTURA
+				//tipo = 2   SOLO ACTIVA LOS CONTROLES DE CAPTURA
+				var wsMS:WebService = new WebService(); 
+				wsMS = du.initWsMS(wsMS);
+				du.sCursor();
+				
+				//Application.application.bloquear();	
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlControl = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					
+					if (_xmlControl.elements().length() > 0){
+						montoMin = Number(_xmlControl.Table[0].MONTOMIN);
+						montoMax = Number(_xmlControl.Table[0].MONTOMAX);
+						if(currentState == null){
+							formDatosGralSolic.activaControles(_xmlControl);
+							formCalendarioSolic.activaControles(_xmlControl);
+							formTasasSolic.activaControles(_xmlControl);
+							formRecargosSolic.activaControles(_xmlControl);
+							formEntregaSolic.activaControles(_xmlControl);						
+							if(tipo == 1){
+								formDatosGralSolic.cargaParamsProd(_xmlControl);
+								formCalendarioSolic.cargaParamsProd(_xmlControl);
+								formTasasSolic.cargaParamsProd(_xmlControl);	
+								formRecargosSolic.cargaParamsProd(_xmlControl);
+								formEntregaSolic.cargaParamsProd(_xmlControl);
+							}
+						}
+					}
+					wsMS = null;
+					//Application.application.desbloquear(); 	
+				});
+				wsMS.getActivaContSolicESIA.send(prodCred);
+			}
+			
+			public function calculaMontoAutorizado():void{
+				var acred:ArrayCollection = dgAcredEv.dataProvider as ArrayCollection;
+				var i:int;
+				var autorizado:Number = 0;
+				for (i = 0; i < acred.length; i++){
+					autorizado += Number(acred[i].cantAutor);
+				}
+				formDatosGralSolic.txtAutorizado.text = autorizado.toString();
+			}
+						
+			public function calculaMonto():void{
+				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
+				var i:int;
+				var solicitado:Number = 0;
+				for (i = 0; i < acred.length; i++){
+					solicitado += Number(acred[i].cantSolic);
+				}
+				formDatosGralSolic.txtSolicitado.text = solicitado.toString();
+			}
+			
+			public function cargaAcred(grupo:String, ciclo:String, fecSolic:String):void{
+				initConexion();
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlAcred = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					
+					if (_xmlAcred.elements().length() > 0){
+						formateaAcred(ciclo, fecSolic);
+						//asigna la lista de acreditados a los formularios que la implementan
+						formProcSolic.cargaAcred(acredObj);
+						formLugarSolic.cargaAcred(acredObj);
+						formEntregaSolic.cargaAcred(acredObj);
+						if(currentState == null)
+							dgAcred.dataProvider = Arr;
+						else if(currentState == 'evaluacion')
+							dgAcredEv.dataProvider = Arr;
+					} 	
+					else{
+						if(currentState == null)
+							dgAcred.dataProvider = null;
+						else if(currentState == 'evaluacion')
+							dgAcredEv.dataProvider = null;
+					}
+					wsMS = null;
+				});
+				if(ciclo != "")
+					wsMS.getListaAcredSolic.send(grupo, ciclo);
+				if(ciclo == "")
+					wsMS.getListaAcredNvaSolic.send(grupo, fecSolic); //METODO QUE MUESTRA LA LISTA DE ACREDITADOS QUE CORRESPONDEN A UNA NUEVA SOLICITUD
+			}
+			
+			public function cargaCiclo():void{
+				var wsMS:WebService = new WebService();
+				wsMS = du.initWsMS(wsMS);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					var ciclo:String = evt.result.toString();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					
+					txtCiclo.text = ciclo;
+					wsMS = null; 	
+				});
+				wsMS.getNvoCicloSolicESIA.send(grupo);		
+			}
+			
+			public function cargaInfoSolic(cdgGrupo:String, nomGrupo:String, ciclo:String, munic:String, coord:String, promotor:String):void{
+				tipoAccion = 2;
+				bandMod = true;
+				init();
+				this.coord = coord;
+				this.grupo = cdgGrupo;
+				this.promotor = promotor;
+				txtGrupo.text = nomGrupo;
+				txtCiclo.text = ciclo;
+				txtMunicipio.text = munic;
+				
+				if(currentState == 'evaluacion')
+					//selecciona la pestaña Datos Generales si la solicitud se encuentra en proceso de evaluacion
+					tabNav.selectedIndex= 1;
+				
+				var wsMS:WebService = new WebService();
+				wsMS = du.initWsMS(wsMS);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlSolic = new XML(evt.result);
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+					
+					if (_xmlSolic.elements().length() > 0){
+						
+						//SI LA SOLICITUD FUE RECHAZADA NO PERMITE MODIFICAR EL REGISTRO
+						if(_xmlSolic.Table[0].SITUACION == 'R'){
+							desactivaControles();
+							bandMod = false;
+							Alert.show("No es posible modificar la información. La solicitud ya fue Rechazada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+						}
+						
+						//SI LA SOLICITUD FUE AUTORIZADA NO ES POSIBLE EDITARLA
+						if(_xmlSolic.Table[0].SITUACION == 'A' && currentState == null){
+							desactivaControles();
+							bandMod = false;
+							//ACTIVA EL BOTON QUE PERMITE MODIFICAR EL HORARIO Y DIA DE JUNTA
+							btnGuardarHor.visible = true;
+							//Alert.show("No es posible modificar la información. La solicitud ya fue Autorizada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+							Alert.show("Unicamente es posible modificar el día de junta y horario de reunión, debido a que la solicitud ya fue Autorizada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+						}
+						
+						//SI LA SOLICITUD FUE AUTORIZADA PUEDE SER MODIFICADA POR MESA DE CONTROL
+						//ANTES DE QUE SEA AUTORIZADA POR TESORERIA
+						if(_xmlSolic.Table[0].SITUACION == 'A' && currentState == 'evaluacion'){
+							wsMS = du.initWsMS(wsMS);
+							du.sCursor();
+					
+							du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+								_xmlPres = new XML(evt.result);
+								
+								if(_xmlPres.elements().length() == 0){
+									desactivaControles();
+									bandMod = false;
+									Alert.show("No es posible modificar la información. La solicitud ya fue Autorizada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+								}
+								du.rCursor();
+								du.closeWs(wsMS);
+							});
+							//Consulta la tabla de prestamo para verificar que la situacion sea autorizado
+							wsMS.getSituacionPres.send(cdgGrupo, ciclo);
+						}
+						cargaAcred(cdgGrupo, ciclo, _xmlSolic.Table[0].FECSOLIC);
+						llenaRegistros();
+					}
+					else{
+						Alert.show("Error en la carga de Datos","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+					}
+					
+				});
+				wsMS.getInfoSolic.send(cdgGrupo, ciclo);
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function desactivaControles():void{
+				if(currentState == null)
+					dgAcred.editable = false;
+				else if(currentState == 'evaluacion'){
+					dgAcredEv.editable = false;
+					activaSituacion = false; //variable que controla el estatus de los CheckBox de situacion
+				}
+			}
+			
+			public function desactivaEdicion(event:DataGridEvent):void{
+				var acred:ArrayCollection = dgAcredEv.dataProvider as ArrayCollection;
+				var ind:int = dgAcredEv.selectedIndex;
+				if(acred[ind].autorizado != true && acred[ind].solicitado != true)
+					event.preventDefault();
+				calculaMontoAutorizado();
+			}
+	
+			public function enviar():void{
+				info = new DatosSolic();
+				
+				if(_xmlSolic == "" || _xmlSolic.Table[0].SITUACION == 'S' || bandMod == true){
+					//valida que todos los clientes cuenten con proyecto de inversion
+					if(validaProyecto() == false)
+						return;
+					//eventos enviar de los formularios incluidos
+					formProdSolic.enviarDatosSolic(info);
+					formDatosGralSolic.enviarDatosSolic(info);
+					formCalendarioSolic.enviarDatosSolic(info);
+					formTasasSolic.enviarDatosSolic(info);
+					formRecargosSolic.enviarDatosSolic(info);
+					formProcSolic.enviarDatosSolic(info);
+					formEntregaSolic.enviarDatosSolic(info);
+					formLugarSolic.enviarLugarSolic(info);
+					if(currentState == 'evaluacion')
+						formExcepcionEv.enviarDatosSolic(info);
+					if(validaAutorizado())
+						validaFinal();
+				}
+				else{
+					Alert.show("No es posible modificar el registro de la solicitud.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+				}
+			}
+			
+			public function enviarHorario():void{
+				global = new Globales();
+				info = new DatosSolic();
+				
+				formCalendarioSolic.enviarDatosSolic(info);
+				validaHorario();
+			}
+			
+			//funcion que realiza la carga de datos 
+			public function formateaAcred(ciclo:String, fecSolic:String):void{
+				var i:int;
+				var cont:int = _xmlAcred.elements().length();
+				var oItem:Object;
+				
+				Arr.removeAll();
+				acredObj.removeAll();
+				
+				for(i = 0; i < cont; i++)
+				{
+					oItem = new Object();
+					oItem.codigo = _xmlAcred.Table[i].CDGCL;
+					oItem.nombre = _xmlAcred.Table[i].NOMBRE_CL;
+					oItem.telefono = _xmlAcred.Table[i].TELEFONO;
+					if(ciclo == ""){
+						oItem.solicitud = fecSolic;
+						oItem.cantSolic = 0;
+						oItem.situacion = "Solicitado";
+						oItem.sitAcred = "";
+						oItem.cantAut = 0;
+						//informacion de la causa de rechazo
+						oItem.rechazo = "";
+						//informacion del proyecto de inversion
+						oItem.proyecto = "";
+						oItem.emplSostH = 0;
+						oItem.emplSostM = 0;
+						oItem.emplGenH = 0;
+						oItem.emplGenM = 0;
+					}
+					else if(ciclo != ""){
+						oItem.solicitud = _xmlAcred.Table[i].FECSOL;
+						oItem.cantSolic = _xmlAcred.Table[i].CANTSOLIC;
+						oItem.situacion = _xmlAcred.Table[i].SITUACIONC;
+						oItem.sitAcred = _xmlAcred.Table[i].SITUACION.toString(); 
+						//informacion del proyecto de inversion 
+						oItem.proyecto = _xmlAcred.Table[i].PROYECTO.toString();
+						oItem.emplSostH = _xmlAcred.Table[i].EMPLSOSTH;
+						oItem.emplSostM = _xmlAcred.Table[i].EMPLSOSTM;
+						oItem.emplGenH = _xmlAcred.Table[i].EMPLGENH;
+						oItem.emplGenM = _xmlAcred.Table[i].EMPLGENM;
+						//if(oItem.sitAcred == "S")
+						//	oItem.cantAutor = 0;
+						//else
+						oItem.cantAutor = _xmlAcred.Table[i].CANTAUTOR;
+					}
+					oItem.solicitado = false;
+					oItem.autorizado = false;
+					oItem.rechazado = false;
+					switch(oItem.sitAcred){
+						case "S":
+							oItem.solicitado = true;
+							break;
+						case "A":
+							oItem.autorizado = true;
+							break;
+						case "R":
+							oItem.rechazado = true;
+							break;
+					}
+					//informacion de la causa de rechazo
+					oItem.rechazo = _xmlAcred.Table[i].RECHAZO;
+					if(oItem.proyecto != "")
+						oItem.datos = "OK"; 
+					Arr.addItem(oItem);
+					acredObj.addItem(oItem);
+				}
+			}
+			
+			//funcion que da formato a la informacion que sera almacenada
+			public function formateaRegAcred():Boolean{
+				var listaAcred:ArrayCollection;
+				if(currentState == null)				
+					listaAcred = dgAcred.dataProvider as ArrayCollection;
+				if(currentState == 'evaluacion')
+					listaAcred = dgAcredEv.dataProvider as ArrayCollection;
+					
+				if (listaAcred != null){
+					acred = new Array;
+					montos = new Array;
+					cantAutorAcred = new Array;
+					situacionAcred = new Array;
+					rechazo = new Array;
+					proyInv = new Array;
+					emplGenH = new Array;
+					emplGenM = new Array;
+					emplSostH = new Array;
+					emplSostM = new Array;
+					
+					var cont:int = listaAcred.length;
+					var cantSolic:Number;
+					var cantAutor:Number;
+					var i:int; 
+						
+					for(i = 0; i < cont; i++){
+						acred[i] = listaAcred[i].codigo;
+						cantSolic = Number(listaAcred[i].cantSolic);
+						cantAutor = Number(listaAcred[i].cantAutor);
+						situacionAcred[i] = listaAcred[i].situacion;
+						if (cantSolic == 0 || (cantSolic >= montoMin && cantSolic <= montoMax))
+							montos[i] = cantSolic;
+						else{
+							if(cantSolic < montoMin)
+								Alert.show("El acreditado " + listaAcred[i].nombre +  " no alcanza el monto mínimo permitido",titulo,4,null,null,global.iAlert);
+							else if(cantSolic > montoMax)
+								Alert.show("El acreditado " + listaAcred[i].nombre +  " supera el monto máximo permitido",titulo,4,null,null,global.iAlert);
+							return false;
+						} 
+						//Asignaciones en la etapa de registro de la solicitud
+						if(currentState == null){
+							situacionAcred[i] = listaAcred[i].situacion;
+							emplGenH[i] = Number(listaAcred[i].emplGenH);
+							emplGenM[i] = Number(listaAcred[i].emplGenM);
+							emplSostH[i] = Number(listaAcred[i].emplSostH);
+							emplSostM[i] = Number(listaAcred[i].emplSostM);
+						}
+						//Asignaciones en la etapa de evaluacion de la solicitud
+						if(currentState == 'evaluacion'){
+							if (cantAutor == 0 || (cantAutor >= montoMin && cantAutor <= montoMax))
+								cantAutorAcred[i] = cantAutor;
+							else{
+								if(cantAutor < montoMin)
+									Alert.show("El acreditado " + listaAcred[i].nombre +  " no alcanza el monto mínimo permitido",titulo,4,null,null,global.iAlert);
+								else if(cantAutor > montoMax)
+									Alert.show("El acreditado " + listaAcred[i].nombre +  " supera el monto máximo permitido",titulo,4,null,null,global.iAlert);
+								return false;
+							} 
+							//Asigna la situacion de la solicitud a cada cliente
+							situacionAcred[i] = listaAcred[i].sitAcred;
+		
+							//Asigna la causa de rechazo de cada cliente
+							rechazo[i] = listaAcred[i].rechazo;
+						}
+						proyInv[i] = listaAcred[i].proyecto;
+					}
+				}
+				return true;
+			}
+			
+			public function guardaHorario():void{
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setModHorario);
+				wsMS.setModHorario.send(grupo, txtCiclo.text, info.reunion, info.horario);
+			}
+			
+			public function guardaSolic():void{
+				if(formateaRegAcred() == true){ //valida que todos los clientes se hayan registrado con montos validos
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					//Servicio invocado en la etapa de registro de la solicitud
+					if(currentState == null){
+						wsMS.addEventListener(ResultEvent.RESULT, setAccionSolicESIA);
+						wsMS.setAccionSolicESIA.send(tipoAccion, grupo, txtCiclo.text, info.periodicidad, info.solicitado, info.autorizado,
+													 info.diaJunta, info.diasGracia, info.interes, info.duracion, info.pagoCapital,
+													 info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
+													 info.formaDist, info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
+													 info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, 
+													 Application.application.U_ID, info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, 
+													 info.multPerio, coord, promotor, info.tasaFija, acred, montos, proyInv, emplGenH, emplGenM, 
+													 emplSostH, emplSostM, info.calle, info.cdgLugarEntFed, info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol,
+													 info.horario, info.reunion);
+					}
+					//Servicio invocado en la etapa de evaluacion de la solicitud
+					else if(currentState == 'evaluacion'){
+						if(validaSituacion() == true){
+							wsMS.addEventListener(ResultEvent.RESULT, setAccionEvSolicESIA);
+							wsMS.setAccionEvSolicESIA.send(grupo, txtCiclo.text, info.periodicidad, info.solicitado, info.autorizado,
+													   		info.diaJunta, info.diasGracia, info.interes, info.duracion, info.pagoCapital,
+													   		info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
+													   		info.formaDist, info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
+													   		info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, 
+													   		Application.application.U_ID, info.formaEntre, info.nombreCheq, info.multPerio, coord, promotor, info.tasaFija,
+													  	 	acred, montos, proyInv, situacionAcred, rechazo, cantAutorAcred, info.calle, info.cdgLugarEntFed,
+													  	 	info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol, info.horario, info.reunion,
+													  	 	info.excepcion, info.observacion, info.excAcred, info.lstAcred, info.obsAcred);
+						}
+						else{
+							wsMS.disconnect();
+							du.rCursor();
+							Application.application.desbloquear();
+
+						}
+					}
+				}
+			}
+			
+			public function init():void{
+				openEffect.duration = 500;
+				openEffect.play([this]);
+				global = new Globales();
+				du = new Utils();
+				titulo = "Mantenimiento de Solicitud";
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function limpiaSituacion(indice:int):void{
+				Arr[indice].solicitado = false;
+				Arr[indice].autorizado = false;
+				Arr[indice].rechazado = false;
+				Arr[indice].rechazo = "";
+				dgAcredEv.dataProvider = Arr;
+			}
+			
+			public function llenaRegistros():void{
+				var estatus:String;
+				info = new DatosSolic();
+				if(currentState != null)
+					estatus = currentState.toString();
+					
+				info.cdgGrupo = _xmlSolic.Table[0].CDGNS;
+				info.ciclo = _xmlSolic.Table[0].CICLO;
+				
+				//Datos de producto de la solicitud
+				info.cdgTipoProd = _xmlSolic.Table[0].CDGTPC;
+				info.cdgProdCred = _xmlSolic.Table[0].CDGPCR;
+				
+				//Datos generales de la solicitud
+				info.fecSolic = _xmlSolic.Table[0].FECSOLIC;
+				info.fecEntre = _xmlSolic.Table[0].FECINICIO;
+				info.situacion = _xmlSolic.Table[0].SITUACION;
+				info.solicitado = _xmlSolic.Table[0].CANTSOLIC;
+				info.autorizado = _xmlSolic.Table[0].CANTAUTOR;
+				info.moneda = _xmlSolic.Table[0].CDGMO;
+				
+				//Datos del calendario de la solicitud
+				info.periodicidad = _xmlSolic.Table[0].PERIODICIDAD;
+				info.reunion = _xmlSolic.Table[0].NOACUERDO;
+				info.diaJunta = _xmlSolic.Table[0].DIAJUNTA;
+				info.diasGracia = _xmlSolic.Table[0].DESFASEPAGO;
+ 				info.duracion = _xmlSolic.Table[0].DURACION; 
+				info.pagoCapital = _xmlSolic.Table[0].PERIGRCAP;
+				info.pagoInteres = _xmlSolic.Table[0].PERIGRINT;
+				info.multPerio = _xmlSolic.Table[0].MULTPER;
+				info.horario = _xmlSolic.Table[0].HORARIO;
+				
+				//Tasas de la solicitud
+				info.metodoCobro = _xmlSolic.Table[0].CDGMCI;
+				info.formaDist = _xmlSolic.Table[0].CDGFDI;
+				info.instrumento = _xmlSolic.Table[0].CDGTI;
+				info.interes = _xmlSolic.Table[0].TASA;
+				
+				//Datos de recargos de la solicitud
+				info.aplican = _xmlSolic.Table[0].MODOAPLIRECA;
+				info.metodoAplic = _xmlSolic.Table[0].METRECA;
+				info.tasaFija = _xmlSolic.Table[0].TASARECFIJ;
+				info.factorTasa = _xmlSolic.Table[0].TASARECTAS;
+				
+				//Datos de la mesa directiva del grupo
+				info.presidente = _xmlSolic.Table[0].PRESIDENTE;
+				info.secretario = _xmlSolic.Table[0].SECRETARIO;
+				info.tesorero = _xmlSolic.Table[0].TESORERO;
+				
+				//Datos de entrega de la solicitud
+				info.formaEntre = _xmlSolic.Table[0].FORMAENTREGA;
+				info.nombreCheq = _xmlSolic.Table[0].NOMBRECH;
+				info.cdgCb = _xmlSolic.Table[0].CDGDO;
+				info.tipoDes = _xmlSolic.Table[0].CDGDOF;
+				
+				//bandMod indica si la informacion de la solicitud puede modificarse
+				if(info.situacion == 'S' || bandMod == true)		
+					formProdSolic.prodCredObj.addEventListener(CollectionEvent.COLLECTION_CHANGE, actualizaListaProd);
+				formProdSolic.init(info, 2);
+				formDatosGralSolic.dtfEntrega.addEventListener(CalendarLayoutChangeEvent.CHANGE, actualizaFecEntre);
+				formDatosGralSolic.dtfSolicitud.addEventListener(CalendarLayoutChangeEvent.CHANGE, actualizaFecSolic);
+				formDatosGralSolic.init(info, 2, estatus);
+				formCalendarioSolic.init(info, 2, estatus);
+				formTasasSolic.init(info, 2, estatus);
+				formProcSolic.init(info, 2, estatus);
+				formRecargosSolic.init(info, 2, estatus);
+				formEntregaSolic.init(info, 2, estatus);
+				formLugarSolic.init(info, 2, estatus);
+				formLugarSolic.cargaInfoGrupo(grupo);
+				if(currentState == 'evaluacion')
+					formExcepcionEv.init(info, 2, estatus);
+			}
+			
+			public function modificaHorario():void{
+				enviarHorario();
+			}
+			
+			public function modificaSolic():void{
+				if(formDatosGralSolic.situacion.selectedValue == 'S')
+					enviar();
+				else
+					Alert.show("No es posible guardar los cambios realizados en la solicitud.\n\nModifique la situación seleccionada actualmente.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+			} 
+			
+			public function muestraDatosSolic():void{
+				if( _xmlSolic == "" || _xmlSolic.Table[0].SITUACION == 'S'){
+					indAcred = dgAcred.selectedIndex;
+					if(indAcred >= 0){
+						var fecha:String = Arr[indAcred].solicitud;
+						var nomGrupo:String = txtGrupo.text;
+						comMttoDatosSolic = new MttoDatosSolic();
+						comMttoDatosSolic = MttoDatosSolic(PopUpManager.createPopUp(this,MttoDatosSolic,true));
+						comMttoDatosSolic.addEventListener(Event.REMOVED_FROM_STAGE, actualizaDatos);
+						comMttoDatosSolic.init(grupo, nomGrupo, fecha, indAcred, Arr);
+						PopUpManager.centerPopUp(comMttoDatosSolic);
+					}		
+				}
+			}
+			
+			private function registraCausaRechazo(event:ListEvent):void{
+				Arr[indAcred].rechazo = ComboBox(event.currentTarget).selectedItem.id
+			}
+			
+			public function registraInfoSolic(cdgGrupo:String, nomGrupo:String, munic:String, coord:String, promotor:String):void{
+				tipoAccion = 1;
+				init();
+				var estatus:String;
+				if (currentState != null)
+					estatus = currentState.toString();
+				var fecSolic:String = global.formatoFecha(Application.application._Current_Fecha);
+				this.coord = coord;
+				//ASIGNACION DE CODIGO DE GRUPO
+				this.grupo = cdgGrupo;
+				this.promotor = promotor;
+				txtGrupo.text = nomGrupo;
+				txtMunicipio.text = munic;
+				cargaCiclo();
+				cargaAcred(cdgGrupo, "", fecSolic);
+				info = null;
+				formProdSolic.cboProdCred.addEventListener(ListEvent.CHANGE, actualizaProdCred);
+				formDatosGralSolic.dtfSolicitud.addEventListener(CalendarLayoutChangeEvent.CHANGE, actualizaFecSolic);
+				formDatosGralSolic.dtfEntrega.addEventListener(CalendarLayoutChangeEvent.CHANGE, actualizaFecEntre);
+				formProdSolic.init(info, 1, coord);
+				formDatosGralSolic.init(info, 1, estatus);
+				formCalendarioSolic.init(info, 1, estatus);
+				formTasasSolic.init(info, 1, estatus);
+				formProcSolic.init(info, 1, estatus);
+				formEntregaSolic.init(info, 1, estatus);
+				formLugarSolic.init(info, 1, estatus);
+			} 
+			
+			public function selSituacion(event:ItemClickEvent):void{
+				var situacion:String = RadioButtonGroup(event.currentTarget).selection.label;
+				actualizaSituacion(situacion);
+			}
+			
+			public function selAutorizadoAcredEv(event:Event):void{
+				indAcred = dgAcredEv.selectedIndex;
+				var vScroll:Number = dgAcredEv.verticalScrollPosition;
+				limpiaSituacion(indAcred);
+				Arr[indAcred].autorizado = true;
+				Arr[indAcred].sitAcred = 'A';
+				Arr[indAcred].situacion = 'Autorizado';
+				if(Number(_xmlAcred.Table[indAcred].CANTAUTOR) == 0)
+					Arr[indAcred].cantAutor = Arr[indAcred].cantSolic;
+				if(Number(_xmlAcred.Table[indAcred].CANTAUTOR) > 0)
+					Arr[indAcred].cantAutor = _xmlAcred.Table[indAcred].CANTAUTOR;	
+				dgAcredEv.dataProvider = Arr;
+				dgAcredEv.validateNow();
+				dgAcredEv.selectedItem = indAcred;
+				dgAcredEv.verticalScrollPosition = vScroll;
+				calculaMontoAutorizado();
+				//establece la situacion general como autorizado 
+				formDatosGralSolic.situacion.selectedValue = Arr[indAcred].sitAcred;
+				//validaSituacionGral(Arr[indAcred].sitAcred);
+			}
+			
+			public function selRechazadoAcredEv(event:Event):void{
+				indAcred = dgAcredEv.selectedIndex;
+				var vScroll:Number = dgAcredEv.verticalScrollPosition;
+				var rechazoAct:String;
+				var comRechazo:RegRechazo;
+				comRechazo = new RegRechazo();
+				comRechazo = RegRechazo(PopUpManager.createPopUp(this,RegRechazo,true));
+				if(Arr[indAcred].rechazado == false){
+					comRechazo.cboRechazo.addEventListener(ListEvent.CHANGE, registraCausaRechazo);
+					rechazoAct = "";
+					comRechazo.init(-1, rechazoAct);
+					PopUpManager.centerPopUp(comRechazo);	
+				}
+				else{
+					comRechazo.cboRechazo.addEventListener(ListEvent.CHANGE, registraCausaRechazo); 
+					rechazoAct = Arr[indAcred].rechazo;
+					comRechazo.init(indAcred, rechazoAct);
+					PopUpManager.centerPopUp(comRechazo);
+				}
+				limpiaSituacion(indAcred);
+				Arr[indAcred].rechazado = true;
+				Arr[indAcred].sitAcred = 'R';
+				Arr[indAcred].situacion = 'Rechazado';
+				Arr[indAcred].cantAutor = 0;
+				Arr[indAcred].rechazo = rechazoAct;
+				dgAcredEv.dataProvider = Arr;
+				dgAcredEv.validateNow();
+				dgAcredEv.selectedItem = indAcred;
+				dgAcredEv.verticalScrollPosition = vScroll;
+				calculaMontoAutorizado();
+				validaSituacionGral(Arr[indAcred].sitAcred);
+			}
+			
+			public function selSolicitadoAcredEv(event:Event):void{
+				indAcred = dgAcredEv.selectedIndex;
+				var vScroll:Number = dgAcredEv.verticalScrollPosition;
+				limpiaSituacion(indAcred);
+				Arr[indAcred].solicitado = true; 
+				Arr[indAcred].sitAcred = 'S';
+				Arr[indAcred].situacion = 'Solicitado';
+				if(Number(_xmlAcred.Table[indAcred].CANTAUTOR) == 0)
+					Arr[indAcred].cantAutor = 0                                                                                                                                                         
+				if(Number(_xmlAcred.Table[indAcred].CANTAUTOR) > 0)
+					Arr[indAcred].cantAutor = _xmlAcred.Table[indAcred].CANTAUTOR;	
+				dgAcredEv.dataProvider = Arr;
+				dgAcredEv.validateNow();
+				dgAcredEv.selectedItem = indAcred;
+				dgAcredEv.verticalScrollPosition = vScroll;
+				calculaMontoAutorizado();
+				validaSituacionGral(Arr[indAcred].sitAcred);
+			}
+			
+			private function setAccionEvSolicESIA(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionEvSolicESIA);
+				var res:String = event.result.toString();
+				if (res.substr(0,1) == "1"){
+					cerrar();
+				}	
+				else
+					Alert.show(res.substr(2,res.length -1),"Mantenimiento de Solicitud",4,null,null,global.iAlert);		
+			}
+			
+			private function setAccionSolicESIA(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionSolicESIA);
+				var res:String = event.result.toString();
+				if (res.substr(0,1) == "1"){
+					cerrar();
+					//guardaHorario();
+				}	
+				else
+					Alert.show(res.substr(2,res.length -1),"Mantenimiento de Solicitud",4,null,null,global.iAlert);		
+			}
+			
+			private function setModHorario(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setModHorario);
+				var res:String = event.result.toString();
+				if (res.substr(0,1) == "1"){
+					cerrar();
+				}	
+				else
+					Alert.show(res.substr(2,res.length -1),"Mantenimiento de Solicitud",4,null,null,global.iAlert);		
+			}
+			
+			//Funcion que valida que los registros autorizados tengan una cantidad mayor a 0
+			public function validaAutorizado():Boolean{
+				for(var i:int = 0; i < Arr.length; i++){
+					if(Arr[i].sitAcred == 'A' && Arr[i].cantAutor == 0){
+						Alert.show("El préstamo del acreditado " + Arr[i].nombre + " fue autorizado sin monto.\n\nVerifique la información capturada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+						return false;
+					}
+				}
+				return true;
+			}
+			
+			public function validaDatosSolic(event:EventSolic):void{
+				info = event.customProp;
+			}
+			
+			public function validaFinal():void{
+				if (info.guardaProd == true && info.guardaDatos == true && info.guardaCalendario && info.guardaTasas == true && 
+					info.guardaRecargos == true && info.guardaProc == true && info.guardaEntre == true && info.guardaLugar == true)
+					guardaSolic();
+				else
+					Alert.show("Debe capturar los datos requeridos","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+			}
+			
+			public function validaHorario():void{
+				if (info.guardaCalendario == true)
+					guardaHorario();
+				else
+					Alert.show("Debe capturar los datos requeridos","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+			}
+			
+			public function validaMonto(event:Event):void{	
+				numVal.source = TextInput(event.currentTarget);
+				vResult = numVal.validate();
+
+				if (vResult.type!=ValidationResultEvent.VALID)
+                	TextInput(event.currentTarget).text = "";
+			}
+			
+			public function validaProyecto():Boolean{
+				var i:int;
+				for(i = 0; i < Arr.length; i++){
+					if(Arr[i].cantSolic > 0 && Arr[i].datos != "OK"){
+						Alert.show("El acreditado " + Arr[i].nombre + " no cuenta con un proyecto de inversión registrado.\n\nModifique la información del cliente","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+						return false;
+					}
+				}
+				return true;
+			}
+			
+			public function validaSituacion():Boolean{
+				//condicion que verifica la situacion de la solicitud
+				var i:int;
+				if(info.situacion != 'S'){
+					for(i = 0; i < Arr.length; i++){
+						if(Arr[i].sitAcred == 'S'){
+							Alert.show("El acreditado " + Arr[i].nombre + " se encuentra en situación " + Arr[i].situacion + ".\n\nModifique la condición del cliente","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+							return false;
+						}
+					}
+				}
+				if(info.situacion == 'S'){
+					for(i = 0; i < Arr.length; i++){
+						if(Arr[i].sitAcred != 'S'){
+							Alert.show("El acreditado " + Arr[i].nombre + " se encuentra en situación " + Arr[i].situacion + ".\n\nModifique la condición del cliente","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+							return false;
+						}
+					}
+				}
+				return true;
+			}
+			
+			//Funcion que modifica la situacion de la solicitud 
+			//basandose en la situacion que presentan todos los acreditados
+			public function validaSituacionGral(situacion:String):void{
+				var band:Boolean = true;
+				for(var i:int = 0; i < Arr.length; i++){
+					if(situacion != Arr[i].sitAcred)
+						band = false;
+				}
+				if(band == true)
+					formDatosGralSolic.situacion.selectedValue = situacion;
+			}
+		]]>
+	</mx:Script>
+
+	 <mx:NumberValidator id="numVal" property="text" precision="2"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator="," required="false"/>
+
+	<mx:TabNavigator id="tabNav" width="824" height="251" x="10" y="52" creationPolicy="all">
+		<mx:Canvas label="Producto" width="100%" height="100%">
+			<Forms:FormProductoSolic id="formProdSolic" x="140" y="39" width="540" height="130"/>
+		</mx:Canvas>
+		<mx:Canvas label="Datos Generales" width="100%" height="100%">	
+			<Forms:FormDatosGralSolic id="formDatosGralSolic" height="195" width="800" x="10" y="10"/>
+		</mx:Canvas>
+		<!--<mx:Canvas label="Calendario" width="100%" height="100%">	
+			<Forms:FormCalendarioSolic id="formCalendarioSolic" x="75" height="205"/>
+		</mx:Canvas>-->
+		<mx:Canvas label="Calendario" width="100%" height="100%">	
+			<Forms:FormCalendarioSolicNvo id="formCalendarioSolic" x="75" height="205"/>
+		</mx:Canvas>
+		<mx:Canvas label="Tasas" width="100%" height="100%">	
+			<Forms:FormTasasSolic id="formTasasSolic" x="55" height="195" y="10"/>
+		</mx:Canvas>
+		<mx:Canvas label="Recargos" width="100%" height="100%">	
+			<Forms:FormRecargosSolic id="formRecargosSolic" x="60"/>
+		</mx:Canvas>
+		<mx:Canvas label="Procedencia" width="100%" height="100%">	
+			<Forms:FormProcSolic id="formProcSolic" x="110" height="205"/>
+		</mx:Canvas>
+		<mx:Canvas label="Entrega" width="100%" height="100%" id="canvas2">	
+			<Forms:FormEntregaSolic id="formEntregaSolic" x="75"/>
+		</mx:Canvas>
+		<mx:Canvas label="Lugar de Reunión" width="100%" height="100%">
+			<Forms:FormLugarSolic id="formLugarSolic" x="155" width="510" height="211" y="4"/>	
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Button id="btnCancelar" x="770" y="528" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:Button id="btnAceptar" x="698" y="528" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Canvas x="87" y="10" width="670" height="37" styleName="canvasMod">
+		<mx:Label x="13" y="8" text="Grupo Solidario:"/>
+		<mx:TextInput id="txtGrupo" x="99" y="5" width="199" editable="false"/>
+		<mx:Label x="311" y="8" text="Ciclo:"/>
+		<mx:Label x="422" y="8" text="Municipio:"/>
+		<mx:TextInput x="477" y="5" width="181" id="txtMunicipio" editable="false"/>
+		<mx:TextInput x="345" y="5" width="45" id="txtCiclo" editable="false"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="311" width="824" height="209" styleName="canvasMod" id="canvas1">
+		<mx:DataGrid id="dgAcred" x="19.5" y="10" width="783" height="187" 
+		    editable="true" sortableColumns="false">
+			<mx:columns>
+				<mx:DataGridColumn headerText="CODIGO" editable="false" dataField="codigo" width="50"/>
+				<mx:DataGridColumn headerText="ACREDITADO" editable="false" dataField="nombre" width="170"/>
+				<mx:DataGridColumn headerText="SOLICITUD" editable="false" dataField="solicitud" width="50"/>
+				<mx:DataGridColumn headerText="SOLICITADO" dataField="cantSolic" width="70" editable="true">	
+					<mx:itemEditor>
+						<mx:Component>
+		  					<mx:TextInput width="30" fontSize="10" verticalCenter="0" focusOut="outerDocument.calculaMonto()" change="outerDocument.validaMonto(event)" restrict="0-9;."/> 
+		  				</mx:Component>
+					</mx:itemEditor>
+				</mx:DataGridColumn>
+				<mx:DataGridColumn headerText="SITUACION" editable="false" dataField="situacion" width="75"/>
+				<mx:DataGridColumn headerText="DATOS" editable="false" dataField="datos" width="50">
+					<mx:itemRenderer>
+						<mx:Component>
+							<mx:Label click="outerDocument.muestraDatosSolic()" width="50"/>
+		  				</mx:Component>
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Canvas>
+	<mx:Button id="btnGuardarHor" x="10" y="529" label="Modificar Horario" width="120" click="modificaHorario()" visible="false"/>
+</mx:TitleWindow>

@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	height="100%" xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" 
+	creationPolicy="all" xmlns:Administracion="Administracion.*">
+	
+	<!--Componente que permite observar el listado de clientes individuales-->
+	<mx:Script>
+		<![CDATA[
+			import flash.events.*;
+			import mx.containers.TitleWindow;
+        	import mx.controls.Button;
+        	import mx.managers.PopUpManager;
+        			
+        	import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;				
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;	
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.Fault;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			            
+			public var _xmlAcred:XML = new XML();
+			[Bindable]
+			public var dPermisos:XML = new XML();	
+			
+			public var wsMS:WebService;	
+			private var du:Utils;
+			public var titulo:String;
+			private var global:Globales;
+			private var contenedor:Sprite;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionAcred:int;
+			public var indAcred:int;
+			public var vScroll:Number;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			public var comMttoFecha:MttoSelFecha;
+			public var comMttoAgrega:MttoAgregaAcred;
+			public var comMttoBusq:MttoBusqAcred;
+			
+			public var myTitleWindow:TitleWindow = new TitleWindow();
+			
+			public function activarContAcred(band:Boolean):void{
+				txtCodAcred.editable = band;
+				txtPaterno.editable = band;
+				txtNombre.editable = band
+				btnBuscar.enabled = band;
+				if(alta == true)
+					btnAgregar.enabled = band;
+				//btnDatosAcred.enabled = band;
+			}
+			
+			public function activarContModAcred(band:Boolean):void{
+				//if(borrado == true)
+					//btnEliminar.enabled = band;
+				if(edicion == true)	
+					btnEditar.enabled = band;
+			}
+			
+			public function actualizarAcred(event:Event):void{
+				//buscarListaAcred(1);
+			}
+			
+			public function agregarAcred(event:MouseEvent):void{
+				//Condicion que permite indicar si se muestra la pantalla de alta de acreditado
+				//o se realiza la busqueda de alguno previamente registrado
+				if (comMttoAgrega.rdbNuevo.selected == true){
+					PopUpManager.removePopUp(comMttoAgrega);
+					mostrarFormAcred(1);
+				}
+				if (comMttoAgrega.rdbExistente.selected == true){
+					PopUpManager.removePopUp(comMttoAgrega);
+					//mostrarBusqAcred();	
+				}
+			}
+			
+			//FUNCION QUE SE ENCARGA DE BUSCAR LOS REGISTROS QUE COINCIDEN CON LOS CRITERIOS 
+			//DE BUSQUEDA SELECCIONADOS
+			public function buscarAcred():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodAcred.text != "" || txtPaterno.text != "" || txtNombre.text != ""){
+					btnBuscar.setFocus();
+					dgAcred.dataProvider = null;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlAcred = new XML(evt.result);
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+						
+						if (_xmlAcred.elements().length() > 0){
+							dgAcred.dataProvider = _xmlAcred.Table;
+						}
+						seleccionaAcred(); 	
+					});
+					params[0] = Application.application.U_ID;
+					params[1] = txtCodAcred.text;
+					params[2] = txtNombre.text;
+					params[3] = txtPaterno.text;
+					wsCat.getInfoAcred.send(9, params);
+				}
+			}
+
+			public function eliminarAcred(event:MouseEvent):void{
+				var fechaBaja:String = comMttoFecha.dtfFecha.text;
+				PopUpManager.removePopUp(comMttoFecha);  
+				var acred:String = dgAcred.selectedItem.CODIGO;
+				initConexion();
+				du.sCursor();
+				Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setEliminaAcred);
+				//wsMS.setEliminaAcred.send(Application.application.U_ID, grupo, acred, fechaBaja);
+			}
+			
+			public function iniVar():void{
+				this.indAcred = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				wsMS = new WebService();
+				titulo = "Mantenimiento de Acreditado";
+				du = new Utils();
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}			
+			
+			public function limpiarContAcred():void{
+				txtCodAcred.text = "";
+				txtPaterno.text = "";
+				txtNombre.text = "";
+			}
+			
+			public function manejadorEliminarAcred(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var acred:String = dgAcred.selectedItem.CODIGO;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setEliminaAcred);
+					//wsMS.setEliminaAcred.send(Application.application.U_ID, grupo, acred);
+			    } 
+			}
+			
+			public function mostrarAltaAcred():void{
+				comMttoAgrega = new MttoAgregaAcred();
+				comMttoAgrega = MttoAgregaAcred(PopUpManager.createPopUp(this,MttoAgregaAcred,true));
+				comMttoAgrega.btnAceptar.addEventListener(MouseEvent.CLICK, agregarAcred); 
+				PopUpManager.centerPopUp(comMttoAgrega);		
+			}
+			
+			public function mostrarBaja():void{
+				var indice:int = dgAcred.selectedIndex;
+				var fec:Date;
+				if (this._xmlAcred.Table[indice].ESTATUS != "Baja")
+				{	
+					comMttoFecha = new MttoSelFecha();
+					comMttoFecha = MttoSelFecha(PopUpManager.createPopUp(this,MttoSelFecha,true));
+					comMttoFecha.title = "Fecha de Baja";
+					comMttoFecha.lblFecha.text="Fecha de Baja del Cliente"; 
+					fec = Application.application._Current_Fecha;
+					comMttoFecha.fechaMin = new Date(fec.fullYear,fec.month,fec.date - 1);
+					comMttoFecha.fechaMax = new Date(fec.fullYear,fec.month,fec.date - 1);
+					comMttoFecha.edita = false;
+					//PARAMETRO IGUAL A 1 PERMITE OMITIR EL DATO
+					comMttoFecha.init(1);
+					comMttoFecha.btnAceptar.addEventListener(MouseEvent.CLICK, eliminarAcred);
+					PopUpManager.centerPopUp(comMttoFecha);	
+				}
+				else
+					Alert.show("El cliente ya está dado de baja",titulo, 4,null,null,global.iInfo);
+			}
+			
+			public function mostrarFormAcred(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion == true){
+					var comMttoAcredInd:MttoAcreditadoInd = new MttoAcreditadoInd();
+					switch(tipo){
+						case 1: 
+							comMttoAcredInd = MttoAcreditadoInd(PopUpManager.createPopUp(this,MttoAcreditadoInd,true)); 
+							PopUpManager.centerPopUp(comMttoAcredInd);
+							comMttoAcredInd.addEventListener(Event.REMOVED_FROM_STAGE, actualizarAcred);
+							comMttoAcredInd.registraInfoAcred();
+							break;
+						case 2: 
+							if (dgAcred.selectedIndex >= 0){
+								accionAcred = tipo;
+								comMttoAcredInd = MttoAcreditadoInd(PopUpManager.createPopUp(this,MttoAcreditadoInd,true)); 
+								PopUpManager.centerPopUp(comMttoAcredInd);
+								var indice:int = dgAcred.selectedIndex;
+								iniVar();
+								this.indAcred = indice;
+								this.vScroll = dgAcred.verticalScrollPosition;
+								var acred:String = dgAcred.selectedItem.CODIGO;
+								comMttoAcredInd.addEventListener(Event.REMOVED_FROM_STAGE, actualizarAcred);
+								comMttoAcredInd.cargaInfoAcred(acred);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Acreditado",titulo,4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			public function permisos():void{
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var cont:int;
+
+				wsMS = du.initWs(wsMS);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
+							case "C":
+								consulta = true;
+								if (global.permisosModAcredInd(Application.application.PERFIL_ID)){
+									borrado = true;
+									alta = true;
+									edicion = true;
+								}
+								break;	
+							/*case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;*/
+						}
+					}
+//					btnAgregar.enabled = alta;
+					du.rCursor();
+					du.closeWs(wsMS);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			public function seleccionaAcred():void{
+				if (dgAcred.selectedIndex >= 0){
+					activarContModAcred(true);
+				}
+				else{
+					activarContModAcred(false);
+				}
+			}
+			
+			private function setEliminaAcred(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaAcred);
+				var res:String = new String(event.result.toString());
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas width="860" height="510" backgroundColor="#ffffff" backgroundAlpha="1.0"> 
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="820.5" height="400" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="798.5" height="378"
+				sortableColumns="false" verticalScrollPolicy="on" click="seleccionaAcred()"  
+				doubleClickEnabled="true" itemDoubleClick="mostrarFormAcred(2)" horizontalScrollPolicy="auto"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60"/>
+					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="250"/>
+					<mx:DataGridColumn headerText="SUCURSAL" dataField="COORD" width="110"/>
+					<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="200"/>
+					<mx:DataGridColumn headerText="TIPO" dataField="TIPOPREST" width="90"/>
+					<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="70"/>
+					<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="170"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="10" text="ACREDITADOS INDIVIDUALES" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="684" y="39" width="155" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarAcred()" toolTip="Buscar Acreditado" width="40"/>
+			<mx:Button id="btnAgregar" x="105" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormAcred(1)" toolTip="Registrar Acreditado" width="40"/>
+			<mx:Button id="btnEditar" x="57" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormAcred(2)" toolTip="Editar Acreditado" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas x="18" y="39" width="658" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodAcred" x="13" y="7" text="Código:" textAlign="right"/>
+			<mx:TextInput id="txtCodAcred" x="62" y="6" width="56" enter="buscarAcred()" maxChars="6" restrict="0-9"/>
+			<mx:Label id="lblPaterno" x="443" y="7" text="Apellido Paterno:" textAlign="right"/>
+			<mx:TextInput id="txtPaterno" x="537" y="6" width="110" enter="buscarAcred()" maxChars="50"/>
+			<mx:Label id="lblNombre" x="144" y="7" text="Nombre/Razón Social:" textAlign="right"/>
+			<mx:TextInput id="txtNombre" x="263" y="6" width="170" enter="buscarAcred()" maxChars="50"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

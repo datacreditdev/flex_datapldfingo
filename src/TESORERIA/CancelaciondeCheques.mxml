@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" xmlns:forms="forms.*" 
+	xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" height="100%">
+	<mx:states>
+		<mx:State name="devolucion">
+			<mx:RemoveChild target="{lblCiclo}"/>
+			<mx:RemoveChild target="{txtCiclo}"/>
+			<mx:SetProperty target="{lblFecha}" name="text" value="Fecha de Impresión:"/>
+		</mx:State>
+	</mx:states>
+	
+	<!--Componente de cancelacion de Cheques-->
+	<mx:Script>
+		<![CDATA[
+			import OPERAC.MttoCuenta;
+			import Data.Globales;
+			import Data.Utils;
+			import Data.TxtExport;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;				
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;  
+			import mx.controls.CheckBox;
+			import mx.controls.ComboBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.DataGridEvent;				
+			import mx.events.CloseEvent;	
+			import mx.events.ListEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;  
+			import mx.validators.Validator;
+			            
+			[Bindable]
+			public var _xmlAcred:XML = new XML();
+			[Bindable]
+			private var _xmlCoord:XML =  new XML();
+			[Bindable]
+			private var _xmlCta:XML =  new XML();
+			
+			public var wsMS:WebService;
+			public var du:Utils;
+			public var titulo:String;
+			private var global:Globales;
+		
+			private var acred:Array;
+			private var cheque:Array;
+			private var chequera:Array;
+			private var codigo:Array;
+			private var ciclo:Array;
+			private var tipoCred:Array;
+			
+			public var acredObj:ArrayCollection = new ArrayCollection();
+			public var ctaObj:ArrayCollection =  new ArrayCollection();
+			public var coordObj:ArrayCollection =  new ArrayCollection();
+			
+			public function actualizaCta(event:Event):void{
+				var comMttoCta:MttoCuenta = event.currentTarget as MttoCuenta;
+				txtCodCuenta.text = comMttoCta.dgCuenta.selectedItem.CODIGO;
+				txtCuenta.text = comMttoCta.dgCuenta.selectedItem.BANCO;			
+			}
+			
+			//funcion que permite buscar los cheques impresos
+			public function buscaCheques():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				if(validaConsCheques()){
+					var tipo:int;
+					var tipoChq:String = tipoCheque.selectedValue.toString();
+					if(tipoChq == "D")
+						tipo = 1;
+					else if(tipoChq == "G")
+						tipo = 2;
+					var coord:String = cboCoordinacion.selectedItem.id;
+					var cuenta:String = txtCodCuenta.text;
+					var fecha:String = dtfFecha.text;
+					var codigo:String = txtGrupo.text;
+					var ciclo:String = txtCiclo.text;
+					var tipoCred:String = "I";
+					dgAcred.dataProvider = null;
+					
+					du.initWsCat(wsCat);
+					du.sCursor();
+					Application.application.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {
+						_xmlAcred = XML(event.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsCat);
+						Application.application.desbloquear();
+						
+						if(_xmlAcred.elements().length() > 0){
+							formateaListaAcred();
+							dgAcred.dataProvider = acredObj;
+							lblControl.text = calculaRegSel().toString() + " Registro(s) seleccionado(s)";
+						}
+						else
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					});
+					params[0] = tipo;
+					params[1] = coord;
+					params[2] = cuenta;
+					params[3] = fecha;
+					params[4] = codigo;
+					params[5] = ciclo;
+					params[6] = tipoCred;
+					wsCat.getInfoGeneral.send(8, params);
+				}	
+			}
+			
+			public function buscaCuenta():void{
+				if (txtCodCuenta.text != ""){
+					if(cboCoordinacion.selectedIndex > 0){
+						var i:int;
+						var coord:String;
+						btnBusqCta.setFocus();
+						i = _xmlCoord.Table.(NOMBRE.toString() == cboCoordinacion.selectedLabel).childIndex();
+						coord = coordObj[i + 1].id;
+						initConexion();
+						du.sCursor();
+						Application.application.bloquear();
+						wsMS.addEventListener(ResultEvent.RESULT, getInfoCuenta);
+						wsMS.getInfoCuenta.send(5, txtCodCuenta.text, "", Application.application.U_ID, coord);
+					}
+					else
+						Alert.show("Seleccione una Sucursal.",titulo,4,null,null,global.iAlert);
+				}						
+			}
+			
+			public function calculaRegSel():Number{
+				var listaAcred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
+				var cont:Number = 0;
+				
+				for (var i:int = 0; i < listaAcred.length; i++){
+					if(listaAcred[i].REGISTRO == true)
+						cont++;
+				}
+				return cont;
+			}
+			
+			public function cargaCoord():void{
+				_xmlCoord = Application.application._xmlCoord;
+					
+				if (_xmlCoord.elements().length() > 0){
+					formateaCoord();
+					cboCoordinacion.dataProvider = coordObj;
+				}
+			}
+			
+			public function enviar():void{
+				if(valida()){
+					var coord:String = cboCoordinacion.selectedItem.id;
+					var cuenta:String = txtCodCuenta.text;
+					var tipo:int;
+					var tipoChq:String = tipoCheque.selectedValue.toString();
+					if(tipoChq == "D")
+						tipo = 1;
+					else if(tipoChq == "G")
+						tipo = 4;
+					formateaRegAcred();
+						
+					initConexion();
+					du.sCursor();
+								
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+						var res:String = evt.result.toString();
+							
+						du.rCursor();
+						du.closeWs(wsMS);	
+							
+						if(res.substr(0,1) == "1"){
+							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+							limpiar();
+						}
+						else	
+							Alert.show("No es posible realizar el proceso de cancelación.",titulo,4,null,null,global.iAlert);	
+					});
+					wsMS.setAccionCancCheque.send(tipo, coord, cuenta, codigo, ciclo, tipoCred, acred, cheque, chequera, Application.application.U_ID);
+				}
+			}
+			
+			public function formateaCoord():void{
+				var cont:int = _xmlCoord.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlCoord.Table[i].CODIGO;	
+					oItem.nombre = _xmlCoord.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				coordObj = new ArrayCollection(item);
+			}
+			
+			public function formateaCuenta(cadInfo:String):void{
+				var oItem:Object;
+				var array:Array;
+				
+				oItem = new Object();
+				oItem.CDGIB = "0";                       
+				oItem.NUMERO = "0";
+                oItem.TIPO = "0";
+				oItem.CODIGO = "0";
+				oItem.BANCO = "--Seleccionar--";
+				oItem.CANCELA = "0";
+				oItem.MODIFICA = "0";			
+							
+				var xml:XMLDocument = new XMLDocument(cadInfo); 
+     			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+     			var data:Object = decoder.decodeXML(xml);  
+				array = ArrayUtil.toArray(data.NewDataSet.Table);   
+				ctaObj = new ArrayCollection(array);
+				ctaObj.addItemAt(oItem,0);	
+			}
+			
+			public function formateaListaAcred():void{
+				var cont:int = _xmlAcred.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				acredObj.removeAll();
+				acredObj.refresh();
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.REGISTRO = false;
+					oItem.NOCHEQUE = _xmlAcred.Table[i].NOCHEQUE;
+					oItem.CHEQUERA = _xmlAcred.Table[i].CHEQUERA;
+					oItem.CDGCL = _xmlAcred.Table[i].CDGCL;
+					oItem.NOMBRE = _xmlAcred.Table[i].NOMBREC;
+					oItem.CANTIDAD = _xmlAcred.Table[i].CANTIDAD;	
+					oItem.CDGCLNS = _xmlAcred.Table[i].CDGCL;
+					oItem.GRUPO = _xmlAcred.Table[i].GRUPO;
+					oItem.CICLO = _xmlAcred.Table[i].CICLO;
+					item.push(oItem);
+				}
+				acredObj = new ArrayCollection(item);
+			}
+			
+			public function formateaRegAcred():void{
+				var n:int;
+				var cont:int;
+				var listaAcred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;  
+				
+				cont = listaAcred.length;
+				acred = new Array;
+				cheque = new Array;
+				chequera = new Array;
+				codigo = new Array;
+				ciclo = new Array;
+				tipoCred = new Array;
+				
+				n = 0;
+				
+				for(var i:int = 0; i < cont; i++){
+					if (listaAcred[i].REGISTRO == true){
+						acred[n] = listaAcred[i].CDGCL;
+						cheque[n] = listaAcred[i].NOCHEQUE;
+						chequera[n] = listaAcred[i].CHEQUERA;
+						codigo[n] = listaAcred[i].CDGCLNS;
+						ciclo[n] = listaAcred[i].CICLO;	
+						tipoCred[n]	= "I";	
+						n++;
+					}
+				}
+			}
+			
+			private function getInfoCuenta(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getInfoCuenta);
+				this._xmlCta = new XML(event.result);
+				if (this._xmlCta.elements().length() > 0)
+					txtCuenta.text = _xmlCta.Table[0].BANCO;
+				else{
+					txtCuenta.text = "";
+					Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+				}
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Cancelación de Cheques";
+				lblTitulo.text = titulo.toUpperCase();
+				cargaCoord(); 	
+				limpiar();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function limpiaListaAcred():void{
+				dgAcred.dataProvider = null;
+				lblControl.text = "";
+			}
+			
+			public function limpiar():void{
+				dtfFecha.selectedDate = Application.application._Current_Fecha;
+				dgAcred.dataProvider = null;
+				cboCoordinacion.selectedIndex = 0;
+				txtCodCuenta.text = "";
+				txtCuenta.text = "";
+				txtGrupo.text = "";
+				txtCiclo.text = "";
+				lblControl.text = "";
+			}
+			
+			public function muestraFormCta():void{
+				limpiaListaAcred();
+				var comMttoCta:MttoCuenta = new MttoCuenta();
+				comMttoCta = MttoCuenta(PopUpManager.createPopUp(this,MttoCuenta,true));
+				comMttoCta.init(5);
+				comMttoCta.addEventListener("enviar", actualizaCta);
+				PopUpManager.centerPopUp(comMttoCta);
+			}
+			
+			public function seleccionaRegAcred(event:Event):void{
+				var ind:int = dgAcred.selectedIndex;
+				var vScroll:Number = dgAcred.verticalScrollPosition;
+				acredObj[ind].REGISTRO = CheckBox(event.currentTarget).selected;
+				lblControl.text = calculaRegSel().toString() + " Registro(s) seleccionado(s)";
+			}
+			
+			public function seleccionarTipo(event:Event):void{
+				var tipo:String; 
+				tipo = event.currentTarget.selectedValue.toString();
+				if(tipo == "D")
+					currentState = null;
+				else if(tipo == "G")
+					currentState = "devolucion";
+			}
+			
+			public function valida():Boolean{
+				if(calculaRegSel() == 0){	
+					Alert.show("Seleccione al menos un registro para realizar el proceso de cancelación.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
+			public function validaConsCheques():Boolean{
+				if(cboCoordinacion.selectedIndex <= 0){	
+					Alert.show("Seleccione la sucursal de la cuenta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(txtCodCuenta.text == "" || txtCuenta.text == ""){
+					Alert.show("Debe seleccionar la cuenta bancaria.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(currentState == null){
+					if((txtGrupo.text != "" && txtCiclo.text == "") || (txtCiclo.text != "" && txtGrupo.text == "")){
+						Alert.show("Debe capturar el código y ciclo.",titulo,4,null,null,global.iAlert);
+						return false;
+					}
+				}
+				return true;
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="650" height="560">
+		<mx:Canvas id="cnvDetalle" x="10" y="187" width="630.25" height="330" styleName="canvasMod" visible="true">
+			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="608.25" height="308" editable="true"
+				sortableColumns="false" resizableColumns="false" verticalScrollPolicy="on" horizontalScrollPolicy="on"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="" dataField="REGISTRO" textAlign="center" rendererIsEditor="true" width="50" editorDataField="selected">
+					<mx:itemRenderer>
+						<mx:Component>
+		  					<mx:CheckBox change="outerDocument.seleccionaRegAcred(event)" width="30" fontSize="10" verticalCenter="0"/> 
+		  				</mx:Component>
+					</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn headerText="CHEQUE" dataField="NOCHEQUE" width="70" editable="false"/>
+					<mx:DataGridColumn headerText="CHEQUERA" dataField="CHEQUERA" width="80" editable="false"/>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="60" editable="false"/>
+					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE" width="220" editable="false"/>
+					<mx:DataGridColumn headerText="MONTO" dataField="CANTIDAD" width="60" editable="false"/>
+					<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="60" editable="false"/>
+					<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="150" editable="false"/>
+					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="60" editable="false"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label id="lblTitulo" x="10" y="10" width="370.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvCriterios" styleName="canvasMod" width="480" height="140" x="75" y="39">
+			<mx:Label id="lblFecha" x="5.6" y="104" text="Fecha de Inicio:" width="107.75" textAlign="right"/>
+			<mx:DateField id="dtfFecha" x="121.35" y="102" width="100" change="limpiaListaAcred()"/>
+			<mx:TextInput id="txtCuenta" x="174.35" y="45" width="231.5" editable="false"/>
+			<mx:TextInput id="txtCodCuenta" x="121.35" y="45" width="45" maxChars="2" restrict="0-9" enter="buscaCuenta()" change="limpiaListaAcred()"/>
+			<mx:Label id="lblEtiqCuenta" x="53.35" y="47" text="Cuenta:" width="60" textAlign="right"/>
+			<mx:Button id="btnBusqCta" x="414.35" y="43" icon="@Embed(source='assets/ico_lupa.png')" click="muestraFormCta()" toolTip="Buscar Cuenta" width="40"/>
+			<mx:ComboBox id="cboCoordinacion" x="121.35" y="11" labelField="nombre" change="limpiaListaAcred()"/>
+			<mx:Label id="lblCoordinacion" x="27.65" y="14" text="Sucursal:" width="85.7" textAlign="right"/>
+			<mx:TextInput id="txtGrupo" x="281.75" y="102" maxChars="6" restrict="0-9" change="limpiaListaAcred()" visible="false"/>
+			<mx:TextInput id="txtCiclo" x="413.85" y="102" width="40.5" maxChars="2" restrict="0-9" change="limpiaListaAcred()" height="24" visible="false"/>
+			<mx:Label id="lblGrupo" x="233.75" y="104" text="Grupo:" width="40" textAlign="right" visible="false"/>
+			<mx:Label id="lblCiclo" x="365.85" y="104" text="Ciclo:" width="40" textAlign="right" visible="false"/>
+			<mx:RadioButtonGroup id="tipoCheque" change="seleccionarTipo(event)" />
+			<mx:RadioButton x="125.75" y="73" label="Desembolso" groupName="tipoCheque" value="D" selected="true" id="rdbDesembolso"/>
+		</mx:Canvas>
+		<mx:Button id="btnCancelar" x="472" y="525" label="Cancelar" click="enviar()" enabled="true" toolTip="Cancelar" width="80"/>
+		<mx:Button id="btnBuscar" x="575" y="83" icon="@Embed(source='assets/folder.png')" click="buscaCheques()" toolTip="Buscar Cheques" />
+		<mx:Label id="lblControl" x="10" y="528" width="368.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Button id="btnLimpiar" x="560" y="525" label="Limpiar" click="limpiar()" toolTip="Limpiar" width="80"/>
+	</mx:Canvas>
+</mx:Canvas>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" showCloseButton="true" close="cerrar()" 
+	layout="absolute" width="450" height="340" creationPolicy="all" creationComplete="initApp()">
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.core.Application;
+			import mx.collections.ArrayCollection;
+			import mx.core.DragSource;
+        	import mx.events.*;
+            import mx.managers.DragManager;
+            import mx.collections.IList;
+			
+			[Bindable]
+			public var _xmlCta:XML =  new XML();
+			
+			public var global:Globales; 
+			public var wsMS:WebService;
+			public var du:Utils;	
+			public var titulo:String;
+			public var tipo:int;
+			
+			public var ctaObj:ArrayCollection = new ArrayCollection();			
+			
+			public function buscarCuenta():void{
+				if (txtCodCuenta.text != "" || txtCuenta.text != ""){
+					btnBusqCta.setFocus();
+					initConexion();
+					du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, getInfoCuenta);
+					wsMS.getInfoCuenta.send(this.tipo, txtCodCuenta.text, txtCuenta.text, Application.application.U_ID);
+				}
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function enviar():void{
+				if(validar() == true){
+					dispatchEvent(new Event("enviar"));
+					PopUpManager.removePopUp(this);
+				}
+			}
+			
+			public function formateaCuenta():void{
+				var i:int;
+				var cont:int = _xmlCta.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for(i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.CODIGO = _xmlCta.Table[i].CODIGO;
+					oItem.BANCO = _xmlCta.Table[i].BANCO + " - " + _xmlCta.Table[i].NUMERO;
+					item.push(oItem);
+				}
+				ctaObj = new ArrayCollection(item);
+			}
+			
+			private function getInfoCuenta(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getInfoCuenta);
+				this._xmlCta = new XML(event.result);
+				if (_xmlCta.elements().length() > 0){
+					formateaCuenta();
+					dgCuenta.dataProvider = ctaObj;
+				}
+			}
+			
+			public function init(tipo:int):void{
+				this.tipo = tipo;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Catálogo de Cuentas";
+				this.title = titulo;
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function manejadorCerrar(e:CloseEvent):void{
+				if(e.detail == Alert.OK)
+					PopUpManager.removePopUp(this);
+			}
+			
+			public function validar():Boolean{
+				if(dgCuenta.selectedIndex < 0){
+					Alert.show("No se ha seleccionado la Cuenta Bancaria.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label x="15" y="12" text="Código:" width="44"/>
+	<mx:Label x="131.5" y="12" text="Nombre:" width="54"/>
+	<mx:TextInput id="txtCodCuenta" x="62.5" y="10" width="60" maxChars="6" restrict="0-9" enter="buscarCuenta()"/>
+	<mx:TextInput id="txtCuenta" x="184.5" y="10" width="200.5" enter="buscarCuenta()"/>
+	<mx:Button id="btnCerrar" x="394" y="268" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="346" y="268" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:DataGrid id="dgCuenta" x="16" y="51" width="418" height="209" sortableColumns="false"
+	 	doubleClickEnabled="true" itemDoubleClick="enviar()">
+		<mx:columns>
+			<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+			<mx:DataGridColumn headerText="BANCO" dataField="BANCO"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnBusqCta" x="393" y="10" icon="@Embed(source='assets/ico_lupa.png')" click="buscarCuenta()" toolTip="Buscar Cuenta" width="40"/>
+</mx:TitleWindow>

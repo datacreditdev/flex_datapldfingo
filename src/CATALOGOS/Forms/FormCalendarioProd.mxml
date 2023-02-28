@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="550" height="240">
+	
+	<mx:Metadata>
+		[Event(name="enviarDatosProd", type="Data.EventProd")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;		
+			import Data.EventProd;
+			import Data.DatosProd;
+			import mx.controls.Alert;
+			import mx.effects.*;
+			import mx.events.EffectEvent;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.core.Application;
+			
+			public var datos:DatosProd = new DatosProd();
+			
+			public var wsMS:WebService;	
+			public var tipoAccion:int;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function enviarDatosProd(formData:DatosProd):void{
+				formData.periodicidad = periodicidad.selectedValue != null ? periodicidad.selectedValue.toString(): "";
+				formData.multPerio = Number(txtMultiplos.text);
+				formData.diaEsp = Number(numDiaEsp.value);
+				formData.pagoCapital = Number(txtPagoCapital.text);
+				formData.pagoInteres = Number(txtPagoInteres.text);
+				formData.duracion = Number(txtDuracion.text);
+				
+				//Indicador de edicion de la periodicidad
+				if(chkPer.selected == true)
+					formData.fijaPer = "S";
+				else if(chkPer.selected == false)
+					formData.fijaPer = "N";	
+				//Indicador de edicion del multiplo de periodicidad
+				if(chkMultPer.selected == true)
+					formData.fijaMultPer = "S";
+				else if(chkMultPer.selected == false)
+					formData.fijaMultPer = "N";	
+				//Indicador de edicion periodo de gracia de capital
+				if(chkPGC.selected == true)
+					formData.fijaPGC = "S";
+				else if(chkPGC.selected == false)
+					formData.fijaPGC = "N";
+				//Indicador de edicion periodo de gracia de capital
+				if(chkPGI.selected == true)
+					formData.fijaPGI = "S";
+				else if(chkPGI.selected == false)
+					formData.fijaPGI = "N";
+				//Indicador de edicion del plazo
+				if(chkPlazo.selected == true)
+					formData.fijaPlazo = "S";
+				else if(chkPlazo.selected == false)
+					formData.fijaPlazo = "N";		
+				
+				formData.guardaCalendario = true;
+				
+				var event:EventProd = new EventProd("enviarDatosProd", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(info:DatosProd, tipoAccion:int):void{
+				global = new Globales();
+				du = new Utils();
+				this.tipoAccion = tipoAccion;
+				
+				if (info != null){
+					datos = info;
+					
+					periodicidad.selectedValue = info.periodicidad;
+					numDiaEsp.value = Number(info.diaEsp);
+					//Indicador de edicion de la periodicidad
+					if(info.fijaPer == "S")
+						chkPer.selected = true;
+					else if(info.fijaPer == "N")
+						chkPer.selected = false;	
+						
+					txtMultiplos.text = info.multPerio.toString();
+					//Indicador de edicion del multiplo de periodicidad
+					if(info.fijaMultPer == "S")
+						chkMultPer.selected = true;
+					else if(info.fijaMultPer == "N")
+						chkMultPer.selected = false;	
+					
+					txtPagoCapital.text = info.pagoCapital.toString();
+					//Indicador de edicion periodo de gracia de capital
+					if(info.fijaPGC == "S")
+						chkPGC.selected = true;
+					else if(info.fijaPGC == "N")
+						chkPGC.selected = false;
+					
+					txtPagoInteres.text = info.pagoInteres.toString();
+					//Indicador de edicion periodo de gracia de capital
+					if(info.fijaPGI == "S")
+						chkPGI.selected = true;
+					else if(info.fijaPGI == "N")
+						chkPGI.selected = false;
+					
+					txtDuracion.text = info.duracion.toString();
+					//Indicador de edicion del plazo
+					if(info.fijaPlazo == "S")
+						chkPlazo.selected = true;
+					else if(info.fijaPlazo == "N")
+						chkPlazo.selected = false;																							
+				}		
+			}	
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+				
+		]]>
+	</mx:Script>
+
+	<mx:Label x="12" y="10" text="Periodicidad del Prestamo"/>
+	<mx:Canvas x="12" y="29" width="213" height="190" styleName="canvasMod">
+		<mx:Canvas id="cnvPeriodicidad" x="10" y="10" width="190" height="100" styleName="canvasMod">
+			<mx:RadioButtonGroup id="periodicidad"/>
+			<mx:RadioButton id="rdbSemanal" x="10" y="4" label="Semanal" groupName="periodicidad" value="S"/>
+			<mx:RadioButton id="rdbQuincenal" x="10" y="36" label="Quincenal" groupName="periodicidad" value="Q"/>
+			<mx:RadioButton id="rdbCatorcenal" x="106" y="4" label="Catorcenal" groupName="periodicidad" value="C"/>
+			<mx:RadioButton id="rdbMensual" x="106" y="36" label="Mensual" groupName="periodicidad" value="M"/>
+			<mx:CheckBox id="chkPer" x="32.5" y="68" label="No Permitir modificar"/>
+		</mx:Canvas>
+		<mx:Label x="16.5" y="120" text="Múltiplo de la periodicidad:"/>
+		<mx:TextInput id="txtMultiplos" x="154.5" y="118" width="40" restrict="0-9" maxChars="2"/>
+		<mx:CheckBox id="chkMultPer" x="44" y="148" label="No Permitir modificar"/>
+	</mx:Canvas>
+	<mx:Label x="240" y="10" text="Periodos de Gracia"/>
+	<mx:Canvas x="240" y="29" width="298" height="75" styleName="canvasMod">
+		<mx:FormItem id="pagoCapital" label="Para pago de capital:" x="8.5" y="10">
+			<mx:TextInput id="txtPagoCapital" width="30" restrict="0-9" maxChars="2"/>	
+		</mx:FormItem>
+		<mx:FormItem id="pagoInteres" label="Para pago de interés:" x="7.5" y="39">
+			<mx:TextInput id="txtPagoInteres" width="30" restrict="0-9" maxChars="2"/>	
+		</mx:FormItem>
+		<mx:CheckBox id="chkPGC" x="166.5" y="10" label="No Permitir modificar"/>
+		<mx:CheckBox id="chkPGI" x="167.5" y="39" label="No Permitir modificar"/>
+	</mx:Canvas>
+	<mx:Canvas width="298" height="85" styleName="canvasMod" x="240" y="112">
+		<mx:FormItem id="duracion" label="Plazo:" x="10" y="10">
+			<mx:TextInput id="txtDuracion" width="30" restrict="0-9" maxChars="2"/>	
+		</mx:FormItem>
+		<mx:Label text="Periodos" y="12" x="96"/>
+		<mx:CheckBox id="chkPlazo" label="No Permitir modificar"  x="163" y="10"/>
+		<mx:Label id="lblDiaPago" text="Día de Pago:" x="84" y="51"/>
+		<mx:NumericStepper id="numDiaEsp" maximum="31" minimum="1" x="157" y="49"/>
+	</mx:Canvas>
+</mx:Canvas>

@@ -1,0 +1,622 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="auto" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*" height="100%">
+	
+	<!--Componente de mantenimiento de Localidades-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;  
+			import mx.events.*;  
+			import Data.Globales;
+			import mx.controls.ComboBox;
+			import mx.events.FlexEvent;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.formatters.NumberFormatter;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.CloseEvent;	
+			import mx.events.ListEvent;	
+			import mx.core.Application;
+			import mx.containers.TitleWindow;				
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.collections.ArrayCollection;
+			import mx.effects.easing.Elastic;
+			import mx.events.ValidationResultEvent;            
+
+			public var _xmlEntFed:XML = new XML();
+			public var _xmlMunic:XML = new XML();
+			public var _xmlLocalidad:XML = new XML();
+			public var _xmlColonia:XML = new XML();
+			[Bindable]
+			public var dPermisos:XML = new XML();
+			[Bindable]
+			public var dpEntFed:XMLList = new XMLList();	
+			
+			public var entFedObj:ArrayCollection = new ArrayCollection();
+			public var munObj:ArrayCollection = new ArrayCollection();
+			public var locObj:ArrayCollection = new ArrayCollection();
+			public var colObj:ArrayCollection = new ArrayCollection();
+			
+			public var wsMS:WebService = new WebService();	
+			public var ws:WebService = new WebService();
+			public var du:Utils;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionLoc:int;
+			public var accionCol:int;
+			public var indice:int;
+			public var vScroll:Number;
+			
+			//variables que indican las opciones disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			public function activarContCol(band:Boolean):void{
+				btnDatosCol.enabled = band;	
+				if(alta == true)
+					btnAgregarCol.enabled = band;
+			}	
+			
+			public function activarContLoc(band:Boolean):void{
+				btnDatosLoc.enabled = band;
+				if(alta == true)
+					btnAgregarLoc.enabled = band;
+			}
+					
+			public function activarContMunic(band:Boolean):void{
+				btnDatosMunic.enabled = band;
+			}
+			
+			public function activarContModCol(band:Boolean):void{
+				if(edicion == true)	
+					btnEditarCol.enabled = band;
+				if(borrado == true)
+					btnEliminarCol.enabled = band;
+			}
+			
+			public function activarContModLoc(band:Boolean):void{
+				if(edicion == true)	
+					btnEditarLoc.enabled = band;
+			}
+			
+			public function actualizarCol(event:Event):void{
+				buscarListaCol(1);
+			}
+			
+			public function actualizarLoc(event:Event):void{
+				buscarListaLoc(1);
+			}
+			
+			public function buscarEntFed():void{
+				//busqueda utilizando los campos de codigo y nombre de entidad
+				if(txtCodEntFed.text != "" && txtEntFed.text != "")
+					dpEntFed = _xmlEntFed.Table.(CODIGO.toString().substr(0, txtCodEntFed.length).toLowerCase() == txtCodEntFed.text.toLowerCase() && NOMBRE.toString().substr(0, txtEntFed.length).toLowerCase() == txtEntFed.text.toLowerCase());
+				//busqueda utilizando el campo de codigo de la entidad federativa
+				else if	(txtCodEntFed.text != "" && txtEntFed.text == "")
+					dpEntFed = _xmlEntFed.Table.(CODIGO.toString().substr(0, txtCodEntFed.length).toLowerCase() == txtCodEntFed.text.toLowerCase());
+				//busqueda utilizando el campo de nombre de la entidad federativa
+				else if (txtCodEntFed.text == "" && txtEntFed.text != "")
+					dpEntFed = _xmlEntFed.Table.(NOMBRE.toString().substr(0, txtEntFed.length).toLowerCase() == txtEntFed.text.toLowerCase());
+				else
+					dpEntFed = _xmlEntFed.elements();
+				seleccionaEntFed();
+			}
+			
+			public function buscarListaCol(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var entFed:String = dgEntFed.selectedItem.CODIGO;
+				var munic:String = dgMunic.selectedItem.codigo;
+				var localidad:String = dgLocalidad.selectedItem.codigo;
+				
+				dgColonia.dataProvider = null;
+				du.initWsCat(wsCat);
+				du.sCursor();
+			 	if (tipo == 1)
+					Application.application.bloquear();
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlColonia = new XML(evt.result.toString());
+					
+					if(_xmlColonia.elements().length() > 0){
+						formateaColonia();
+						dgColonia.dataProvider = colObj;
+					}
+					if(accionCol == 2){
+						dgColonia.validateNow();
+						dgColonia.verticalScrollPosition = vScroll;
+						dgColonia.selectedIndex = indice;
+						accionCol = 0;
+					}
+					seleccionaCol();
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+				});
+				params[0] = entFed;
+				params[1] = munic;
+				params[2] = localidad;
+				params[3] = "";
+				wsCat.getCatalogoGral.send(5, params);
+			}
+
+			public function buscarListaLoc(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var entFed:String = dgEntFed.selectedItem.CODIGO;
+				var munic:String = dgMunic.selectedItem.codigo;
+				
+				dgLocalidad.dataProvider = null;
+				du.initWsCat(wsCat);
+				du.sCursor();
+			 	if (tipo == 1)
+					Application.application.bloquear();
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlLocalidad = new XML(evt.result.toString());
+					
+					if(_xmlLocalidad.elements().length() > 0){
+						formateaLocalidad();
+						dgLocalidad.dataProvider = locObj;
+					}
+					if(accionLoc == 2){
+						dgLocalidad.validateNow();
+						dgLocalidad.verticalScrollPosition = vScroll;
+						dgLocalidad.selectedIndex = indice;
+						accionLoc = 0;
+					}
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+				});
+				params[0] = entFed;
+				params[1] = munic;
+				params[2] = "";
+				wsCat.getCatalogoGral.send(4, params);
+			}
+
+			public function buscarListaMunic(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var entFed:String = dgEntFed.selectedItem.CODIGO;
+				
+				dgMunic.dataProvider = null;
+				du.initWsCat(wsCat);
+				du.sCursor();
+			 	if (tipo == 1)
+					Application.application.bloquear();
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlMunic = new XML(evt.result.toString());
+					
+					if(_xmlMunic.elements().length() > 0){
+						formateaMunicipio();
+						dgMunic.dataProvider = null;
+						dgMunic.dataProvider = munObj;
+					}
+					du.rCursor();
+					du.closeWs(wsCat);
+					Application.application.desbloquear();
+				});
+				params[0] = entFed;
+				params[1] = "";
+				wsCat.getCatalogoGral.send(3, params);
+			}
+			
+			public function cargaEntFed():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlEntFed = new XML(evt.result.toString());
+					dpEntFed = _xmlEntFed.elements(); 
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlEntFed.elements().length() > 0){
+						dgEntFed.dataProvider = dpEntFed;
+					} 	
+				});
+				wsCat.getCatalogoGral.send(2);
+			}
+
+			public function eliminarColonia():void{
+				Alert.show("¿Desea eliminar la colonia seleccionada?", "Mantenimiento de Colonias", Alert.YES|Alert.NO,null, manejadorEliminarCol,global.iQuest);
+			}
+			
+			public function formateaEntFed():void{
+				var i:int;
+				var cont:int = _xmlEntFed.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				entFedObj.filterFunction = null;
+				entFedObj.refresh();
+				entFedObj.removeAll();
+				entFedObj.refresh();
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.nombre = _xmlEntFed.Table[i].NOMBRE;
+					oItem.codigo = _xmlEntFed.Table[i].CODIGO;
+					oItem.abreviatura = _xmlEntFed.Table[i].ABREVIATURA;
+					item.push(oItem);
+				}
+				entFedObj = new ArrayCollection(item);
+			}
+			
+			public function formateaColonia():void{
+				var i:int;
+				var cont:int = _xmlColonia.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				colObj.filterFunction = null;
+				colObj.refresh();
+				colObj.removeAll();
+				colObj.refresh();
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.nombre = _xmlColonia.Table[i].NOMBRE;
+					oItem.codigo = _xmlColonia.Table[i].CODIGO;
+					oItem.codPostal = _xmlColonia.Table[i].CDGPOSTAL;
+					item.push(oItem);
+				}
+				colObj = new ArrayCollection(item);
+			}
+			
+			public function formateaLocalidad():void{
+				var i:int;
+				var cont:int = _xmlLocalidad.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				locObj.filterFunction = null;
+				locObj.refresh();
+				locObj.removeAll();
+				locObj.refresh();
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.nombre = _xmlLocalidad.Table[i].NOMBRE;
+					oItem.codigo = _xmlLocalidad.Table[i].CODIGO;
+					oItem.cdgArea = _xmlLocalidad.Table[i].CDGTEL;
+					item.push(oItem);
+				}
+				locObj = new ArrayCollection(item);
+			}
+			
+			public function formateaMunicipio():void{
+				var i:int;
+				var cont:int = _xmlMunic.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				munObj.filterFunction = null;
+				munObj.refresh();
+				munObj.removeAll();
+				munObj.refresh();
+				
+				for (i = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.nombre = _xmlMunic.Table[i].NOMBRE;
+					oItem.codigo = _xmlMunic.Table[i].CODIGO;
+					item.push(oItem);
+				}
+				munObj = new ArrayCollection(item);
+			}
+			
+			public function iniVar():void{
+				this.indice = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du =  new Utils();
+				cargaEntFed();
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}		
+			
+			public function manejadorEliminarCol(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var cdgEntFed:String = dgEntFed.selectedItem.CODIGO;
+					var cdgMunic:String = dgMunic.selectedItem.codigo;
+					var cdgLoc:String = dgLocalidad.selectedItem.codigo;
+					var cdgCol:String = dgColonia.selectedItem.codigo; 
+					initConexion();
+					du.sCursor();
+			 		du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						var res:String = evt.result.toString();
+					
+						du.rCursor();
+						du.closeWs(wsMS);
+						Application.application.desbloquear();
+						
+						if (res.substr(0,1) == "1")
+							buscarListaCol(1);
+						else
+							Alert.show(res.substr(2,res.length-1), "Mantenimiento de Colonias",4,null,null,global.iAlert);
+					});
+					wsMS.setAccionCol.send(3, cdgEntFed, cdgMunic, cdgLoc, cdgCol);
+				} 
+			}
+			
+			//Muestra el formulario de edicion de localidad
+			public function mostrarFormLoc(tipo:int):void{
+				//tipo = 2 MODIFICA REGISTRO
+				var cdgEntFed:String;
+				var entFed:String;
+				var cdgMunic:String;
+				var munic:String;
+				if(edicion == true){
+					var comMttoLoc:MttoLocalidad = new MttoLocalidad();
+					cdgEntFed = dgEntFed.selectedItem.CODIGO;
+					entFed = dgEntFed.selectedItem.NOMBRE;
+					cdgMunic = dgMunic.selectedItem.codigo;
+					munic = dgMunic.selectedItem.nombre;
+					comMttoLoc = MttoLocalidad(PopUpManager.createPopUp(this,MttoLocalidad,true));  
+					comMttoLoc.addEventListener(Event.REMOVED_FROM_STAGE, actualizarLoc);			
+					comMttoLoc.init(cdgEntFed, entFed, cdgMunic, munic);
+					switch(tipo){
+						case 1:
+								comMttoLoc.registraInfoLoc();
+								PopUpManager.centerPopUp(comMttoLoc);
+							break;
+						case 2: 
+							if (dgLocalidad.selectedIndex >= 0){
+								accionLoc = tipo;
+								var cdgLoc:String = dgLocalidad.selectedItem.codigo;
+								iniVar();
+								this.indice = dgLocalidad.selectedIndex;
+								this.vScroll = dgLocalidad.verticalScrollPosition;
+								comMttoLoc.cargaInfoLoc(cdgLoc);
+								PopUpManager.centerPopUp(comMttoLoc);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de la Localidad","Mantenimiento de Localidades",4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}	
+			
+			//Muestra el formulario de edicion de colonia 
+			public function mostrarFormCol(tipo:int):void{
+				//tipo = 2 MODIFICA REGISTRO
+				var cdgEntFed:String;
+				var entFed:String;
+				var cdgMunic:String;
+				var munic:String;
+				var cdgLoc:String;
+				var localidad:String;
+				if(edicion == true){
+					var comMttoCol:MttoColonia = new MttoColonia();
+					cdgEntFed = dgEntFed.selectedItem.CODIGO;
+					entFed = dgEntFed.selectedItem.NOMBRE;
+					cdgMunic = dgMunic.selectedItem.codigo;
+					munic = dgMunic.selectedItem.nombre;
+					cdgLoc = dgLocalidad.selectedItem.codigo;
+					localidad = dgLocalidad.selectedItem.nombre;
+					
+					switch(tipo){
+						case 1:
+								comMttoCol = MttoColonia(PopUpManager.createPopUp(this,MttoColonia,true));  
+								comMttoCol.addEventListener(Event.REMOVED_FROM_STAGE, actualizarCol);			
+								comMttoCol.init(cdgEntFed, entFed, cdgMunic, munic, cdgLoc, localidad);
+								comMttoCol.registraInfoCol();
+								PopUpManager.centerPopUp(comMttoCol);
+							break;
+						case 2: 
+							if (dgColonia.selectedIndex >= 0){
+								accionCol = tipo;
+								var cdgCol:String = dgColonia.selectedItem.codigo;
+								iniVar();
+								this.indice = dgColonia.selectedIndex;
+								this.vScroll = dgColonia.verticalScrollPosition;
+								comMttoCol = MttoColonia(PopUpManager.createPopUp(this,MttoColonia,true));  
+								comMttoCol.addEventListener(Event.REMOVED_FROM_STAGE, actualizarCol);			
+								comMttoCol.init(cdgEntFed, entFed, cdgMunic, munic, cdgLoc, localidad);
+								comMttoCol.cargaInfoCol(cdgCol);
+								PopUpManager.centerPopUp(comMttoCol);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de la Colonia","Mantenimiento de Colonias",4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}	
+			
+			public function permisos():void{
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var i:int;
+				var cont:int;
+				
+				ws = du.initWs(ws);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(i = 0; i < cont; i++)
+					{
+						switch(dPermisos.Table[i].OPCION.toString())
+						{
+							case "C":
+								consulta = true;
+								if (global.permisosLocalidades(Application.application.PERFIL_ID)){
+									borrado = true;
+									alta = true;
+									edicion = true;
+								}
+								break;	
+							/*case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;*/
+						}
+					}
+					du.rCursor();
+					du.closeWs(ws);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				ws.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			public function seleccionaCol():void{
+				if (dgColonia.selectedIndex >= 0){
+					activarContModCol(true);
+				}
+				else{
+					activarContModCol(false);
+				}
+			}
+			
+			public function seleccionaEntFed():void{
+				dgMunic.dataProvider = null;
+				dgLocalidad.dataProvider = null;
+				dgColonia.dataProvider = null;
+				activarContMunic(false);
+				activarContLoc(false);
+				activarContModLoc(false);
+				activarContCol(false);
+				activarContModCol(false);
+				if (dgEntFed.selectedIndex >= 0){
+					activarContMunic(true);
+				}
+				else{
+					activarContMunic(false);
+				}
+			}
+			
+			public function seleccionaLoc():void{
+				dgColonia.dataProvider = null;
+				activarContCol(false);
+				activarContModCol(false);
+				if (dgLocalidad.selectedIndex >= 0){
+					activarContCol(true);
+					activarContModLoc(true);
+				}
+				else{
+					activarContCol(false);
+					activarContModCol(false);
+				}
+			}
+			
+			public function seleccionaMunic():void{
+				dgLocalidad.dataProvider = null;
+				dgColonia.dataProvider = null;
+				activarContLoc(false);
+				activarContModLoc(false);
+				activarContCol(false);
+				activarContModCol(false);
+				if (dgMunic.selectedIndex >= 0){
+					activarContLoc(true);
+				}
+				else{
+					activarContLoc(false);
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Canvas styleName="canvasComp" width="615" height="840">
+		<mx:Canvas id="cnvEntFed" x="10" y="84" width="592.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgEntFed" dataProvider="{dpEntFed}" x="10" y="10" width="570.5" height="124"
+				resizableColumns="false" verticalScrollPolicy="on" horizontalScrollPolicy="on" itemClick="seleccionaEntFed()" doubleClickEnabled="true" itemDoubleClick="buscarListaMunic(1)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+					<mx:DataGridColumn headerText="ENTIDAD FEDERATIVA" dataField="NOMBRE" width="200"/>
+					<mx:DataGridColumn headerText="ABREVIATURA" dataField="ABREVIATURA" width="70"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="10" y="10" text="ENTIDAD FEDERATIVA" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="45.25" y="39" width="530.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodEntFed" x="15" y="6" text="Código:"/>
+			<mx:Label id="lblEntFed" x="165" y="6" text="Entidad Federativa:"/>
+			<mx:TextInput id="txtEntFed" x="270" y="5" width="247.5" change="buscarEntFed()" maxChars="50"/>
+			<mx:TextInput id="txtCodEntFed" x="64" y="5" width="68" change="buscarEntFed()" maxChars="6" restrict="0-9"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvMunic" x="10" y="283" width="592.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
+			<Data:RowColorDataGrid id="dgMunic" x="10" y="10" width="570.5" height="124"
+				resizableColumns="false" verticalScrollPolicy="on" itemClick="seleccionaMunic()" doubleClickEnabled="true" itemDoubleClick="buscarListaLoc(1)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="codigo" width="35"/>
+					<mx:DataGridColumn headerText="MUNICIPIO" dataField="nombre" width="100"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="445.5" y="437" width="157" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
+			<mx:Button id="btnEditarLoc" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormLoc(2)" toolTip="Editar Localidad" width="40"/>
+			<mx:Button id="btnDatosLoc" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaLoc(1)" enabled="false" toolTip="Localidades" width="40"/>
+			<mx:Button id="btnAgregarLoc" x="106" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormLoc(1)" toolTip="Agregar Localidad" width="40"/>
+		</mx:Canvas>
+		<mx:Label x="10" y="254" text="MUNICIPIO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Label x="10" y="453" text="LOCALIDAD" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="542.5" y="238" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnDatosMunic" x="9" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaMunic(1)" enabled="false" toolTip="Acreditados del Grupo" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvLocalidad" x="10" y="482" width="592.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
+			<Data:RowColorDataGrid id="dgLocalidad" x="10" y="10" width="570.5" height="124"
+				resizableColumns="false" verticalScrollPolicy="on" itemClick="seleccionaLoc()" doubleClickEnabled="true" itemDoubleClick="mostrarFormLoc(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="codigo" width="50"/>
+					<mx:DataGridColumn headerText="LOCALIDAD" dataField="nombre" width="180"/>
+					<mx:DataGridColumn headerText="AREA TEL." dataField="cdgArea" width="90"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Canvas x="397.5" y="636" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas0">
+			<mx:Button id="btnEditarCol" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormCol(2)" toolTip="Editar Colonia" width="40"/>
+			<mx:Button id="btnDatosCol" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaCol(1)" enabled="false" toolTip="Colonias" width="40"/>
+			<mx:Button id="btnAgregarCol" x="105" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormCol(1)" toolTip="Agregar Colonia" width="40"/>
+			<mx:Button id="btnEliminarCol" x="153" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarColonia()" enabled="false" toolTip="Eliminar Colonia" width="40"/>
+		</mx:Canvas>
+		<mx:Label x="10" y="652" text="COLONIA" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas id="cnvColonia" x="10" y="681" width="592.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
+			<Data:RowColorDataGrid id="dgColonia" x="10" y="10" width="570.5" height="124"
+				resizableColumns="false" verticalScrollPolicy="on" itemClick="seleccionaCol()" doubleClickEnabled="true" itemDoubleClick="mostrarFormCol(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="codigo" width="50"/>
+					<mx:DataGridColumn headerText="COLONIA" dataField="nombre" width="180"/>
+					<mx:DataGridColumn headerText="CODIGO POSTAL" dataField="codPostal" width="90"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

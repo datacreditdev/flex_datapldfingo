@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="460" height="450" 
+	creationPolicy="all" xmlns:Forms="CATALOGOS.Forms.*">
+	
+	<mx:Validator id="codigoV" source="{txtCodigo}" property="text" 
+	invalid="{txtCodigo.setFocus()}" triggerEvent="" requiredFieldError="Código de Gerencia Requerido"/>
+	
+	<mx:Validator id="nombreV" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Gerencia Requerido"/>
+
+	<mx:Script>
+	<![CDATA[
+		import mx.collections.ArrayCollection;
+		import mx.managers.PopUpManager;
+		import Data.EventDir;
+		import Data.DatosDir;
+		import mx.controls.Alert;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import Data.Utils;
+		import Data.Globales;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.events.ResultEvent;
+		import mx.core.Application;
+		
+		[Bindable]
+		private var info:DatosDir;
+		private var _xmlReg:XML =  new XML();
+		private var _xmlGte:XML =  new XML();
+		
+		public var gteObj:ArrayCollection = new ArrayCollection();
+		
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var codPers:String; 
+		public var titulo:String;
+		public var du:Utils;
+		public var global:Globales;
+		
+		public function cargaInfoReg(codReg:String, regional:String, codPers:String):void{
+			var j:int;
+			this.title = "Edición";
+			txtCodigo.text = codReg;
+			txtNombre.text = regional;
+				
+			initConexion();
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlReg = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsMS);
+					
+				if (_xmlReg.elements().length() > 0){
+					llenaRegistros();
+				} 	
+			});
+			wsMS.getInfoReg.send(codReg);
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			formDatosDir.enviarDatosDir(info);
+			validaFinal();
+		}
+		
+		public function efectoInicial(event:EffectEvent):void{
+			
+		}
+		
+		
+		public function formateaGte():void{
+			var i:int;
+			var cont:int = _xmlGte.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+				
+			oItem = new Object();
+			oItem.codigo = "";	
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+				
+			for (i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlGte.Table[i].CODIGO;	
+				oItem.nombre = _xmlGte.Table[i].NOMBREC;
+				item.push(oItem);
+			}
+			gteObj = new ArrayCollection(item);
+		}
+		
+		public function guardaReg():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionReg);
+			wsMS.setAccionReg.send(tipoAccion, txtCodigo.text, txtNombre.text, cboGerente.selectedItem.codigo,
+								   info.calle, info.cdgEntFed, info.cdgMun, info.cdgLoc, info.cdgCol,
+								   info.telefono); 			
+		}
+	
+		public function init(tipo:int, codReg:String, regional:String, codPers:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			var j:int;
+			tipoAccion = tipo;
+			global = new Globales();
+			du = new Utils();
+			 
+			titulo = "Mantenimiento de Gerencias Regionales";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+		
+			du.initWsCat(wsCat);
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlGte = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if (_xmlGte.elements().length() > 0){
+					formateaGte();
+					cboGerente.dataProvider = gteObj;
+				} 	
+				for(j = 0; j < gteObj.length; j++){
+					if (gteObj[j].codigo.toString() == codPers){
+						cboGerente.selectedIndex = j;
+						break;
+					}
+				}
+				if(tipoAccion == 1){
+					registraInfoReg();
+					txtCodigo.editable = true;
+					txtNombre.editable = true;
+				}
+				else if(tipoAccion == 2){
+					cargaInfoReg(codReg, regional, codPers);
+					txtCodigo.editable = false;
+					txtNombre.editable = false;
+				}
+			});
+			//Listado de Gerentes Regionales disponibles
+			wsCat.getCatalogoGral.send(27);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+				info = new DatosDir();
+				//Datos de la Gerencia Regional
+				info.calle = _xmlReg.Table[0].CALLE;
+				info.cdgEntFed = _xmlReg.Table[0].CDGEF;
+				info.entFed = _xmlReg.Table[0].ENTFED; 
+				info.cdgMun = _xmlReg.Table[0].CDGMU;
+				info.municipio = _xmlReg.Table[0].MUNIC;
+				info.cdgLoc = _xmlReg.Table[0].CDGLO;
+				info.localidad = _xmlReg.Table[0].LOC;
+				info.cdgCol = _xmlReg.Table[0].CDGCOL;
+				info.colonia = _xmlReg.Table[0].COL;
+				info.telefono = _xmlReg.Table[0].TELEFONO;
+				
+				formDatosDir.init(info);
+			}
+		
+		public function registraInfoReg():void{
+			tipoAccion = 1;
+			this.title = "Nuevo";
+			info = null;
+			formDatosDir.init(info);
+		}
+		
+		private function setAccionReg(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionReg);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validaDatosDir(event:EventDir):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			var invalidArray:Array = Validator.validateAll([codigoV, nombreV]);
+			if (info.guarda == true && invalidArray.length == 0)
+				guardaReg();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+	]]>
+	</mx:Script>
+	<mx:Canvas x="15" y="10" width="430" height="100" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblCodigo" x="62.5" y="10" text="Código:"/>
+		<mx:TextInput id="txtCodigo" editable="false" x="111.5" y="8" width="45" maxChars="3"/>
+		<mx:Label id="lblNombre" x="58.5" y="38" text="Nombre:"/>
+		<mx:TextInput id="txtNombre" editable="false" x="111.5" y="36" width="250" height="24" maxChars="50"/>
+		<mx:Label id="lblGerente" x="56.5" y="68" text="Gerente:"/>
+		<mx:ComboBox id="cboGerente" x="111.5" y="65" width="290" height="24" labelField="nombre"/>
+	</mx:Canvas>
+	<mx:Canvas x="15" y="118" width="430" height="250" styleName="canvasMod">
+		<Forms:FormDatosDir id="formDatosDir" x="14" height="240" y="3"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="357" y="376" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="405" y="376" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

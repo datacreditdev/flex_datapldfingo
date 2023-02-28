@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="420" height="500">
+	
+	<mx:Validator id="dispV" source="{txtCodDisp}" property="text" 
+	invalid="{txtCodDisp.setFocus()}" triggerEvent="" requiredFieldError="Disposición Requerida"/>
+	
+	<mx:Validator id="descV" source="{txtDesc}" property="text" 
+	invalid="{txtDesc.setFocus()}" triggerEvent="" requiredFieldError="Descripción Requerida"/>
+	
+	<mx:Validator id="cantV" source="{txtCantidad}" property="text" 
+	invalid="{txtCantidad.setFocus()}" triggerEvent="" requiredFieldError="Cantidad Requerida"/>
+	
+	<mx:Validator id="plazoV" source="{txtPlazo}" property="text" 
+	invalid="{txtPlazo.setFocus()}" triggerEvent="" requiredFieldError="Plazo Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosDisposicion;
+		import Data.EventDisposicion;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;
+		import mx.events.ValidationResultEvent;	
+		
+		[Bindable]
+		private var info:DatosDisposicion;
+		[Bindable]
+		private var _xmlDisp:XML =  new XML();
+		
+		public var pagoObj:ArrayCollection = new ArrayCollection();
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var du:Utils;
+		private var vResult:ValidationResultEvent;
+		
+		public function cargaInfoDisp(tipo:int, codOF:String, orgFond:String, codLC:String, lineaCred:String, codDisp:String):void{
+			tipoAccion = tipo; 
+			this.title = "Edición";
+			//Datos de la Disposicion
+			info.cdgOF = codOF;
+			info.cdgLC = codLC;
+			info.cdgDisp = codDisp;
+			
+			initConexion();
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlDisp = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsMS);
+					
+				if (_xmlDisp.elements().length() > 0){
+					llenaRegistros();
+				} 	
+			});
+			wsMS.getInfoDisposicion.send(codOF, codLC, codDisp);
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			var invalidArray:Array = Validator.validateAll([dispV, descV, cantV, plazoV]);
+				
+			if(invalidArray.length == 0){	
+				info.cdgDisp = txtCodDisp.text;
+				info.contrato = txtContrato.text;
+				info.descripcion = txtDesc.text;
+				info.fecDisp = txtDisp.text;
+				info.cantidad = Number(txtCantidad.text);
+				info.plazo = Number(txtPlazo.text);
+				info.pagoCap = cboPagoCap.selectedItem.codigo;
+				info.pagoInt = cboPagoInt.selectedItem.codigo;
+				info.graciaCap = Number(txtGraciaCap.text);
+				info.graciaInt = Number(txtGraciaInt.text);
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+		
+		public function formateaPago():void{
+			var oItem:Object
+			
+			oItem = new Object();
+			oItem.codigo = "";	
+			oItem.nombre = "--Seleccionar--";
+			pagoObj.addItem(oItem);
+				
+			oItem = new Object();
+			oItem.codigo = "M";	
+			oItem.nombre = "Mensual";
+			pagoObj.addItem(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "B";	
+			oItem.nombre = "Bimestral";
+			pagoObj.addItem(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "T";	
+			oItem.nombre = "Trimestral";
+			pagoObj.addItem(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "C";	
+			oItem.nombre = "Cuatrimestral";
+			pagoObj.addItem(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "S";	
+			oItem.nombre = "Semestral";
+			pagoObj.addItem(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "A";	
+			oItem.nombre = "Anual";
+			pagoObj.addItem(oItem);
+		}
+		
+		public function guardaDisposicion():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionDisposicion);
+			wsMS.setAccionDisposicion.send(tipoAccion, info.cdgOF, info.cdgLC, info.cdgDisp, info.contrato, 
+									       info.descripcion, info.fecDisp, info.cantidad, info.plazo, 
+									       info.pagoCap, info.pagoInt, info.graciaCap, info.graciaInt, 
+									       Application.application.U_ID);	
+		}
+	
+		public function init(tipo:int, codOF:String, orgFond:String, codLC:String, lineaCred:String, codDisp:String = null):void{
+			global = new Globales(); 
+			du = new Utils();
+			info = new DatosDisposicion();
+			titulo = "Mantenimiento de Disposición";
+			txtCodOF.text = codOF;
+			txtOF.text = orgFond;
+			txtCodLC.text = codLC;
+			txtLC.text = lineaCred;
+			txtDisp.selectedDate = Application.application._Current_Fecha;
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			formateaPago();
+			cboPagoCap.dataProvider = pagoObj;
+			cboPagoInt.dataProvider = pagoObj;
+			
+			if(tipo == 1)
+				registraInfoDisp(tipo, codOF, orgFond, codLC, lineaCred);
+			else if(tipo == 2)
+				cargaInfoDisp(tipo, codOF, orgFond, codLC, lineaCred, codDisp);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+			var i:int;
+			txtCodDisp.setFocus();
+			
+			txtCodDisp.text = info.cdgDisp;
+			txtContrato.text = _xmlDisp.Table[0].CONTRATO;
+			txtDesc.text = _xmlDisp.Table[0].DESCRIPCION;
+			txtDisp.text = _xmlDisp.Table[0].FDISP;
+			txtCantidad.text = _xmlDisp.Table[0].CANTIDAD;
+			txtPlazo.text = _xmlDisp.Table[0].PLAZO;
+			for(i = 0; i < pagoObj.length; i++)
+			{
+				if(pagoObj[i].codigo == _xmlDisp.Table[0].PAGOCAP.toString())
+					cboPagoCap.selectedIndex = i;
+				if(pagoObj[i].codigo == _xmlDisp.Table[0].PAGOINT.toString())
+					cboPagoInt.selectedIndex = i		
+			}
+			txtGraciaCap.text = _xmlDisp.Table[0].GRACIACAP;
+			txtGraciaInt.text = _xmlDisp.Table[0].GRACIAINT;
+		}
+			
+		public function registraInfoDisp(tipo:int, codOF:String, orgFond:String, codLC:String, lineaCred:String):void{
+			var i:int;
+			tipoAccion = tipo;
+			this.title = "Nuevo";
+			info.cdgOF = codOF;
+			info.cdgLC = codLC;
+			
+			txtCodDisp.setFocus();
+			
+			initConexion();
+			du.sCursor();
+				
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				var _xmlCod:XML = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsMS);
+				wsMS = null;
+					
+				if(_xmlCod.elements().length() > 0){
+					txtCodDisp.text = _xmlCod.Table[0].CDGDISP;
+					txtPlazo.text = _xmlCod.Table[0].PLAZO;
+					for(i = 0; i < pagoObj.length; i++)
+					{
+						if(pagoObj[i].codigo == _xmlCod.Table[0].PAGOCAP.toString())
+							cboPagoCap.selectedIndex = i;
+						if(pagoObj[i].codigo == _xmlCod.Table[0].PAGOINT.toString())
+							cboPagoInt.selectedIndex = i;		
+					}
+					txtGraciaCap.text = _xmlCod.Table[0].GRACIACAP;
+					txtGraciaInt.text = _xmlCod.Table[0].GRACIAINT;
+				}
+			});
+			wsMS.getCodigoDisposicion.send(codOF, codLC);
+		}
+		
+		private function setAccionDisposicion(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionDisposicion);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validaDatosDisp(event:EventDisposicion):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			if (info.guarda == true)
+				guardaDisposicion();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		public function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+               	TextInput(event.currentTarget).text = "";
+		}
+		
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	<mx:Canvas x="22.5" y="10" width="375" height="70" styleName="canvasMod">
+		<mx:Label id="lblOF" x="14.5" y="9" text="Fondeadora:"/>
+		<mx:Label id="lblOF0" x="6.5" y="39" text="Línea Crédito:"/>
+		<mx:TextInput id="txtCodOF" x="85.5" y="7" width="50" editable="false"/>
+		<mx:TextInput id="txtOF" x="143.5" y="7" width="221" editable="false"/>
+		<mx:TextInput id="txtCodLC" x="85.5" y="37" width="50" editable="false"/>
+		<mx:TextInput id="txtLC" x="143.5" y="37" width="221" editable="false"/>
+	</mx:Canvas>
+	<mx:Canvas x="22.5" y="88" width="375" height="332" styleName="canvasMod">
+		<mx:Label id="lblCantidad" x="64.25" y="140" text="Cantidad:"/>
+		<mx:Label id="lblDesc" x="50.5" y="76" text="Descripción:"/>
+		<mx:Label id="lblOtor" x="19.5" y="108" text="Fecha Disposición:"/>
+		<mx:Label id="lblcodDisp" x="52.5" y="12" text="Disposición:"/>
+		<mx:Label id="lblContrato" x="66.5" y="44" text="Contrato:"/>
+		<mx:Label id="lblPlazo" x="80.25" y="172" text="Plazo:"/>
+		<mx:TextInput id="txtCodDisp" x="123.5" y="10" width="50" maxChars="3" editable="false"/>
+		<mx:TextInput id="txtContrato" x="123.5" y="42" width="109" maxChars="150"/>
+		<mx:TextInput id="txtDesc" x="123.5" y="74" width="230" maxChars="150"/>
+		<mx:DateField id="txtDisp" width="109" x="123.5" y="106"/>
+		<mx:TextInput id="txtCantidad" x="122.25" y="138" width="110.25"/>
+		<mx:TextInput id="txtPlazo" x="122.25" y="170" width="50.5" maxChars="3" restrict="0-9"/>
+		<mx:Label id="lblPagoCap" x="47.25" y="204" text="Pago Capital:"/>
+		<mx:ComboBox id="cboPagoCap" x="122.25" y="201" width="230" labelField="nombre"/>
+		<mx:Label id="lblPagoInt" x="46.25" y="235.5" text="Pago Interés:"/>
+		<mx:ComboBox id="cboPagoInt" x="122.25" y="233" width="230" labelField="nombre" height="23"/>
+		<mx:Label id="lblGraciaCap" x="40.5" y="266" text="Gracia Capital:"/>
+		<mx:TextInput id="txtGraciaInt" x="123.5" y="296" width="50.5" maxChars="13" change="validaMonto(event)"/>
+		<mx:Label id="lblMesesGC" x="182" y="266" text="meses"/>
+		<mx:TextInput id="txtGraciaCap" x="123.5" y="264" width="50.5" maxChars="13" change="validaMonto(event)"/>
+		<mx:Label id="lblGraciaInt" x="39.5" y="298" text="Gracia Interés:"/>
+		<mx:Label id="lblMesesGI" x="182" y="298" text="meses"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="309.5" y="428" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="357.5" y="428" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+</mx:TitleWindow>

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="380" height="220">
+	
+	<mx:Validator id="tasaV" source="{txtTasa}" property="text" 
+	invalid="{txtTasa.setFocus()}" triggerEvent="" requiredFieldError="Tasa Requerida"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosTasa;
+		import Data.EventTasa;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		[Bindable]
+		private var info:DatosTasa;
+		[Bindable]
+		private var _xmlTasa:XML =  new XML();
+		
+		public var global:Globales;
+		public var instrumento:String;
+		public var descInst:String;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var du:Utils;
+		private var vResult:ValidationResultEvent;
+		
+		public function cargaInfoTasa(instrumento:String, descInst:String, tasa:Number, valDesde:String):void{
+			tipoAccion = 2; 
+			this.title = "Edición";
+			
+			info = new DatosTasa();
+			//Datos de la Tasa
+			this.instrumento = instrumento;
+			this.descInst = descInst;
+			info.valDesde = valDesde;
+			info.tasa = tasa;
+			
+			llenaRegistros();
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			info = new DatosTasa();
+				
+			var invalidArray:Array = Validator.validateAll([tasaV]);
+				
+			if(invalidArray.length == 0){
+				info.instrumento = txtInstrumento.text;	
+				if(tipoAccion == 1)
+					info.valDesde = dtfValDesde.text;
+				else if(tipoAccion == 2)
+					info.valDesde = txtValDesde.text;
+				info.tasa = Number(txtTasa.text);
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+		
+		public function guardaTasa():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionTasa);
+			wsMS.setAccionTasa.send(tipoAccion, info.instrumento, info.valDesde, info.tasa);	
+		}
+	
+		public function init():void{
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Mantenimiento de Tasa";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+			dtfValDesde.visible = false;
+			txtTasa.setFocus();
+			
+			txtInstrumento.text = this.instrumento;
+			txtDescInst.text = this.descInst;
+		    txtValDesde.text = info.valDesde;
+			txtTasa.text = info.tasa.toString();
+		}
+			
+		public function registraInfoTasa(instrumento:String, descInst:String):void{
+			tipoAccion = 1;
+			this.title = "Nuevo";
+			info = null;
+			
+			txtValDesde.visible = false;
+			txtInstrumento.text = instrumento;
+			txtDescInst.text = descInst;
+			dtfValDesde.selectedDate = Application.application._Current_Fecha;
+		}
+		
+		private function setAccionTasa(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionTasa);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validaDatosTasa(event:EventTasa):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			if (info.guarda == true)
+				guardaTasa();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		public function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+                TextInput(event.currentTarget).text = "";
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:NumberValidator id="numVal" property="text" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	<mx:Canvas x="10" y="10" width="360" height="45" styleName="canvasMod">
+		<mx:Label id="lblInstrumento" x="7.75" y="12" text="Instrumento:"/>
+		<mx:TextInput id="txtInstrumento" x="76.5" y="10" width="50" editable="false"/>
+		<mx:TextInput id="txtDescInst" x="134.5" y="10" width="213.5" editable="false"/>
+	</mx:Canvas>
+	<mx:Canvas x="10" y="63" width="360" height="75" styleName="canvasMod">
+		<mx:Label id="lblTasa" x="129.25" y="41" text="Tasa:" textAlign="right"/>
+		<mx:Label id="lblValDesde" x="89.5" y="11" text="Válido desde:" textAlign="right"/>
+		<mx:TextInput id="txtValDesde" x="169.25" y="9" width="80" editable="false"/>
+		<mx:DateField id="dtfValDesde" x="168.5" y="9" width="100"/>
+		<mx:TextInput id="txtTasa" x="169.25" y="39" width="80" restrict="0-9;." change="validaMonto(event)"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="282" y="146" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="330" y="146" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

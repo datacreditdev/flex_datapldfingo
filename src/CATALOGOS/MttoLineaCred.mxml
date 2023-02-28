@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="780" height="480" xmlns:Data="Data.*">
+	
+	<mx:Validator id="lineaV" source="{txtLC}" property="text" 
+	invalid="{txtLC.setFocus()}" triggerEvent="" requiredFieldError="Línea de Crédito Requerida"/>
+	
+	<mx:Validator id="contV" source="{txtContrato}" property="text" 
+	invalid="{txtContrato.setFocus()}" triggerEvent="" requiredFieldError="Contrato Requerido"/>
+	
+	<mx:Validator id="descV" source="{txtDesc}" property="text" 
+	invalid="{txtDesc.setFocus()}" triggerEvent="" requiredFieldError="Descripción Requerida"/>
+	
+	<mx:Validator id="plazoV" source="{txtPlazo}" property="text" 
+	invalid="{txtPlazo.setFocus()}" triggerEvent="" requiredFieldError="Plazo Requerido"/>
+
+	<mx:Validator id="montoMaxV" source="{txtMontoMax}" property="text" 
+	invalid="{txtMontoMax.setFocus()}" triggerEvent="" requiredFieldError="Monto Maximo Requerido"/>
+
+	<mx:NumberValidator id="instV" source="{cboInstrumento}" property="selectedIndex" 
+	invalid="{cboInstrumento.setFocus()}" minValue="1" triggerEvent="" lowerThanMinError="Tasa de Interés Requerida"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosLineaCred;
+		import Data.EventLineaCred;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		
+		[Bindable]
+		private var info:DatosLineaCred;
+		
+		private var _xmlLC:XML =  new XML();
+		private var _xmlInst:XML =  new XML();
+		
+		public var instObj:ArrayCollection = new ArrayCollection();
+		public var pagoObj:ArrayCollection = new ArrayCollection();
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var du:Utils;
+		private var vResult:ValidationResultEvent;
+		
+		public function cargaInfoLC(tipo:int, codOF:String, orgFond:String, codLC:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			tipoAccion = tipo; 
+			this.title = "Edición";
+			//Datos de la Linea de Credito
+			info.cdgOF = codOF;
+			info.cdgLC = codLC;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlLC = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if (_xmlLC.elements().length() > 0){
+					llenaRegistros();
+				} 	
+			});
+			params[0] = codOF;
+			params[1] = codLC;
+			wsCat.getInfoRegistro.send(12, params);
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			var invalidArray:Array = Validator.validateAll([lineaV, contV, descV, plazoV, montoMaxV, instV]);
+				
+			if(invalidArray.length == 0){	
+				var i:int;
+				info.cdgLC = txtLC.text;
+				info.contrato = txtContrato.text;
+				info.descripcion = txtDesc.text;
+				info.otorgada = txtOtor.text;
+				i = _xmlInst.Table.(DESCRIPCION.toString() == cboInstrumento.selectedLabel).childIndex();
+				info.cdgTI = instObj[i + 1].id;
+				info.plazo = txtPlazo.text != ""? Number(txtPlazo.text):0;
+				info.cantidad = Number(txtCantidad.text);
+				info.montoMax = Number(txtMontoMax.text); 
+				info.periodoRep = Number(txtPeriodoRep.text);
+				info.pagoCap = cboPagoCap.selectedItem.codigo;
+				info.pagoInt = cboPagoInt.selectedItem.codigo;
+				info.graciaCap = Number(txtGraciaCap.text);
+				info.graciaInt = Number(txtGraciaInt.text);
+				info.tipoCred = tipoCred.selectedValue.toString();
+				info.tipo = tipoRec.selectedValue.toString();
+				info.recursos = recursos.selectedValue.toString();
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+		
+		private function formateaInstrumento():void{
+			var cont:int = _xmlInst.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			oItem = new Object();
+			oItem.id = "0";	
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+				
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.id = _xmlInst.Table[i].CODIGO;	
+				oItem.nombre = _xmlInst.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			instObj = new ArrayCollection(item);
+		}
+		
+		public function formateaPago():void{
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			oItem = new Object();
+			oItem.codigo = "";	
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+				
+			oItem = new Object();
+			oItem.codigo = "M";	
+			oItem.nombre = "Mensual";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "B";	
+			oItem.nombre = "Bimestral";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "T";	
+			oItem.nombre = "Trimestral";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "C";	
+			oItem.nombre = "Cuatrimestral";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "S";	
+			oItem.nombre = "Semestral";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "A";	
+			oItem.nombre = "Anual";
+			item.push(oItem);
+			
+			pagoObj = new ArrayCollection(item);
+		}
+		
+		public function guardaLineaCred():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionLineaCred);
+			wsMS.setAccionLineaCred.send(tipoAccion, info.cdgOF, info.cdgLC, info.contrato, info.descripcion, 
+									     info.otorgada, info.cdgTI, info.cantidad, info.plazo, info.montoMax,
+									     info.periodoRep, info.pagoCap, info.pagoInt, info.graciaCap, info.graciaInt, 
+									     info.tipoCred, info.tipo, info.recursos, Application.application.U_ID);	
+		}
+	
+		public function init(tipo:int, codOF:String, orgFond:String, codLC:String = null):void{
+			var wsCat:WebService = new WebService();
+			var params: Array = new Array();
+			
+			global = new Globales(); 
+			du = new Utils();
+			info = new DatosLineaCred();
+			titulo = "Mantenimiento de Línea de Crédito";
+			txtCodOF.text = codOF;
+			txtOF.text = orgFond;
+			txtOtor.selectedDate = Application.application._Current_Fecha;
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlInst = new XML(evt.result.toString()); 
+				
+				du.rCursor();
+				du.closeWs(wsCat);
+				
+				if (_xmlInst.elements().length() > 0){
+					formateaInstrumento();	
+			 		cboInstrumento.dataProvider = instObj;
+				} 
+				formateaPago();
+				cboPagoCap.dataProvider = pagoObj;
+				cboPagoInt.dataProvider = pagoObj; 	
+	
+				if(tipo == 1)
+			 		registraInfoLC(tipo, codOF, orgFond); 
+			 	else if(tipo == 2)
+			 		cargaInfoLC(tipo, codOF, orgFond, codLC);
+			});
+			wsCat.getCatalogoGral.send(31, params);	
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+			var i:int;
+			txtLC.setFocus();
+			
+			txtLC.text = info.cdgLC;
+			txtContrato.text = _xmlLC.Table[0].CONTRATO;
+			txtDesc.text = _xmlLC.Table[0].DESCRIPCION;
+			txtOtor.text = _xmlLC.Table[0].FOTORGADA;
+			i = _xmlInst.Table.(CODIGO.toString() == _xmlLC.Table[0].CDGTI).childIndex();
+			cboInstrumento.selectedIndex = i + 1;
+			txtPlazo.text = _xmlLC.Table[0].PLAZO;
+			txtCantidad.text = _xmlLC.Table[0].CANTIDAD;
+			txtMontoMax.text = _xmlLC.Table[0].MONTOMAX;
+			txtPeriodoRep.text = _xmlLC.Table[0].PERIODOREP;
+			for(i = 0; i < pagoObj.length; i++){
+				if(pagoObj[i].codigo == _xmlLC.Table[0].PAGOCAP.toString())
+					cboPagoCap.selectedIndex = i;
+				if(pagoObj[i].codigo == _xmlLC.Table[0].PAGOINT.toString())
+					cboPagoInt.selectedIndex = i		
+			}
+			txtGraciaCap.text = _xmlLC.Table[0].GRACIACAP;
+			txtGraciaInt.text = _xmlLC.Table[0].GRACIAINT;
+			tipoCred.selectedValue = _xmlLC.Table[0].REVOLVENTE;
+			tipoRec.selectedValue = _xmlLC.Table[0].TIPO;
+			recursos.selectedValue = _xmlLC.Table[0].RECURSOS;
+		}
+			
+		public function registraInfoLC(tipo:int, codOF:String, orgFond:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array; 
+			
+			tipoAccion = tipo;
+			this.title = "Nuevo";
+			info.cdgOF = codOF;
+			
+			txtLC.setFocus();
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+				
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				var _xmlCod:XML = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if(_xmlCod.elements().length() > 0){
+					txtLC.text = _xmlCod.Table[0].CDGLC;
+				}
+			});
+			params[0] = codOF;
+			wsCat.getInfoRegistro.send(18, params);
+		}
+		
+		private function setAccionLineaCred(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionLineaCred);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validaDatosLC(event:EventLineaCred):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			if (info.guarda)
+				guardaLineaCred();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		public function validaMonto(event:Event):void{
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type!=ValidationResultEvent.VALID)
+            	TextInput(event.currentTarget).text = "";
+		}
+		
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas x="202.5" y="10" width="375" height="40" styleName="canvasMod">
+		<mx:Label id="lblOF" x="14.5" y="9" text="Fondeadora:"/>
+		<mx:TextInput id="txtCodOF" x="85.5" y="7" width="50" editable="false"/>
+		<mx:TextInput id="txtOF" x="143.5" y="7" width="221" editable="false"/>
+	</mx:Canvas>
+	<mx:Canvas x="22.5" y="61" width="360" height="339" styleName="canvasMod">
+		<mx:Label id="lblTasa" x="35" y="109" text="Tasa Interés:"/>
+		<mx:Label id="lblCantidad" x="53" y="204" text="Cantidad:"/>
+		<mx:Label id="lblDesc" x="38" y="76" text="Descripción:"/>
+		<mx:Label id="lblOtor" x="50" y="172" text="Otorgada:"/>
+		<mx:Label id="lblLC" x="17" y="12" text="Línea de Crédito:"/>
+		<mx:Label id="lblContrato" x="54" y="44" text="Contrato:"/>
+		<mx:Label id="lblPlazo" x="69" y="140" text="Plazo:"/>
+		<mx:TextInput id="txtLC" x="111" y="10" width="50" maxChars="3" editable="false"/>
+		<mx:TextInput id="txtContrato" x="111" y="42" width="109" maxChars="150"/>
+		<mx:TextInput id="txtDesc" x="111" y="74" width="230" maxChars="150"/>
+		<Data:CustomComboBox id="cboInstrumento" x="111" y="106" width="230" labelField="nombre"/>
+		<mx:TextInput id="txtPlazo" x="111" y="138" width="50.5" maxChars="3" restrict="0-9"/>
+		<mx:DateField id="txtOtor" width="109" x="111" y="170"/>
+		<mx:TextInput id="txtCantidad" x="111" y="202" width="110.25" maxChars="13" change="validaMonto(event)"/>
+		<mx:Label id="lblMesesPlazo" x="169.5" y="140" text="meses"/>
+		<mx:Label id="lblMontoMax" x="10" y="236" text="Monto Max Acred:"/>
+		<mx:TextInput id="txtMontoMax" x="111" y="234" width="110.25" maxChars="13" change="validaMonto(event)"/>
+		<mx:Label id="lblPeriodoRep" x="12" y="268" text="Periodo Reportes:"/>
+		<mx:TextInput id="txtPeriodoRep" x="111" y="266" width="50.5" maxChars="13" change="validaMonto(event)"/>
+		<mx:Label id="lblMesesPR" x="169.5" y="268" text="meses"/>
+	</mx:Canvas>
+	<mx:Canvas x="400.5" y="61" width="360" height="339" styleName="canvasMod">
+		<mx:Label x="46" y="190" text="Tipo" width="210.25"/>
+		<mx:Label x="46" y="243" text="Recursos" width="210.25"/>
+		<mx:Label x="46" y="136" text="Tipo de Crédito" width="210.25"/>
+		<mx:Canvas x="46" y="155" width="266" height="30" styleName="canvasMod">
+			<mx:RadioButtonGroup id="tipoCred"/>
+			<mx:RadioButton x="38" y="2" label="Revolvente" groupName="tipoCred" value="R"/>
+			<mx:RadioButton x="132" y="2" label="No Revolvente" groupName="tipoCred" value="N"/>
+		</mx:Canvas>
+		<mx:Canvas x="46" y="209" width="266" height="30" styleName="canvasMod">
+			<mx:RadioButtonGroup id="tipoRec"/>
+			<mx:RadioButton x="50.5" y="2" label="Préstamo" groupName="tipoRec" value="P"/>
+			<mx:RadioButton x="144.5" y="2" label="Donación" groupName="tipoRec" value="D"/>
+		</mx:Canvas>
+		<mx:Canvas x="46" y="262" width="266" height="65" styleName="canvasMod">
+			<mx:RadioButtonGroup id="recursos"/>
+			<mx:RadioButton x="10.5" y="6" label="Recursos Propios" groupName="recursos" value="P"/>
+			<mx:RadioButton x="126.5" y="6" label="Recursos de Fomento" groupName="recursos" value="F"/>
+			<mx:RadioButton x="10" y="34" label="Otros Recursos" groupName="recursos" value="O"/>
+		</mx:Canvas>
+		<mx:Label id="lblPagoCap" x="27" y="13" text="Pago Capital:"/>
+		<mx:ComboBox id="cboPagoCap" x="102" y="10" width="230" labelField="nombre"/>
+		<mx:Label id="lblPagoInt" x="26" y="43.5" text="Pago Interés:"/>
+		<mx:ComboBox id="cboPagoInt" x="102" y="41" width="230" labelField="nombre" height="23"/>
+		<mx:Label id="lblGraciaCap" x="19" y="74" text="Gracia Capital:"/>
+		<mx:TextInput id="txtGraciaInt" x="102" y="104" width="50.5" maxChars="13" change="validaMonto(event)"/>
+		<mx:Label id="lblMesesGC" x="160.5" y="74" text="meses"/>
+		<mx:TextInput id="txtGraciaCap" x="102" y="72" width="50.5" maxChars="13" change="validaMonto(event)"/>
+		<mx:Label id="lblGraciaInt" x="19" y="106" text="Gracia Interés:"/>
+		<mx:Label id="lblMesesGI" x="160.5" y="106" text="meses"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="672.5" y="408" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="720.5" y="408" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+</mx:TitleWindow>

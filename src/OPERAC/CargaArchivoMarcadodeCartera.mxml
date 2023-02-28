@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="569" height="532" backgroundAlpha="1.0" 
+	creationPolicy="all" creationComplete="initApp()" backgroundColor="#FFFFFF" xmlns:Data="Data.*" 
+	x="12.5" y="42" xmlns:local="*" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+	
+	<mx:Script>    
+    <![CDATA[
+    	import as3xls.xls.Cell;
+        import as3xls.xls.ExcelFile;
+        import as3xls.xls.Sheet;
+    	import Data.ExcelExportXls;
+    	import Data.Globales;
+    	import Data.Utils; 
+    	import mx.collections.ArrayCollection;
+        import mx.controls.Alert; 
+        import mx.controls.dataGridClasses.DataGridColumn;
+        import mx.core.Application; 	
+        import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService; 
+		import flash.external.ExternalInterface;
+
+      	private var fileReference:FileReference;
+      	private var du:Utils;
+      	private var global:Globales;
+      	private var sheet:Sheet;
+      	private var wsMS:WebService;
+      	private var titulo:String;
+		
+        private var arrNomGpo:Array;
+        private var arrInicio:Array;        
+        private var arrGrupo:Array;
+        private var arrCiclo:Array;
+        private var arrClns:Array;
+        private var arrTipoMov:Array;
+       
+      	[Bindable]
+        private var infoObj:ArrayCollection = new ArrayCollection();
+		private var _xmlRes:XML = new XML();
+      	 
+       	private function buscarArchivo():void{
+       		var fileFilter:FileFilter = new FileFilter("Excel (.xls)", "*.xls;");
+       		
+       		try{
+	       		fileReference = new FileReference();
+	            fileReference.addEventListener(Event.SELECT,fileReference_Select);
+	            fileReference.addEventListener(Event.CANCEL,fileReference_Cancel);
+	            fileReference.browse([fileFilter]);
+	    	}
+         	catch (error:Error){
+         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 return;
+         	} 
+        }
+        
+        public function cargarInfo():void{	        	        
+        	if(formateaInfo()){
+        		var fecha:String = dtFecha.text;
+        		
+	        	initConexion();
+				du.sCursor();
+				//Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionMarcaCartera);
+			    wsMS.setAccionMarcaCartera.send(0, arrGrupo,arrNomGpo,arrInicio, arrCiclo, arrClns, fecha, arrTipoMov, Application.application.U_ID );
+			}	        
+        }
+        
+		public function exportar():void{
+			var dgE:ExcelExportXls = new ExcelExportXls();
+			dgE.loadDGInExcel(dgInfo,null,titulo);		
+		}
+        
+        public function formateaInfo():Boolean{
+            var info:ArrayCollection = dgInfo.dataProvider as ArrayCollection;
+            var max:int;
+            
+            arrNomGpo = new Array;
+		    arrInicio = new Array;
+            arrGrupo = new Array;
+            arrCiclo = new Array;
+            arrClns = new Array;
+            arrTipoMov = new Array;
+			
+			if (info.length <= 0){
+				return false;
+			}
+			else{
+				if(info.length <= 10000)
+			 		max = info.length;
+			 	else
+			 		max = 10000;
+			    
+				for(var i:int = 0; i < max ; i++){
+					arrGrupo[i] = info[i].CDGNS;
+				    arrNomGpo[i] = info[i].NOM_GRUPO;
+				    arrCiclo[i] = info[i].CICLO;
+					arrInicio[i] = info[i].INICIO;	                
+				    arrClns[i] = "G";
+					arrTipoMov[i] = info[i].TIPOMOV;
+				}   				 			 
+			}	
+			return true;
+        }
+        
+        private function fileReference_Select(event:Event):void{
+        	dgInfo.dataProvider = null;	
+        	lblResultado.text = "Cargando registros, espere un momento..."
+	    	fileReference.addEventListener(ProgressEvent.PROGRESS,fileReference_Progress);
+	        fileReference.addEventListener(Event.COMPLETE,fileReference_Complete);
+	        fileReference.addEventListener(IOErrorEvent.IO_ERROR, onLoadError);
+	        fileReference.load(); 
+	        txtArchivo.text = fileReference.name;
+        }
+        
+        private function fileReference_Cancel(event:Event):void{
+            fileReference = null;
+        }
+        
+        private function fileReference_Progress(event:ProgressEvent):void{
+        }
+        
+        private function onLoadError():void{
+        }
+        
+        private function fileReference_Complete(event:Event):void{
+        	try{
+	            dgInfo.dataProvider = null;
+	            infoObj.removeAll();
+	            infoObj.refresh();
+	            btnCargar.visible = true;
+	            btnLimpiar.visible = true;
+	            btnExportar.visible = false;
+	            
+	            var fileData:ByteArray  = fileReference.data;
+	            var excelFile:ExcelFile = new ExcelFile();
+	            var noOfRows:int;
+	            var noOfColumns:int;
+	            
+	            if(fileData!=null && fileData.length > 0){
+	            	excelFile.loadFromByteArray(fileData);
+	                var sheet:Sheet = excelFile.sheets[0];
+	                if(sheet!=null){
+	            	    noOfRows = sheet.rows;
+	                    noOfColumns = sheet.cols;
+	                    for(var row:int = 1; row<noOfRows;row++){
+	                	    var cellObject:Object ={};
+	                        for(var col:int=0; col<noOfColumns; col++){
+	                    	    var cell:Cell = new Cell();
+	                            var cellValue:String = new String();
+	                            cell = sheet.getCell(row,col);
+	                            if(cell != null){
+	                            	cellValue = (cell.value).toString();
+	                                addProperty(cellObject,col,cellValue);
+	                            }
+	                     	} 
+	                     	cellObject.ESTATUS = ""; 
+	                        infoObj.addItem(cellObject);
+	                        dgInfo.dataProvider = infoObj;
+	                    } 
+	                    lblResultado.text = noOfRows -1 + " Registro(s) Encontrado(s)";
+	                }    
+	            } 
+	            dgInfo.includeInLayout = true;
+	            dgInfo.visible = true;
+	            fileReference = null;
+	            btnCargar.enabled = true;
+	            btnLimpiar.enabled = true;
+            }
+            catch (error:Error){
+  				Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		return;
+         	}       		        		        
+        }  
+        
+        private function addProperty(cellObject:Object,index:int,cellValue:String):void{
+            if(index == 0)
+                cellObject.CDGNS = cellValue;
+            else if(index == 1)
+                cellObject.NOM_GRUPO = cellValue;           
+            else if(index == 2)
+                cellObject.CICLO = cellValue;
+            else if(index == 3)
+                cellObject.INICIO = global.formatoFechaExcel(Number(cellValue));
+            else if(index == 4)
+                cellObject.TIPOMOV = cellValue;               
+        }
+        
+        private function complete(event:Event):void {
+        	var count:int = infoObj.length -1;
+        	if(count == 1)
+        		lblResultado.text = infoObj.length + " Registro Encontrado";
+        	else
+ 				lblResultado.text = count + " Registros Encontrados";
+        	btnCargar.enabled = true;
+        	btnLimpiar.enabled = true;		 	
+		}
+              
+      	private function initApp():void{ 
+	    	global = new Globales();
+	    	du = new Utils();
+	        titulo = "Carga Archivo Marcado de Cartera";
+	      	lblTitulo.text = titulo.toUpperCase(); 
+	      	limpiar();
+	    }    
+	    
+	    public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsMS.loadWSDL();
+		}
+		
+		private function getGridPositionFor(grupo:String, ciclo:String):int{
+			for(var i:int = 0; i < infoObj.length; i++ ){
+				if(infoObj[i].CDGNS == grupo && infoObj[i].CICLO == ciclo)
+					return i;
+			}
+			return -1;
+		}	
+	    
+	    private function checaNoMarcados():void{
+			for(var i:int = 0; i < infoObj.length; i++ ){
+				if(infoObj[i].ESTATUS == null || infoObj[i].ESTATUS == ""){
+					infoObj[i].ESTATUS = "FALLÓ";
+				}
+			}			
+		}
+
+	    private function setAccionMarcaCartera(event:ResultEvent):void{
+			wsMS.disconnect();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionMarcaCartera);
+			wsMS = null;
+			_xmlRes = new XML(event.result.toString());
+			var cont:int = _xmlRes.elements().length();			
+			if (cont > 0){
+				for (var i:int = 0; i < cont; i++){
+					var grupo:String =  _xmlRes.Table[i].CDGNS;
+					var ciclo:String =  _xmlRes.Table[i].CICLO;
+					var inicio:String =  _xmlRes.Table[i].INICIO;
+					var tipo:String =  _xmlRes.Table[i].TIPOMOV; 
+				    var j:int = getGridPositionFor(grupo, ciclo);
+				    if (j != -1)	
+				    	infoObj[j].ESTATUS = "MARCADO";					   	
+				}
+				checaNoMarcados();					
+				dgInfo.dataProvider = infoObj;	
+				Alert.show("Datos cargados exitosamente.",titulo,4,null,null,global.iInfo);		
+				du.rCursor();	
+			}				
+			else{
+				var res:String = event.result.toString();
+				if(res.indexOf("(SICEM.PRN_LEGAL_PK) violada") >= 0){
+					Alert.show("Existen grupos que ya han sido marcados.",titulo,4,null,null,global.iAlert);
+					lblResultado.text = "";
+				} 
+				else{
+					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iError);
+					limpiar();
+				}					 			
+				du.rCursor();				 
+				dgInfo.dataProvider = null;	
+				txtArchivo.text = "";				 				
+			}	
+		}
+		
+		private function limpiar():void{
+			var fec:Date;
+			fec = Application.application._Current_Fecha;
+			dtFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 
+			dgInfo.dataProvider = null;	
+			infoObj = new ArrayCollection();
+			txtArchivo.text = "";	
+			lblResultado.text = "";
+			btnCargar.enabled = false;
+		}
+	     
+    ]]>
+  	</mx:Script>
+  	<mx:Canvas x="10" y="39" width="549" height="486.05" styleName="canvasMod" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+		<mx:DataGrid id="dgInfo" x="10" y="10" width="527" height="341.05" horizontalScrollPolicy="auto">
+			<mx:columns>
+				<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="70"/>
+				<mx:DataGridColumn headerText="NOMBRE DE GRUPO" dataField="NOM_GRUPO" width="190"/>
+				<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
+				<mx:DataGridColumn headerText="INICIO" dataField="INICIO" width="70"/>
+				<mx:DataGridColumn headerText="TIPO" dataField="TIPOMOV" width="40"/>
+				<mx:DataGridColumn headerText="ESTATUS" dataField="ESTATUS" width="90"/>				
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label id="lblResultado" x="10" y="359.05" width="526.15" fontStyle="italic" fontWeight="bold" fontSize="12" textAlign="left"/>
+		<mx:Button label="Exportar Excel" id="btnExportar" visible="false" x="292" y="435" click="exportar()"/>
+		<mx:Button label="Cargar Archivo" id="btnCargar" enabled="false" x="219.5" y="450.05" click="cargarInfo()"/>
+		<mx:Button label="Limpiar" id="btnLimpiar" enabled="false" x="364.6" y="418.05" click="limpiar()"/>
+		<mx:Button label="Buscar" id="btnBuscar" enabled="true" click="buscarArchivo()" x="292.6" y="418.05"/>
+		<mx:TextInput id="txtArchivo" editable="false" enabled="true" x="114.35" y="418.05" width="160"/>
+		<mx:DateField x="239.5" y="388.05" width="113.95" id="dtFecha"/>
+		<mx:Label x="193.5" y="390.05" text="Fecha:" id="lblFecha"/>
+  	</mx:Canvas>
+	<mx:Label id="lblTitulo" x="10" y="10" width="368" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+</mx:Canvas>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="360" height="80" creationPolicy="all" xmlns:Data="Data.*">
+	<mx:Metadata>
+		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
+	</mx:Metadata>
+	
+	<mx:Validator id="avalV" source="{txtAval}" property="text" 
+	invalid="{txtAval.setFocus()}" triggerEvent="" requiredFieldError="Aval Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.validators.Validator;
+			import OPERAC.MttoBusqPersona;
+			
+			public var datos:DatosSolic = new DatosSolic();
+			
+			public var wsMS:WebService;
+			private var du:Utils;
+			private var global:Globales;
+			private var vResult:ValidationResultEvent;
+			private var codAval:String;
+			
+			private function agregarAval(evt:Event):void{
+				var comBusqPers:MttoBusqPersona = evt.currentTarget as MttoBusqPersona;
+				codAval = comBusqPers.obtenerCodigo();
+				txtAval.text = comBusqPers.obtenerNombre();
+			}
+			
+			public function desactivaControles():void{
+				cnvAval.enabled = false;
+			}
+			
+			public function enviarDatosSolic(formData:DatosSolic):void{
+				if(valida()){
+					formData.aval = codAval;
+					formData.guardaAval = true;
+				}
+				else
+					formData.guardaAval = false;	
+				
+				var event:EventSolic = new EventSolic("enviarDatosSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(info:DatosSolic, tipoAccion:int, estatus:String):void{
+				du = new Utils();
+				global = new Globales();
+				permisos();
+								
+				if (info != null){
+					if(info.situacion == 'A' || info.situacion == 'R' || estatus == "evaluacion")
+						desactivaControles();
+					
+					codAval = info.aval;
+					txtAval.text = info.nomAval;
+				}
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function mostrarFormPers():void{
+				var obj:DisplayObject = this.parentApplication.parent;
+				var comBusqPers:MttoBusqPersona = new MttoBusqPersona;
+				comBusqPers = MttoBusqPersona(PopUpManager.createPopUp(obj,MttoBusqPersona,true));
+				comBusqPers.addEventListener("enviar", agregarAval);
+				PopUpManager.centerPopUp(comBusqPers);
+			}
+			
+			private function permisos():void{
+				var perfil_id:String = Application.application.cadPerfil;
+				var cont:int;
+			}
+		
+			private function valida():Boolean{
+				/*var invalidArray:Array = Validator.validateAll([avalV]);
+				if(invalidArray.length > 0)
+					return false;*/	
+				return true;
+			}
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvAval" x="15.5" y="26" styleName="canvasMod" height="40" width="330.5">
+		<mx:TextInput id="txtAval" width="232" y="8" x="25"/>
+		<mx:Button id="btnAval" icon="@Embed(source='assets/ico_lupa.png')" x="274" y="7" click="mostrarFormPers()"/>
+	</mx:Canvas>
+	<mx:Label id="lblAval" text="Datos Aval" x="15.5" y="7"/>
+</mx:Canvas>

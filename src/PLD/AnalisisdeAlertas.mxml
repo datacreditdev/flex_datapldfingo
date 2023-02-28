@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" height="100%" width="100%" xmlns:forms="forms.*" 
+	xmlns:Data="Data.*" xmlns:Administracion="Administracion.*" creationPolicy="all" creationComplete="initApp()">
+
+	<mx:Script>
+		<![CDATA[
+		
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.CloseEvent;
+		import mx.events.EffectEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.xml.SimpleXMLDecoder;
+		import mx.utils.ArrayUtil;  
+		import mx.validators.Validator;	
+		
+		private var _xmlInfo:XML = new XML();
+		
+		public var estObj:ArrayCollection = new ArrayCollection();
+		public var infoObj:ArrayCollection = new ArrayCollection();
+		
+		private var du:Utils;
+		private var global:Globales;
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var texto:String;
+		public var control:Number;
+		private var vResult:ValidationResultEvent;
+		
+		private function actualizarAlertas(event:Event):void{
+			consultar();
+		}
+		
+		private function consultar():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			if(cboEstatus.selectedIndex != 0){
+				var cont:int;
+				var estatus:String = cboEstatus.selectedItem.codigo;
+				var fecIni:String = dtfFecIni.text;
+				var fecFin:String = dtfFecFin.text;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				Application.application.bloquear();
+				
+				dgReg.dataProvider = null;
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlInfo = new XML(evt.result.toString());
+						
+					du.closeWs(wsCat);
+					du.rCursor();
+					Application.application.desbloquear();
+						
+					if(_xmlInfo.elements().length() > 0){
+						formateaInfo();
+						dgReg.dataProvider = infoObj;
+						cont = _xmlInfo.elements().length();
+						lblTotal.text = cont + " Registro(s)";
+					}
+					else{
+						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						lblTotal.text = "";
+					}
+				});
+				params[0] = estatus;
+				params[1] = fecIni;
+				params[2] = fecFin;
+				wsCat.getListado.send(33, params);
+			}
+			else
+				Alert.show("Debe seleccionar el estatus de la Alerta.",titulo,4,null,null,global.iAlert);	
+		}
+		
+		private function formateaEstatus():void{
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			estObj.removeAll();
+			estObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);	
+			
+			oItem = new Object();
+			oItem.codigo = "P";
+			oItem.nombre = "Pendiente";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "C";
+			oItem.nombre = "Concluido";
+			item.push(oItem);
+			
+			estObj = new ArrayCollection(item);		
+		}
+			
+		private function formateaInfo():void{
+			var oItem:Object;
+			var i:int;
+			var cont:int = _xmlInfo.elements().length();
+			var item:Array = new Array;
+			
+			infoObj.removeAll();
+			infoObj.refresh();
+			
+			for(i = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.FREG = _xmlInfo.Table[i].FREG;
+				oItem.ALTA = _xmlInfo.Table[i].FALTA;
+				oItem.DESCALERTA = _xmlInfo.Table[i].DESCALERTA;
+				oItem.SECUENCIA = _xmlInfo.Table[i].SECUENCIA;
+				oItem.DESCRIPCION = _xmlInfo.Table[i].DESCRIPCION;
+				oItem.DESCTIPO = _xmlInfo.Table[i].DESCTIPO;
+				oItem.DESCESTATUS = _xmlInfo.Table[i].DESCESTATUS;
+				oItem.CDGCL = _xmlInfo.Table[i].CDGCL;
+				oItem.NOMCL = _xmlInfo.Table[i].NOMCL;
+				oItem.REP = Boolean(Number(_xmlInfo.Table[i].REP.toString()));
+				oItem.NOREP = Boolean(Number(_xmlInfo.Table[i].NOREP.toString()));
+				oItem.REGISTROPE = _xmlInfo.Table[i].REGISTROPE;
+				oItem.NOMREGPE = _xmlInfo.Table[i].NOMREGPE;
+				oItem.ACTUALIZAPE = _xmlInfo.Table[i].ACTUALIZAPE;
+				oItem.NOMACTPE = _xmlInfo.Table[i].NOMACTPE;
+				oItem.REPORTADO = _xmlInfo.Table[i].REPORTADO;
+				oItem.JUSTIFICA = _xmlInfo.Table[i].JUSTIFICA;
+				item.push(oItem);	
+			}
+			infoObj = new ArrayCollection(item);
+		}
+		
+		public function initApp():void{
+			global = new Globales();
+			du = new Utils();
+			titulo = "Análisis de Alertas";
+			lblTitulo.text = titulo.toUpperCase();
+			formateaEstatus();
+			cboEstatus.dataProvider = estObj;
+		}		
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function limpiar():void{
+			cboEstatus.selectedIndex = 0;
+			dtfFecIni.selectedDate = null;
+			dtfFecFin.selectedDate = null;
+			dgReg.dataProvider = null;
+			lblTotal.text = "";
+		}
+		
+		public function muestraDictamen():void{
+			var alta:String = dgReg.selectedItem.ALTA;
+			var sec:String = dgReg.selectedItem.SECUENCIA;
+			var comDictamen:DictamenAlertas = new DictamenAlertas();
+			comDictamen = DictamenAlertas(PopUpManager.createPopUp(this,DictamenAlertas,true));
+			comDictamen.addEventListener(Event.REMOVED_FROM_STAGE, actualizarAlertas);
+			PopUpManager.centerPopUp(comDictamen);
+			comDictamen.init(alta, sec);
+		}
+				
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas width="800" height="460" backgroundColor="#ffffff" backgroundAlpha="1.0" id="canvas1">
+		<mx:Canvas id="cnvFondeo" x="21" y="55" width="460" height="80" styleName="canvasMod">
+			<mx:Label id="lblOF" x="55.05" y="16" text="Estatus:"/>
+			<mx:ComboBox id="cboEstatus" x="107.05" y="13" width="140" labelField="nombre"></mx:ComboBox>
+			<mx:Button id="btnBusqDisp" x="378.9" y="43" icon="@Embed(source='assets/ico_lupa.png')" toolTip="Buscar Info Disposición" width="40" visible="false"/>
+			<mx:Label id="lblFecIni" x="32.05" y="46" text="Fecha Inicial:"/>
+			<mx:DateField id="dtfFecIni" width="110" x="107.05" y="44"/>
+			<mx:Label id="lblFecFin" x="244.95" y="46" text="Fecha Final:"/>
+			<mx:DateField id="dtfFecFin" width="110" x="315.95" y="44"/>
+		</mx:Canvas>
+		<mx:Button x="62" y="145" label="Consultar" click="consultar()"/>
+		<mx:Button x="150" y="145" label="Limpiar" width="71" height="24" click="limpiar()"/>
+		<mx:Label id="lblFiltro" x="21" y="36" text="Criterios de Selección"/>
+		<mx:Label id="lblTitulo" x="21" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<Data:RowColorDataGrid id="dgReg" x="21" y="179" width="760" height="241" horizontalScrollPolicy="on" sortableColumns="true" 
+			doubleClickEnabled="true" itemDoubleClick="muestraDictamen()">
+			<Data:columns>
+				<mx:DataGridColumn headerText="FECHA" dataField="ALTA" width="90"/>
+				<mx:DataGridColumn headerText="TIPO" dataField="DESCALERTA" width="220"/>
+				<mx:DataGridColumn headerText="ESTATUS" dataField="DESCESTATUS" width="80"/>
+				<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
+				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMCL" width="200"/>
+				<mx:DataGridColumn headerText="FUNCIONARIO" dataField="CDGPE" width="100"/>
+				<mx:DataGridColumn headerText="NOMBRE FUNCIONARIO" dataField="NOMPE" width="200"/>
+				<mx:DataGridColumn headerText="REPORTADO" dataField="REP" textAlign="center" rendererIsEditor="true" width="90" editorDataField="selected">
+					<mx:itemRenderer>
+						<mx:Component>
+							<mx:CheckBox width="25" fontSize="10" verticalCenter="0" enabled="false"/> 
+						</mx:Component>
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+				<mx:DataGridColumn headerText="NO REPORTADO" dataField="NOREP" textAlign="center" rendererIsEditor="true" width="110" editorDataField="selected">
+					<mx:itemRenderer>
+						<mx:Component>
+							<mx:CheckBox width="25" fontSize="10" verticalCenter="0" enabled="false"/> 
+						</mx:Component>
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+				<mx:DataGridColumn headerText="USUARIO" dataField="REGISTROPE" width="80"/>
+				<mx:DataGridColumn headerText="NOMBRE USUARIO" dataField="NOMREGPE" width="150"/>
+				<mx:DataGridColumn headerText="DICTAMINÓ" dataField="ACTUALIZAPE" width="80"/>
+				<mx:DataGridColumn headerText="NOMBRE DICTAMINÓ" dataField="NOMACTPE" width="150"/>
+			</Data:columns>
+		</Data:RowColorDataGrid>
+		<mx:Label id="lblTotal" x="20.95" y="429" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+	</mx:Canvas>
+</mx:Canvas>

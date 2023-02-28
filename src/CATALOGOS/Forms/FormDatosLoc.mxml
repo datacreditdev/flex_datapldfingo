@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="440" height="150" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosLoc", type="Data.EventLoc")]
+	</mx:Metadata>
+	
+	<mx:Validator id="localidadV" source="{txtLocalidad}" property="text" 
+	invalid="{txtLocalidad.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Localidad Requerido"/>
+	 
+	<mx:Validator id="codigoV" source="{txtCodigo}" property="text" 
+	invalid="{txtCodigo.setFocus()}" triggerEvent="" requiredFieldError="Codigo Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import Data.Globales;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import Data.DatosLoc;
+			import Data.EventLoc;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			
+			public var du:Utils;
+			private var global:Globales;
+			
+			public function enviarDatosLoc(formData:DatosLoc):void{
+				var invalidArray:Array = Validator.validateAll([codigoV, localidadV]);
+				
+				if(invalidArray.length == 0){	
+					formData.codigo = txtCodigo.text;
+					formData.localidad = txtLocalidad.text;
+					formData.areaTel = txtArea.text;
+					if(tipo.selection != null) 
+						formData.tipo = tipo.selectedValue.toString(); 
+					formData.guarda = true;
+				}
+				else{
+					formData.guarda = false;
+				}
+				var event:EventLoc = new EventLoc("enviarDatosLoc", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(info:DatosLoc):void{
+				global = new Globales();
+				du = new Utils();
+				txtCodigo.setFocus();
+				if (info != null){
+					txtCodigo.text = info.codigo;
+					txtCodigo.editable = false;
+					txtLocalidad.text = info.localidad;
+					txtArea.text = info.areaTel;
+					tipo.selectedValue = info.tipo;	
+				}
+			}
+	]]>
+	</mx:Script>
+	<mx:FormItem label="Código:" id="codigo" visible="true">
+		<mx:TextInput id="txtCodigo" maxChars="4" width="50" restrict="0-9"/>
+	</mx:FormItem>
+	<mx:FormItem label="Localidad:" id="localidad" visible="true" width="410">
+		<mx:TextInput id="txtLocalidad" width="280" maxChars="50"/>
+	</mx:FormItem>
+	<mx:FormItem label="Área telefónica:" id="area" visible="true" width="170">
+		<mx:TextInput id="txtArea" width="45" maxChars="3" restrict="0-9"/>
+	</mx:FormItem>
+	<mx:FormItem label="Tipo:" visible="true" width="330">
+		<mx:Canvas>
+			<mx:RadioButtonGroup id="tipo"/>
+			<mx:RadioButton id="rdbUrbano" label="Urbano" groupName="tipo" value="U"/>
+			<mx:RadioButton id="rdbRural" label="Rural" x="80" groupName="tipo" value="R"/>	
+		</mx:Canvas>	
+	</mx:FormItem>
+</mx:Form>

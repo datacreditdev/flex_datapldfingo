@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="250" creationPolicy="all" xmlns:control="CONTROL.*">
+
+	<mx:Metadata>
+		[Event(name="enviarDatosDir", type="Data.EventDir")]
+	</mx:Metadata>
+		
+	<mx:Validator id="calleV" source="{txtCalle}" property="text" 
+	invalid="{txtCalle.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Calle Requerido"/>
+	
+	<mx:Validator id="entFedV" source="{comEntGrid.txtDato}" property="text" 
+	invalid="{comEntGrid.txtDato.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Entidad Federativa Requerido"/>
+	
+	<mx:Validator id="municipioV" source="{comMunGrid.txtDato}" property="text" 
+	invalid="{comMunGrid.txtDato.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Municipio Requerido"/>
+	
+	<mx:Validator id="localidadV" source="{comLocGrid.txtDato}" property="text" 
+	invalid="{comLocGrid.txtDato.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Localidad Requerido"/>
+	
+	<mx:Validator id="coloniaV" source="{comColGrid.txtDato}" property="text" 
+	invalid="{comColGrid.txtDato.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Colonia Requerido"/>
+
+	<mx:Script>
+		<![CDATA[
+			import Data.EventDir;
+			import Data.DatosDir;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.validators.Validator;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.StringUtil;
+			
+			private var _xmlDir:XML =  new XML();
+			private var _xmlColonia:XML =  new XML();
+			private var _xmlEntidad:XML =  new XML();
+			private var _xmlMunicipio:XML =  new XML();
+			private var _xmlLocalidad:XML =  new XML();
+			
+			public var coordObj:ArrayCollection = new ArrayCollection();
+	
+			public var coord:Array = new Array();
+			
+			public var datos:DatosDir = new DatosDir();
+			
+			public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS	
+			public var ws:WebService = new WebService();     //variable utilizada en las llamadas sincronas de WS
+			public var du:Utils;
+			public var texto:String;
+			private var global:Globales;
+			
+			public function enviarDatosDir(formData:DatosDir):void{
+				var invalidArray:Array = Validator.validateAll([calleV, entFedV, municipioV, localidadV, coloniaV]);
+				if(invalidArray.length == 0){	
+					formData.calle = StringUtil.trim(txtCalle.text);
+					formData.telefono = StringUtil.trim(txtTelefono.text);
+					formData.cdgEntFed = datos.cdgEntFed;
+					formData.cdgMun = datos.cdgMun;
+					formData.cdgLoc = datos.cdgLoc;
+					formData.cdgCol = datos.cdgCol;
+					formData.guarda = true;
+				}
+				else{
+					formData.guarda = false;
+				}
+				var event:EventDir = new EventDir("enviarDatosDir", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(info:DatosDir):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				global = new Globales();
+				du = new Utils();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				_xmlEntidad = null;
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlEntidad = new XML(evt.result.toString());
+					
+					if(_xmlEntidad.elements().length() > 0){
+						comEntGrid.init(_xmlEntidad, 130);
+						comEntGrid.addEventListener("seleccionar",selecEntFed);
+						comEntGrid.addEventListener("verificar",verifEntFed);
+					}
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (info != null){
+						txtCalle.text = info.calle;
+						txtTelefono.text = info.telefono;
+						comEntGrid.asignaTexto(info.entFed);
+						comMunGrid.asignaTexto(info.municipio);
+						comLocGrid.asignaTexto(info.localidad);
+						comColGrid.asignaTexto(info.colonia);	
+						
+						datos.cdgEntFed = info.cdgEntFed;		
+						datos.cdgMun = info.cdgMun;
+						datos.cdgLoc = info.cdgLoc;
+						datos.cdgCol = info.cdgCol;	
+						
+						obtieneMunicipio();
+						obtieneLocalidad();
+						obtieneColonia();
+					}	
+				});
+				wsCat.getCatalogoGral.send(2);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function limpiaDatosDir():void{
+				comEntGrid.limpiar();
+				comMunGrid.limpiar();
+				comLocGrid.limpiar();
+				comColGrid.limpiar();
+						
+				datos.cdgEntFed = "";		
+				datos.cdgMun = "";
+				datos.cdgLoc = "";
+				datos.cdgCol = "";	
+			}
+			
+			private function obtieneColonia():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlColonia = new XML(evt.result.toString());
+					
+					comColGrid.init(_xmlColonia, 70);
+					if(_xmlColonia.elements().length() > 0){
+						comColGrid.addEventListener("seleccionar",selecColonia);
+					}
+					du.rCursor();
+					du.closeWs(wsCat);
+				});
+				params[0] = datos.cdgEntFed;
+				params[1] = datos.cdgMun;
+				params[2] = datos.cdgLoc;
+				params[3] = "";
+				wsCat.getCatalogoGral.send(5, params);
+			}
+			
+			private function obtieneLocalidad():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlLocalidad = new XML(evt.result.toString());
+					
+					comLocGrid.init(_xmlLocalidad, 90);
+					if(_xmlLocalidad.elements().length() > 0){
+						comLocGrid.addEventListener("seleccionar",selecLocalidad);
+						comLocGrid.addEventListener("verificar",verifLocalidad);
+					}
+					du.rCursor();
+					du.closeWs(wsCat);
+				});
+				params[0] = datos.cdgEntFed;
+				params[1] = datos.cdgMun;
+				params[2] = "";
+				wsCat.getCatalogoGral.send(4, params);
+			}
+			
+			private function obtieneMunicipio():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlMunicipio = new XML(evt.result.toString());
+					
+					comMunGrid.init(_xmlMunicipio, 130);
+					if(_xmlMunicipio.elements().length() > 0){
+						comMunGrid.addEventListener("seleccionar",selecMunic);
+						comMunGrid.addEventListener("verificar",verifMunic);
+					}
+					du.rCursor();
+					du.closeWs(wsCat);
+				});
+				params[0] = datos.cdgEntFed;
+				params[1] = "";
+				wsCat.getCatalogoGral.send(3, params);
+			}
+			
+			private function selecColonia(event:Event):void{
+				datos.cdgCol = event.currentTarget.codigo;
+				comColGrid.setFocus();
+			}
+			
+			private function selecEntFed(event:Event):void{
+				if(datos.cdgEntFed != event.currentTarget.codigo){
+					comMunGrid.limpiar();
+					comLocGrid.limpiar();
+					comColGrid.limpiar();
+					datos.cdgEntFed = event.currentTarget.codigo;
+					obtieneMunicipio();
+				}
+				comEntGrid.setFocus();
+			}
+				
+			private function selecMunic(event:Event):void{
+				if(datos.cdgMun != event.currentTarget.codigo){	
+					comLocGrid.limpiar();
+					comColGrid.limpiar();
+					datos.cdgMun = event.currentTarget.codigo;
+					obtieneLocalidad();
+				}
+				comMunGrid.setFocus();
+			}
+				
+			private function selecLocalidad(event:Event):void{
+				if(datos.cdgLoc != event.currentTarget.codigo){
+					comColGrid.limpiar();
+					datos.cdgLoc = event.currentTarget.codigo;
+					obtieneColonia();
+				}
+				comLocGrid.setFocus();
+			}
+			
+			private function verifEntFed(event:Event):void{
+				if(comEntGrid.codigo == ""){	
+					comMunGrid.limpiar();
+					comLocGrid.limpiar();
+					comColGrid.limpiar();
+					datos.cdgMun = "";
+					datos.cdgLoc = "";
+					datos.cdgCol = ""; 
+				}
+			}
+			
+			private function verifLocalidad(event:Event):void{
+				if(comColGrid.codigo == "")
+					comColGrid.limpiar();
+					datos.cdgCol = ""; 
+			}
+			
+			private function verifMunic(event:Event):void{
+				if(comMunGrid.codigo == ""){
+					comLocGrid.limpiar();
+					comColGrid.limpiar();
+					datos.cdgLoc = "";
+					datos.cdgCol = ""; 
+				}
+			}
+	]]>
+	</mx:Script>
+	<mx:Label id="lblCalle" text="Calle:" x="100.5" y="23"/>
+	<mx:TextInput id="txtCalle" maxChars="80" width="200" x="139.5" y="21"/>
+	<mx:Label id="lblEntFed" text="Entidad Federativa:" x="34.5" y="55"/>
+	<control:TextGrid id="comEntGrid" x="139.5" y="53" height="24"/>		
+	<mx:Label id="lblMunic" text="Municipio:" x="79.5" y="87"/>
+	<control:TextGrid id="comMunGrid" x="139.5" y="85" height="24"/>
+	<mx:Label id="lblLoc" text="Localidad:" x="77.5" y="119"/>
+	<control:TextGrid id="comLocGrid" x="139.5" y="117" height="24"/>
+	<mx:Label id="lblCol" text="Colonia:" x="88.5" y="151"/>
+	<control:TextGrid id="comColGrid" x="139.5" y="149" height="24"/>
+	<mx:Label id="lblTel" text="Teléfono:" x="81.5" y="183"/>
+	<mx:TextInput id="txtTelefono" restrict="0-9" maxChars="20" x="139.5" y="181" width="140"/>
+</mx:Canvas>

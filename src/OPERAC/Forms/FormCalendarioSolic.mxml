@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="670" height="204" creationPolicy="all">
+	<mx:Metadata>
+		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
+	</mx:Metadata>
+	
+	<!--<mx:Validator id="nombreV" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Grupo Requerido"/>-->
+		
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import Data.Globales;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import Data.DatosSolic;
+			import Data.EventSolic;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			
+			[Bindable]
+			private var _xmlCodigo:XML =  new XML();
+			[Bindable]
+			private var _xmlDir:XML =  new XML();
+			[Bindable]
+			private var _xmlCoord:XML =  new XML();
+			
+			public var coordObj:ArrayCollection = new ArrayCollection();
+			
+			public var coord:Array = new Array();
+			
+			public var datos:DatosSolic = new DatosSolic();
+			
+			public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS	
+			public var ws:WebService = new WebService();     //variable utilizada en las llamadas sincronas de WS
+			public var du:Utils;
+			public var tipoAccion:int;
+			public var estatus:String;
+			public var dia:String;
+			private var global:Globales;
+			
+			public function activaControles(_xmlControl:XML):void{
+				var periodicidad:String = _xmlControl.Table[0].FIJAPER;
+				var multPer:String = _xmlControl.Table[0].PERIODICIDAD;
+				var pagoCap:String = _xmlControl.Table[0].FIJAPGC;
+				var pagoInt:String = _xmlControl.Table[0].FIJAPGI;
+				var plazo:String = _xmlControl.Table[0].FIJAPLA;
+				//Periodicidad de pago
+				if(periodicidad == "S")
+					cnvPeriodicidad.enabled = false;
+				else if(periodicidad == "N")
+					cnvPeriodicidad.enabled = true;
+				//Multiplos de periodicidad
+				if(multPer == "S")
+					cnvMultPer.enabled = false;
+				else if(multPer == "N")
+					cnvMultPer.enabled = true;
+				//Periodos de gracia Pago Capital
+				if(pagoCap == "S")
+					pagoCapital.enabled = false;
+				else if(pagoCap == "N")
+					pagoCapital.enabled = true;
+				//Periodos de gracia Pago Interes 
+				if(pagoInt == "S")
+					pagoInteres.enabled = false;
+				else if(pagoInt == "N")
+					pagoInteres.enabled = true;
+				//Plazo
+				if(plazo == "S"){
+					duracion.enabled = false;
+				}
+				else if(plazo == "N"){
+					duracion.enabled = true;
+				}
+			}
+			
+			public function actualizaDiaJunta(dia:String):void{
+				if(dia != "")
+					this.dia = dia;
+				diaJunta.selectedValue = this.dia;
+			}
+			
+			public function cargaParamsProd(_xmlParam:XML):void{
+				periodicidad.selectedValue = _xmlParam.Table[0].PERIODICIDAD;
+				txtMultiplos.text = _xmlParam.Table[0].MULTPER;
+				txtPagoCapital.text = _xmlParam.Table[0].PERIGRCAP;
+				txtPagoInteres.text = _xmlParam.Table[0].PERIGRINT;
+				txtDuracion.text = _xmlParam.Table[0].PLAZO;
+			}
+			
+			public function desactivaControles():void{
+				cnvPeriodicidad.enabled = false;
+				cnvDiaJunta.enabled = false;
+				cnvDuracion.enabled = false;
+				cnvPagos.enabled = false;
+				cnvMultPer.enabled = false;
+			}
+			
+			public function enviarDatosSolic(formData:DatosSolic):void{
+				var invalidArray:Array = Validator.validateAll([]);
+				var j:int;
+				
+				if(invalidArray.length == 0 && periodicidad.selection != null && diaJunta.selection != null){	
+					formData.periodicidad = periodicidad.selectedValue.toString();
+					formData.diaJunta = diaJunta.selectedValue.toString();
+					formData.diasGracia = Number(txtDiasGracia.text);
+					formData.duracion  = Number(txtDuracion.text);
+					formData.multPerio = Number(txtMultiplos.text);
+					//formData.horario = txtHorario.text;
+					formData.pagoCapital = Number(txtPagoCapital.text);
+					formData.pagoInteres = Number(txtPagoInteres.text);
+					formData.guardaCalendario = true;
+				}
+				else{
+					formData.guardaCalendario = false;
+				}
+				var event:EventSolic = new EventSolic("enviarDatosSolic", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(info:DatosSolic, tipoAccion:int, estatus:String):void{
+				this.tipoAccion = tipoAccion;
+				this.estatus = estatus;
+				global = new Globales();
+				du = new Utils();
+				
+				if(tipoAccion == 1)
+					actualizaDiaJunta(Application.application._Current_Fecha.getDay().toString());
+					
+				if (info != null){
+					var j:int;
+					datos = info;
+					
+					if(info.situacion == 'A' || info.situacion == 'R' || estatus == "evaluacion" || estatus == "entrega")
+						desactivaControles();
+					
+					periodicidad.selectedValue = info.periodicidad;
+					actualizaDiaJunta(info.diaJunta);
+					txtDiasGracia.text = info.diasGracia.toString();
+					txtDuracion.text = info.duracion.toString();
+					txtPagoCapital.text = info.pagoCapital.toString();
+					txtPagoInteres.text = info.pagoInteres.toString();
+					txtMultiplos.text = info.multPerio.toString();
+				}	
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}		
+			
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvPeriodicidad" x="10" y="29" width="190" height="68" styleName="canvasMod">
+		<mx:RadioButtonGroup id="periodicidad"/>
+		<mx:RadioButton id="rdbSemanal" x="10" y="4" label="Semanal" groupName="periodicidad" value="S"/>
+		<mx:RadioButton id="rdbQuincenal" x="10" y="36" label="Quincenal" groupName="periodicidad" value="Q"/>
+		<mx:RadioButton id="rdbCatorcenal" x="106" y="4" label="Catorcenal" groupName="periodicidad" value="C"/>
+		<mx:RadioButton id="rdbMensual" x="106" y="36" label="Mensual" groupName="periodicidad" value="M"/>
+	</mx:Canvas>
+	<mx:Canvas id="cnvDiaJunta" x="208" y="29" width="232" height="68" styleName="canvasMod">
+		<mx:RadioButtonGroup id="diaJunta" itemClick="actualizaDiaJunta('')"/>
+		<mx:RadioButton id="rdbLunes" x="10" y="5" label="Lunes" groupName="diaJunta" value="1"/>
+		<mx:RadioButton id="rdbMartes" x="78" y="5" label="Martes" groupName="diaJunta" value="2"/>
+		<mx:RadioButton id="rdbMiercoles" x="149" y="5" label="Miércoles" groupName="diaJunta" value="3"/>
+		<mx:RadioButton id="rdbJueves" x="10" y="37" label="Jueves" groupName="diaJunta" value="4"/>
+		<mx:RadioButton id="rdbViernes" x="78" y="37" label="Viernes" groupName="diaJunta" value="5"/>
+	</mx:Canvas>
+	<mx:Canvas id="cnvDuracion" x="448" y="29" width="212" height="68" styleName="canvasMod">
+		<mx:Label id="lblDiasGracia" x="10" y="10" text="Días de Gracia para depositar:"/>
+		<mx:TextInput id="txtDiasGracia" x="169" y="8" width="30" restrict="0-9" maxChars="2"/>
+		<mx:FormItem id="duracion" label="Plazo:" x="119" y="36">
+			<mx:TextInput id="txtDuracion" width="30" restrict="0-9" maxChars="2"/>	
+		</mx:FormItem>
+	</mx:Canvas>
+	<mx:Canvas id="cnvPagos" x="448" y="118" width="212" height="68" styleName="canvasMod">
+		<mx:FormItem id="pagoCapital" label="Para pago de capital:" x="46" y="7">
+			<mx:TextInput id="txtPagoCapital" width="30" restrict="0-9" maxChars="2"/>	
+		</mx:FormItem>
+		<mx:FormItem id="pagoInteres" label="Para pago de interés:" x="45" y="36">
+			<mx:TextInput id="txtPagoInteres" width="30" restrict="0-9" maxChars="2"/>	
+		</mx:FormItem>
+	</mx:Canvas>
+	<mx:Label x="10" y="10" text="Periodicidad del préstamo"/>
+	<mx:Label x="208" y="10" text="Día de Junta/Pago"/>
+	<mx:Label x="448" y="99" text="Periodos de gracia"/>
+	<mx:Canvas id="cnvMultPer" x="208" y="118" width="232" height="27" styleName="canvasMod">
+		<mx:Label id="lblMultiplos" x="30" y="3" text="Multiplos de Periodicidad:"/>
+		<mx:TextInput id="txtMultiplos" x="160" y="1" width="40" restrict="0-9" maxChars="2"/>
+	</mx:Canvas>
+	<mx:Canvas x="208" y="159" width="232" height="27" styleName="canvasMod" visible="false">
+		<mx:Label id="lblHorario" x="46" y="2" text="Horario:"/>
+		<mx:TextInput id="txtHora" x="97" y="0" width="30"/>
+		<mx:TextInput id="txtMinuto" x="135" y="0" width="30"/>
+		<mx:Label id="lblSeparador" x="128" y="2" text=":" width="6" textAlign="center"/>
+	</mx:Canvas>
+</mx:Canvas>

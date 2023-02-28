@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" height="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*">
+	
+	<!--Componente que permite observar el listado de Organizaciones Fondeadoras disponibles-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;    
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			
+			[Bindable]
+			public var _xmlOF:XML = new XML();
+			[Bindable]
+			public var _xmlLC:XML = new XML();
+			[Bindable]
+			public var _xmlDisp:XML = new XML();
+			[Bindable]
+			public var dPermisos:XML = new XML();
+			
+			public var wsMS:WebService;	
+			public var tituloOF:String;
+			public var tituloLC:String;
+			public var tituloDisp:String;
+			public var du:Utils;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionOF:int;
+			public var accionLC:int;
+			public var accionDisp:int;
+			public var indOF:int;
+			public var indLC:int;
+			public var indDisp:int;
+			public var vScroll:Number;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			public function activarContDisp(band:Boolean):void{
+				if(alta == true)
+					btnAgregarDisp.enabled = band;
+				btnDatosDisp.enabled = band;
+			}
+			
+			public function activarContLC(band:Boolean):void{
+				if(alta == true)
+					btnAgregarLC.enabled = band;
+				btnDatosLC.enabled = band;
+			}
+			
+			public function activarContModDisp(band:Boolean):void{
+				if(borrado == true)
+					btnEliminarDisp.enabled = band;
+				if(edicion == true)	
+					btnEditarDisp.enabled = band;
+			}
+			
+			public function activarContModLC(band:Boolean):void{
+				if(borrado == true)
+					btnEliminarLC.enabled = band;
+				if(edicion == true)	
+					btnEditarLC.enabled = band;
+			}
+			
+			public function activarContOF(band:Boolean):void{
+				if(edicion == true)
+					btnEditar.enabled = band;
+				if(borrado == true)
+					btnEliminar.enabled = band;
+			}
+			
+			public function actualizarDisp(event:Event):void{
+				buscarListaDisp(1);
+			}
+			
+			public function actualizarLC(event:Event):void{
+				buscarListaLC(1);
+			}
+			
+			public function actualizarOF(event:Event):void{
+				buscarOF(1);
+			}
+			
+			public function buscarListaDisp(tipo:int):void{
+				var codOF:String = dgOF.selectedItem.CODIGO;
+				var codLC:String = dgLC.selectedItem.CODIGO;
+				dgDisp.dataProvider = null;
+				initConexion();
+				du.sCursor();
+			 	if (tipo == 1)
+					Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, getListaDisposicion);
+				wsMS.getListaDisposicion.send(codOF, codLC);
+			}
+			
+			public function buscarListaLC(tipo:int):void{
+				var codOF:String = dgOF.selectedItem.CODIGO;
+				dgLC.dataProvider = null;
+				initConexion();
+				du.sCursor();
+			 	if (tipo == 1)
+					Application.application.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, getListaLineaCred);
+				wsMS.getListaLineaCred.send(codOF);
+			}
+			
+			public function buscarOF(tipo:int):void{
+				if (txtCodOF.text != "" || txtOF.text != ""){
+					btnBuscar.setFocus();
+					dgOF.dataProvider = null;
+					initConexion();
+					du.sCursor();
+					if(tipo == 1)
+						Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, getOrgFond);
+					wsMS.getOrgFond.send(txtCodOF.text, txtOF.text);
+				}	
+			}
+
+			public function eliminarDisp():void{
+				Alert.show("¿Desea eliminar la Disposición seleccionada?", tituloDisp, Alert.YES|Alert.NO,null, manejadorEliminarDisp,global.iQuest);
+			}
+			
+			public function eliminarLC():void{
+				Alert.show("¿Desea eliminar la Línea de Crédito seleccionada?", tituloLC, Alert.YES|Alert.NO,null, manejadorEliminarLC,global.iQuest);
+			}
+			
+			public function eliminarOF():void{
+				Alert.show("¿Desea eliminar la Organización Fondeadora seleccionada?", tituloOF, Alert.YES|Alert.NO,null, manejadorEliminarOF,global.iQuest);
+			}
+			
+			private function getListaDisposicion(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getListaDisposicion);
+				this._xmlDisp = new XML(event.result);
+				
+				if (this._xmlDisp.elements().length() > 0){
+					dgDisp.dataProvider = _xmlDisp.Table;
+					
+					if(accionDisp == 2){
+						dgDisp.validateNow();
+						dgDisp.verticalScrollPosition = vScroll;
+						dgDisp.selectedIndex = indDisp;
+						this.accionDisp = 0;
+					}
+				}
+				seleccionarDisp();
+			}
+			
+			private function getListaLineaCred(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getListaLineaCred);
+				this._xmlLC = new XML(event.result);
+				
+				if (this._xmlLC.elements().length() > 0){
+					dgLC.dataProvider = _xmlLC.Table;
+					
+					if(accionLC == 2){
+						dgLC.validateNow();
+						dgLC.verticalScrollPosition = vScroll;
+						dgLC.selectedIndex = indLC;
+						this.accionLC = 0;
+					}
+				}
+				seleccionarLC();
+			}
+			
+			private function getOrgFond(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, getOrgFond);
+				this._xmlOF = new XML(event.result);
+				if (this._xmlOF.elements().length() > 0){
+					dgOF.dataProvider = _xmlOF.Table;
+					
+					if(accionOF == 2){
+						dgOF.validateNow();
+						dgOF.verticalScrollPosition = vScroll;
+						dgOF.selectedIndex = indOF;
+						this.accionOF = 0;
+					}
+				}
+				seleccionarOF();
+			}
+			
+			public function iniVar():void{
+				this.indOF = -1;
+				this.indLC = -1;
+				this.indDisp = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				wsMS = new WebService();
+				tituloOF = "Mantenimiento de Org Fondeadora";
+				tituloLC = "Mantenimiento de Línea de Crédito";
+				tituloDisp = "Mantenimiento de Disposición";
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			public function manejadorEliminarDisp(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codOF:String = dgOF.selectedItem.CODIGO;
+					var codLC:String = dgLC.selectedItem.CODIGO;  
+					var codDisp:String = dgDisp.selectedItem.CODIGO;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionDisposicion);
+					wsMS.setAccionDisposicion.send(3, codOF, codLC, codDisp, "", "", "", 0, 0, "", "", 0, 0, 
+												   Application.application.U_ID);
+			    } 
+			}
+			
+			public function manejadorEliminarLC(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codOF:String = dgOF.selectedItem.CODIGO;
+					var codLC:String = dgLC.selectedItem.CODIGO;  
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionLineaCred);
+					wsMS.setAccionLineaCred.send(3, codOF, codLC, "", "", "", 0, 0, 0, 0, "", "", 0, 0, "", "", "",
+								 	     		 Application.application.U_ID);
+			    } 
+			}
+			
+			public function manejadorEliminarOF(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codOF:String = dgOF.selectedItem.CODIGO;
+			    	initConexion();
+			    	du.sCursor();
+					Application.application.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionOrgFond);
+					wsMS.setAccionOrgFond.send(3, codOF, "", "", "", "", "", "", "", "", 
+								 	   		   "", "", Application.application.U_ID);
+			    } 
+			}
+			
+			public function mostrarFormDisp(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion == true){
+					var codOF:String = dgOF.selectedItem.CODIGO;
+					var orgFond:String = dgOF.selectedItem.NOMBRE;
+					var codLC:String = dgLC.selectedItem.CODIGO;
+					var lineaCred:String = dgLC.selectedItem.DESCRIPCION;
+					var comMttoDisp:MttoDisposicion = new MttoDisposicion();
+					switch(tipo){
+						case 1: 
+							comMttoDisp = MttoDisposicion(PopUpManager.createPopUp(this,MttoDisposicion,true)); 
+							comMttoDisp.addEventListener(Event.REMOVED_FROM_STAGE, actualizarDisp);
+							comMttoDisp.init(tipo, codOF, orgFond, codLC, lineaCred);
+							PopUpManager.centerPopUp(comMttoDisp);
+							break;
+						case 2: 
+							if (dgDisp.selectedIndex >= 0){
+								accionDisp = tipo;
+								comMttoDisp = MttoDisposicion(PopUpManager.createPopUp(this,MttoDisposicion,true)); 
+								var codDisp:String = dgDisp.selectedItem.CODIGO;
+								var indice:int = dgDisp.selectedIndex;
+								iniVar();
+								this.indDisp = indice;
+								this.vScroll = dgDisp.verticalScrollPosition;
+								comMttoDisp.addEventListener(Event.REMOVED_FROM_STAGE, actualizarDisp);
+								comMttoDisp.init(tipo, codOF, orgFond, codLC, lineaCred, codDisp);
+								PopUpManager.centerPopUp(comMttoDisp);
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Disposición",tituloDisp,4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			public function mostrarFormLC(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion){
+					var codOF:String = dgOF.selectedItem.CODIGO;
+					var orgFond:String = dgOF.selectedItem.NOMBRE;
+					var comMttoLC:MttoLineaCred = new MttoLineaCred();
+					switch(tipo){
+						case 1: 
+							comMttoLC = MttoLineaCred(PopUpManager.createPopUp(this,MttoLineaCred,true)); 
+							comMttoLC.addEventListener(Event.REMOVED_FROM_STAGE, actualizarLC);
+							comMttoLC.init(tipo, codOF, orgFond);
+							PopUpManager.centerPopUp(comMttoLC);
+							break;
+						case 2: 
+							if (dgLC.selectedIndex >= 0){
+								accionLC = tipo;
+								comMttoLC = MttoLineaCred(PopUpManager.createPopUp(this,MttoLineaCred,true)); 
+								var codLC:String = dgLC.selectedItem.CODIGO;
+								var lineaCred:String = dgLC.selectedItem.DESCRIPCION;
+								var indice:int = dgLC.selectedIndex;
+								iniVar();
+								this.indLC = indice;
+								this.vScroll = dgLC.verticalScrollPosition;
+								comMttoLC.addEventListener(Event.REMOVED_FROM_STAGE, actualizarLC);
+								comMttoLC.init(tipo, codOF, orgFond, codLC);
+								PopUpManager.centerPopUp(comMttoLC);
+								
+							}
+							else
+								Alert.show("Debe seleccionar el registro de Línea de Crédito",tituloLC,4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			public function mostrarFormOF(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoOF:MttoOrgFond = new MttoOrgFond();
+				comMttoOF = MttoOrgFond(PopUpManager.createPopUp(this,MttoOrgFond,true)); 
+				if(edicion == true){
+					switch(tipo){
+						case 1: 
+							comMttoOF.addEventListener(Event.REMOVED_FROM_STAGE, actualizarOF);
+							comMttoOF.init(tipo);
+							PopUpManager.centerPopUp(comMttoOF);
+							break;
+						case 2: 
+							if (dgOF.selectedIndex >= 0){
+								accionOF = tipo;
+								var codOF:String = dgOF.selectedItem.CODIGO;
+								var orgFond:String = dgOF.selectedItem.NOMBRE;
+								var indice:int = dgOF.selectedIndex;
+								iniVar();
+								this.indOF = indice;
+								this.vScroll = dgOF.verticalScrollPosition;
+								comMttoOF.addEventListener(Event.REMOVED_FROM_STAGE, actualizarOF);
+								comMttoOF.init(tipo, codOF);	
+								PopUpManager.centerPopUp(comMttoOF);	
+							}
+							else
+								Alert.show("Debe seleccionar el registro de la Organización Fondeadora",tituloOF,4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}
+			
+			public function permisos():void{
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var Params:Array;
+				var i:int;
+				var cont:int;
+				
+				wsMS = du.initWs(wsMS);
+				du.sCursor();
+				//bloquear();
+					
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(i = 0; i < cont; i++)
+					{
+						switch(dPermisos.Table[i].OPCION.toString())
+						{
+							case "C":
+								consulta = true;
+								break;	
+							case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;				
+						}
+					}
+					btnAgregar.enabled = alta;
+					//desbloquear();
+					du.rCursor();
+					du.closeWs(wsMS);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			public function seleccionarDisp():void{
+				if (dgDisp.selectedIndex >= 0){
+					activarContModDisp(true);
+				}
+				else{
+					activarContModDisp(false);
+				}
+			}
+			
+			public function seleccionarLC():void{
+				dgDisp.dataProvider = null;
+				activarContModDisp(false);
+				if (dgLC.selectedIndex >= 0){
+					activarContModLC(true);
+					activarContDisp(true);
+				}
+				else{
+					activarContModLC(false);
+					activarContDisp(false);
+				}
+			}
+			
+			public function seleccionarOF():void{
+				dgLC.dataProvider = null;
+				dgDisp.dataProvider = null;
+				activarContModLC(false);
+				if (dgOF.selectedIndex >= 0){
+					activarContOF(true);
+					activarContLC(true);
+				}
+				else{
+					activarContOF(false);
+					activarContLC(false);
+					activarContDisp(false);
+				}
+			}
+			
+			private function setAccionDisposicion(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionDisposicion);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarListaDisp(1);
+				else
+					Alert.show(res.substr(2,res.length-1),tituloDisp,4,null,null,global.iAlert);
+			}
+			
+			private function setAccionLineaCred(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionLineaCred);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarListaLC(1);
+				else
+					Alert.show(res.substr(2,res.length-1), tituloLC,4,null,null,global.iAlert);
+			}
+
+			private function setAccionOrgFond(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				Application.application.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionOrgFond);
+				var res:String = new String(event.result);
+				if (res.substr(0,1) == "1")
+					//Alert.show("Grupo Eliminado","Mantenimiento de Grupo",4,null,null,global.iInfo);
+					buscarOF(1);
+				else
+					Alert.show(res.substr(2,res.length-1), tituloOF,4,null,null,global.iAlert);
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas width="765" height="630" styleName="canvasComp">	
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="726.5" height="125" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgOF" x="10" y="10" width="700.5" height="100" sortableColumns="true" 
+			 	resizableColumns="true" verticalScrollPolicy="on" itemClick="seleccionarOF()" 
+				itemDoubleClick="mostrarFormOF(2)" doubleClickEnabled="true"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+					<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="250"/>
+					<mx:DataGridColumn headerText="ALTA" dataField="FALTA" width="100"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="10" text="ORGANIZACIONES FONDEADORAS" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarOF(1)" toolTip="Buscar Org. Fondeadora" width="40"/>
+			<mx:Button id="btnAgregar" x="106" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormOF(1)" toolTip="Registrar Org. Fondeadora" width="40"/>
+			<mx:Button id="btnEliminar" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarOF()" enabled="false" toolTip="Eliminar Org. Fondeadora" width="40"/>
+			<mx:Button id="btnEditar" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormOF(2)" toolTip="Editar Org. Fondeadora" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas x="18.5" y="39" width="513.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodOF" x="15" y="6" text="Código:"/>
+			<mx:Label id="lblOF" x="132.5" y="6" text="Nombre:"/>
+			<mx:TextInput id="txtOF" x="185.5" y="5" width="316" enter="buscarOF(1)" maxChars="50"/>
+			<mx:TextInput id="txtCodOF" x="64" y="5" width="50" enter="buscarOF(1)" maxChars="4"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvProdCred" x="19.25" y="262" width="726.5" height="175" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgLC" x="10" y="10" width="704.5" height="150"
+			    draggableColumns="false" verticalScrollPolicy="on" 
+				horizontalScrollPolicy="auto" itemClick="seleccionarLC()" doubleClickEnabled="true"
+				itemDoubleClick="mostrarFormLC(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60"/>
+					<mx:DataGridColumn headerText="CONTRATO" dataField="CONTRATO" width="100"/>
+					<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="250"/>
+					<mx:DataGridColumn headerText="FEC. OTORGADA" dataField="FENTREGA" width="130"/>
+					<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="90"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18.5" y="233" text="LÍNEAS DE CRÉDITO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="540" y="217" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnAgregarLC" x="106" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormLC(1)" toolTip="Agregar Linea Crédito" width="40"/>
+			<mx:Button id="btnEliminarLC" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarLC()" toolTip="Eliminar Línea Crédito" width="40"/>
+			<mx:Button id="btnEditarLC" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormLC(2)" toolTip="Editar Línea Crédito" width="40"/>
+			<mx:Button id="btnDatosLC" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaLC(1)" enabled="false" toolTip="Líneas de Crédito" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDetalle1" x="19.25" y="490" width="726.5" height="124" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgDisp" x="10" y="10" width="704.5" height="100"
+				sortableColumns="true" resizableColumns="true" verticalScrollPolicy="on" 
+				itemClick="seleccionarDisp()" doubleClickEnabled="true" doubleClick="mostrarFormDisp(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+					<mx:DataGridColumn headerText="CONTRATO" dataField="CONTRATO" width="100"/>
+					<mx:DataGridColumn headerText="DESCRIPCION" dataField="DESCRIPCION" width="250"/>
+					<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="80"/>
+					<mx:DataGridColumn headerText="DISPOSICION" dataField="FDISP" width="80"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="19.25" y="461" text="DISPOSICIONES" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="540" y="445" width="205.75" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnAgregarDisp" x="106" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormDisp(1)" toolTip="Agregar Disposición" width="40"/>
+			<mx:Button id="btnEliminarDisp" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarDisp()" toolTip="Eliminar Disposición" width="40"/>
+			<mx:Button id="btnEditarDisp" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormDisp(2)" toolTip="Editar Disposición" width="40"/>
+			<mx:Button id="btnDatosDisp" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaDisp(1)" enabled="false" toolTip="Disposiciones" width="40"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

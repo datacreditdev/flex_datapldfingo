@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="550" height="240">
+	
+	<mx:Metadata>
+		[Event(name="enviarDatosProd", type="Data.EventProd")]
+	</mx:Metadata>
+		
+	<mx:NumberValidator id="metodoV" source="{cboMetodoCobro}" property="selectedIndex"
+	 minValue="0" triggerEvent="" lowerThanMinError="Método de Cobro Requerido"/>
+		
+	<mx:Script>
+		<![CDATA[
+			import Data.Utils;
+			import Data.Globales;
+			import Data.DatosProd;
+			import Data.EventProd;
+			import mx.controls.Alert;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.effects.easing.Elastic;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.xml.SimpleXMLDecoder;
+			import mx.utils.ArrayUtil;
+			import mx.validators.Validator;
+			
+			private var _xmlMetCob:XML =  new XML();
+			private var _xmlDistInt:XML =  new XML();
+			private var _xmlInstCred:XML =  new XML();
+			
+			public var metCobObj:ArrayCollection = new ArrayCollection();
+			public var distIntObj:ArrayCollection = new ArrayCollection();
+			public var instCredObj:ArrayCollection = new ArrayCollection();
+			
+			public var datos:DatosProd = new DatosProd();
+			
+			public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS	
+			public var tipoAccion:int;
+			public var estatus:String;
+			private var du:Utils;
+			private var global:Globales;
+			private var vResult:ValidationResultEvent;
+			
+			public function cambiaMetodo():void{
+				cboMetodoCobro.toolTip = cboMetodoCobro.selectedItem.tooltip;
+			}
+			
+			public function cargaInteres():void{
+				//var indice:int = cboInstrumento.selectedIndex;
+				//txtInteres.text = _xmlInstCred.Table[indice - 1].TASA;
+			}
+			
+			/*public function cargaParamsProd(_xmlParam:XML):void{
+				var j:int;
+				cboMetodoCobro.dataProvider = metCobObj;
+				for(j = 0; j < metCobObj.length; j++){
+					if(metCobObj[j].id.toString() == _xmlParam.Table[0].CDGMCI){
+						cboMetodoCobro.selectedIndex = j;
+						break;
+					}
+					cambiaMetodo();
+				}
+				cboDistInteres.dataProvider = distIntObj;
+				for(j = 0; j < distIntObj.length; j++){
+					if(distIntObj[j].id.toString() == _xmlParam.Table[0].CDGFDI){
+						cboDistInteres.selectedIndex = j;
+						break;
+					}
+				}	
+				/*cboInstrumento.dataProvider = instCredObj;				
+				for(j = 0; j < instCredObj.length; j++){
+					if(instCredObj[j].CODIGO.toString() == _xmlParam.Table[0].CDGTI){
+						cboInstrumento.selectedIndex = j;
+						break;
+					}
+				}	
+				txtInteres.text = _xmlParam.Table[0].TASA;
+			}*/
+			
+			public function desactivaControles():void{
+				cnvMetodoCobro.enabled = false;
+				cnvTasa.enabled = false;
+			}
+			
+			public function enviarDatosProd(formData:DatosProd):void{
+				var invalidArray:Array = Validator.validateAll([metodoV]);
+				
+				if(invalidArray.length == 0){	
+					formData.metodoCobro = cboMetodoCobro.selectedItem.id;
+					formData.formaDist = cboDistInteres.selectedItem.id;
+					//formData.instrumento = cboInstrumento.selectedItem.CODIGO;
+					formData.interes = Number(txtInteres.text);
+					
+					//Indicador de edicion del metodo de cobro
+					if(chkMCI.selected == true)
+						formData.fijaMCI = "S";
+					else if(chkMCI.selected == false)
+						formData.fijaMCI = "N";
+					//Indicador de edicion de la distribucion de interes
+					if(chkFDI.selected == true)
+						formData.fijaFDI = "S";
+					else if(chkFDI.selected == false)
+						formData.fijaFDI = "N";
+					//Indicador de edicion de tasa de interes
+					if(chkTasa.selected == true)
+						formData.fijaTas = "S";
+					else if(chkTasa.selected == false)
+						formData.fijaTas = "N";
+					
+					formData.guardaTasas = true;
+				}
+				else{
+					formData.guardaTasas = false;
+				}
+				var event:EventProd = new EventProd("enviarDatosProd", formData);
+				dispatchEvent(event);
+			}
+			
+			public function formateaDistInt():void{
+				var cont:int = _xmlDistInt.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlDistInt.Table[i].CODIGO;	
+					oItem.nombre = _xmlDistInt.Table[i].CODIGO + " " + _xmlDistInt.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				distIntObj = new ArrayCollection(item);
+			}
+			
+			public function formateaInstCred(cadInfo:String):void{
+				var oItem:Object;
+				var array:Array;			
+							
+				var xml:XMLDocument = new XMLDocument(cadInfo); 
+     			var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
+     			var data:Object = decoder.decodeXML(xml);  
+				array = ArrayUtil.toArray(data.NewDataSet.Table);   
+				instCredObj = new ArrayCollection(array);
+				
+				oItem = new Object();
+				oItem.CODIGO = "0";	
+				oItem.DESCRIPCION = "--Seleccionar--";
+				instCredObj.addItemAt(oItem, 0);
+			}
+			
+			public function formateaMetCob():void{
+				var cont:int = _xmlMetCob.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				oItem.tooltip = "";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlMetCob.Table[i].CODIGO;	
+					oItem.nombre = _xmlMetCob.Table[i].CODIGO + " " + _xmlMetCob.Table[i].NOMBRE;
+					oItem.tooltip = _xmlMetCob.Table[i].TEXTO;
+					item.push(oItem);
+				}
+				metCobObj = new ArrayCollection(item);
+			}
+			
+			public function init(info:DatosProd, tipoAccion:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				this.tipoAccion = tipoAccion;
+				//this.estatus = estatus;
+				global = new Globales();
+				du = new Utils();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlMetCob = new XML(evt.result.toString());
+					
+					if (_xmlMetCob.elements().length() > 0){
+						formateaMetCob();
+						cboMetodoCobro.dataProvider = metCobObj;
+						cboMetodoCobro.toolTip = _xmlMetCob.Table[0].TEXTO;
+					} 	
+					
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlDistInt = new XML(evt.result.toString());
+						
+						if (_xmlDistInt.elements().length() > 0){
+							formateaDistInt();
+							cboDistInteres.dataProvider = distIntObj;
+						}
+						
+						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+							_xmlInstCred = new XML(evt.result.toString());
+						
+							du.rCursor();
+							du.closeWs(wsCat);
+						
+							/*if (_xmlInstCred.elements().length() > 0){
+								formateaInstCred(evt.result.toString());
+								cboInstrumento.dataProvider = instCredObj;
+							}*/
+							if (info != null){
+								var j:int;
+								datos = info;
+								
+								for(j = 0; j < metCobObj.length; j++){
+									if(metCobObj[j].id.toString() == info.metodoCobro){
+										cboMetodoCobro.selectedIndex = j;
+										cambiaMetodo();
+										break;
+									}
+								}
+								//Indicador de edicion del metodo de cobro
+								if(info.fijaMCI == "S")
+									chkMCI.selected = true;
+								else if(info.fijaMCI == "N")
+									chkMCI.selected = false;
+								
+								cboDistInteres.dataProvider = distIntObj;
+								for(j = 0; j < distIntObj.length; j++){
+									if(distIntObj[j].id.toString() == info.formaDist){
+										cboDistInteres.selectedIndex = j;
+										break;
+									}
+								}	
+								//Indicador de edicion de la distribucion de interes
+								if(info.fijaFDI == "S")
+									chkFDI.selected = true;
+								else if(info.fijaFDI == "N")
+									chkFDI.selected = false;
+								
+								//cboInstrumento.dataProvider = instCredObj;
+								/*cargaInteres();
+								for(j = 0; j < instCredObj.length; j++){
+									if(instCredObj[j].CODIGO.toString() == info.instrumento){
+										cboInstrumento.selectedIndex = j;
+										break;
+									}
+										
+								}*/	
+								txtInteres.text = info.interes.toString();
+								//Indicador de edicion de tasa de interes
+								if(info.fijaTas == "S")
+									chkTasa.selected = true;
+								else if(info.fijaTas == "N")
+									chkTasa.selected = false;
+							}		
+						});
+						//Obtiene informacion del Instrumento de Credito
+						wsCat.getCatalogoGral.send(19);	
+					});
+					//Obtiene informacion de la Distribucion de Interes
+					wsCat.getCatalogoGral.send(18);
+				});
+				//Obtiene informacion del Metodo de Cobro de Interes
+				wsCat.getCatalogoGral.send(17);
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			public function validaMonto(event:Event):void{
+				numVal.source = TextInput(event.currentTarget);
+				vResult = numVal.validate();
+
+				if (vResult.type!=ValidationResultEvent.VALID)
+                	TextInput(event.currentTarget).text = "";
+			}
+	]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas id="cnvMetodoCobro" x="25" y="10" width="500" height="136" styleName="canvasMod">
+		<mx:FormItem id="metodoCobro" label="Método de cobro de intereses:" x="32.5" y="7" width="455.5">
+			<mx:ComboBox id="cboMetodoCobro" width="285" labelField="nombre" change="cambiaMetodo()"/>
+			<mx:CheckBox id="chkMCI" label="No Permitir modificar"/>
+		</mx:FormItem>
+		<mx:FormItem id="distInteres" label="Forma de distribución de intereses:" x="10" y="69" width="478">
+			<mx:ComboBox id="cboDistInteres" width="285" labelField="nombre"/>
+			<mx:CheckBox id="chkFDI" label="No Permitir modificar"/>
+		</mx:FormItem>
+	</mx:Canvas>
+	<mx:Canvas id="cnvTasa" x="75" y="170" width="400" height="50" styleName="canvasMod">
+		<mx:FormItem id="interes" label="Interés:" x="63.25" y="12" width="145">
+			<mx:TextInput id="txtInteres" width="80" restrict="0-9;." change="validaMonto(event)"/>
+		</mx:FormItem>
+		<mx:CheckBox id="chkTasa" label="No Permitir modificar" x="240" y="13"/>
+	</mx:Canvas>
+	<mx:Label x="75" y="151" text="Tasa fija"/>
+</mx:Canvas>

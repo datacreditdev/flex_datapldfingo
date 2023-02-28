@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="300" height="500" horizontalScrollPolicy="off" 
+	backgroundAlpha="1.0" backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()">
+	<mx:states>
+		<mx:State name="noExporta">
+			<mx:RemoveChild target="{btnExportar}"/>
+			<mx:SetProperty name="height" value="470"/>
+		</mx:State>
+		<mx:State name="fechaNoExp">
+			<mx:SetProperty name="height" value="500"/>
+			<mx:SetProperty target="{label0}" name="y" value="312"/>
+			<mx:SetProperty target="{canvas4}" name="y" value="331"/>
+			<mx:SetProperty target="{label3}" name="y" value="400"/>
+			<mx:SetProperty target="{canvas3}" name="y" value="419"/>
+			<mx:SetProperty target="{button1}" name="y" value="464"/>
+			<mx:SetProperty target="{button2}" name="y" value="464"/>
+			<mx:SetProperty target="{canvas1}" name="height" value="68"/>
+			<mx:SetProperty target="{lblFechaFin}" name="y" value="39"/>
+			<mx:SetProperty target="{dtfFechaFin}" name="y" value="37"/>
+			<mx:SetProperty target="{label1}" name="text" value="Fecha Inicial:"/>
+			<mx:SetProperty target="{lblFechaFin}" name="text" value="Fecha Final:"/>
+			<mx:SetProperty target="{lblFechaFin}" name="x" value="43.5"/>
+			<mx:RemoveChild target="{btnExportar}"/>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:DateField id="dtfFechaFin" x="111.5" y="37" width="111"/>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{canvas1}" position="lastChild">
+				<mx:Label x="42.5" y="39" text="Fecha límite:" id="lblFechaFin"/>
+			</mx:AddChild>	
+		</mx:State>
+	</mx:states>
+	
+	<mx:NumberValidator id="asesorV" source="{cboAsesor}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Asesor Requerido"/>
+	 
+	<mx:StringValidator id="tipoCartV" source="{tipoCart}" property="selectedValue"  
+        required="true" requiredFieldError="Tipo de Cartera requerido"/> 
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.ExcelExportXls;
+			import mx.collections.ArrayCollection;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;	
+			import mx.validators.Validator;
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.ObjectUtil;
+			
+			private var _xmlReg:XML =  new XML();
+			private var _xmlCoord:XMLList = new XMLList;
+			private var _xmlAsesor:XML =  new XML();
+			[Bindable]
+			private var _xmlRep:XML =  new XML();
+			
+			public var regObj:ArrayCollection = new ArrayCollection();
+			public var coordObj:ArrayCollection = new ArrayCollection();
+			public var asesorObj:ArrayCollection = new ArrayCollection();
+			
+			public var wsRep:WebService;
+			public var rep:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			public function agregaInicial(codigo:String, texto:String):Object{
+				var oItem:Object = new Object();
+				oItem.codigo = codigo;	
+				oItem.nombre = texto;
+				return oItem;
+			}		
+			
+			public function cargaAsesor():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+						
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlAsesor = new XML(evt.result.toString());
+						
+					du.rCursor();
+					du.closeWs(wsCat);	
+						
+					asesorObj.removeAll();
+					asesorObj.refresh();
+					asesorObj.addItem(agregaInicial("000000", "--Todos--"))	
+						
+					if(_xmlAsesor.elements().length() > 0)
+						formateaAsesor();
+					if(_xmlAsesor.elements().length() == 1){
+						cboAsesor.selectedIndex = 1;
+						cboAsesor.enabled = false;
+					}
+				});
+				params[0] = cboSucursal.selectedItem.codigo;
+				wsCat.getCatalogoGral.send(8, params);
+			}		
+			
+			public function cargaSucursal():void{
+				_xmlCoord = Application.application._xmlCoord.Table.(CDGRG.toString().toLowerCase() == cboRegion.selectedItem.codigo.toString().toLowerCase());
+					
+				coordObj.removeAll();
+				coordObj.refresh();	
+				coordObj.addItem(agregaInicial("000", "--Todas--"))
+				asesorObj.removeAll();
+				asesorObj.refresh();
+				asesorObj.addItem(agregaInicial("000000", "--Todos--"))
+				
+				cboSucursal.enabled = true;	
+					formateaSucursal();
+				
+				if(_xmlCoord.length() == 1){
+					cboSucursal.selectedIndex = 1;
+					cboSucursal.enabled = false;
+					rdbSucursal.enabled = false;
+					cargaAsesor();
+				}
+			}			
+						
+			public function cargaRegion():void{ 				  
+				_xmlReg = Application.application._xmlReg;
+					
+					formateaRegion();
+				if(_xmlReg.elements().length() == 1){
+					cboRegion.selectedIndex = 1;
+					cboRegion.enabled = false;
+					rdbRegion.enabled = false;
+				}
+				cargaSucursal();
+			}				
+			
+			public function enviar():void{
+				dispatchEvent(new Event("enviar"));
+			}
+			
+			public function exportar():void{
+				var titulo:String;
+				var textoCart:String;
+				if (valida() == true){			
+					initConexion();
+					du.sCursor();
+					
+					Application.application.bloquear();
+						
+					switch (tipoCart.selectedValue.toString()){
+            			case "0":
+                			textoCart = "CARTERA VIGENTE, JUDICIAL Y EXTRAJUDICIAL";
+                			break;
+            			case "1":
+			                textoCart = "CARTERA VIGENTE";
+			                break;
+			            case "2":
+			                textoCart = "CARTERA VENCIDA";
+			                break;
+			        }	
+							
+					du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsRep);
+						
+						if(_xmlRep.elements().length() > 0){
+							var dgE:ExcelExportXls = new ExcelExportXls();
+							if(rep == "1")
+								dgE.loadDGInExcel(dgRepCart,null,"Reporte de Situación de Cartera al " + dtfFecha.text + " " + textoCart);
+							else if(rep == "4")		
+								dgE.loadDGInExcel(dgRepBandas,null,"Antigüedad de Saldos al " + dtfFecha.text + " " + textoCart);
+						}
+						else
+							Alert.show("No se encontro información relacionada con los datos de consulta.","Reporte",4,null,null,global.iAlert);
+							
+						Application.application.desbloquear();				
+					});
+					if(this.rep == "1"){
+						wsRep.getRepMora.send(dtfFecha.text, nivel.selectedValue.toString(), tipoCart.selectedValue.toString(),
+											 Application.application.U_ID, Application.application.NOM_U_ID,
+											 cboRegion.selectedItem.codigo, cboSucursal.selectedItem.codigo, cboAsesor.selectedItem.codigo);
+					}
+					else if(this.rep == "4"){
+						wsRep.getRepAntSaldos.send(dtfFecha.text, nivel.selectedValue.toString(), tipoCart.selectedValue.toString(),
+											      Application.application.U_ID, Application.application.NOM_U_ID,
+											 	  cboRegion.selectedItem.codigo, cboSucursal.selectedItem.codigo, cboAsesor.selectedItem.codigo);
+					}
+				}
+			}		
+			
+			private function formateaAsesor():void{
+				var cont:int = _xmlAsesor.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlAsesor.Table[i].CODIGO;
+					oItem.nombre = _xmlAsesor.Table[i].NOMBREC;
+					item.push(oItem);
+				}
+				asesorObj.source = asesorObj.source.concat(item);
+			}			
+						
+			private function formateaSucursal():void{
+				var cont:int = _xmlCoord.length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlCoord.CODIGO[i].toString();
+					oItem.nombre = _xmlCoord.NOMBRE[i].toString();
+					item.push(oItem);
+				}
+				coordObj.source = coordObj.source.concat(item);
+			}			
+			
+			public function formateaRegion():void{
+				var cont:int = _xmlReg.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlReg.Table[i].CODIGO;
+					oItem.nombre = _xmlReg.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				regObj.source = regObj.source.concat(item);
+			}	
+			
+			public function generar():void{
+				if (valida()){	
+					if (rep == "-1")
+						enviar();
+					else if(rep != "-1"){				
+						var consulta:String;
+						var id:String = "&id=" + rep;
+						var fecha:String = "&fecha=" + global.formatoFechaSep(dtfFecha.selectedDate,"-");
+						var niv:String = "&nivel=" + nivel.selectedValue.toString();
+						var cartera:String = "&tipoCart=" + tipoCart.selectedValue.toString();
+						var usuario:String = "&usuario=" + Application.application.U_ID;
+						var nomUsuario:String = "&nomUsuario=" + Application.application.NOM_U_ID;
+						var region:String = "&region=" + obtieneRegion();
+						var sucursal:String = "&sucursal=" + obtieneSucursal();
+						var asesor:String = "&asesor=" + obtieneAsesor();
+						consulta = global.urlPdf + id + fecha + niv + cartera + usuario + nomUsuario + region + sucursal + asesor;					
+						Application.application.muestraPdf(consulta);
+					}
+				}			
+			}
+						
+			public function init(rep:String, titulo:String, estado:String):void{
+				this.rep = rep;
+				lblTitulo.text = titulo;
+				currentState = estado;
+				limpiar();
+			}		
+						
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+			}		
+			
+			public function initConexion():void{				
+				wsRep = new WebService();			
+				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsRep.loadWSDL();
+			}	
+		
+			public function limpiar():void{
+				var fec:Date;
+				cboRegion.enabled = true;
+				cboSucursal.enabled = true;
+				cboAsesor.enabled = true;
+				regObj.removeAll();
+				regObj.refresh();
+				regObj.addItem(agregaInicial("000", "--Todas--"));
+				cboRegion.dataProvider = regObj;		
+				cboSucursal.dataProvider = coordObj;
+				cboAsesor.dataProvider = asesorObj;
+				cargaRegion();		
+				fec = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				if(currentState == 'fechaNoExp')
+					dtfFechaFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				nivel.selectedValue = 2;
+				tipoCart.selectedValue = 0;
+			}
+			
+			public function obtieneAsesor():String{
+				return cboAsesor.selectedItem.codigo;
+			}
+			
+			public function obtieneRegion():String{
+				return cboRegion.selectedItem.codigo;
+			}
+			
+			public function obtieneSucursal():String{
+				return cboSucursal.selectedItem.codigo;
+			}
+				
+			public function valida():Boolean{
+				var invTipoCart:Array = Validator.validateAll([tipoCartV]);
+				
+				if(dtfFecha.text == "" && currentState == null){
+					Alert.show("Seleccione la fecha límite del reporte.","Reporte",4,null,null,global.iAlert);
+					return false;
+				}
+				if(currentState == 'fechaNoExp'){
+					if(dtfFechaFin.text == ""){ 
+						Alert.show("Seleccione la fecha final del reporte.","Reporte",4,null,null,global.iAlert);
+						return false;
+					}
+				}
+				if(nivel.selection == null){
+					Alert.show("Seleccione el nivel de detalle del reporte.","Reporte",4,null,null,global.iAlert);
+					return false;
+				}
+				if(invTipoCart.length > 0){
+					Alert.show("Seleccione el Tipo de Cartera del reporte.","Reporte",4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas x="18" y="388" width="264" height="37" styleName="canvasMod" id="canvas3">
+		<mx:RadioButtonGroup id="nivel"/>
+		<mx:RadioButton id="rdbRegion" x="19.5" y="5" label="Región" groupName="nivel" value="0"/>
+		<mx:RadioButton id="rdbSucursal" x="91.5" y="5" label="Sucursal" groupName="nivel" value="1"/>
+		<mx:RadioButton id="rdbAsesor" x="181.5" y="5" label="Asesor" groupName="nivel" value="2"/>	
+	</mx:Canvas>
+	<mx:Label x="18" y="369" text="Nivel de detalle" id="label3"/>
+	<mx:Label id="lblTitulo" x="18" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="264.05" height="165.5" styleName="canvasMod" id="canvas2">
+		<mx:ComboBox id="cboRegion" x="10" y="27.5" labelField="nombre" change="cargaSucursal()" width="170"></mx:ComboBox>
+		<mx:ComboBox id="cboSucursal" x="10" y="80" labelField="nombre" change="cargaAsesor()" width="170"></mx:ComboBox>
+		<mx:ComboBox id="cboAsesor" x="10" y="129.5" labelField="nombre" width="242.05"></mx:ComboBox>
+		<mx:Label x="10" y="9" text="Región" height="20"/>
+		<mx:Label x="10" y="60.5" text="Sucursal" height="20"/>
+		<mx:Label x="10" y="111" text="Asesor" height="20"/>
+	</mx:Canvas>
+	<mx:Canvas x="18" y="236" width="264" height="37" styleName="canvasMod" id="canvas1">
+		<mx:Label x="27.5" y="6" text="Fecha reporte:" id="label1"/>
+		<mx:DateField id="dtfFecha" x="111.5" y="5" width="111"/>
+	</mx:Canvas>
+	<mx:Button x="58" y="433" label="Generar" click="generar()" id="button1"/>
+	<mx:Button x="163" y="433" label="Limpiar" width="71" height="24" click="limpiar()" id="button2"/>
+	<mx:Label x="18" y="34" text="Criterios de Selección" id="label2"/>
+	<mx:Canvas x="18" y="300" width="264" height="61" styleName="canvasMod" id="canvas4">
+		<mx:RadioButtonGroup id="tipoCart"/>
+		<mx:RadioButton x="11" y="31" label="Todas" groupName="tipoCart" value="0" selected="true"/>
+		<mx:RadioButton x="10" y="5" label="Cartera Vigente" groupName="tipoCart" value="1"/>
+		<mx:RadioButton x="151" y="5" label="Cartera Vencida" groupName="tipoCart" value="2"/>
+	</mx:Canvas>
+	<mx:Label x="18" y="281" text="Tipo de Cartera" id="label0"/>
+	<mx:Button x="94.5" y="465" label="Exportar Excel" click="exportar()" id="btnExportar"/>
+	<mx:DataGrid id="dgRepCart" dataProvider="{_xmlRep.dtMora}" x="310" y="22" width="548" visible="false" horizontalScrollPolicy="on">
+		<mx:columns>
+			<mx:DataGridColumn headerText="COD_REGIONAL" dataField="COD_REGIONAL"/>
+			<mx:DataGridColumn headerText="REGIONAL" dataField="REGIONAL"/>
+			<mx:DataGridColumn headerText="COD_SUCURSAL" dataField="COD_COORD"/>
+			<mx:DataGridColumn headerText="SUCURSAL" dataField="COORDINACION"/>
+			<mx:DataGridColumn headerText="COD_ASESOR" dataField="COD_ASESOR"/>
+			<mx:DataGridColumn headerText="ASESOR" dataField="OF_CREDITO"/>
+			<mx:DataGridColumn headerText="COD_GRUPO" dataField="COD_GRUPO"/>
+			<mx:DataGridColumn headerText="NOMBRE_GRUPO" dataField="GRUPO"/>
+			<mx:DataGridColumn headerText="CICLO" dataField="CICLO"/>
+			<mx:DataGridColumn headerText="INICIO" dataField="INICIO"/>
+			<mx:DataGridColumn headerText="CANT_ENTREGADA" dataField="CANT_ENTRE"/>
+			<mx:DataGridColumn headerText="SALDO_TOTAL" dataField="SALDO_TOTAL"/>
+			<mx:DataGridColumn headerText="PAGOS_COMPROMETIDOS" dataField="PAGOS_COMP"/>
+			<mx:DataGridColumn headerText="PAGOS_EFECTUADOS" dataField="PAGOS_EFECT"/>
+			<mx:DataGridColumn headerText="MORA_TOTAL" dataField="MORA_TOTAL"/>
+			<mx:DataGridColumn headerText="DIAS_MORA" dataField="DIAS_MORA"/>
+			<mx:DataGridColumn headerText="MORATORIOS" dataField="MORATORIOS"/>
+			<mx:DataGridColumn headerText="SALDO_GARANTIA" dataField="SALDO_GL"/>
+			<mx:DataGridColumn headerText="INTEGRANTES" dataField="NUM_INTEG"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:DataGrid id="dgRepBandas" dataProvider="{_xmlRep.dtBandas}" x="310" y="22" width="548" visible="false" horizontalScrollPolicy="on">
+		<mx:columns>
+			<mx:DataGridColumn headerText="COD_REGIONAL" dataField="COD_REGIONAL"/>
+			<mx:DataGridColumn headerText="REGIONAL" dataField="REGIONAL"/>
+			<mx:DataGridColumn headerText="COD_SUCURSAL" dataField="COD_COORD"/>
+			<mx:DataGridColumn headerText="SUCURSAL" dataField="COORDINACION"/>
+			<mx:DataGridColumn headerText="COD_ASESOR" dataField="COD_ASESOR"/>
+			<mx:DataGridColumn headerText="ASESOR" dataField="OF_CREDITO"/>
+			<mx:DataGridColumn headerText="COD_GRUPO" dataField="COD_GRUPO"/>
+			<mx:DataGridColumn headerText="NOMBRE_GRUPO" dataField="GRUPO"/>
+			<mx:DataGridColumn headerText="CICLO" dataField="CICLO"/>
+			<mx:DataGridColumn headerText="INICIO" dataField="INICIO"/>
+			<mx:DataGridColumn headerText="SALDO_TOTAL" dataField="SALDO_TOTAL"/>
+			<mx:DataGridColumn headerText="MORA_TOTAL" dataField="MORA_TOTAL"/>
+			<mx:DataGridColumn headerText="7" dataField="MORA_7"/>
+			<mx:DataGridColumn headerText="15" dataField="MORA_15"/>
+			<mx:DataGridColumn headerText="30" dataField="MORA_30"/>
+			<mx:DataGridColumn headerText="60" dataField="MORA_60"/>
+			<mx:DataGridColumn headerText="90" dataField="MORA_90"/>
+			<mx:DataGridColumn headerText="120" dataField="MORA_120"/>
+			<mx:DataGridColumn headerText=">120" dataField="MORA_SUP_120"/>
+			<mx:DataGridColumn headerText="MORATORIOS" dataField="MORATORIOS"/>
+			<mx:DataGridColumn headerText="SALDO_GARANTIA" dataField="SALDO_GL"/>
+		</mx:columns>
+	</mx:DataGrid>
+</mx:Canvas>

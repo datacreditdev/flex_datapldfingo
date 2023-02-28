@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="420" height="250">
+	
+	<mx:Validator id="codigoV" source="{txtCodigo}" property="text" 
+	invalid="{txtCodigo.setFocus()}" triggerEvent="" requiredFieldError="Código Requerido"/>
+	
+	<mx:Validator id="nombreV" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Nombre Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.EventActividad;
+		import Data.DatosActividad;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;
+		import mx.events.ValidationResultEvent;	
+		
+		[Bindable]
+		private var info:DatosActividad;
+		[Bindable]
+		private var _xmlAct:XML =  new XML();
+		
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var wsCat:WebService;
+		public var tipoAccion:int;
+		public var titulo:String;
+		private var du:Utils;
+		private var global:Globales;
+		private var vResult:ValidationResultEvent;
+		
+		public function cargaInfoActividad(tipo:int, codSec:String, sector:String, codGiro:String, giro:String, codigo:String):void{
+			var params:Array = new Array;
+			wsCat = new WebService;
+			tipoAccion = tipo; 
+			this.title = "Edición";
+			//Datos de la Actividad
+			info.cdgSec = codSec;
+			info.cdgGiro = codGiro;
+			info.codigo = codigo;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlAct = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if (_xmlAct.elements().length() > 0){
+					llenaRegistros();
+				} 	
+			});
+			params[0] = codSec;
+			params[1] = codGiro;
+			params[2] = codigo
+			wsCat.getInfoRegistro.send(36, params);
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			var invalidArray:Array = Validator.validateAll([codigoV, nombreV]);
+				
+			if(invalidArray.length == 0){	
+				info.codigo = txtCodigo.text;
+				info.nombre = txtNombre.text;
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+		
+		public function guardaActividad():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionActividad);
+			wsMS.setAccionActividad.send(tipoAccion, info.cdgSec, info.cdgGiro, info.codigo, info.nombre, 
+									     Application.application.U_ID);	
+		}
+	
+		public function init(tipo:int, codSec:String, sector:String, codGiro:String, giro:String, codigo:String = null):void{
+			global = new Globales(); 
+			du = new Utils();
+			info = new DatosActividad();
+			titulo = "Mantenimiento de Actividad";
+			txtCodSec.text = codSec;
+			txtSector.text = sector;
+			txtCodGiro.text = codGiro;
+			txtGiro.text = giro;
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			if(tipo == 1)
+				registraInfoActividad(tipo, codSec, sector, codGiro, giro);
+			else if(tipo == 2)
+				cargaInfoActividad(tipo, codSec, sector, codGiro, giro, codigo);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function llenaRegistros():void{
+			var i:int;
+			txtCodigo.setFocus();
+			
+			txtCodigo.text = info.codigo;
+			txtNombre.text = _xmlAct.Table[0].NOMBRE;
+		}
+			
+		public function registraInfoActividad(tipo:int, codSec:String, sector:String, codGiro:String, giro:String):void{
+			var i:int;
+			tipoAccion = tipo;
+			this.title = "Nuevo";
+			info.cdgSec = codSec;
+			info.cdgGiro = codGiro;
+			
+			txtCodigo.setFocus();				
+		}
+		
+		private function setAccionActividad(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionActividad);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validaDatosActividad(event:EventActividad):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			if (info.guarda)
+				guardaActividad();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	<mx:Canvas x="22.5" y="10" width="375" height="70" styleName="canvasMod">
+		<mx:Label id="lblSec" x="37.5" y="8" text="Sector:"/>
+		<mx:Label id="lblGiro" x="49.5" y="38" text="Giro:"/>
+		<mx:TextInput id="txtCodSec" x="85.5" y="7" width="50" editable="false"/>
+		<mx:TextInput id="txtSector" x="143.5" y="7" width="221" editable="false"/>
+		<mx:TextInput id="txtCodGiro" x="85.5" y="37" width="50" editable="false"/>
+		<mx:TextInput id="txtGiro" x="143.5" y="37" width="221" editable="false"/>
+	</mx:Canvas>
+	<mx:Canvas x="22.5" y="88" width="375" height="80" styleName="canvasMod">
+		<mx:Label id="lblNombre" x="18" y="41" text="Nombre:"/>
+		<mx:Label id="lblCodigo" x="10" y="11" text="Actividad:"/>
+		<mx:TextInput id="txtCodigo" x="71" y="10" width="50"/>
+		<mx:TextInput id="txtNombre" x="71" y="40" width="292" maxChars="300"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="164" y="176" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="212" y="176" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

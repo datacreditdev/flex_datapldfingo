@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="300" backgroundAlpha="1.0" 
+	backgroundColor="#FFFFFF" creationPolicy="all" xmlns:local="*" creationComplete="initApp()">
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.PdfExport;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.*;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent; 
+		import mx.managers.PopUpManager;
+		import mx.managers.CursorManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;
+		import mx.events.ValidationResultEvent;	
+		import flash.net.navigateToURL;	
+			
+		public var global:Globales;
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var listData:Array;
+		public var du:Utils;
+		private var vResult:ValidationResultEvent;
+			
+		public function initApp():void{
+			global = new Globales();
+			du = new Utils();
+			titulo = "Emisión de Documentos";
+			lblTitulo.text = titulo.toUpperCase();				
+		}	
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+			
+		private function iniciar():void{
+			openWindows(0);
+		}	
+			
+		private function openWindows(n:Number):void{
+			if (n < listData.length){
+				navigateToURL(new URLRequest(listData[n]), "_blank");
+			 	callLater(callLater, [openWindows, [n+1]]);
+			}
+ 		}	
+			
+		public function imprimir():void{	
+			if(valida()){
+				var i:int;
+				var acred:String = txtAcred.text;
+				var ciclo:String = txtCiclo.text;
+				var anexo:int = Number(chkAnexo.selected);
+				var pagos:int = Number(chkPagos.selected);
+				var garantia:int = Number(chkGarantia.selected);
+				var contrato:int = Number(chkContrato.selected);
+				var pagare:int = Number(chkPagare.selected);
+				
+				initConexion();
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					var res:String = evt.result.toString(); 
+						
+					du.rCursor();
+					du.closeWs(wsMS);
+						
+					if (res.substr(0,1) == "1"){
+						var consulta:String;
+						var id:String;
+						var codAcred:String;
+						var infoCiclo:String;
+						var usuario:String;
+						
+						codAcred = "&acred=" + acred;
+						infoCiclo = "&ciclo=" + ciclo;
+						usuario = "&usuario=" + Application.application.U_ID;	
+						
+						i = 0;	
+						listData = new Array();	 	
+ 								
+						if(pagare == 1){
+							id = "&id=28";
+							consulta = global.urlPdf + id + codAcred + infoCiclo + usuario;
+							listData[i] = consulta;
+							i += 1;	
+						}
+						if(contrato == 1){
+							id = "&id=29";
+							consulta = global.urlPdf + id + codAcred + infoCiclo + usuario;
+							listData[i] = consulta;	
+							i += 1;	
+						}
+						if(pagos == 1){
+							id = "&id=34";
+							consulta = global.urlPdf + id + codAcred + infoCiclo + usuario;
+							listData[i] = consulta;	
+							i += 1;
+						}	
+						if(garantia == 1){
+							id = "&id=35";
+							consulta = global.urlPdf + id + codAcred + infoCiclo + usuario;
+							listData[i] = consulta;
+							i += 1;
+						}
+						if(anexo == 1){
+							id = "&id=36";
+							consulta = global.urlPdf + id + codAcred + infoCiclo + usuario;
+							listData[i] = consulta;
+							i += 1;
+						}
+						callLater(iniciar);
+					} 	
+					else
+						Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);	
+				});
+				wsMS.setEmisionDocumentosInd.send(acred, ciclo, "I", anexo, pagos, garantia, contrato, pagare, 
+											      Application.application.U_ID);
+			}
+		}
+		
+		public function valida():Boolean{
+			if(txtAcred.text == ""){
+				Alert.show("Capture el número de acreditado.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(txtCiclo.text == ""){
+				Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(chkAnexo.selected == false && chkPagos.selected == false && 
+			   chkGarantia.selected == false && chkContrato.selected == false &&
+			   chkPagare.selected == false)
+			{
+				Alert.show("Debe seleccionar al menos un tipo de documento.",titulo,4,null,null,global.iAlert);
+				return false;	
+			}
+			return true;
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Label id="lblTitulo" x="15.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="16.95" y="53.5" width="247.54999" height="71.5" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblCiclo" x="138.75" y="10" text="Ciclo" width="81" height="20"/>
+		<mx:Label id="lblAcred" x="25.75" y="10" text="Acreditado" width="114.3" height="20"/>
+		<mx:TextInput id="txtAcred" x="25.75" y="28.5" maxChars="6" restrict="0-9" enter="imprimir()"/>
+		<mx:TextInput id="txtCiclo" x="138.75" y="28.5" width="45" maxChars="2" restrict="0-9" enter="imprimir()"/>
+	</mx:Canvas>
+	<mx:Label x="16.95" y="34" text="Criterios de Selección" width="124.25"/>
+	<mx:Canvas x="16.95" y="148.5" width="247.54999" height="110.5" styleName="canvasMod" id="canvas0">
+		<mx:CheckBox id="chkAnexo" x="11.75" y="10" label="Anexo Contrato"/>
+		<mx:CheckBox id="chkPagos" x="126.75" y="10" label="Carta Inst. Pagos"/>
+		<mx:CheckBox id="chkContrato" x="11.75" y="42" label="Contrato"/>
+		<mx:CheckBox id="chkGarantia" x="126.75" y="42" label="Garantía"/>
+		<mx:CheckBox id="chkPagare" x="11.75" y="74" label="Pagaré"/>
+	</mx:Canvas>
+	<mx:Label x="16.95" y="129" text="Documentos" width="124.25"/>
+	<mx:Button x="190.45" y="267" label="Imprimir" click="imprimir()"/>
+</mx:Canvas>

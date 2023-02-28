@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="462" height="630"  xmlns:control="CONTROL.*">
+	
+	<mx:Validator id="sucBancV" source="{txtCodSB}" property="text" 
+	invalid="{txtCodSB.setFocus()}" triggerEvent="" requiredFieldError="Código Requerido"/>
+	
+	<mx:Validator id="nombreV" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Nombre Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosSucBancaria;
+		import Data.EventSucBancaria;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.utils.StringUtil;
+		import mx.validators.Validator;	
+		
+		[Bindable]
+		private var info:DatosSucBancaria;
+		private var _xmlSB:XML =  new XML();
+		private var _xmlColonia:XML =  new XML();
+		private var _xmlDir:XML =  new XML();
+		private var _xmlEntidad:XML =  new XML();
+		private var _xmlMunicipio:XML =  new XML();
+		private var _xmlLocalidad:XML =  new XML();
+		
+		private var _xmlFiltro:XMLList;	
+		
+		public var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var texto:String;
+		public var du:Utils;
+		
+		//Realiza la busqueda de direccion utilizando el codigo postal
+		public function buscaCodPostal():void{ 
+			txtCodPostal.text = StringUtil.trim(txtCodPostal.text);
+			if (txtCodPostal.text != "" && txtCodPostal.length == 5){
+				initConexion();
+				du.sCursor();
+				
+				_xmlDir = null;
+			
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					_xmlDir = new XML(evt.result.toString());
+				
+					limpiaDatosDir();
+					
+					du.rCursor();
+					du.closeWs(wsMS);
+						
+					if(_xmlDir.elements().length() > 0){						
+						comEntGrid.asignaTexto(_xmlDir.Table[0].ENTFED);
+						comMunGrid.asignaTexto(_xmlDir.Table[0].MUNIC);
+						comLocGrid.asignaTexto(_xmlDir.Table[0].LOC);
+						comColGrid.asignaTexto(_xmlDir.Table[0].COL);	
+						
+						comEntGrid.asignaCodigo(_xmlDir.Table[0].CDGEF);
+						comMunGrid.asignaCodigo(_xmlDir.Table[0].CDGMU);
+						comLocGrid.asignaCodigo(_xmlDir.Table[0].CDGLO);
+						comColGrid.asignaCodigo(_xmlDir.Table[0].CDGCOL);	
+							
+						info.cdgEntFed = _xmlDir.Table[0].CDGEF;
+						info.cdgMun = _xmlDir.Table[0].CDGMU;
+						info.cdgLoc = _xmlDir.Table[0].CDGLO;
+						info.cdgCol = _xmlDir.Table[0].CDGCOL; 
+							
+						obtieneMunicipio();
+						obtieneLocalidad();
+						obtieneColonia();
+					}
+				});
+				wsMS.getDirCodPostal.send(txtCodPostal.text);
+			}
+			else{
+				txtCodPostal.text = "";
+				obtieneMunicipio();
+				obtieneLocalidad();
+				obtieneColonia();
+			}
+		}
+		
+		public function cargaInfoSB(codIB:String, instBanc:String, codSB:String):void{
+			tipoAccion = 2; 
+			this.title = "Edición";
+			//Datos de la Sucursal Bancaria
+			info.cdgIB = codIB;
+			info.cdgSB = codSB;
+			
+			initConexion();
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlSB = new XML(evt.result.toString()); 
+					
+				du.rCursor();
+				du.closeWs(wsMS);
+					
+				if (_xmlSB.elements().length() > 0){
+					llenaRegistros();
+					obtieneMunicipio();
+					obtieneLocalidad();
+					obtieneColonia();
+				} 	
+			});
+			wsMS.getInfoSucBancaria.send(codIB, codSB);
+		}
+		
+		public function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		public function enviar():void{
+			var invalidArray:Array = Validator.validateAll([sucBancV, nombreV]);
+				
+			if(invalidArray.length == 0){	
+				info.cdgSB = txtCodSB.text;
+				info.nombre = txtNombre.text;
+				info.calle = txtCalle.text;
+				info.telefono = txtTelefono.text;
+				info.gerente = txtGerente.text;
+				info.ejecutivo = txtEjecutivo.text;
+				info.labora = labora.selectedValue.toString();
+				info.guarda = true;
+			}
+			else{
+				info.guarda = false;
+			}
+			validaFinal();
+		}
+					
+		public function guardaSucBancaria():void{
+			initConexion();
+			du.sCursor();
+			Application.application.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionSucBancaria);
+			wsMS.setAccionSucBancaria.send(tipoAccion, info.cdgIB, info.cdgSB, info.nombre, info.gerente, info.ejecutivo, info.calle, 
+										   info.cdgEntFed, info.cdgMun, info.cdgLoc, info.cdgCol, info.telefono, info.labora);	 
+		}
+	
+		public function init(tipo:int, codIB:String, instBanc:String, codSB:String = null):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			global = new Globales(); 
+			du = new Utils();
+			info = new DatosSucBancaria();
+			titulo = "Mantenimiento de Sucursal Bancaria";
+			txtCodIB.text = codIB;
+			txtIB.text = instBanc;
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+					
+			_xmlEntidad = null;
+				
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlEntidad = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if(_xmlEntidad.elements().length() > 0){
+					comEntGrid.init(_xmlEntidad, 130);
+					comEntGrid.addEventListener("seleccionar",selecEntFed);
+					comEntGrid.addEventListener("verificar",verifEntFed);
+				}
+				if(tipo == 1)
+			 		registraInfoSB(codIB, instBanc); 
+			 	else if(tipo == 2)
+			 		cargaInfoSB(codIB, instBanc, codSB);
+			});
+			wsCat.getCatalogoGral.send(2);
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		public function limpiaDatosDir():void{
+			comEntGrid.limpiar();
+			comMunGrid.limpiar();
+			comLocGrid.limpiar();
+			comColGrid.limpiar();	
+						
+			info.cdgEntFed = "";
+			info.cdgMun = "";
+			info.cdgLoc = "";
+			info.cdgCol = ""; 
+		}
+		
+		public function llenaRegistros():void{
+			txtCodIB.setFocus();
+			
+			txtCodSB.text = _xmlSB.Table[0].CODIGO;
+			txtNombre.text = _xmlSB.Table[0].NOMBRE;
+			txtCalle.text = _xmlSB.Table[0].CALLE;
+			txtCodPostal.text = _xmlSB.Table[0].CODPOSTAL;
+			comEntGrid.codigo = _xmlSB.Table[0].CDGEF;
+			comEntGrid.asignaTexto(_xmlSB.Table[0].ENTFED);
+			comMunGrid.codigo = _xmlSB.Table[0].CDGMU;
+			comMunGrid.asignaTexto(_xmlSB.Table[0].MUNIC);
+			comLocGrid.codigo = _xmlSB.Table[0].CDGLO;
+			comLocGrid.asignaTexto(_xmlSB.Table[0].LOC);
+			comColGrid.codigo = _xmlSB.Table[0].CDGCOL;
+			comColGrid.asignaTexto(_xmlSB.Table[0].COL);
+			txtTelefono.text = _xmlSB.Table[0].TELEFONO;
+			txtGerente.text = _xmlSB.Table[0].GERENTE;
+			txtEjecutivo.text = _xmlSB.Table[0].EJECUTIVO;
+			labora.selectedValue = _xmlSB.Table[0].LABORSAB;
+			
+			info.cdgEntFed = _xmlSB.Table[0].CDGEF;
+			info.cdgMun = _xmlSB.Table[0].CDGMU;
+			info.cdgLoc = _xmlSB.Table[0].CDGLO;
+			info.cdgCol = _xmlSB.Table[0].CDGCOL; 
+		}
+		
+		private function obtieneColonia():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array; 
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlColonia = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsCat);
+				wsCat = null;
+				
+				comColGrid.init(_xmlColonia, 70);
+				if(_xmlColonia.elements().length() > 0){
+					comColGrid.addEventListener("seleccionar",selecColonia);
+				}	
+			});
+			params[0] = info.cdgEntFed;
+			params[1] = info.cdgMun;
+			params[2] = info.cdgLoc;
+			params[3] = "";
+			wsCat.getCatalogoGral.send(5, params);
+		}
+			
+		private function obtieneLocalidad():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;						
+
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlLocalidad = new XML(evt.result.toString());
+					
+				comLocGrid.init(_xmlLocalidad, 90);	
+				if(_xmlLocalidad.elements().length() > 0){
+					comLocGrid.addEventListener("seleccionar",selecLocalidad);
+					comLocGrid.addEventListener("verificar",verifLocalidad);
+				}
+				du.rCursor();
+				du.closeWs(wsCat);
+				wsCat = null;		
+			});
+			params[0] = info.cdgEntFed;
+			params[1] = info.cdgMun;
+			params[2] = "";
+			wsCat.getCatalogoGral.send(4, params);
+		}
+			
+		private function obtieneMunicipio():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+				
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlMunicipio = new XML(evt.result.toString());
+					
+				comMunGrid.init(_xmlMunicipio, 130);	
+				if(_xmlMunicipio.elements().length() > 0){
+					comMunGrid.addEventListener("seleccionar",selecMunic);
+					comMunGrid.addEventListener("verificar",verifMunic);
+				}
+				du.rCursor();
+				du.closeWs(wsCat);
+				wsCat = null;	
+			});
+			params[0] = info.cdgEntFed;
+			params[1] = "";
+			wsCat.getCatalogoGral.send(3, params);
+		}
+			
+		public function registraInfoSB(codIB:String, instBanc:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			tipoAccion = 1;
+			this.title = "Nuevo";
+			info.cdgIB = codIB;
+			
+			txtCodSB.setFocus();
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+				
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				var _xmlCod:XML = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsCat);
+				wsCat = null;
+					
+				if(_xmlCod.elements().length() > 0){
+					txtCodSB.text = _xmlCod.Table[0].CDGSB;
+				}
+			});
+			params[0] = codIB;
+			wsCat.getInfoRegistro.send(20, params);
+		}
+		
+		public function selecColonia(event:Event):void{
+			info.cdgCol = event.currentTarget.codigo;
+			_xmlFiltro = _xmlColonia.Table.(CODIGO.toString() == info.cdgCol)
+			if(txtCodPostal.text != _xmlFiltro.CDGPOSTAL.toString())
+				txtCodPostal.text = _xmlFiltro.CDGPOSTAL.toString();
+			comColGrid.setFocus();
+		}
+		
+		private function selecEntFed(event:Event):void{
+			if(info.cdgEntFed != event.currentTarget.codigo){
+				comMunGrid.limpiar();
+				comLocGrid.limpiar();
+				comColGrid.limpiar();
+				info.cdgEntFed = event.currentTarget.codigo;
+				obtieneMunicipio();
+			}
+			comEntGrid.setFocus();
+		}
+			
+		private function selecMunic(event:Event):void{	
+			if(info.cdgMun != event.currentTarget.codigo){
+				comLocGrid.limpiar();
+				comColGrid.limpiar();
+				info.cdgMun = event.currentTarget.codigo;
+				obtieneLocalidad();
+			}
+			comMunGrid.setFocus();
+		}
+			
+		private function selecLocalidad(event:Event):void{
+			if(info.cdgLoc != event.currentTarget.codigo){
+				comColGrid.limpiar();
+				info.cdgLoc = event.currentTarget.codigo;
+				obtieneColonia();
+			}
+			comLocGrid.setFocus();
+		}
+		
+		private function setAccionSucBancaria(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			Application.application.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionSucBancaria);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){
+				cerrar();
+			}	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validaDatosSucBancaria(event:EventSucBancaria):void{
+			info = event.customProp;
+		}
+		
+		public function validaFinal():void{
+			if (info.guarda == true)
+				guardaSucBancaria();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		private function verifEntFed(event:Event):void{
+			if(comEntGrid.codigo == ""){	
+				comMunGrid.limpiar();
+				comLocGrid.limpiar();
+				comColGrid.limpiar();
+				info.cdgMun = "";
+				info.cdgLoc = "";
+				info.cdgCol = ""; 
+			}
+		}
+		
+		private function verifLocalidad(event:Event):void{
+			if(comColGrid.codigo == "")
+				comColGrid.limpiar();
+				info.cdgCol = ""; 
+		}
+		
+		private function verifMunic(event:Event):void{
+			if(comMunGrid.codigo == ""){
+				comLocGrid.limpiar();
+				comColGrid.limpiar();
+				info.cdgLoc = "";
+				info.cdgCol = ""; 
+			}
+		}
+		]]>
+	</mx:Script>
+	<mx:Canvas id="cnvInstBancaria" x="21" y="10" width="420" height="40" styleName="canvasMod">
+		<mx:Label id="lblIB" x="10.5" y="9" text="Institución Bancaria:"/>
+		<mx:TextInput id="txtCodIB" x="120.5" y="7" width="50" maxChars="4" editable="false"/>
+		<mx:TextInput id="txtIB" x="178.5" y="7" width="220.5" editable="false"/>
+	</mx:Canvas>
+	<mx:Canvas id="cnvCont" x="21" y="58" width="420" height="145" styleName="canvasMod">
+		<mx:Label id="lblNombre" x="67.5" y="44" text="Nombre:"/>
+		<mx:TextInput id="txtNombre" x="120.5" y="42" maxChars="50" width="230"/>
+		<mx:Label id="lblSB" x="71.5" y="12" text="Código:"/>
+		<mx:TextInput id="txtCodSB" x="120.5" y="10" width="50" maxChars="4" editable="false"/>
+		<mx:Label id="lblGerente" x="65.5" y="76" text="Gerente:"/>
+		<mx:TextInput id="txtGerente" x="120.5" y="74" maxChars="50" width="230"/>
+		<mx:Label id="lblEjecutivo" x="61.5" y="108" text="Ejecutivo:"/>
+		<mx:TextInput id="txtEjecutivo" x="120.5" y="106" maxChars="50" width="230"/>
+	</mx:Canvas>
+	<mx:Canvas id="cnvDir" x="21" y="229" styleName="canvasMod" width="420" height="243">
+		<mx:Label id="lblCalle" x="107.5" y="12" text="Calle:"/>
+		<mx:Label id="lblEntFed" x="41.5" y="76" text="Entidad Federativa:"/>
+		<mx:Label id="lblMunicipio" x="86.5" y="108" text="Municipio:"/>
+		<mx:Label id="lblLocalidad" x="84.5" y="140" text="Localidad:"/>
+		<mx:Label id="lblColonia" x="95.5" y="172" text="Colonia:"/>
+		<mx:Label id="lblTelefono" x="88.5" y="204" text="Teléfono:"/>
+		<mx:Label id="lblCodPostal" x="65.5" y="44" text="Código Postal:"/>
+		<mx:TextInput id="txtCalle" x="146.5" y="10" width="210" maxChars="50"/>
+		<mx:TextInput id="txtCodPostal" x="146.5" y="42" width="80" maxChars="5" enter="buscaCodPostal()" focusOut="buscaCodPostal()" restrict="0-9"/>
+		<control:TextGrid id="comEntGrid" x="146.5" y="74" height="24"/>
+		<control:TextGrid id="comMunGrid" x="146.5" y="106" height="24"/>
+		<control:TextGrid id="comLocGrid" x="146.5" y="138" height="24"/>
+		<control:TextGrid id="comColGrid" x="146.5" y="170" height="24"/>
+		<mx:TextInput id="txtTelefono" x="146.5" y="202" width="120" maxChars="10" restrict="0-9"/>
+	</mx:Canvas>
+	<mx:Label id="lblDom" x="21" y="211" text="Domicilio"/>
+	<mx:Button id="btnAceptar" x="158" y="552" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="240" y="552" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:Label id="lblLabora" x="136" y="480" text="Labora Sábados"/>
+	<mx:Canvas id="cnvLabora" x="136" y="499" width="190" height="40" styleName="canvasMod">
+		<mx:RadioButtonGroup id="labora"/>
+		<mx:RadioButton id="rdbSi" x="45" y="7" label="Si" groupName="labora" value="S" width="50" selected="true"/>
+		<mx:RadioButton id="rdbNo" x="113" y="7" groupName="labora" value="N" width="50" label="No"/>
+	</mx:Canvas>
+</mx:TitleWindow>
