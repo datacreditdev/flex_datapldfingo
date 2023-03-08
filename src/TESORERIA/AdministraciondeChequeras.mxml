@@ -5,6 +5,7 @@
 	<!--Componente de chequeras-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
@@ -38,6 +39,7 @@
 			public var du:Utils;
 			public var titulo:String;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro
@@ -149,8 +151,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Administración de Chequeras";
 				alta = true;
 				borrado = true;
@@ -227,7 +230,6 @@
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
 				var Params:Array;
-				var i:int;
 				var cont:int;
 				
 				initConexion();
@@ -238,11 +240,11 @@
 						
 					cont = dPermisos.elements().length();
 					
-					for(i = 0; i < cont; i++){
+					for(var i:int = 0; i < cont; i++){
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosModSolic(Application.application.PERFIL_ID)){
+								if (permiso.permisosModSolic(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;

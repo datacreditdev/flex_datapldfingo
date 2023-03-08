@@ -5,6 +5,7 @@
 	<!--Componente que permite observar el listado de personas-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
@@ -36,6 +37,7 @@
 			public var du:Utils;
 			public var titulo:String;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro
@@ -107,8 +109,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				wsMS = new WebService();
+				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Mantenimiento de Acreditado";
 				du = new Utils();
 				alta = false;
@@ -166,7 +169,6 @@
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
 				var Params:Array;
-				var i:int;
 				var cont:int;
 
 				wsMS = du.initWs(wsMS);
@@ -177,13 +179,11 @@
 						
 					cont = dPermisos.elements().length();
 					
-					for(i = 0; i < cont; i++)
-					{
-						switch(dPermisos.Table[i].OPCION.toString())
-						{
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosModAcredInd(Application.application.PERFIL_ID)){
+								if (permiso.permisosModAcredInd(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;

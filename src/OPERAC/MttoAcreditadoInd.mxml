@@ -25,6 +25,7 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import CONTROL.CtrlVisorDoc;
 			import mx.containers.Panel;
 			import Data.EventAcred;
@@ -59,6 +60,7 @@
 			public var titulo:String;
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			//variables que indican los permisos disponibles para el usuario
 			public var consBuro:Boolean = new Boolean();
@@ -157,8 +159,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Mantenimiento de Acreditado";
 				formateaTipoPers();
 				cboTipoPers.dataProvider = tipoObj;
@@ -288,7 +291,7 @@
 			public function permisos():void{
 				/*var perfil_id:String = Application.application.cadPerfil;
 				
-				if (global.permisosConsBuro(Application.application.PERFIL_ID)){
+				if (permiso.permisosConsBuro(Application.application.PERFIL_ID)){
 					consBuro = true;	
 				}
 				btnConsBuro.visible = consBuro;*/

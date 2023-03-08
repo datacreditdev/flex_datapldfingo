@@ -4,6 +4,7 @@
 	<!--Componente de Devolucion de Garantia-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import mx.messaging.AbstractConsumer;
 			import Data.Globales;
 			import Data.Utils;
@@ -52,6 +53,7 @@
 			public var coord:String;
 			public var estatus:String;
 			private var global:Globales;
+			private var permiso:Permisos;
 			private var vResult:ValidationResultEvent;
 		
 			public var listaObj:ArrayCollection = new ArrayCollection();
@@ -59,7 +61,7 @@
 			public var acredObj:ArrayCollection = new ArrayCollection();
 							
 			public function activarControles():void{
-				if(global.permisosBusqAcred(Application.application.PERFIL_ID) == true){
+				if(permiso.permisosBusqAcred(Application.application.PERFIL_ID) == true){
 					txtCodAcred.editable = true;
 					btnBusqAcred.visible = true;
 					//dtfFecha.enabled = true;
@@ -162,7 +164,7 @@
 			}
 			
 			public function enviar():void{
-				if(valida() == true){
+				if(valida()){
 					var grupo:String = txtCodGrupo.text;
 					var cuenta:String = txtCodCuenta.text;
 					var fecha:String = dtfFecha.text;
@@ -231,7 +233,6 @@
 			}
 			
 			public function formateaMovsGL():void{
-				var i:int;
 				var cont:int = _xmlMovs.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -244,7 +245,7 @@
 				oItem.descripcion = "--Seleccionar--";
 				item.push(oItem);
 				
-				for (i = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.id = _xmlMovs.Table[i].CODIGO;
 					oItem.descripcion = _xmlMovs.Table[i].DESCRIPCION;		
@@ -333,8 +334,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				rep = "25";
 				titulo = "Devolución de Garantía";
 				lblTitulo.text = titulo.toUpperCase();

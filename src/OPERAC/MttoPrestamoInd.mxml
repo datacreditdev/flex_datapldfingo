@@ -375,7 +375,7 @@
 				info.nombreCheq = _xmlPrn.Table[0].NOMBRECH;
 				
 				//bandMod indica si la informacion de la solicitud puede modificarse
-				formProdSolic.init(cdgAcred, info, 2);
+				formProdSolic.init("I", cdgAcred, info, 2);
 				formDatosGralPrn.init(info, 2, estatus);
 				formCalendarioSolic.init(info, 2, estatus);
 				formTasasSolic.init(info, 2, estatus);

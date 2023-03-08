@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Configuration>
-	<wsdl>http://150.150.23.11/administracion/seguridad_data/Process_Service/Process_Service.asmx?wsdl</wsdl>
+	<wsdl>http://localhost/administracion/seguridad_data/Process_Service/Process_Service.asmx?wsdl</wsdl>
 	
 	<wsdlCat>http://localhost/ws_catalogos_data/service.asmx?wsdl</wsdlCat>
 	<wsdlPdf>http://localhost/RptGenerado_data/default.aspx?</wsdlPdf>

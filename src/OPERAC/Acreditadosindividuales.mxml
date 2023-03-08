@@ -6,6 +6,7 @@
 	<!--Componente que permite observar el listado de clientes individuales-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import flash.events.*;
 			import mx.containers.TitleWindow;
         	import mx.controls.Button;
@@ -40,6 +41,7 @@
 			private var du:Utils;
 			public var titulo:String;
 			private var global:Globales;
+			private var permiso:Permisos;
 			private var contenedor:Sprite;
 			
 			//variables que especifican el indice del elemento 
@@ -146,6 +148,7 @@
 			
 			public function initApp():void{
 				global = new Globales();
+				permiso = new Permisos();
 				wsMS = new WebService();
 				titulo = "Mantenimiento de Acreditado";
 				du = new Utils();
@@ -258,7 +261,7 @@
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosModAcredInd(Application.application.PERFIL_ID)){
+								if (permiso.permisosModAcredInd(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;
@@ -311,8 +314,8 @@
 				doubleClickEnabled="true" itemDoubleClick="mostrarFormAcred(2)" horizontalScrollPolicy="auto"> 
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60"/>
-					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="250"/>
-					<mx:DataGridColumn headerText="SUCURSAL" dataField="COORD" width="110"/>
+					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="300"/>
+					<mx:DataGridColumn headerText="SUCURSAL" dataField="COORD" width="90"/>
 					<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="200"/>
 					<mx:DataGridColumn headerText="TIPO" dataField="TIPOPREST" width="90"/>
 					<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="70"/>

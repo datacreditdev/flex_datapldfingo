@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"  width="425" height="479" layout="absolute" 
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"  width="600" height="479" layout="absolute" 
 	showCloseButton="true" close="cerrar()">
 	
 	<mx:Metadata>
@@ -74,25 +74,6 @@
 				params[2] = tipoCred;
 				//Obtiene el listado de registros de la tabla de Amortización
  				wsCat.getListado.send(45, params);
- 				
- 				/*du.initWsCat(wsMS);
-				du.sCursor();
-				Application.application.bloquear();
-						
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
-					_xmlTabla = new XML(evt.result.toString());
-	
-					du.rCursor();
-					du.closeWs(wsMS);
-					Application.application.desbloquear();
-					
-					if(_xmlTabla.elements().length() > 0){
-						formateaTablaAmort();
-						dgTablaAmort.dataProvider = pagos;
-						calculaTotal();
-					}
-				});
-				wsMS.getTablaAmort.send(this.codigo, this.ciclo, this.tipoCred);*/
 			}
 			
 			private function cerrar():void{
@@ -116,6 +97,7 @@
 					oItem.cantidad = Number(_xmlTabla.Table[i].CANTIDAD);
 					oItem.capital = Number(_xmlTabla.Table[i].CAPITAL);
 					oItem.interes = Number(_xmlTabla.Table[i].INTERES);
+					oItem.moneda = _xmlTabla.Table[i].MONEDA;
 					item.push(oItem);
 				}
 				pagos = new ArrayCollection(item);
@@ -138,11 +120,10 @@
 				dgTablaAmort.editable = editable;
 				
 				cargaTablaAmort();
-			}
-			
+			}			
 		]]>
 	</mx:Script>
-	<mx:Canvas width="398.25" height="100" styleName="canvasMod" x="12.75" y="10">
+	<mx:Canvas width="573.25" height="100" styleName="canvasMod" x="12.75" y="10">
 		<mx:Label x="28" y="10" text="Código:"/>
 		<mx:Label x="24" y="38" text="Nombre:"/>
 		<mx:Label x="38" y="66" text="Ciclo:"/>
@@ -153,18 +134,19 @@
 		<mx:RadioButton x="182" y="64" label="Automática" visible="false"/>
 		<mx:RadioButton x="269" y="64" label="Manual" visible="false"/>
 	</mx:Canvas>
-	<mx:DataGrid id="dgTablaAmort" width="398.25" height="230" alpha="1.0" sortableColumns="false" x="12.75" y="118">
+	<mx:DataGrid id="dgTablaAmort" editable="false" width="573.25" height="230" alpha="1.0" sortableColumns="false" x="12.75" y="118">
 		<mx:columns>
-			<mx:DataGridColumn headerText="NO." dataField="numero" width="35" editable="false"/>
-			<mx:DataGridColumn headerText="FECHA PAGO" dataField="fecha" width="90" editable="false"/>
-			<mx:DataGridColumn headerText="AMORTIZACION" dataField="cantidad" width="100" editable="false"/>
-			<!--<mx:DataGridColumn headerText="CAPITAL" dataField="capital" editable="false"/>
-			<mx:DataGridColumn headerText="INTERES" dataField="interes" editable="false"/>-->
+			<mx:DataGridColumn headerText="NO." dataField="numero" width="35"/>
+			<mx:DataGridColumn headerText="FECHA PAGO" dataField="fecha" width="110"/>
+			<mx:DataGridColumn headerText="MONEDA" dataField="moneda" width="80"/>
+			<mx:DataGridColumn headerText="CAPITAL" dataField="capital" width="100"/>
+			<mx:DataGridColumn headerText="INTERES" dataField="interes" width="100"/>
+			<mx:DataGridColumn headerText="AMORTIZACION" dataField="cantidad" width="110"/>
 		</mx:columns>
 	</mx:DataGrid>
-	<mx:Canvas styleName="canvasMod" x="291" y="356" width="120" height="37.65">
+	<mx:Canvas styleName="canvasMod" x="466" y="356" width="120" height="37.65">
 		<mx:Label id="lblTotal" x="10" y="8.6" textAlign="right" width="100"/>
 	</mx:Canvas>
-	<mx:Button id="btnCancelar" x="350" y="401.65" label="Cerrar" click="cerrar()"/>
-	<mx:Label x="239" y="363" text="Total:" fontSize="14" fontStyle="italic" fontWeight="bold"/>
+	<mx:Button id="btnCancelar" x="525" y="401.65" label="Cerrar" click="cerrar()"/>
+	<mx:Label x="411" y="363" text="Total:" fontSize="14" fontStyle="italic" fontWeight="bold"/>
 </mx:TitleWindow>

@@ -60,6 +60,7 @@
 			public var wsMS:WebService;
 			public var tipoAccion:int;
 			public var coord:String;
+			public var tipo:String;
 			private var du:Utils;
 			private var global:Globales;
 			
@@ -105,6 +106,19 @@
 				wsCat.getCatalogoGral.send(12, params);
 			}
 			
+			private function ejecutaFuncion(callback:Function):void{
+				var listener:Function = function(e:Event):void{					
+					try{
+						callback(e);
+					}catch(err:Error){
+						Alert.okLabel = "Aceptar";
+						Alert.show(err.toString());
+					}	
+					this.removeEventListener(listener);	
+				};
+				this.addEventListener("Evento", listener);
+			}	
+			
 			public function enviarDatosSolic(formData:DatosSolic):void{
 				var invalidArray:Array = Validator.validateAll([tipoProdV, prodCredV]);
 				
@@ -139,7 +153,7 @@
 				
 				oItem = new Object();
 				oItem.id = "";	
-				oItem.aut = "--Ninguno--";
+				oItem.aut = "--Seleccionar--";
 				item.push(oItem);
 				
 				for (var i:int = 0; i < cont; i++){
@@ -194,7 +208,7 @@
 				prodCredObj = new ArrayCollection(item);
 			}
 			
-			public function init(acred:String, info:DatosSolic, tipoAccion:int, coord:String = ""):void{
+			public function init(tipo:String, acred:String, info:DatosSolic, tipoAccion:int, coord:String = ""):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
 				
@@ -202,66 +216,65 @@
 				du = new Utils();
 				this.tipoAccion = tipoAccion;
 				this.coord = coord;
+				this.tipo = tipo;
 				
 				if(tipoAccion == 2)
 					cnvProdSolic.enabled = false;
 				
 				du.initWsCat(wsCat);
-				du.sCursor();
-					
-				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-					_xmlCR = new XML(evt.result.toString());
-					
-					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-						_xmlTipoProd = new XML(evt.result.toString());
+				du.sCursor();	
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{											
+					_xmlTipoProd = new XML(evt.result.toString());
 						
-						du.rCursor();
-						du.closeWs(wsCat);
+					du.rCursor();
+					du.closeWs(wsCat);
 						
-						if (_xmlCR.elements().length() > 0){
-							formateaCredRev();
-							if(tipoAccion == 1){
-								currentState = "revolvente";
-								cboCredRev.dataProvider = credRevObj;
-							}
-						}		
-						if (_xmlTipoProd.elements().length() > 0){
-							formateaTipoProd();
-							cboTipoProd.dataProvider = tipoProdObj;
-						}				
-						if (info != null){
-							var j:int;
-								
-							datos.cdgTipoProd = info.cdgTipoProd;
-							datos.cdgProdCred = info.cdgProdCred;
-							datos.autorCrr = info.autorCrr;
+					if (_xmlTipoProd.elements().length() > 0){
+						formateaTipoProd();
+						cboTipoProd.dataProvider = tipoProdObj;
+					}
 							
-							if(datos.autorCrr.toString() != ""){
-								currentState = "revolvente";
-								cnvAutorizado.enabled = false;
-								cboCredRev.dataProvider = credRevObj;
-								for(j = 0; j < credRevObj.length; j++){
-									if (credRevObj[j].aut.toString() == info.autorCrr){
-										cboCredRev.selectedIndex = j;
-										break;
-									}
-								}	
-							}
-							for(j = 0; j < tipoProdObj.length; j++){
-								if (tipoProdObj[j].id.toString() == info.cdgTipoProd){
-									cboTipoProd.selectedIndex = j;
-									cargaProdCred();
-									break;									
-								}
+					if(info != null){	
+						datos.cdgTipoProd = info.cdgTipoProd;
+						datos.cdgProdCred = info.cdgProdCred;
+						
+						for(var j:int = 0; j < tipoProdObj.length; j++){
+							if(tipoProdObj[j].id.toString() == info.cdgTipoProd){
+								cboTipoProd.selectedIndex = j;
+								cargaProdCred();
+								break;									
 							}
 						}
-					});
-					//Obtiene informacion del tipo de producto
-					wsCat.getCatalogoGral.send(11);
+						
+						if(tipo == "R"){
+							datos.autorCrr = info.autorCrr;
+							currentState = "revolvente";
+							
+							ejecutaFuncion(function(e:Event):void{
+								if(datos.autorCrr.toString() != ""){
+									cnvAutorizado.enabled = false;
+									cboCredRev.dataProvider = credRevObj;
+									for(var i:int = 0; i < credRevObj.length; i++){
+										if (credRevObj[i].aut.toString() == info.autorCrr){
+											cboCredRev.selectedIndex = i;
+											break;
+										}
+									}	
+								}
+							});	
+							obtieneCredRev(acred);
+						}
+					}
+					else{
+						if(tipo == "R"){
+							currentState = "revolvente";
+							obtieneCredRev(acred);
+						}
+					}
 				});
-				params[0] = acred;
-				//Obtiene informacion de los creditos revolventes del acreditado
-				wsCat.getInfoAcred.send(12, params);
+				//Obtiene informacion del tipo de producto
+				wsCat.getCatalogoGral.send(11);
 			}
 			
 			public function initConexion():void{				
@@ -276,6 +289,32 @@
 			
 			public function obtieneTipoProd():String{
 				return cboTipoProd.selectedItem.id;
+			}
+			
+			private function obtieneCredRev(acred:String):void{
+				var wsCat:WebService = new WebService();
+				var params:Array = new Array();
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{											
+					_xmlCR = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+				
+					if (_xmlCR.elements().length() > 0){
+						formateaCredRev();
+						if(tipoAccion == 1){
+							cboCredRev.dataProvider = credRevObj;
+						}
+					}
+					dispatchEvent(new Event("Evento"));
+				});
+				params[0] = acred;
+				//Obtiene informacion de los creditos revolventes del acreditado
+				wsCat.getInfoAcred.send(12, params);
 			}
 	]]>
 	</mx:Script>

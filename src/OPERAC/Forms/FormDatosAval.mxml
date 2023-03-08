@@ -6,6 +6,7 @@
 
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.DatosAcred;
 			import Data.EventAcred;
 			import Data.Globales;
@@ -39,6 +40,7 @@
 			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS	
 			public var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			public var bandCURP:Boolean;
 			public var f:Date;
 			public var fecMin:Date;
@@ -81,7 +83,6 @@
 			}
 			
 			public function formateaCoord():void{
-				var i:int;
 				var cont:int = _xmlCoord.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -91,7 +92,7 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				for (i = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.id = _xmlCoord.Table[i].CODIGO;	
 					oItem.nombre = _xmlCoord.Table[i].NOMBRE;
@@ -102,7 +103,6 @@
 			}
 			
 			public function formateaEntFed():void{
-				var i:int;
 				var cont:int = _xmlEntFed.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -113,7 +113,7 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				for (i = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.id = _xmlEntFed.Table[i].CODIGO;
 					oItem.clave = _xmlEntFed.Table[i].CDGCURP;	
@@ -202,8 +202,10 @@
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
 				
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
+				
 				f = Application.application._Current_Fecha;
 				fecMin = new Date(f.getFullYear()-17,f.getMonth(),f.getDate());
 				fecMax = new Date(f.getFullYear()-80,f.getMonth(),f.getDate());
@@ -305,7 +307,7 @@
 			}
 			
 			public function permisos():void{
-				if(global.permisosModAcred(Application.application.PERFIL_ID)){
+				if(permiso.permisosModAcred(Application.application.PERFIL_ID)){
 					txtRfc.editable = true;
 					txtCurp.editable = true;
 				}

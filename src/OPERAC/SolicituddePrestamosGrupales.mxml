@@ -12,6 +12,7 @@
 	<!--Componente de mantenimiento de solicitudes-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Utils;
 			import mx.controls.DataGrid;
 			import mx.controls.dataGridClasses.DataGridItemRenderer;  
@@ -50,6 +51,7 @@
 			public var wsMS:WebService = new WebService();	
 			public var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro
@@ -194,6 +196,7 @@
 			
 			public function initApp():void{
 				global = new Globales();
+				permiso = new Permisos();
 				alta = false;
 				borrado = false;
 				consulta = false;
@@ -231,7 +234,7 @@
 				var munic:String;
 				var indGrupo:int;
 				var ciclo:String;
-				if(edicion == true){
+				if(edicion){
 					var comMttoSolic:MttoSolicitud = new MttoSolicitud();
 					comMttoSolic.currentState = '';
 					indGrupo = dgGrupos.selectedIndex;
@@ -290,7 +293,6 @@
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
 				var Params:Array;
-				var i:int;
 				var cont:int;
 				
 				du = new Utils();
@@ -302,13 +304,11 @@
 						
 					cont = dPermisos.elements().length();
 					
-					for(i = 0; i < cont; i++)
-					{
-						switch(dPermisos.Table[i].OPCION.toString())
-						{
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosModSolic(Application.application.PERFIL_ID)){
+								if (permiso.permisosModSolic(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;

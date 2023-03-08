@@ -55,6 +55,7 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
@@ -69,6 +70,7 @@
 			import mx.utils.ObjectUtil;
 			
 			private var global:Globales;
+			private var permiso:Permisos;
 			public var wsMS:WebService;
 			public var titulo:String;
 			private var du:Utils;
@@ -77,7 +79,7 @@
 			
 			//funcion que ejecuta el proceso de modificacion de prestamo
 			public function ejecuta():void{
-				if(valida() == true){
+				if(valida()){
 					initConexion();
 					du.sCursor();
 					
@@ -122,7 +124,7 @@
 				oItem.nombre = "--Seleccionar--";
 				tipoMovObj.addItem(oItem);
 				
-				if(global.permisosDesautoriza(Application.application.PERFIL_ID)){
+				if(permiso.permisosDesautoriza(Application.application.PERFIL_ID)){
 					oItem = new Object();
 					oItem.tipo = 1;
 					oItem.id = "desautoriza";	
@@ -130,7 +132,7 @@
 					tipoMovObj.addItem(oItem);
 				}
 				
-				if(global.permisosModFecDes(Application.application.PERFIL_ID)){
+				if(permiso.permisosModFecDes(Application.application.PERFIL_ID)){
 					oItem = new Object();
 					oItem.tipo = 2;
 					oItem.id = "desembolso";	
@@ -140,8 +142,9 @@
 			}			
 						
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Módulo de Correcciones";
 				lblTitulo.text = titulo.toUpperCase();
 				formateaTipoMov();

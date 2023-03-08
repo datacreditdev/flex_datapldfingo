@@ -11,6 +11,7 @@
 	<!--Componente de mantenimiento de solicitudes Individuales-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Utils;
 			import mx.controls.DataGrid;
 			import mx.controls.dataGridClasses.DataGridItemRenderer;  
@@ -49,6 +50,7 @@
 			public var wsMS:WebService	
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro
@@ -157,8 +159,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				alta = false;
 				borrado = false;
 				consulta = false;
@@ -185,6 +188,7 @@
 				var ciclo:String;
 				var autorizado:String;
 				var sec:String;
+				
 				if(edicion == true){
 					var comMttoSolic:MttoSolicitudRevInd = new MttoSolicitudRevInd();
 					acred = dgAcred.selectedItem.CODIGO;
@@ -220,7 +224,6 @@
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
 				var Params:Array;
-				var i:int;
 				var cont:int;
 				
 				wsMS = new WebService();
@@ -232,13 +235,11 @@
 						
 					cont = dPermisos.elements().length();
 					
-					for(i = 0; i < cont; i++)
-					{
-						switch(dPermisos.Table[i].OPCION.toString())
-						{
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosModSolic(Application.application.PERFIL_ID)){
+								if (permiso.permisosModSolic(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;
@@ -306,8 +307,7 @@
 					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="250"/>
 					<mx:DataGridColumn headerText="SUCURSAL" dataField="COORD" width="80"/>
 					<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="170"/>
-					<mx:DataGridColumn headerText="CODIGO" dataField="CDGPRPE" width="70"/>
-					<mx:DataGridColumn headerText="OFICIAL DE CREDITO" dataField="PROMOTOR" width="200"/>
+					<mx:DataGridColumn headerText="NOMBRE EJECUTIVO" dataField="NOMASESOR" width="200"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>

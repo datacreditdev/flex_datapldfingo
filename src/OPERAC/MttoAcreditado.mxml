@@ -5,6 +5,7 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			
 			import Data.EventAcred;
 			import Data.DatosAcred;
@@ -34,6 +35,7 @@
 			public var titulo:String;
 			public var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			//variables que indican los permisos disponibles para el usuario
 			public var consBuro:Boolean = new Boolean();
@@ -124,8 +126,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				titulo = "Mantenimiento de Acreditado";
 			}
 			
@@ -181,10 +184,9 @@
 			
 			public function permisos():void{
 				var perfil_id:String = Application.application.cadPerfil;
-				var i:int;
 				var cont:int;
 				
-				if (global.permisosConsBuro(Application.application.PERFIL_ID)){
+				if (permiso.permisosConsBuro(Application.application.PERFIL_ID)){
 					consBuro = true;	
 				}
 				btnConsBuro.visible = consBuro;	
@@ -220,7 +222,7 @@
 			
 			public function validaFinal():void{
 				if (info.guardaDatos == true && info.guardaDir == true && info.guardaOtros == true){
-					//if(global.permisosModRegAcred(Application.application.PERFIL_ID) == true)
+					//if(permiso.permisosModRegAcred(Application.application.PERFIL_ID) == true)
 						//guardaAcred();
 					//else{	
 					validaSituacionAcred();

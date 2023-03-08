@@ -6,6 +6,7 @@
 	<!--Componente de mantenimiento de Localidades-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Utils;
 			import mx.controls.DataGrid;
 			import mx.controls.dataGridClasses.DataGridItemRenderer;  
@@ -48,6 +49,7 @@
 			public var ws:WebService = new WebService();
 			public var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro
@@ -238,7 +240,6 @@
 			}
 			
 			public function formateaEntFed():void{
-				var i:int;
 				var cont:int = _xmlEntFed.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -248,7 +249,7 @@
 				entFedObj.removeAll();
 				entFedObj.refresh();
 				
-				for (i = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.nombre = _xmlEntFed.Table[i].NOMBRE;
 					oItem.codigo = _xmlEntFed.Table[i].CODIGO;
@@ -259,7 +260,6 @@
 			}
 			
 			public function formateaColonia():void{
-				var i:int;
 				var cont:int = _xmlColonia.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -269,7 +269,7 @@
 				colObj.removeAll();
 				colObj.refresh();
 				
-				for (i = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.nombre = _xmlColonia.Table[i].NOMBRE;
 					oItem.codigo = _xmlColonia.Table[i].CODIGO;
@@ -280,7 +280,6 @@
 			}
 			
 			public function formateaLocalidad():void{
-				var i:int;
 				var cont:int = _xmlLocalidad.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -290,7 +289,7 @@
 				locObj.removeAll();
 				locObj.refresh();
 				
-				for (i = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.nombre = _xmlLocalidad.Table[i].NOMBRE;
 					oItem.codigo = _xmlLocalidad.Table[i].CODIGO;
@@ -301,7 +300,6 @@
 			}
 			
 			public function formateaMunicipio():void{
-				var i:int;
 				var cont:int = _xmlMunic.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -311,7 +309,7 @@
 				munObj.removeAll();
 				munObj.refresh();
 				
-				for (i = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.nombre = _xmlMunic.Table[i].NOMBRE;
 					oItem.codigo = _xmlMunic.Table[i].CODIGO;
@@ -326,8 +324,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du =  new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				cargaEntFed();
 				alta = false;
 				borrado = false;
@@ -454,7 +453,6 @@
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
 				var Params:Array;
-				var i:int;
 				var cont:int;
 				
 				ws = du.initWs(ws);
@@ -465,13 +463,11 @@
 						
 					cont = dPermisos.elements().length();
 					
-					for(i = 0; i < cont; i++)
-					{
-						switch(dPermisos.Table[i].OPCION.toString())
-						{
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosLocalidades(Application.application.PERFIL_ID)){
+								if (permiso.permisosLocalidades(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;

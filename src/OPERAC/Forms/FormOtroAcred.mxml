@@ -9,6 +9,7 @@
 
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.EventAcred;
 			import Data.DatosAcred;
 			import Data.Utils;
@@ -37,6 +38,7 @@
 			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS
 			public var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			private var vResult:ValidationResultEvent;
 			
 			public function initConexion():void{				
@@ -46,7 +48,7 @@
 			}	
 			
 			public function enviarDatosAcred(formData:DatosAcred):void{
-				if(valida() == true){
+				if(valida()){
 					var i:int;
 					formData.nivelEsc = "";
 					formData.edoCivil = "";
@@ -82,7 +84,6 @@
 			}
 			
 			public function formateaNivel():void{
-				var i:int;
 				var cont:int = _xmlNivelEsc.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -146,15 +147,14 @@
 			}
 			
 			public function init(info:DatosAcred):void{
-				var i:int;
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				permisos();
 				formateaNivel();
 				cboNivelEsc.dataProvider = nivelEscObj;
 				
 				if (info != null){
-					var j:int;
 					switch(info.edoCivil){
 						case "S":  
 							rdbSoltero.selected = true;
@@ -172,7 +172,7 @@
 							rdbUnion.selected = true;
 							break;		
 					}
-					for(i = 0; i < nivelEscObj.length; i++){
+					for(var i:int = 0; i < nivelEscObj.length; i++){
 						if (nivelEscObj[i].id == info.nivelEsc){
 							cboNivelEsc.selectedIndex = i;
 							break;
@@ -187,10 +187,9 @@
 			
 			public function permisos():void{
 				var perfil_id:String = Application.application.cadPerfil;
-				var i:int;
 				var cont:int;
 				
-				if (global.permisosMarcaAcred(Application.application.PERFIL_ID)){
+				if (permiso.permisosMarcaAcred(Application.application.PERFIL_ID)){
 					marca.visible = true;
 					enano.visible = true;
 					cantEnano.visible = true;	

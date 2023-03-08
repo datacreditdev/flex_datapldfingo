@@ -519,7 +519,7 @@
 				//bandMod indica si la informacion de la solicitud puede modificarse
 				if(info.situacion == 'S' || bandMod == true)		
 					formProdSolicInd.prodCredObj.addEventListener(CollectionEvent.COLLECTION_CHANGE, actualizaListaProd);
-				formProdSolicInd.init(cdgAcred, info, 2);
+				formProdSolicInd.init("I", cdgAcred, info, 2);
 				formDatosGralSolic.dtfEntrega.addEventListener(CalendarLayoutChangeEvent.CHANGE, actualizaFecEntre);
 				formDatosGralSolic.dtfSolicitud.addEventListener(CalendarLayoutChangeEvent.CHANGE, actualizaFecSolic);
 				formDatosGralSolic.init(info, 2, estatus);
@@ -565,7 +565,7 @@
 				formProdSolicInd.addEventListener("actualiza", actualizaProdCred);
 				formDatosGralSolic.dtfSolicitud.addEventListener(CalendarLayoutChangeEvent.CHANGE, actualizaFecSolic);
 				formDatosGralSolic.dtfEntrega.addEventListener(CalendarLayoutChangeEvent.CHANGE, actualizaFecEntre);
-				formProdSolicInd.init(cdgAcred, info, 1, coord);
+				formProdSolicInd.init("I", cdgAcred, info, 1, coord);
 				formDatosGralSolic.init(info, 1, estatus);
 				formCalendarioSolic.init(info, 1, estatus);
 				formTasasSolic.init(info, 1, estatus);

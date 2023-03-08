@@ -5,6 +5,7 @@
 	<!--Componente que permite observar el listado de clientes que pertenecen a la solicitud capturada por el usuario-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
@@ -36,6 +37,7 @@
 			public var wsMS:WebService = new WebService();	
 			private var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro
@@ -200,6 +202,7 @@
 			
 			public function initApp():void{
 				global = new Globales();
+				permiso = new Permisos();
 				alta = false;
 				borrado = false;
 				consulta = false;
@@ -363,7 +366,7 @@
 						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
-								if (global.permisosModGrupos(Application.application.PERFIL_ID)){
+								if (permiso.permisosModGrupos(Application.application.PERFIL_ID)){
 									borrado = true;
 									alta = true;
 									edicion = true;

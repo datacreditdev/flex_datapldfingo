@@ -62,6 +62,7 @@
 
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.EventPersona;
 			import Data.DatosPersona;
 			import Data.Utils;
@@ -92,6 +93,7 @@
 			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS	
 			public var du:Utils;
 			private var global:Globales;
+			private var permiso:Permisos;
 			public var bandCURP:Boolean;
 			public var f:Date;
 			public var fecMin:Date;
@@ -263,8 +265,11 @@
 			public function init(info:DatosPersona):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
-				global = new Globales();
+				
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
+				
 				f = Application.application._Current_Fecha;
 				
 				permisos();
@@ -381,7 +386,7 @@
 			}
 			
 			public function permisos():void{
-				if(global.permisosModAcred(Application.application.PERFIL_ID)){
+				if(permiso.permisosModAcred(Application.application.PERFIL_ID)){
 					txtRfc.editable = true;
 					txtCurp.editable = true;
 				}

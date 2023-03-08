@@ -5,6 +5,7 @@
 	<!--Componente de impresion de cheques individuales-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Permisos;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
@@ -46,6 +47,7 @@
 			public var rep:String;
 			public var banco:String;
 			private var global:Globales;
+			private var permiso:Permisos;
 		
 			public var acred:Array;
 			public var chqAcred:Array;
@@ -130,10 +132,9 @@
 			
 			public function calculaRegSel():Number{
 				var listaAcred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
-				var i:int;
 				var cont:Number = 0;
 				
-				for (i = 0; i < listaAcred.length; i++){
+				for (var i:int = 0; i < listaAcred.length; i++){
 					if(listaAcred[i].REGISTRO == true)
 						cont++;
 				}
@@ -145,7 +146,7 @@
 			} 
 			
 			public function enviar():void{
-				if(valida() == true){
+				if(valida()){
 					var cdgAcred:String = dgAcred.selectedItem.CDGCL;
 					var ciclo:String = dgAcred.selectedItem.CICLO;
 					var coord:String = dgAcred.selectedItem.CDGCO;
@@ -208,7 +209,6 @@
 			}
 			
 			public function formateaChequera():void{
-				var i:int;
 				var cont:int = _xmlChq.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -217,7 +217,7 @@
 				oItem.id = "--Seleccionar--";
 				item.push(oItem);
 				
-				for (i = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.id = _xmlChq.Table[i].CODIGO;	
 					item.push(oItem);
@@ -226,7 +226,6 @@
 			}
 			
 			public function formateaListaAcred():void{
-				var i:int;
 				var cont:int = _xmlAcred.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -234,7 +233,7 @@
 				acredObj.removeAll();
 				acredObj.refresh();
 				
-				for (i = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.REGISTRO = false;
 					oItem.CDGCL = _xmlAcred.Table[i].CDGCL;
@@ -248,7 +247,6 @@
 			}
 			
 			public function formateaRegAcred():void{
-				var i:int;
 				var n:int;
 				var cont:int;
 				var ini:Number;
@@ -260,7 +258,7 @@
 				acred = new Array;
 				chqAcred = new Array;
 				
-				for(i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					if(listaAcred[i].REGISTRO == true){
 						acred[n] = listaAcred[i].CDGCL;
 						chqAcred[n] = ini.toString(); 
@@ -303,8 +301,9 @@
 			}
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
+				permiso = new Permisos();
 				permisos();
 				rep = "21";
 				titulo = "Impresión de Cheques";
@@ -333,10 +332,9 @@
 			
 			public function permisos():void{
 				var perfil_id:String = Application.application.cadPerfil;
-				var i:int;
 				var cont:int;
 				
-				if (global.permisosSelecCuenta(Application.application.PERFIL_ID)){
+				if (permiso.permisosSelecCuenta(Application.application.PERFIL_ID)){
 					txtCodCuenta.editable = true;
 					txtCodCuenta.addEventListener(FlexEvent.ENTER, manejaBusqCuenta);
 					btnBusqCta.visible = true;		
