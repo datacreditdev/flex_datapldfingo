@@ -34,13 +34,33 @@
 			public var ctaObj:ArrayCollection = new ArrayCollection();			
 			
 			public function buscarCuenta():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if (txtCodCuenta.text != "" || txtCuenta.text != ""){
 					btnBusqCta.setFocus();
-					initConexion();
+					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
-					wsMS.addEventListener(ResultEvent.RESULT, getInfoCuenta);
-					wsMS.getInfoCuenta.send(this.tipo, txtCodCuenta.text, txtCuenta.text, Application.application.U_ID);
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+						this._xmlCta = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						global.desbloquear();
+						
+						if (_xmlCta.elements().length() > 0){
+							formateaCuenta();
+							dgCuenta.dataProvider = ctaObj;
+						}
+					});
+					params[0] = this.tipo;
+					params[1] = txtCodCuenta.text;
+					params[2] = txtCuenta.text;
+					params[3] = global.obtenerUsuario();
+					params[4] = "";
+					wsCat.getInfoRegistro.send(3, params);
 				}
 			}
 			
@@ -49,37 +69,24 @@
 			}
 			
 			public function enviar():void{
-				if(validar() == true){
+				if(validar()){
 					dispatchEvent(new Event("enviar"));
 					PopUpManager.removePopUp(this);
 				}
 			}
 			
 			public function formateaCuenta():void{
-				var i:int;
 				var cont:int = _xmlCta.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
 				
-				for(i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.CODIGO = _xmlCta.Table[i].CODIGO;
 					oItem.BANCO = _xmlCta.Table[i].BANCO + " - " + _xmlCta.Table[i].NUMERO;
 					item.push(oItem);
 				}
 				ctaObj = new ArrayCollection(item);
-			}
-			
-			private function getInfoCuenta(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getInfoCuenta);
-				this._xmlCta = new XML(event.result);
-				if (_xmlCta.elements().length() > 0){
-					formateaCuenta();
-					dgCuenta.dataProvider = ctaObj;
-				}
 			}
 			
 			public function init(tipo:int):void{

@@ -38,7 +38,7 @@
 					var impreso:int = chkImpreso.selected == true ? 1: 0; 
 					var preimp:int = chkPreimp.selected == true ? 1: 0;
 					
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 							
@@ -47,7 +47,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsRep);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						dgReporte.dataProvider = null;
 						btnExportar.enabled = false;

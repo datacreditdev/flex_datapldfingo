@@ -98,41 +98,101 @@
 			//FUNCION QUE SE ENCARGA DE BUSCAR LOS REGISTROS QUE CONINCIDEN CON LOS CRITERIOS 
 			//DE BUSQUEDA SELECCIONADOS
 			public function buscarAcred():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if (txtCodAcred.text != "" || txtAcred.text != ""){
 					btnBuscarAcred.setFocus();
 					var indice:int = dgGrupos.selectedIndex;
 					var grupo:String = this._xmlGrupos.Table[indice].CODIGO;
 					dgAcred.dataProvider = null;
-					initConexion();
+			
+					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
-					wsMS.addEventListener(ResultEvent.RESULT, getAcred);
-					wsMS.getAcred.send(grupo, txtCodAcred.text, txtAcred.text);
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+						this._xmlAcred = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						global.desbloquear();
+						
+						if (this._xmlAcred.elements().length() > 0){
+							dgAcred.dataProvider = _xmlAcred.Table;
+						}
+						seleccionaAcred();
+					});
+					params[0] = grupo;
+					params[1] = txtCodAcred.text;
+					params[2] = txtAcred.text;
+					wsCat.getInfoAcred.send(3, params);
 				}
 			}
 			
 			public function buscarGrupo():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array; 
+				
 				if (txtCodGrupo.text != "" || txtGrupo.text != ""){
 					btnBuscar.setFocus();
 					dgGrupos.dataProvider = null;
-					initConexion();
+					
+					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
-					wsMS.addEventListener(ResultEvent.RESULT, getGrupos);
-					wsMS.getGrupos.send(Application.application.U_ID, txtCodGrupo.text, txtGrupo.text);
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+						this._xmlGrupos = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						global.desbloquear();
+						
+						if (this._xmlGrupos.elements().length() > 0){
+							dgGrupos.dataProvider = _xmlGrupos.Table;
+						}
+						seleccionaGrupo();
+					});
+					params[0] = global.obtenerUsuario();
+					params[1] = txtCodGrupo.text;
+					params[2] = txtGrupo.text;
+					wsCat.getListado.send(11, params);
 				}	
 			}
 			
 			public function buscarListaAcred(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				var indice:int = dgGrupos.selectedIndex;
 				var grupo:String = this._xmlGrupos.Table[indice].CODIGO;
 				dgAcred.dataProvider = null;
-				initConexion();
+				du.initWsCat(wsCat);
 				du.sCursor();
 			 	if (tipo == 1)
-					Application.application.bloquear();
-				wsMS.addEventListener(ResultEvent.RESULT, getListaAcred);
-				wsMS.getListaAcred.send(grupo);
+					global.bloquear();
+
+				du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+					this._xmlAcred = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					global.desbloquear();	
+					
+					if (this._xmlAcred.elements().length() > 0){
+						dgAcred.dataProvider = _xmlAcred.Table;
+						if(accionAcred == 2){
+							dgAcred.validateNow();
+							dgAcred.verticalScrollPosition = vScroll;
+							dgAcred.selectedIndex = indAcred;
+							this.accionAcred = 0;
+						}
+					}
+					seleccionaAcred();
+				});
+				params[0] = grupo;
+				wsCat.getListado.send(1, params);
 			}
 
 			public function eliminarAcred(event:MouseEvent):void{
@@ -144,9 +204,9 @@
 				var acred:String = _xmlAcred.Table[indAc].CODIGO;
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setEliminaAcred);
-				wsMS.setEliminaAcred.send(Application.application.U_ID, grupo, acred, fechaBaja);
+				wsMS.setEliminaAcred.send(global.obtenerUsuario(), grupo, acred, fechaBaja);
 			}
 			
 			public function eliminarGrupo():void{
@@ -156,41 +216,11 @@
 			private function getAcred(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, getAcred);
 				this._xmlAcred = new XML(event.result);
 				if (this._xmlAcred.elements().length() > 0){
 					dgAcred.dataProvider = _xmlAcred.Table;
-				}
-				seleccionaAcred();
-			}
-			
-			private function getGrupos(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getGrupos);
-				this._xmlGrupos = new XML(event.result);
-				if (this._xmlGrupos.elements().length() > 0){
-					dgGrupos.dataProvider = _xmlGrupos.Table;
-				}
-				seleccionaGrupo();
-			}
-			
-			private function getListaAcred(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();	
-				wsMS.removeEventListener(ResultEvent.RESULT, getListaAcred);
-				this._xmlAcred = new XML(event.result);
-				if (this._xmlAcred.elements().length() > 0){
-					dgAcred.dataProvider = _xmlAcred.Table;
-					if(accionAcred == 2){
-						dgAcred.validateNow();
-						dgAcred.verticalScrollPosition = vScroll;
-						dgAcred.selectedIndex = indAcred;
-						this.accionAcred = 0;
-					}
 				}
 				seleccionaAcred();
 			}
@@ -229,9 +259,9 @@
 					var acred:String = _xmlAcred.Table[indAc].CODIGO;
 			    	initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setEliminaAcred);
-					wsMS.setEliminaAcred.send(Application.application.U_ID, grupo, acred);
+					wsMS.setEliminaAcred.send(global.obtenerUsuario(), grupo, acred);
 			    } 
 			}
 			
@@ -241,9 +271,9 @@
 					var grupo:String = _xmlGrupos.Table[indGr].CODIGO;  
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setEliminaGrupo);
-					wsMS.setEliminaGrupo.send(Application.application.U_ID, grupo);
+					wsMS.setEliminaGrupo.send(global.obtenerUsuario(), grupo);
 			    } 
 			}
 			
@@ -419,7 +449,7 @@
 			private function setEliminaAcred(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();				
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaAcred);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -431,7 +461,7 @@
 			private function setEliminaGrupo(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaGrupo);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")

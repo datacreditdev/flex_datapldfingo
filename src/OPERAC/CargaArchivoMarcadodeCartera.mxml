@@ -59,9 +59,9 @@
         		
 	        	initConexion();
 				du.sCursor();
-				//Application.application.bloquear();
+				//global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionMarcaCartera);
-			    wsMS.setAccionMarcaCartera.send(0, arrGrupo,arrNomGpo,arrInicio, arrCiclo, arrClns, fecha, arrTipoMov, Application.application.U_ID );
+			    wsMS.setAccionMarcaCartera.send(0, arrGrupo,arrNomGpo,arrInicio, arrCiclo, arrClns, fecha, arrTipoMov, global.obtenerUsuario() );
 			}	        
         }
         
@@ -233,7 +233,7 @@
 
 	    private function setAccionMarcaCartera(event:ResultEvent):void{
 			wsMS.disconnect();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionMarcaCartera);
 			wsMS = null;
 			_xmlRes = new XML(event.result.toString());

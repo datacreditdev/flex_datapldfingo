@@ -45,22 +45,26 @@
 				}
 			}
 			
-			private function getListaAcred(event:ResultEvent):void{
-				wsMS.disconnect();
-				CursorManager.removeBusyCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getListaAcred);
-				this._xmlAcred = new XML(event.result);
-			}
-			
 			public function init(grupo:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				this.grupo = grupo;
 				dgAcred.dataProvider = null;
-				Application.application.bloquear();
-				initConexion();
-			 	CursorManager.setBusyCursor();
-				wsMS.addEventListener(ResultEvent.RESULT, getListaAcred);
-				wsMS.getListaAcred.send(this.grupo);
+				
+				du.initWsCat(wsCat);
+			 	du.sCursor();
+				global.bloquear();
+				
+				du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+					this._xmlAcred = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					global.desbloquear();
+				});
+				params[0] = this.grupo;
+				wsCat.getListado.send(1, params);
 			}
 			
 			public function initApp():void{

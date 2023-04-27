@@ -182,11 +182,11 @@
 		public function guardaOrgFond():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionOrgFond);
 			wsMS.setAccionOrgFond.send(tipoAccion, info.cdgOF, info.nombre, info.segNombre, info.aPaterno,
 								 	   info.aMaterno, info.calle, info.cdgEntFed, info.cdgMun, 
-								 	   info.cdgLoc, info.cdgCol, info.telefono, Application.application.U_ID);	 
+								 	   info.cdgLoc, info.cdgCol, info.telefono, global.obtenerUsuario());	 
 		}
 	
 		public function init(tipo:int, codOF:String = null):void{
@@ -288,31 +288,38 @@
 		}
 		
 		public function obtieneColonia():void{
-			var wsMS:WebService = new WebService(); 
-			wsMS = du.initWsMS(wsMS);
+			var wsCat:WebService = new WebService();
+			var params:Array = new Array;
+			 
+			du.initWsCat(wsCat);
 			du.sCursor();
 			
-			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 				_xmlColonia = new XML(evt.result.toString());
 				
 				du.rCursor();
-				du.closeWs(wsMS);
-				wsMS = null;
+				du.closeWs(wsCat);
 				
 				comColGrid.init(_xmlColonia, 70);
 				if(_xmlColonia.elements().length() > 0){
 					comColGrid.addEventListener("seleccionar",selecColonia);
 				}	
 			});
-			wsMS.getColonia.send(info.cdgEntFed, info.cdgMun, info.cdgLoc, "");
+			params[0] = info.cdgEntFed;
+			params[1] = info.cdgMun;
+			params[2] = info.cdgLoc;
+			params[3] = "";
+			wsCat.getCatalogoGral.send(5, params);
 		}
 			
 		public function obtieneLocalidad():void{
-			var wsMS:WebService = new WebService();
-			wsMS = du.initWsMS(wsMS);
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			du.initWsCat(wsCat);
 			du.sCursor();
 			
-			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 				_xmlLocalidad = new XML(evt.result.toString());
 					
 				comLocGrid.init(_xmlLocalidad, 90);	
@@ -321,17 +328,22 @@
 					comLocGrid.addEventListener("verificar",verifLocalidad);
 				}
 				du.rCursor();
-				du.closeWs(wsMS);
-				wsMS = null;		
+				du.closeWs(wsCat);	
 			});
-			wsMS.getLocalidad.send(info.cdgEntFed, info.cdgMun, "");
+			params[0] = info.cdgEntFed;
+			params[1] = info.cdgMun;
+			params[2] = "";
+			wsCat.getCatalogoGral.send(4, params);
 		}
 			
 		public function obtieneMunicipio():void{
-			initConexion();
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			du.initWsCat(wsCat);
 			du.sCursor();
 				
-			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 				_xmlMunicipio = new XML(evt.result.toString());
 					
 				comMunGrid.init(_xmlMunicipio, 130);
@@ -340,33 +352,36 @@
 					comMunGrid.addEventListener("verificar",verifMunic);
 				}
 				du.rCursor();
-				du.closeWs(wsMS);
-				wsMS = null;	
+				du.closeWs(wsCat);
 			});
-			wsMS.getMunicipio.send(info.cdgEntFed, "");
+			params[0] = info.cdgEntFed;
+			params[1] = "";
+			wsCat.getCatalogoGral.send(3, params);
 		}
 			
 		public function registraInfoOF():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
 			tipoAccion = 1;
 			this.title = "Nuevo";
 			
 			txtOF.setFocus();
 			
-			initConexion();
+			du.initWsCat(wsCat);
 			du.sCursor();
 				
-			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+			du.ejecutaWsMethod(wsCat, function(evt:ResultEvent):void {											
 				var _xmlCod:XML = new XML(evt.result.toString());
 				
 				du.rCursor();
-				du.closeWs(wsMS);
-				wsMS = null;
+				du.closeWs(wsCat);
 					
 				if(_xmlCod.elements().length() > 0){
 					txtOF.text = _xmlCod.Table[0].CDGORF;
 				}
 			});
-			wsMS.getCodigoOrgFond.send();
+			wsCat.getInfoRegistro.send(17, params);
 		}
 		
 		private function selecColonia(event:Event):void{
@@ -407,7 +422,7 @@
 		private function setAccionOrgFond(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionOrgFond);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

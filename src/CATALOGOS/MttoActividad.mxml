@@ -92,10 +92,10 @@
 		public function guardaActividad():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionActividad);
 			wsMS.setAccionActividad.send(tipoAccion, info.cdgSec, info.cdgGiro, info.codigo, info.nombre, 
-									     Application.application.U_ID);	
+									     global.obtenerUsuario());	
 		}
 	
 		public function init(tipo:int, codSec:String, sector:String, codGiro:String, giro:String, codigo:String = null):void{
@@ -144,7 +144,7 @@
 		private function setAccionActividad(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionActividad);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

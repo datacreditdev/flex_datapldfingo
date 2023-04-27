@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="368" height="260" title="Agregar/Editar Perfil" showCloseButton="true" close="cerrar()" creationPolicy="all" creationComplete="init()">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" 
+	width="368" height="260" title="Agregar/Editar Perfil" showCloseButton="true" 
+	close="cerrar()" creationPolicy="all" creationComplete="init()">
 	
 	<mx:Script>
 		<![CDATA[
@@ -15,10 +17,10 @@
 		import mx.rpc.soap.WebService;
 		
 		private var info:DatosPerfil;
-		public var ws:WebService;
-		public var du:Utils;
-		public var global:Globales;
+		private var du:Utils;
+		private var global:Globales;	
 		public var tipoAccion:int;
+		public var titulo:String;
 		
 		public function cargaInfoPerfil(codigo:String, nombre:String):void{
 			tipoAccion = 2;
@@ -34,7 +36,9 @@
 		}				
 		
 		private function guardar():void{
-			if(valida() == false)
+			var wsAdmin:WebService = new WebService;
+			
+			if(!valida())
 				return;
 			
 			info = new DatosPerfil();							
@@ -42,60 +46,32 @@
 			info.codigo = txtCodigo.text;
 			info.nombre	= txtNombre.text;				
 			
-			var aPerfil:Array = new Array();								
-			aPerfil[0] = info.codigo;
-			aPerfil[1] = info.nombre;	
-			
-			ws = new WebService();	
-			ws = du.initWs(ws);
+			du.initWsAdmin(wsAdmin);
 			du.sCursor();
-			ws = du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
+			
+			du.ejecutaWsMethod(wsAdmin,function(evt:ResultEvent):void{
 				var res:String = evt.result.toString();
-				ws = du.closeWs(ws);
+				
+				du.closeWs(wsAdmin);
 				du.rCursor();
 				
-				if(res.substr(0,1) == "1")	
-				{
-					cerrar();
-					//Params[0] = Application.application.SESSION_ID;
-					//Params[1] = Application.application._Current_Mod_Id;
-					//Params[2] = 4;
-
-					//if(TipoAccion == 1)
-					//{
-					//	du.showExito("Perfil Agregado exitosamente");
-						/*ws = du.initWs(ws);
-						du.sCursor();
-						du.ejecutaWsMethod(ws,function(evt_b:ResultEvent):void{
-							du.rCursor();
-							ws = du.closeWs(ws);
-						});
-						Params[3] = 'Alta de perfil' + txtNombre.text;
-						ws.ESLoginMethods.send(5,Params);*/
-					//	}						
-					//else
-					//{
-					//	du.showExito("Perfil modificado exitosamente");
-						/*ws = du.initWs(ws);
-						du.sCursor();
-						du.ejecutaWsMethod(ws,function(evt_b:ResultEvent):void{
-							du.rCursor();
-							ws = du.closeWs(ws);
-						});
-						Params[3] = 'Modificación de perfil' + txtNombre.text;
-						ws.ESLoginMethods.send(5,Params);*/
-					//}		
-					//Cerrar();				
+				if(res.substr(0,1) == "1"){
+					Alert.show("Proceso finalizado exitosamente",titulo,4,null,null,global.iInfo);		
+					cerrar();	
 				}
 				else
-					Alert.show(res.substr(2,res.length - 1),"Mantenimiento de Perfil",4,null,null,global.iAlert);		
+					Alert.show(res.substr(2,res.length - 1),titulo,4,null,null,global.iAlert);		
 			});
-			ws.ES_Admin_Perfiles.send(tipoAccion, aPerfil);						
+			if(tipoAccion == 1)
+				wsAdmin.setAltaPerfil.send(info.codigo, info.nombre);
+			else if(tipoAccion == 2)
+				wsAdmin.setCambioPerfil.send(info.codigo, info.nombre);					
 		}
 		
 		private function init():void{
 			global = new Globales();
 			du = new Utils();
+			titulo = "Mantenimiento de Perfil";
 		}
 		
 		public function registraInfoPerfil():void{
@@ -103,14 +79,13 @@
 			txtCodigo.setFocus();
 		} 
 		
-		private function valida():Boolean
-		{
+		private function valida():Boolean{
 			if(txtCodigo.text == ""){
-				Alert.show("Debe capturar el código del perfil","Mantenimiento de Perfil",4,null,null,global.iAlert);
+				Alert.show("Debe capturar el código del perfil",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(txtNombre.text == ''){
-				Alert.show("Debe capturar el nombre del perfil","Mantenimiento de Perfil",4,null,null,global.iAlert);
+				Alert.show("Debe capturar el nombre del perfil",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			return true;

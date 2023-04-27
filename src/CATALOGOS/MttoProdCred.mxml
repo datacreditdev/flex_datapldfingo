@@ -90,7 +90,7 @@
 		private function guardaProd():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionProd);
 			wsMS.setAccionProd.send(tipoAccion, codTipoProd, info.cdgProd, info.nombreProd, info.moneda, info.tipoCred,
 									info.valido, info.montoMin, info.montoMax, info.baseCalc, info.periodicidad, info.multPerio,
@@ -212,7 +212,7 @@
 		private function setAccionProd(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionProd);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1")

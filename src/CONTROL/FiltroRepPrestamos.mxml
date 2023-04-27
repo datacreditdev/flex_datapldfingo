@@ -83,7 +83,7 @@
 			}		
 			
 			public function cargaSucursal():void{
-				_xmlCoord = Application.application._xmlCoord.Table.(CDGRG.toString().toLowerCase() == obtieneRegion().toLowerCase());
+				_xmlCoord = Application.application._xmlSuc.Table.(CDGRG.toString().toLowerCase() == obtieneRegion().toLowerCase());
 					
 				coordObj.removeAll();
 				coordObj.refresh();	
@@ -160,7 +160,7 @@
 						var consulta:String;
 						var id:String = "&id=" + rep;
 						var cartera:String = "&tipoCart=" + tipoCart.selectedValue.toString();
-						var usuario:String = "&usuario=" + Application.application.U_ID;
+						var usuario:String = "&usuario=" + global.obtenerUsuario();
 						var nomUsuario:String = "&nomUsuario=" + Application.application.NOM_U_ID;
 						var region:String = "&region=" + obtieneRegion();
 						var coord:String = "&coord=" + obtieneSucursal();

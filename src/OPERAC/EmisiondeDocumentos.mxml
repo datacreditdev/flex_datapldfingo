@@ -80,7 +80,7 @@
 						
 						codAcred = "&acred=" + acred;
 						infoCiclo = "&ciclo=" + ciclo;
-						usuario = "&usuario=" + Application.application.U_ID;	
+						usuario = "&usuario=" + global.obtenerUsuario();	
 						
 						i = 0;	
 						listData = new Array();	 	
@@ -121,7 +121,7 @@
 						Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);	
 				});
 				wsMS.setEmisionDocumentosInd.send(acred, ciclo, "I", anexo, pagos, garantia, contrato, pagare, 
-											      Application.application.U_ID);
+											      global.obtenerUsuario());
 			}
 		}
 		

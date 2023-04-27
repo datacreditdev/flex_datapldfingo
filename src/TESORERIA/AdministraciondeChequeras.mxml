@@ -86,7 +86,7 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 							
 					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {											
 						_xmlCta = new XML(event.result);
@@ -101,7 +101,7 @@
 							activaContChq(true);	
 						}
 						else{
-							Application.application.desbloquear();
+							global.desbloquear();
 							txtCuenta.text = "";
 							Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 						}
@@ -117,7 +117,7 @@
 				if (txtCodCuenta.text != ""){
 					dgChequera.dataProvider = null;
 					if(tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 					du.initWsCat(wsCat);
 					du.sCursor();
 					
@@ -126,7 +126,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if(_xmlChq.elements().length() > 0){
 							dgChequera.dataProvider = _xmlChq.Table;
@@ -140,7 +140,7 @@
 						seleccionaChq();
 					});
 					params[0] = txtCodCuenta.text; 
-					params[1] = Application.application.U_ID;
+					params[1] = global.obtenerUsuario();
 					wsCat.getListado.send(27, params);
 				}	
 			}
@@ -175,7 +175,7 @@
 					var coord:String = dgChequera.selectedItem.CDGCO; 
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setEliminaChequera);
 					wsMS.setEliminaChequera.send(codigo, cuenta, coord);
 			    } 
@@ -283,7 +283,7 @@
 			private function setEliminaChequera(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaChequera);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")

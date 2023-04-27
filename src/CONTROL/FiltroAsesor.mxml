@@ -34,7 +34,7 @@
 			public var asesorObj:ArrayCollection = new ArrayCollection();
 			
 			public var wsMS:WebService;
-			public var du:Utils;
+			private var du:Utils;
 			private var global:Globales;
 			
 			public function agregaInicial(codigo:String, texto:String):Object{
@@ -45,30 +45,35 @@
 			}		
 			
 			public function cargaAsesor():void{
-				initConexion();
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
 				du.sCursor();
 						
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlAsesor = new XML(evt.result.toString());
 						
 					du.rCursor();
-					du.closeWs(wsMS);	
+					du.closeWs(wsCat);	
 						
 					asesorObj.removeAll();
 					asesorObj.refresh();
 					asesorObj.addItem(agregaInicial("000000", "--Todos--"))	
 						
-						formateaAsesor();
+					formateaAsesor();
+					
 					if(_xmlAsesor.elements().length() == 1){
 						cboAsesor.selectedIndex = 1;
 						cboAsesor.enabled = false;
 					}
 				});
-				wsMS.getPromotor.send(cboCoord.selectedItem.codigo);
+				params[0] = cboCoord.selectedItem.codigo;
+				wsCat.getCatalogoGral.send(24, params);
 			}		
 			
 			public function cargaCoord():void{
-				_xmlCoord = Application.application._xmlCoord.Table.(CDGRG.toString().toLowerCase() == cboRegion.selectedItem.codigo.toString().toLowerCase());
+				_xmlCoord = Application.application._xmlSuc.Table.(CDGRG.toString().toLowerCase() == cboRegion.selectedItem.codigo.toString().toLowerCase());
 				
 				coordObj.removeAll();
 				coordObj.refresh();	
@@ -98,12 +103,11 @@
 			}				
 					
 			public function formateaAsesor():void{
-				var i:int;
 				var cont:int = _xmlAsesor.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
 				
-				for(i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.codigo = _xmlAsesor.Table[i].CODIGO;
 					oItem.nombre = _xmlAsesor.Table[i].NOMBREC;
@@ -113,12 +117,11 @@
 			}			
 						
 			public function formateaCoord():void{
-				var i:int;
 				var cont:int = _xmlCoord.length();
 				var oItem:Object;
 				var item:Array = new Array;
 				
-				for(i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.codigo = _xmlCoord.CODIGO[i].toString();
 					oItem.nombre = _xmlCoord.NOMBRE[i].toString();
@@ -128,12 +131,11 @@
 			}			
 			
 			public function formateaRegion():void{
-				var i:int;
 				var cont:int = _xmlReg.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
 				
-				for(i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.codigo = _xmlReg.Table[i].CODIGO;
 					oItem.nombre = _xmlReg.Table[i].NOMBRE;

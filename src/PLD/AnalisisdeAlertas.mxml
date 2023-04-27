@@ -50,7 +50,7 @@
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				dgReg.dataProvider = null;
 				
@@ -59,7 +59,7 @@
 						
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 						
 					if(_xmlInfo.elements().length() > 0){
 						formateaInfo();

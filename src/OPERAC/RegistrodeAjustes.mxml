@@ -54,14 +54,14 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 							
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 						_xmlInfo = new XML(evt.result);
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 				
 						if (_xmlInfo.elements().length() > 0){
 							saldoCap = Number(_xmlInfo.Table[0].CAPITAL);
@@ -134,7 +134,7 @@
 							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
 					}); 
 					wsMS.setRegistroAjuste.send(codigo, ciclo, tipoCred, fecha, capital, interes, moratorios, justifica, observaciones, 
-												Application.application.U_ID);
+												global.obtenerUsuario());
 				}
 			}
 			

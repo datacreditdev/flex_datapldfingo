@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="300" height="500" backgroundAlpha="1.0" backgroundColor="#FFFFFF"
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="580" height="450" backgroundAlpha="1.0" backgroundColor="#FFFFFF"
 	 creationPolicy="all" xmlns:control="CONTROL.*" creationComplete="initApp()">
 	<mx:Script>
 		<![CDATA[
 			public function initApp():void{
-				comFiltroRep.init("1","REPORTE DE SITUACIÓN DE CARTERA", "");			
+				comFiltroRep.init("1","Reporte de situación de cartera", "");			
 			}		
 		]]>
 	</mx:Script>

@@ -36,7 +36,6 @@ package Data
 		public var frm_38:CierredeDia;
 		public var frm_39:AgendaDiariadeSucursal;
 		public var frm_45:SimuladordeCobro;
-		public var frm_47:DispersionReferenciada;
 		public var frm_48:ReimpresiondeOrdenesdePago;
 		public var frm_49:ImpresiondeBurodeCredito;
 		public var frm_50:AdministraciondeOrdenesdePago;

@@ -76,13 +76,13 @@
 				permisos();
 				
 				du.initWsCat(wsCat);
-				Application.application.bloquear();
+				global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlAcred = new XML(evt.result);	
 						
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					if (_xmlAcred.elements().length() > 0)
 						llenaRegistros();
@@ -144,9 +144,9 @@
 			public function guardaAcred():void{
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionAcred);
-				wsMS.setAccionAcred.send(tipoAccion, Application.application.U_ID, this.grupo, info.codigo, 
+				wsMS.setAccionAcred.send(tipoAccion, global.obtenerUsuario(), this.grupo, info.codigo, 
 											 info.cdgco, info.nombre, info.segNombre, info.aPaterno, info.aMaterno, 
 											 info.sexo, info.fecha, info.cdgNacPais, info.cdgNacEntFed, info.cdgNac, info.rfc, 
 											 info.curp, info.ife, info.calle, info.noInt, info.noExt, info.entreCalles, info.telefono, 
@@ -315,8 +315,8 @@
 						var id:String = "&id=19";
 						var tipo:String = "&tipo=C";
 						var codAcred:String = "&acred=" + acred;
-						var usuario:String = "&usuario=" + Application.application.U_ID;
-						var nomUsuario:String = "&nomUsuario=" + Application.application.lblUser.text;
+						var usuario:String = "&usuario=" + global.obtenerUsuario();
+						var nomUsuario:String = "&nomUsuario=" + global.obtenerNombreUsuario();
 						var sic:String = "&sic=CC";
 						
 						consulta = global.urlPdf + id + codAcred + usuario + nomUsuario + tipo + sic;		
@@ -327,7 +327,7 @@
 						Alert.show(res,titulo,4,null,null,global.iAlert);
 					this.removeEventListener("consultar", procesarConsulta);
 				});
-				wsCC.getEjecutaConsulta.send("C", acred, "I", Application.application.U_ID);
+				wsCC.getEjecutaConsulta.send("C", acred, "I", global.obtenerUsuario());
 			}
 			
 			public function registraInfoAcred():void{
@@ -353,7 +353,7 @@
 			private function setAccionAcred(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionAcred);
 				var res:String = event.result.toString();
 				var codigo:String;
@@ -415,7 +415,7 @@
 						else
 							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
 					});
-					wsMS.getValidaSituacionAcred.send(acred, Application.application.U_ID);
+					wsMS.getValidaSituacionAcred.send(acred, global.obtenerUsuario());
 				}
 				else
 					guardaAcred();

@@ -50,32 +50,59 @@
 			
 			//funcion que permite buscar las ordenes de pago entregadas
 			public function buscarOrdenPago():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if(valida()){
 					dgAcred.dataProvider = null;
-					initConexion();
+					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
-					wsMS.addEventListener(ResultEvent.RESULT, getAcredOrdenPago);
-					wsMS.getAcredOrdenPago.send(cboBanco.selectedItem.CODIGO, dtfFecha.text);
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+						_xmlAcred = XML(event.result.toString());
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						global.desbloquear();
+						
+						if(_xmlAcred.elements().length() > 0){
+							formateaListaAcred(event.result.toString());
+							dgAcred.dataProvider = acredObj;
+						}
+						else
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					});
+					params[0] = cboBanco.selectedItem.CODIGO;
+					params[1] = dtfFecha.text;
+					wsCat.getListado.send(39, params);
 				}	
 			}
 			
 			public function cargaBanco():void{
-				initConexion();
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
 				du.sCursor();
-				//bloquear();		
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlCta = XML(evt.result.toString());
 						
 					du.rCursor();
-					du.closeWs(wsMS);	
-					//desbloquear();
+					du.closeWs(wsCat);	
+					
 					if(_xmlCta.elements().length() > 0){
 						formateaCuenta(evt.result.toString());
 						cboBanco.dataProvider = ctaObj;
 					}
 				});
-				wsMS.getInfoCuenta.send(0, "", "", Application.application.U_ID);
+				params[0] = 0;
+				params[1] = "";
+				params[2] = "";
+				params[3] = global.obtenerUsuario();
+				params[4] = "";
+				wsCat.getInfoRegistro.send(3, params);
 			}
 			
 			public function cargaTipoMov():void{
@@ -138,7 +165,7 @@
 					else	
 						Alert.show("No es posible generar el documento de " + mov + " de Órdenes de Pago.\n\nVerifique los criterios de selección.",titulo,4,null,null,global.iAlert);	
 				});
-				wsMS.setAccionModOrdenPago.send(tipo, grupo, ciclo, acred, cheque, fecha, Application.application.U_ID, cuenta);
+				wsMS.setAccionModOrdenPago.send(tipo, grupo, ciclo, acred, cheque, fecha, global.obtenerUsuario(), cuenta);
 			}
 			
 			public function formateaCuenta(cadInfo:String):void{
@@ -206,20 +233,6 @@
 						n++;
 					}
 				}
-			}
-			
-			private function getAcredOrdenPago(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getAcredOrdenPago);
-				_xmlAcred = XML(event.result.toString());
-				if(_xmlAcred.elements().length() > 0){
-					formateaListaAcred(event.result.toString());
-					dgAcred.dataProvider = acredObj;
-				}
-				else
-					Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 			}
 			
 			public function initApp():void{

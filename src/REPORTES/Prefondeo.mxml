@@ -37,14 +37,14 @@
 			public function generar():void{
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 						
 				du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
 					_xmlRep = new XML(evt.result.toString());
 					
 					du.rCursor();
 					du.closeWs(wsRep);
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					dgReporte.dataProvider = null;
 					btnExportar.enabled = false;

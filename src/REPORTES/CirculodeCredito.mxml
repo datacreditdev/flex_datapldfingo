@@ -35,7 +35,7 @@
 					var fecAux:Date = dtfFecha.selectedDate;		
 					fecIni = global.formatoFecha(new Date(fecAux.fullYear,fecAux.month,fecAux.date - 6));
 					fecFin = dtfFecha.text; 
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 								
@@ -58,14 +58,14 @@
 							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 						}
 					});
-					wsMS.getRepCirculoCredito.send(fecIni, fecFin, Application.application.U_ID);
+					wsMS.getRepCirculoCredito.send(fecIni, fecFin, global.obtenerUsuario());
 				}
 			}
 		
 			//Una vez completado el proceso, se ejecuta este metodo
 			private function complete(event:Event):void {
 				 ExternalInterface.call("console.log", "complete, se ha terminado de generar el archivo");
-				 Application.application.desbloquear();	
+				 global.desbloquear();	
 			}
 			public function initApp():void{
 				global = new Globales();

@@ -245,20 +245,20 @@
 								else
 									Alert.show("No se encontraron registros de acreditados que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 							});
-							wsMS.getInfoControlAcred.send(tipoAccion, grupo, ciclo, semana, Application.application.U_ID);	
+							wsMS.getInfoControlAcred.send(tipoAccion, grupo, ciclo, semana, global.obtenerUsuario());	
 						}
 						else 
 							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 					});
-					wsMS.getInfoControlSemanal.send(grupo, ciclo, semana, Application.application.U_ID);
+					wsMS.getInfoControlSemanal.send(grupo, ciclo, semana, global.obtenerUsuario());
 				}
 			}
 			
 			public function calculaAport():void{
 				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
-				var i:int;
 				var aport:Number = 0;
-				for (i = 0; i < acred.length; i++){
+				
+				for(var i:int = 0; i < acred.length; i++){
 					aport += Number(acred[i].aport);
 				}
 				txtAport.text = aport.toString();	
@@ -270,12 +270,11 @@
 				var vScroll:Number = dgAcred.verticalScrollPosition;
 				
 				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
-				var i:int;
 				var pagoTeo:Number;
 				var pagoReal:Number;
 				var dif:Number = 0;
 				
-				for (i = 0; i < acred.length; i++){
+				for(var i:int = 0; i < acred.length; i++){
 					pagoTeo = Number(acred[i].pagoTeo);
 					pagoReal = Number(acred[i].pagoReal);
 					dif = pagoTeo - pagoReal;
@@ -288,9 +287,9 @@
 			
 			public function calculaDev():void{
 				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
-				var i:int;
 				var devolucion:Number = 0;
-				for (i = 0; i < acred.length; i++){
+				
+				for (var i:int = 0; i < acred.length; i++){
 					devolucion += Number(acred[i].devolucion);
 				}
 				txtDev.text = devolucion.toString();	
@@ -304,9 +303,9 @@
 			
 			public function calculaPagoReal():void{
 				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
-				var i:int;
 				var pagoReal:Number = 0;
-				for (i = 0; i < acred.length; i++){
+				
+				for (var i:int = 0; i < acred.length; i++){
 					pagoReal += Number(acred[i].pagoReal);
 				}
 				txtPagoReal.text = pagoReal.toString();
@@ -315,9 +314,9 @@
 						
 			public function calculaPagoTeorico():void{
 				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
-				var i:int;
 				var pagoTeo:Number = 0;
-				for (i = 0; i < acred.length; i++){
+				
+				for(var i:int = 0; i < acred.length; i++){
 					pagoTeo += Number(acred[i].pagoTeo);
 				}
 				txtPagoTeo.text = global.formatoDecimalSinSep(pagoTeo.toString());
@@ -325,9 +324,9 @@
 			
 			public function calculaAhorro():void{
 				var acred:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
-				var i:int;
 				var ahorro:Number = 0;
-				for (i = 0; i < acred.length; i++){
+				
+				for(var i:int = 0; i < acred.length; i++){
 					ahorro += Number(acred[i].ahorro);
 				}
 				txtAhorro.text = ahorro.toString();	
@@ -368,14 +367,12 @@
 			
 			//funcion que realiza la carga de datos 
 			public function formateaAcred():void{
-				var i:int;
 				var cont:int = _xmlAcred.elements().length();
 				var oItem:Object;
 				
 				acredObj.removeAll();
 				
-				for(i = 0; i < cont; i++)
-				{
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.numero = i + 1;
 					oItem.puesto = _xmlAcred.Table[i].PUESTO;
@@ -420,10 +417,8 @@
 
 					var cont:int = listaAcred.length;
 					var contAux:int;
-					var i:int;
-					var j:int; 
 						
-					for(i = 0; i < cont; i++){
+					for(var i:int = 0; i < cont; i++){
 						acred[i] = listaAcred[i].codigo;
 						pagoTeo[i] = Number(listaAcred[i].pagoTeo);
 						pagoReal[i] = Number(listaAcred[i].pagoReal);
@@ -432,7 +427,7 @@
 						ahorro[i] = Number(listaAcred[i].ahorro);
 						
 						contAux = asistObj.length;
-						for(j = 0; j < contAux; j++){
+						for(var j:int = 0; j < contAux; j++){
 		   					if (asistObj[j].descripcion.toString() == listaAcred[i].asistencia)
 		   						asist[i] = asistObj[j].id.toString();
 		   				}
@@ -480,13 +475,13 @@
 			public function guardaControlSemanal():void{
 				if(formateaRegAcred() == true){ //valida que todos los clientes cuenten con su asistencia registrada
 					initConexion();
-					Application.application.bloquear();
+					global.bloquear();
 					CursorManager.setBusyCursor();
 					//Servicio invocado en la etapa de registro del control semanal
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionControlSemanal);
 					wsMS.setAccionControlSemanal.send(tipoAccion, txtCodGrupo.text, txtCiclo.text, semana, Number(txtPagoTeo.text), Number(txtPagoReal.text),
 													  Number(txtAport.text), Number(txtDev.text), Number(txtAhorro.text), Number(txtMora.text), 
-													  txtObs.text, acred, pagoTeo, pagoReal, aport, devolucion, ahorro, asist, Application.application.U_ID);
+													  txtObs.text, acred, pagoTeo, pagoReal, aport, devolucion, ahorro, asist, global.obtenerUsuario());
 				}
 			}
 			
@@ -562,7 +557,7 @@
 			private function setAccionControlSemanal(event:ResultEvent):void{
 				wsMS.disconnect();
 				CursorManager.removeBusyCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionControlSemanal);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){
@@ -580,8 +575,7 @@
 				listaAcred = dgAcred.dataProvider as ArrayCollection;
 				cont = listaAcred.length;
 				
-				for(var i:int = 0; i < cont; i++)
-				{
+				for(var i:int = 0; i < cont; i++){
 					if(listaAcred[i].asistencia == null){
 						Alert.show("La asistencia del acreditado " + listaAcred[i].nombre + " no fue registrada.\n\nCapture los datos requeridos.",titulo,4,null,null,global.iAlert);
 						return false;

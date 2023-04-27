@@ -75,7 +75,7 @@
 		public function guardaTipoProd():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionTipoProd);
 			wsMS.setAccionTipoProd.send(tipoAccion, info.cdgTPC, info.nombreTPC);	
 		}
@@ -115,7 +115,7 @@
 		private function setAccionTipoProd(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionTipoProd);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

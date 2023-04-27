@@ -30,23 +30,30 @@
 		public var du:Utils;
 		
 		public function cargaInfoCol(cdgCol:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
 			tipoAccion = 2; 
 			this.title = "Edición";
 			
-			initConexion();
+			du.initWsCat(wsCat);
 			du.sCursor();
 					
-			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 				_xmlCol = new XML(evt.result.toString()); 
 					
 				du.rCursor();
-				du.closeWs(wsMS);
+				du.closeWs(wsCat);
 					
 				if (_xmlCol.elements().length() > 0){
 					llenaRegistros();
 				} 	
 			});
-			wsMS.getInfoCol.send(txtCdgEntFed.text, txtCdgMunic.text, txtCdgLoc.text, cdgCol);
+			params[0] = txtCdgEntFed.text;
+			params[1] = txtCdgMunic.text;
+			params[2] = txtCdgLoc.text;
+			params[3] = cdgCol;
+			wsCat.getInfoRegistro.send(10, params);
 		}
 		
 		public function cerrar():void{
@@ -66,7 +73,7 @@
 		public function guardaCol():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionCol);
 			wsMS.setAccionCol.send(tipoAccion, txtCdgEntFed.text, txtCdgMunic.text, txtCdgLoc.text, 
 								   info.codigo, info.colonia, info.codPostal, info.pobreza); 			
@@ -130,7 +137,7 @@
 		private function setAccionCol(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCol);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

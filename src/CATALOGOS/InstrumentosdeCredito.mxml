@@ -95,14 +95,14 @@
 					du.initWsCat(wsCat);
 					du.sCursor();
 					if(tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 						
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{	
 						_xmlInst = new XML(evt.result);
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlInst.elements().length() > 0){
 							dgInstrumento.dataProvider = _xmlInst.Table;
@@ -129,14 +129,14 @@
 				du.initWsCat(wsCat);
 				du.sCursor();
 			 	if (tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
 					_xmlTasa = new XML(evt.result);
 					
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 				
 					if (_xmlTasa.elements().length() > 0){
 						dgTasa.dataProvider = _xmlTasa.Table;
@@ -192,7 +192,7 @@
 					var codTasa:String = dgTasa.selectedItem.CODIGO;  
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionTasa);
 					wsMS.setAccionTasa.send(3, codInst, codTasa, "", "", "",
                                  			 "", "", "", "", "");
@@ -204,7 +204,7 @@
 					var codInst:String = dgInstrumento.selectedItem.CODIGO;
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionInst);
 					wsMS.setAccionInst.send(3, codInst, "", "", "", "", "", "", "", "");
 			    } 
@@ -351,7 +351,7 @@
 			private function setAccionTasa(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionTasa);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -363,7 +363,7 @@
 			private function setAccionInst(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionInst);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")

@@ -81,21 +81,21 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlPers = new XML(evt.result);
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlPers.elements().length() > 0){
 							dgPers.dataProvider = _xmlPers.Table;
 						}
 						seleccionaPers(); 	
 					});
-					params[0] = Application.application.U_ID;
+					params[0] = global.obtenerUsuario();
 					params[1] = txtCodPers.text;
 					params[2] = txtPaterno.text;
 					params[3] = txtMaterno.text;

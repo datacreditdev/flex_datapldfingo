@@ -47,6 +47,9 @@
 		private var vResult:ValidationResultEvent;
 		
 		public function cargaInfoDisp(tipo:int, codOF:String, orgFond:String, codLC:String, lineaCred:String, codDisp:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
 			tipoAccion = tipo; 
 			this.title = "Edición";
 			//Datos de la Disposicion
@@ -54,20 +57,24 @@
 			info.cdgLC = codLC;
 			info.cdgDisp = codDisp;
 			
-			initConexion();
+			du.initWsCat(wsCat);
 			du.sCursor();
 			
-			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 				_xmlDisp = new XML(evt.result.toString()); 
 					
 				du.rCursor();
-				du.closeWs(wsMS);
+				du.closeWs(wsCat);
 					
 				if (_xmlDisp.elements().length() > 0){
 					llenaRegistros();
 				} 	
 			});
-			wsMS.getInfoDisposicion.send(codOF, codLC, codDisp);
+			params[0] = codOF;
+			params[1] = codLC;
+			params[2] = codDisp;
+			params[3] = "";
+			wsCat.getInfoRegistro.send(13, params);
 		}
 		
 		public function cerrar():void{
@@ -141,12 +148,12 @@
 		public function guardaDisposicion():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionDisposicion);
 			wsMS.setAccionDisposicion.send(tipoAccion, info.cdgOF, info.cdgLC, info.cdgDisp, info.contrato, 
 									       info.descripcion, info.fecDisp, info.cantidad, info.plazo, 
 									       info.pagoCap, info.pagoInt, info.graciaCap, info.graciaInt, 
-									       Application.application.U_ID);	
+									       global.obtenerUsuario());	
 		}
 	
 		public function init(tipo:int, codOF:String, orgFond:String, codLC:String, lineaCred:String, codDisp:String = null):void{
@@ -179,7 +186,6 @@
 		}	
 		
 		public function llenaRegistros():void{
-			var i:int;
 			txtCodDisp.setFocus();
 			
 			txtCodDisp.text = info.cdgDisp;
@@ -188,8 +194,7 @@
 			txtDisp.text = _xmlDisp.Table[0].FDISP;
 			txtCantidad.text = _xmlDisp.Table[0].CANTIDAD;
 			txtPlazo.text = _xmlDisp.Table[0].PLAZO;
-			for(i = 0; i < pagoObj.length; i++)
-			{
+			for(var i:int = 0; i < pagoObj.length; i++){
 				if(pagoObj[i].codigo == _xmlDisp.Table[0].PAGOCAP.toString())
 					cboPagoCap.selectedIndex = i;
 				if(pagoObj[i].codigo == _xmlDisp.Table[0].PAGOINT.toString())
@@ -200,7 +205,9 @@
 		}
 			
 		public function registraInfoDisp(tipo:int, codOF:String, orgFond:String, codLC:String, lineaCred:String):void{
-			var i:int;
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
 			tipoAccion = tipo;
 			this.title = "Nuevo";
 			info.cdgOF = codOF;
@@ -208,21 +215,19 @@
 			
 			txtCodDisp.setFocus();
 			
-			initConexion();
+			du.initWsCat(wsCat);
 			du.sCursor();
 				
-			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+			du.ejecutaWsMethod(wsCat, function(evt:ResultEvent):void {											
 				var _xmlCod:XML = new XML(evt.result.toString());
 				
 				du.rCursor();
-				du.closeWs(wsMS);
-				wsMS = null;
+				du.closeWs(wsCat);
 					
 				if(_xmlCod.elements().length() > 0){
 					txtCodDisp.text = _xmlCod.Table[0].CDGDISP;
 					txtPlazo.text = _xmlCod.Table[0].PLAZO;
-					for(i = 0; i < pagoObj.length; i++)
-					{
+					for(var i:int = 0; i < pagoObj.length; i++){
 						if(pagoObj[i].codigo == _xmlCod.Table[0].PAGOCAP.toString())
 							cboPagoCap.selectedIndex = i;
 						if(pagoObj[i].codigo == _xmlCod.Table[0].PAGOINT.toString())
@@ -232,13 +237,15 @@
 					txtGraciaInt.text = _xmlCod.Table[0].GRACIAINT;
 				}
 			});
-			wsMS.getCodigoDisposicion.send(codOF, codLC);
+			params[0] = codOF;
+			params[1] = codLC;
+			wsCat.getInfoRegistro.send(19, params);
 		}
 		
 		private function setAccionDisposicion(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionDisposicion);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){
@@ -260,7 +267,7 @@
 		public function validaFinal():void{
 			if (info.guarda == true)
 				guardaDisposicion();
-			else
+			else 
 				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
 		}
 		

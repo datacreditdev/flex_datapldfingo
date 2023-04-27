@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="250" height="154" creationPolicy="all" 
+	creationComplete="init()" xmlns:Data="Data.*">
+ 
+<mx:Metadata>
+	[Event(name="cargaAsesor", type="cargaAsesor")]
+	[Event(name="cargaSucursal", type="cargaSucursal")]
+	[Event(name="cargaRegion", type="cargaRegion")]
+	[Event(name="selecAsesor", type="selecAsesor")]
+</mx:Metadata>
+
+<mx:Script>
+	<![CDATA[
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.easing.Elastic;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.events.FaultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.utils.ObjectUtil;
+		import mx.validators.Validator;	
+		
+		private var _xmlReg:XML = new XML();
+		private var _xmlSucursal:XMLList = new XMLList;
+		private var _xmlAsesor:XML = new XML();
+		
+		private var regObj:ArrayCollection = new ArrayCollection();
+		private var sucursalObj:ArrayCollection = new ArrayCollection();
+		private var asesorObj:ArrayCollection = new ArrayCollection();
+		
+		private var du:Utils;
+		private var global:Globales;
+		private var iniAsesor:String;
+	
+		private function agregaInicial(codigo:String, texto:String):Object{
+			var oItem:Object = new Object();
+			oItem.codigo = codigo;	
+			oItem.nombre = texto;
+			return oItem;
+		}	
+			
+		public function cargaAsesor():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			//tipo = 1 Indica que la busqueda de asesores se realizara por coordinador
+			//tipo = 2 Indica que la busqueda de asesores se realizara por sucursal
+			cboAsesor.enabled = true;
+			
+			asesorObj.removeAll();
+			asesorObj.refresh();
+			asesorObj.addItem(agregaInicial("000000", iniAsesor));
+			
+			cboAsesor.selectedIndex = 0;	
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlAsesor = new XML(evt.result.toString());
+					
+				du.rCursor();
+				du.closeWs(wsCat);	
+					
+				if(_xmlAsesor.elements().length() > 0){
+					formateaAsesor();
+					cboAsesor.dataProvider = asesorObj;	
+					
+				 	if(_xmlAsesor.elements().length() == 1){
+						cboAsesor.selectedIndex = 1;
+						cboAsesor.enabled = false;
+					}
+					else{
+						if(Application.application.PUESTO == 'A'){
+							var i:int;
+							i = _xmlAsesor.Table.(CODIGO.toString() == global.obtenerUsuario().toString()).childIndex();
+							cboAsesor.selectedIndex = i + 1;
+							cboAsesor.enabled = false;
+						}
+					}
+				}
+				dispatchEvent(new Event("cargaAsesor"));
+			});
+			if(Application.application.PUESTO == 'C'){
+				params[0] = global.obtenerUsuario();
+				wsCat.getCatalogoGral.send(23, params);	
+			}
+			else{
+				params[0] = cboSucursal.selectedItem.codigo;
+				wsCat.getCatalogoGral.send(24, params);	
+			}
+		}		
+						
+		public function cargaRegion():void{ 				  
+			_xmlReg = Application.application._xmlReg;
+			formateaRegion();
+			cboRegion.dataProvider = regObj;
+			
+			if(_xmlReg.elements().length() == 1){
+				cboRegion.selectedIndex = 1;
+				cboRegion.enabled = false;
+			}
+			cargaSucursal();
+		}		
+		
+		public function cargaSucursal():void{
+			_xmlSucursal = Application.application._xmlSuc.Table.(CDGRG.toString().toLowerCase() == cboRegion.selectedItem.codigo.toString().toLowerCase());
+			
+			sucursalObj.removeAll();
+			sucursalObj.refresh();	
+			sucursalObj.addItem(agregaInicial("000", iniAsesor))
+			asesorObj.removeAll();
+			asesorObj.refresh();
+			asesorObj.addItem(agregaInicial("000000", iniAsesor))
+			
+			cboSucursal.enabled = true;
+			cboAsesor.enabled = true;
+			
+			formateaSucursal();
+			
+			cboSucursal.dataProvider = sucursalObj;
+			
+			if(_xmlSucursal.length() == 1){
+				cboSucursal.selectedIndex = 1;
+				cboSucursal.enabled = false;
+			}
+			dispatchEvent(new Event("cargaSucursal"));
+			cargaAsesor();
+		}
+		
+		private function formateaAsesor():void{
+			var cont:int = _xmlAsesor.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlAsesor.Table[i].CODIGO;
+				oItem.nombre = _xmlAsesor.Table[i].NOMBREC;
+				item.push(oItem);
+			}
+			asesorObj.source = asesorObj.source.concat(item);
+		}	
+				
+		private function formateaSucursal():void{
+			var cont:int = _xmlSucursal.length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlSucursal.CODIGO[i].toString();
+				oItem.nombre = _xmlSucursal.NOMBRE[i].toString();
+				item.push(oItem);
+			}
+			sucursalObj.source = sucursalObj.source.concat(item);
+		}			
+		
+		private function formateaRegion():void{
+			var cont:int = _xmlReg.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlReg.Table[i].CODIGO;
+				oItem.nombre = _xmlReg.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			regObj.source = regObj.source.concat(item);
+		}
+		
+		public function init(band:Boolean = false):void{
+			global = new Globales();
+			du = new Utils();
+			if(band == false)
+				iniAsesor = "--Todos--";
+			else
+				iniAsesor = "--Seleccionar--";
+		}
+		
+		public function limpiar():void{
+			cboRegion.enabled = true;
+			cboSucursal.enabled = true;
+			cboAsesor.enabled = true;
+			regObj.removeAll();
+			regObj.refresh();
+			regObj.addItem(agregaInicial("000", iniAsesor));
+			cargaRegion();
+		}
+		
+		private function modificaRegion():void{
+			cargaSucursal();
+		}
+		
+		private function modificaSucursal():void{
+			cargaAsesor();
+		}
+		
+		public function obtieneAsesor():String{
+			return cboAsesor.selectedItem.codigo;
+		}
+		
+		public function obtieneNomAsesor():String{
+        	return cboAsesor.selectedItem.nombre;
+        }
+        
+        public function obtieneNumAsesores():int{
+        	return _xmlAsesor.elements().length();
+        }
+		
+		public function obtieneNomRegion():String{
+              return cboRegion.selectedItem.nombre;
+        }
+        
+        public function obtieneNomSucursal():String{
+              return cboSucursal.selectedItem.nombre;  
+        } 
+	
+		public function obtieneRegion():String{
+			return cboRegion.selectedItem.codigo;
+		}
+		
+		public function obtieneSucursal():String{
+			return cboSucursal.selectedItem.codigo;	
+		}
+		
+		private function seleccionaAsesor():void{
+			dispatchEvent(new Event("selecAsesor"));
+		}
+	]]>
+</mx:Script>
+	<mx:NumberValidator id="asesorV" source="{cboAsesor}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Asesor Requerido"/>
+	<mx:Label x="4" y="3" text="Región" width="61.75" height="20"/>
+	<mx:ComboBox id="cboRegion" x="4" y="20.5" labelField="nombre" change="modificaRegion()" width="170"/>
+	<mx:Label x="4" y="52.5" text="Sucursal" width="81" height="23"/>
+	<mx:ComboBox id="cboSucursal" x="4" y="73" labelField="nombre" width="170" change="modificaSucursal()"/>
+	<mx:Label x="3.9499998" y="105" text="Asesor" width="61.75" height="20"/>
+	<Data:CustomComboBox id="cboAsesor" x="3.9499998" y="122.5" labelField="nombre" change="seleccionaAsesor()" width="242.05"/>
+</mx:Canvas>

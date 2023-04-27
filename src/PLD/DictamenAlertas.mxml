@@ -83,7 +83,7 @@
 						else
 							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);	
 					});
-					wsMS.setProcesaAlerta.send(alta, sec, tipo, codFunc, reportado, justifica, Application.application.U_ID);
+					wsMS.setProcesaAlerta.send(alta, sec, tipo, codFunc, reportado, justifica, global.obtenerUsuario());
 				}
 			}
 			

@@ -107,38 +107,109 @@
 			}
 			
 			public function buscarListaDisp(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				var codOF:String = dgOF.selectedItem.CODIGO;
 				var codLC:String = dgLC.selectedItem.CODIGO;
 				dgDisp.dataProvider = null;
-				initConexion();
+				du.initWsCat(wsCat);
 				du.sCursor();
 			 	if (tipo == 1)
-					Application.application.bloquear();
-				wsMS.addEventListener(ResultEvent.RESULT, getListaDisposicion);
-				wsMS.getListaDisposicion.send(codOF, codLC);
+					global.bloquear();
+					
+				du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+					this._xmlDisp = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					global.desbloquear();
+					
+					if (this._xmlDisp.elements().length() > 0){
+						dgDisp.dataProvider = _xmlDisp.Table;
+						
+						if(accionDisp == 2){
+							dgDisp.validateNow();
+							dgDisp.verticalScrollPosition = vScroll;
+							dgDisp.selectedIndex = indDisp;
+							this.accionDisp = 0;
+						}
+					}
+					seleccionarDisp();
+				});
+				params[0] = codOF;
+				params[1] = codLC;
+				wsCat.getListado.send(22, params);
 			}
 			
 			public function buscarListaLC(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				var codOF:String = dgOF.selectedItem.CODIGO;
 				dgLC.dataProvider = null;
-				initConexion();
+				du.initWsCat(wsCat);
 				du.sCursor();
 			 	if (tipo == 1)
-					Application.application.bloquear();
-				wsMS.addEventListener(ResultEvent.RESULT, getListaLineaCred);
-				wsMS.getListaLineaCred.send(codOF);
+					global.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+					this._xmlLC = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					global.desbloquear();
+					
+					if (this._xmlLC.elements().length() > 0){
+						dgLC.dataProvider = _xmlLC.Table;
+						
+						if(accionLC == 2){
+							dgLC.validateNow();
+							dgLC.verticalScrollPosition = vScroll;
+							dgLC.selectedIndex = indLC;
+							this.accionLC = 0;
+						}
+					}
+					seleccionarLC();
+				});
+				params[0] = codOF;
+				wsCat.getListado.send(21, params);
 			}
 			
 			public function buscarOF(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if (txtCodOF.text != "" || txtOF.text != ""){
 					btnBuscar.setFocus();
 					dgOF.dataProvider = null;
-					initConexion();
+					du.initWsCat(wsCat);
 					du.sCursor();
 					if(tipo == 1)
-						Application.application.bloquear();
-					wsMS.addEventListener(ResultEvent.RESULT, getOrgFond);
-					wsMS.getOrgFond.send(txtCodOF.text, txtOF.text);
+						global.bloquear();
+						
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+						this._xmlOF = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						global.desbloquear();
+						
+						if (this._xmlOF.elements().length() > 0){
+							dgOF.dataProvider = _xmlOF.Table;
+							
+							if(accionOF == 2){
+								dgOF.validateNow();
+								dgOF.verticalScrollPosition = vScroll;
+								dgOF.selectedIndex = indOF;
+								this.accionOF = 0;
+							}
+						}
+						seleccionarOF();	
+					});
+					params[0] = txtCodOF.text;
+					params[1] = txtOF.text;
+					wsCat.getListado.send(55, params);
 				}	
 			}
 
@@ -152,65 +223,6 @@
 			
 			public function eliminarOF():void{
 				Alert.show("¿Desea eliminar la Organización Fondeadora seleccionada?", tituloOF, Alert.YES|Alert.NO,null, manejadorEliminarOF,global.iQuest);
-			}
-			
-			private function getListaDisposicion(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getListaDisposicion);
-				this._xmlDisp = new XML(event.result);
-				
-				if (this._xmlDisp.elements().length() > 0){
-					dgDisp.dataProvider = _xmlDisp.Table;
-					
-					if(accionDisp == 2){
-						dgDisp.validateNow();
-						dgDisp.verticalScrollPosition = vScroll;
-						dgDisp.selectedIndex = indDisp;
-						this.accionDisp = 0;
-					}
-				}
-				seleccionarDisp();
-			}
-			
-			private function getListaLineaCred(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getListaLineaCred);
-				this._xmlLC = new XML(event.result);
-				
-				if (this._xmlLC.elements().length() > 0){
-					dgLC.dataProvider = _xmlLC.Table;
-					
-					if(accionLC == 2){
-						dgLC.validateNow();
-						dgLC.verticalScrollPosition = vScroll;
-						dgLC.selectedIndex = indLC;
-						this.accionLC = 0;
-					}
-				}
-				seleccionarLC();
-			}
-			
-			private function getOrgFond(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getOrgFond);
-				this._xmlOF = new XML(event.result);
-				if (this._xmlOF.elements().length() > 0){
-					dgOF.dataProvider = _xmlOF.Table;
-					
-					if(accionOF == 2){
-						dgOF.validateNow();
-						dgOF.verticalScrollPosition = vScroll;
-						dgOF.selectedIndex = indOF;
-						this.accionOF = 0;
-					}
-				}
-				seleccionarOF();
 			}
 			
 			public function iniVar():void{
@@ -247,10 +259,10 @@
 					var codDisp:String = dgDisp.selectedItem.CODIGO;
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionDisposicion);
 					wsMS.setAccionDisposicion.send(3, codOF, codLC, codDisp, "", "", "", 0, 0, "", "", 0, 0, 
-												   Application.application.U_ID);
+												   global.obtenerUsuario());
 			    } 
 			}
 			
@@ -260,10 +272,10 @@
 					var codLC:String = dgLC.selectedItem.CODIGO;  
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionLineaCred);
 					wsMS.setAccionLineaCred.send(3, codOF, codLC, "", "", "", 0, 0, 0, 0, "", "", 0, 0, "", "", "",
-								 	     		 Application.application.U_ID);
+								 	     		 global.obtenerUsuario());
 			    } 
 			}
 			
@@ -272,10 +284,10 @@
 					var codOF:String = dgOF.selectedItem.CODIGO;
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionOrgFond);
 					wsMS.setAccionOrgFond.send(3, codOF, "", "", "", "", "", "", "", "", 
-								 	   		   "", "", Application.application.U_ID);
+								 	   		   "", "", global.obtenerUsuario());
 			    } 
 			}
 			
@@ -468,7 +480,7 @@
 			private function setAccionDisposicion(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionDisposicion);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -480,7 +492,7 @@
 			private function setAccionLineaCred(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionLineaCred);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -492,7 +504,7 @@
 			private function setAccionOrgFond(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionOrgFond);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")

@@ -92,7 +92,7 @@
 		public function guardaCiclo():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionCiclo);
 			wsMS.setAccionCiclo.send(tipoAccion, info.cdgTipoProd, info.cdgProd, info.ciclo, info.plazo,
 								 	 info.montoMax, info.tasa, info.cumpMonto);	
@@ -143,7 +143,7 @@
 		private function setAccionCiclo(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCiclo);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

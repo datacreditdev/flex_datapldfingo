@@ -57,6 +57,10 @@ package Data
 			this.urlPdf = xmlPdf.toString();
 			this.urlCC = xmlCC.toString();
 		}
+		
+		public function bloquear():void{
+			Application.application.bloquear();
+		}
 	
 		public function clone(value:ArrayCollection):ArrayCollection{
     		var newCollection:ArrayCollection = new ArrayCollection( value.toArray() );
@@ -65,6 +69,10 @@ package Data
 		
 		public function convCadenaFecha(fecha:String):Date {
         	return DateField.stringToDate(fecha, "DD/MM/YYYY");     	
+        }
+        
+        public function desbloquear():void{
+        	Application.application.desbloquear();
         }
 		
 		public function formateaAnio(anios:ArrayCollection=null):ArrayCollection{
@@ -300,6 +308,14 @@ package Data
                     return i;
             }
             return -1;
+ 	 	}
+ 	 	
+ 	 	public function obtenerNombreUsuario():String{
+ 	 		return Application.application.NOM_U_ID;
+ 	 	}
+ 	 	
+ 	 	public function obtenerUsuario():String{
+ 	 		return Application.application.U_ID;
  	 	}
 
 		public function reemplazaCaracteres(cadena:String):String{

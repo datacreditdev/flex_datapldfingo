@@ -50,7 +50,7 @@
 					params[0] = cboTdp.selectedItem.codigo;
 				}
 				
-				params[1] = Application.application.U_ID; 
+				params[1] = global.obtenerUsuario(); 
 				//Obtiene Informacion de Tasas de Usuario
 				wsCat.getListado.send(63, params);
 			}
@@ -72,7 +72,7 @@
 					cargaTasaInteres();
 				});
 			    params[0] = "G";
-			    params[1] = Application.application.U_ID;
+			    params[1] = global.obtenerUsuario();
 			    params[2] = "";
 			    wsCat.getCatalogoGral.send(11, params);
 			}
@@ -89,7 +89,7 @@
 					var prodCred:String = cboTasa.selectedItem.prodCred;
 					var tasa:Number = cboTasa.selectedItem.tasa;
 					
-					Application.application.bloquear();
+					global.bloquear();
 						
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 						var res:String = evt.result.toString();
@@ -97,7 +97,7 @@
 						du.rCursor();
 						du.closeWs(wsMS);
 						
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if(res.substr(0,1) == "1"){
 							limpiar();
@@ -106,7 +106,7 @@
 						else
 							Alert.show(res.substr(2, res.length),titulo,4,null,null,global.iAlert);		
 					});
-					wsMS.setAccionModTasa.send(grupo, ciclo, "G", tipoProd, prodCred, tasa, Application.application.U_ID);
+					wsMS.setAccionModTasa.send(grupo, ciclo, "G", tipoProd, prodCred, tasa, global.obtenerUsuario());
 				}
 			}
 			

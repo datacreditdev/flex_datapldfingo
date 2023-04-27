@@ -120,18 +120,21 @@
 			}
 			
 			public function cargaInfoGrupo(grupo:String):void{
-				wsMS = du.initWsMS(wsMS);
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
 				du.sCursor();
 					
 				_xmlDir = null;
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlDir = new XML(evt.result.toString());
 						
 					limpiaDatosDir();
 						
 					du.rCursor();
-					du.closeWs(wsMS);
+					du.closeWs(wsCat);
 						
 					if(_xmlDir.elements().length() > 0){						
 						txtCalle.text = _xmlDir.Table[0].CALLE;
@@ -147,7 +150,9 @@
 						datos.cdgLugarCol = _xmlDir.Table[0].DOMCDGCOL;
 					}
 				});
-				wsMS.getInfoGrupo.send(2, grupo);		
+				params[0] = 2; 
+				params[1] = grupo;
+				wsCat.getInfoGrupo.send(1, params);		
 			}
 			
 			public function desactivaControles():void{

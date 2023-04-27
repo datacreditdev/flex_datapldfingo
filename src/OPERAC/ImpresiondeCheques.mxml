@@ -85,26 +85,34 @@
 			}
 		
 			public function buscaSigCheque():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if(txtCodCuenta.text != "" && txtCuenta.text != ""){
 					var codCuenta:String = txtCodCuenta.text;
 					var coord:String = dgGrupos.selectedItem.CDGCO;
 					
-					initConexion();
+					du.initWsCat(wsCat);
 					du.sCursor();
 								
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 						_xmlChq = new XML(evt.result);
 							
 						du.rCursor();
-						du.closeWs(wsMS);
+						du.closeWs(wsCat);
 						
 						actualizaRangoCheque();
 					});
-					wsMS.getInfoSigCheque.send(codCuenta, coord);
+					params[0] = codCuenta;
+					params[1] = coord;
+					wsCat.getInfoRegistro.send(5, params);
 				}
 			}
 		
 			public function buscarCuenta():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if (txtCodCuenta.text != ""){
 					txtCuenta.setFocus();
 					if(dgAcred.dataProvider != null){
@@ -112,11 +120,35 @@
 						if(listaAcred.length > 0){
 							var coord:String;
 							coord = dgGrupos.selectedItem.CDGCO.toString();
-							initConexion();
+							du.initWsCat(wsCat);
 							du.sCursor();
-							Application.application.bloquear();
-							wsMS.addEventListener(ResultEvent.RESULT, getInfoCuenta);
-							wsMS.getInfoCuenta.send(5, txtCodCuenta.text, "", Application.application.U_ID, coord);
+							global.bloquear();
+							
+							du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+								this._xmlCta = new XML(event.result);
+								
+								du.closeWs(wsCat);
+								du.rCursor();
+								global.desbloquear();
+								
+								if (this._xmlCta.elements().length() > 0){
+									banco = _xmlCta.Table[0].CDGIB;
+									txtCuenta.text = _xmlCta.Table[0].BANCO;
+									buscaSigCheque();	
+								}
+								else{
+									txtCuenta.text = "";
+									txtChqIni.text = "";
+									txtChqFin.text = "";
+									Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+								}
+							});
+							params[0] = 5;
+							params[1] = txtCodCuenta.text;
+							params[2] = "";
+							params[3] = global.obtenerUsuario();
+							params[4] = coord;
+							wsCat.getInfoRegistro.send(3, params);
 						}
 						else
 							Alert.show("No es posible cargar la información de la cuenta. Es necesario desplegar la lista de acreditados del grupo.",titulo,4,null,null,global.iAlert);
@@ -125,25 +157,64 @@
 			}
 			
 			public function buscarGrupo():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array; 
+				
 				if (txtCodGrupo.text != "" || txtGrupo.text != ""){
 					btnBuscar.setFocus();
 					dgGrupos.dataProvider = null;
-					initConexion();
+					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
-					wsMS.addEventListener(ResultEvent.RESULT, getGruposDesChq);
-					wsMS.getGruposDesChq.send(Application.application.U_ID, txtCodGrupo.text, txtGrupo.text, dtfFecha.text);
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+						this._xmlGrupos = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						global.desbloquear();
+						
+						if (this._xmlGrupos.elements().length() > 0){
+							dgGrupos.dataProvider = _xmlGrupos.Table;
+						}
+						seleccionaGrupo();
+					});
+					params[0] = global.obtenerUsuario();
+					params[1] = txtCodGrupo.text;
+					params[2] = txtGrupo.text;
+					params[3] = dtfFecha.text;
+					wsCat.getListado.send(17, params);
 				}	
 			}
 			
 			public function buscarListaAcred():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				var grupo:String = dgGrupos.selectedItem.CDGNS;
 				var ciclo:String = dgGrupos.selectedItem.CICLO;
 				dgAcred.dataProvider = null;
-				initConexion();
+				du.initWsCat(wsCat);
 			 	du.sCursor();
-				wsMS.addEventListener(ResultEvent.RESULT, getListaAcredPrcChq);
-				wsMS.getListaAcredPrcChq.send(grupo, ciclo);
+			 	
+			 	du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+			 		_xmlAcred = new XML(event.result);
+					
+			 		du.closeWs(wsCat);
+					du.rCursor();
+					global.desbloquear();
+					
+					if(_xmlAcred.elements().length() > 0){
+						formateaListaAcred();
+						dgAcred.dataProvider = acredObj;
+						lblControl.text = calculaRegSel().toString() + " Registro(s) seleccionado(s)";
+						txtCodCuenta.text = dgGrupos.selectedItem.CDGDO;
+						buscarCuenta();
+					}
+			 	});
+			 	params[0] = grupo;
+			 	params[1] = ciclo;
+			 	wsCat.getListado.send(18, params);
 			}
 			
 			public function calculaRegSel():Number{
@@ -207,7 +278,7 @@
 								else
 									Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 							});
-							wsMS.setAccionImpCheque.send(grupo, ciclo, acred, chqAcred, fecha, Application.application.U_ID, cuenta);
+							wsMS.setAccionImpCheque.send(grupo, ciclo, acred, chqAcred, fecha, global.obtenerUsuario(), cuenta);
 						}	
 						else{
 							du.rCursor();
@@ -271,52 +342,6 @@
 						n++;
 						ini++;
 					}
-				}
-			}
-			
-			private function getGruposDesChq(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getGruposDesChq);
-				this._xmlGrupos = new XML(event.result);
-				if (this._xmlGrupos.elements().length() > 0){
-					dgGrupos.dataProvider = _xmlGrupos.Table;
-				}
-				seleccionaGrupo();
-			}
-			
-			private function getInfoCuenta(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getInfoCuenta);
-				this._xmlCta = new XML(event.result);
-				if (this._xmlCta.elements().length() > 0){
-					banco = _xmlCta.Table[0].CDGIB;
-					txtCuenta.text = _xmlCta.Table[0].BANCO;
-					buscaSigCheque();	
-				}
-				else{
-					txtCuenta.text = "";
-					txtChqIni.text = "";
-					txtChqFin.text = "";
-					Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
-				}
-			}
-			
-			private function getListaAcredPrcChq(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getListaAcredPrcChq);
-				_xmlAcred = new XML(event.result);
-				if(_xmlAcred.elements().length() > 0){
-					formateaListaAcred();
-					dgAcred.dataProvider = acredObj;
-					lblControl.text = calculaRegSel().toString() + " Registro(s) seleccionado(s)";
-					txtCodCuenta.text = dgGrupos.selectedItem.CDGDO;
-					buscarCuenta();
 				}
 			}
 			

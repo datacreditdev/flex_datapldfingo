@@ -38,11 +38,11 @@
 		private function guardaDispersion():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionDispersion);
 			wsMS.setAccionDispersion.send(tipoAccion, cdgAcred, ciclo, cdgAcred, "I", info.cdgMetodo, info.cdgBanco, 
 										  info.cuenta, info.concepto, info.monto, info.fecha, info.cdgMotivo, 
-										  info.cdgCuenta, info.reportado, Application.application.U_ID); 			
+										  info.cdgCuenta, info.reportado, global.obtenerUsuario()); 			
 		}
 	
 		public function init(cdgAcred:String, acred:String, ciclo:String, monto:Number, fecha:String):void{
@@ -76,7 +76,7 @@
 		private function setAccionDispersion(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionDispersion);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

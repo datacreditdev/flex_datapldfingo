@@ -62,7 +62,7 @@
 						else
 							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 					});
-					wsRep.getRepConciliacionGL.send(comFiltroFecha.dtfFecha.text, Application.application.U_ID);	
+					wsRep.getRepConciliacionGL.send(comFiltroFecha.dtfFecha.text, global.obtenerUsuario());	
 				}
 			}			
 						

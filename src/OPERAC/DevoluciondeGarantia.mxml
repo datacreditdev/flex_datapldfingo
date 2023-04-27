@@ -92,18 +92,21 @@
 			}
 			
 			public function buscarAcred(event:FlexEvent):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if(event.currentTarget.text != "" && event.currentTarget.length == 6){ 
 					var acred:String = event.currentTarget.text;
 					var grupo:String = txtCodGrupo.text;
 					
-					initConexion();
+					du.initWsCat(wsCat);
 					du.sCursor();
 						
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlAcred = new XML(evt.result);
 							
 						du.rCursor();
-						du.closeWs(wsMS);
+						du.closeWs(wsCat);
 								
 						if(_xmlAcred.elements().length() > 0){
 							txtAcred.text = _xmlAcred.Table[0].NOMBRE_CL;							
@@ -114,7 +117,10 @@
 						}					
 					});
 					//metodo que verifica que el cliente pertenezca al grupo
-					wsMS.getAcred.send(grupo, acred, "");
+					params[0] = grupo;
+					params[1] = acred;
+					params[2] = ""; 
+					wsCat.getInfoAcred.send(3, params);
 				}
 				else{
 					Alert.show("Capture el código de acreditado.",titulo,4,null,null,global.iAlert);
@@ -123,43 +129,148 @@
 			}
 			
 			public function buscarCuenta():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if (txtCodCuenta.text != ""){
 					txtCuenta.setFocus();
-					initConexion();
+					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
-					wsMS.addEventListener(ResultEvent.RESULT, getInfoCuenta);
-					wsMS.getInfoCuenta.send(4, txtCodCuenta.text, "", Application.application.U_ID, coord);
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+						this._xmlCta = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						global.desbloquear();
+						
+						if (this._xmlCta.elements().length() > 0){
+							banco = _xmlCta.Table[0].CDGIB;
+							txtCuenta.text = _xmlCta.Table[0].BANCO;
+							buscarSigCheque();
+						}
+						else{
+							txtCuenta.text = "";
+							Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+						}
+					});
+					params[0] = 4;
+					params[1] = txtCodCuenta.text;
+					params[2] = "";
+					params[3] = global.obtenerUsuario();
+					params[4] = coord;
+					wsCat.getInfoRegistro.send(3, params);
 				}	
 			}
 			
 			public function buscarGrupo():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if (txtCodGrupo.text != ""){
 					btnBuscar.setFocus();
-					initConexion();
+					
+					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
-					wsMS.addEventListener(ResultEvent.RESULT, getGLGrupo);
-					wsMS.getGLGrupo.send(txtCodGrupo.text, Application.application.U_ID);
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+						_xmlGrupo = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						
+						limpiar();
+						
+						if (this._xmlGrupo.elements().length() > 0){
+							codGrupo = txtCodGrupo.text;
+							txtGrupo.text = _xmlGrupo.Table[0].NOMBRE;
+							txtMonto.text = _xmlGrupo.Table[0].MONTO;
+							txtDevolucion.text = _xmlGrupo.Table[0].DESCRIPCION;
+							dtfFecha.selectedDate = global.convCadenaFecha(_xmlGrupo.Table[0].FECHA);
+							coord = _xmlGrupo.Table[0].CDGCO;
+							ciclo = _xmlGrupo.Table[0].CICLO;
+							secPago = _xmlGrupo.Table[0].SECPAGO;
+							estatus = _xmlGrupo.Table[0].ESTATUS;
+					
+							lblInfoGL.text = global.formatoMoneda(_xmlGrupo.Table[0].SALDOGL);
+							
+							txtCodCuenta.editable = true;
+							btnBusqCta.visible = true;
+							activarControles();
+							
+							du.initWsCat(wsCat);
+							du.sCursor();
+								
+							du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+								_xmlMesa = XML(evt.result.toString());	
+								
+								du.closeWs(wsCat);	
+								
+								if(_xmlMesa.elements().length() > 0){
+									txtCodAcred.text = _xmlMesa.Table[0].TESORERO;
+									txtAcred.text = _xmlMesa.Table[0].NOMTESO;
+								}
+								else
+									Alert.show("No se encontró el registro del tesorero del grupo.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+								
+								du.initWsCat(wsCat);
+								
+								du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+									_xmlGL = XML(evt.result.toString());
+							
+									global.desbloquear();
+									du.rCursor();
+									du.closeWs(wsCat);
+									
+									if(_xmlGL.elements().length() > 0){
+										formateaListaMovsGL(evt.result.toString());
+										dgMovsGL.dataProvider = listaObj;		
+									}	
+								});//METODO QUE CONSULTA LOS REGISTROS DE LOS MOVIMIENTOS DE GARANTIA REALIZADOS
+								params[0] = codGrupo;
+								params[1] = "G";
+								wsCat.getListado.send(23, params);
+							});
+							params[0] = codGrupo;
+							params[1] = ciclo;
+							wsCat.getInfoGrupo.send(8, params);
+						}
+						else{
+							global.desbloquear();
+							txtGrupo.text = "";
+							lblInfoGL.text = "";
+							Alert.show("No se ha encontrado información del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+						}
+					});
+					params[0] = txtCodGrupo.text;
+					params[1] = global.obtenerUsuario();
+					wsCat.getInfoGrupo.send(7, params);
 				}	
 			}
 			
 			public function buscarSigCheque():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if(txtCodCuenta.text != "" && txtCuenta.text != ""){
 					var codCuenta:String = txtCodCuenta.text;
 					
-					initConexion();
+					du.initWsCat(wsCat);
 					du.sCursor();
 								
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {																				
 						_xmlChq = new XML(evt.result);
 							
 						du.rCursor();
-						du.closeWs(wsMS);
+						du.closeWs(wsCat);
 						
 						actualizarRangoCheque();
 					});
-					wsMS.getInfoSigCheque.send(codCuenta, coord);
+					params[0] = codCuenta;
+					params[1] = coord;
+					wsCat.getInfoRegistro.send(5, params);
 				}
 			}
 			
@@ -206,7 +317,7 @@
 							//Se sustituyo la variable ciclo por la secuencia de pago para hacer mas precisa
 							//la actualizacion del registro de garantia 
 							wsMS.setDevGarantia.send(grupo, Number(secPago), fecha, monto, estatus, cuenta, cheque, 
-													 codAcred, acred, Application.application.U_ID);
+													 codAcred, acred, global.obtenerUsuario());
 						}
 						else{
 							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
@@ -254,86 +365,10 @@
 				movsObj = new ArrayCollection(item);
 			}
 			
-			private function getGLGrupo(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				wsMS.removeEventListener(ResultEvent.RESULT, getGLGrupo);
-				_xmlGrupo = new XML(event.result);
-				limpiar();
-				
-				if (this._xmlGrupo.elements().length() > 0){
-					codGrupo = txtCodGrupo.text;
-					txtGrupo.text = _xmlGrupo.Table[0].NOMBRE;
-					txtMonto.text = _xmlGrupo.Table[0].MONTO;
-					txtDevolucion.text = _xmlGrupo.Table[0].DESCRIPCION;
-					dtfFecha.selectedDate = global.convCadenaFecha(_xmlGrupo.Table[0].FECHA);
-					coord = _xmlGrupo.Table[0].CDGCO;
-					ciclo = _xmlGrupo.Table[0].CICLO;
-					secPago = _xmlGrupo.Table[0].SECPAGO;
-					estatus = _xmlGrupo.Table[0].ESTATUS;
-			
-					lblInfoGL.text = global.formatoMoneda(_xmlGrupo.Table[0].SALDOGL);
-					
-					txtCodCuenta.editable = true;
-					btnBusqCta.visible = true;
-					activarControles();
-					
-					initConexion();
-					du.sCursor();
-						
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
-						_xmlMesa = XML(evt.result.toString());		
-						
-						if(_xmlMesa.elements().length() > 0){
-							txtCodAcred.text = _xmlMesa.Table[0].TESORERO;
-							txtAcred.text = _xmlMesa.Table[0].NOMTESO;
-						}
-						else
-							Alert.show("No se encontró el registro del tesorero del grupo.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
-						
-						du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
-						_xmlGL = XML(evt.result.toString());
-					
-							Application.application.desbloquear();
-							du.rCursor();
-							du.closeWs(wsMS);
-							
-							if(_xmlGL.elements().length() > 0){
-								formateaListaMovsGL(evt.result.toString());
-								dgMovsGL.dataProvider = listaObj;		
-							}	
-						});//METODO QUE CONSULTA LOS REGISTROS DE LOS MOVIMIENTOS DE GARANTIA REALIZADOS
-						wsMS.getListaMovsGarantia.send(codGrupo);
-						
-					});
-					wsMS.getMesaDirectiva.send(codGrupo, ciclo);
-				}
-				else{
-					Application.application.desbloquear();
-					txtGrupo.text = "";
-					lblInfoGL.text = "";
-					Alert.show("No se ha encontrado información del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
-				}
-			}
-			
-			private function getInfoCuenta(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getInfoCuenta);
-				this._xmlCta = new XML(event.result);
-				if (this._xmlCta.elements().length() > 0){
-					banco = _xmlCta.Table[0].CDGIB;
-					txtCuenta.text = _xmlCta.Table[0].BANCO;
-					buscarSigCheque();
-				}
-				else{
-					txtCuenta.text = "";
-					Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
-				}
-			}
-			
 			public function initApp():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				du = new Utils();
 				global = new Globales();
 				permiso = new Permisos();
@@ -343,14 +378,14 @@
 				var fec:Date = Application.application._Current_Fecha;
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				
-				/*initConexion();
+				/*du.initWsCat(wsCat);
 				du.sCursor();
 				
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlMovs = new XML(evt.result);
 					
 					du.rCursor();
-					du.closeWs(wsMS);
+					du.closeWs(wsCat);
 					
 					if (_xmlMovs.elements().length() > 0){
 						formateaMovsGL();
@@ -360,7 +395,7 @@
 						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
 					}
 				});
-				wsMS.getMovsGarantia.send();*/
+				wsCat.getCatalogoGral.send();*/
 			}
 			
 			public function initConexion():void{				

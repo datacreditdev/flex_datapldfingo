@@ -154,7 +154,7 @@
 							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 						}
 					});
-					wsMS.getRepPagosNoRecibidosDia.send(comFiltroAsesor.dtfFecha.text, "2", comFiltroAsesor.tipoCart.selectedValue.toString(), Application.application.U_ID, 
+					wsMS.getRepPagosNoRecibidosDia.send(comFiltroAsesor.dtfFecha.text, "2", comFiltroAsesor.tipoCart.selectedValue.toString(), global.obtenerUsuario(), 
 													    Application.application.NOM_U_ID, comFiltroAsesor.cboRegion.selectedItem.codigo, 
 													    comFiltroAsesor.cboCoord.selectedItem.codigo, comFiltroAsesor.cboAsesor.selectedItem.codigo);	
 				}

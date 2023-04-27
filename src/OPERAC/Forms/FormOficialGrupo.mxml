@@ -41,9 +41,9 @@
 			public var Arr:ArrayCollection = new ArrayCollection();
 			public var datos:DatosGrupo = new DatosGrupo();
 			public var wsMS:WebService;
-			public var du:Utils;
 			public var texto:String;
 			public var tipoAccion:int;
+			private var du:Utils;
 			private var global:Globales;
 						
 			public function buscaPromotor(event:Event):void{
@@ -71,8 +71,7 @@
 			}		
 			
 			public function buscaRecuperador(event:Event):void{
-				if(TextInput(event.currentTarget).text != '')
-				{	
+				if(TextInput(event.currentTarget).text != ''){	
 					dgPersonal.selectedIndex = -1;
 					texto = TextInput(event.currentTarget).text;					
 					Arr.filterFunction = filtraPersonal;
@@ -96,10 +95,13 @@
 			}		
 						
 			public function cargaPersonal():void{
-				initConexion();
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
 				du.sCursor();
 						
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlPersonal = new XML(evt.result.toString());
 					
 					if (_xmlPersonal.elements().length() > 0){
@@ -107,9 +109,10 @@
 						dgPersonal.dataProvider = Arr;
 					}		
 					du.rCursor();
-					du.closeWs(wsMS);
+					du.closeWs(wsCat);
 				});
-				wsMS.getPromotor.send(Application.application.SUC_ID);
+				params[0] = Application.application.SUC_ID;
+				wsCat.getCatalogoGral.send(24, params);
 			}			
 						
 			public function enviarOficialGrupo(formData:DatosGrupo):void{
@@ -143,7 +146,6 @@
 			}
 
 			public function formateaPersonal():void{
-				var i:int;
 				var cont:int = _xmlPersonal.elements().length();
 				
 				Arr.filterFunction = null;
@@ -151,8 +153,7 @@
 				Arr.removeAll();
 				Arr.refresh();
 				
-				for (i = 0; i < cont; i++)
-				{
+				for(var i:int = 0; i < cont; i++){
 					var oItem:Object = new Object();
 					oItem.nombre = _xmlPersonal.Table[i].NOMBREC;
 					oItem.codigo = _xmlPersonal.Table[i].CODIGO;

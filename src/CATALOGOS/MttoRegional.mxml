@@ -40,25 +40,28 @@
 		public var global:Globales;
 		
 		public function cargaInfoReg(codReg:String, regional:String, codPers:String):void{
-			var j:int;
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
 			this.title = "Edición";
 			txtCodigo.text = codReg;
 			txtNombre.text = regional;
 				
-			initConexion();
+			du.initWsCat(wsCat);
 			du.sCursor();
 					
-			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 				_xmlReg = new XML(evt.result.toString()); 
 					
 				du.rCursor();
-				du.closeWs(wsMS);
+				du.closeWs(wsCat);
 					
 				if (_xmlReg.elements().length() > 0){
 					llenaRegistros();
 				} 	
 			});
-			wsMS.getInfoReg.send(codReg);
+			params[0] = codReg;
+			wsCat.getInfoRegistro.send(4, params);
 		}
 		
 		public function cerrar():void{
@@ -79,7 +82,6 @@
 		
 		
 		public function formateaGte():void{
-			var i:int;
 			var cont:int = _xmlGte.elements().length();
 			var oItem:Object;
 			var item:Array = new Array;
@@ -89,7 +91,7 @@
 			oItem.nombre = "--Seleccionar--";
 			item.push(oItem);
 				
-			for (i = 0; i < cont; i++){
+			for (var i:int = 0; i < cont; i++){
 				oItem = new Object();
 				oItem.codigo = _xmlGte.Table[i].CODIGO;	
 				oItem.nombre = _xmlGte.Table[i].NOMBREC;
@@ -101,7 +103,7 @@
 		public function guardaReg():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionReg);
 			wsMS.setAccionReg.send(tipoAccion, txtCodigo.text, txtNombre.text, cboGerente.selectedItem.codigo,
 								   info.calle, info.cdgEntFed, info.cdgMun, info.cdgLoc, info.cdgCol,
@@ -111,7 +113,6 @@
 		public function init(tipo:int, codReg:String, regional:String, codPers:String):void{
 			var wsCat:WebService = new WebService;
 			var params:Array = new Array;
-			var j:int;
 			tipoAccion = tipo;
 			global = new Globales();
 			du = new Utils();
@@ -134,7 +135,7 @@
 					formateaGte();
 					cboGerente.dataProvider = gteObj;
 				} 	
-				for(j = 0; j < gteObj.length; j++){
+				for(var j:int = 0; j < gteObj.length; j++){
 					if (gteObj[j].codigo.toString() == codPers){
 						cboGerente.selectedIndex = j;
 						break;
@@ -188,7 +189,7 @@
 		private function setAccionReg(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionReg);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

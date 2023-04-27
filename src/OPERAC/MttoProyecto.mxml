@@ -56,7 +56,7 @@
 		public function guardaProy():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionProy);
 			wsMS.setAccionProy.send("I", txtCdgAcred.text, info.codigo, info.nombre, info.actualiza,
 										info.texto, info.cdgGiro, info.cdgSector, info.cdgActEco,
@@ -100,7 +100,7 @@
 		private function setAccionProy(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionProy);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

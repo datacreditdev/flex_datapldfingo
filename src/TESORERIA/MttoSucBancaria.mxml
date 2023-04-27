@@ -93,20 +93,23 @@
 		}
 		
 		public function cargaInfoSB(codIB:String, instBanc:String, codSB:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
 			tipoAccion = 2; 
 			this.title = "Edición";
 			//Datos de la Sucursal Bancaria
 			info.cdgIB = codIB;
 			info.cdgSB = codSB;
 			
-			initConexion();
+			du.initWsCat(wsCat);
 			du.sCursor();
 			
-			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 				_xmlSB = new XML(evt.result.toString()); 
 					
 				du.rCursor();
-				du.closeWs(wsMS);
+				du.closeWs(wsCat);
 					
 				if (_xmlSB.elements().length() > 0){
 					llenaRegistros();
@@ -115,7 +118,9 @@
 					obtieneColonia();
 				} 	
 			});
-			wsMS.getInfoSucBancaria.send(codIB, codSB);
+			params[0] = codIB;
+			params[1] = codSB;
+			wsCat.getInfoRegistro.send(7, params);
 		}
 		
 		public function cerrar():void{
@@ -147,7 +152,7 @@
 		public function guardaSucBancaria():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionSucBancaria);
 			wsMS.setAccionSucBancaria.send(tipoAccion, info.cdgIB, info.cdgSB, info.nombre, info.gerente, info.ejecutivo, info.calle, 
 										   info.cdgEntFed, info.cdgMun, info.cdgLoc, info.cdgCol, info.telefono, info.labora);	 
@@ -313,6 +318,7 @@
 		public function registraInfoSB(codIB:String, instBanc:String):void{
 			var wsCat:WebService = new WebService;
 			var params:Array = new Array;
+			
 			tipoAccion = 1;
 			this.title = "Nuevo";
 			info.cdgIB = codIB;
@@ -378,7 +384,7 @@
 		private function setAccionSucBancaria(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionSucBancaria);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

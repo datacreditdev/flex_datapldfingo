@@ -93,7 +93,7 @@
 					else if(this.currentState == "desembolso")
 						fecha = dtfFecha.text;
 					
-					Application.application.bloquear();
+					global.bloquear();
 						
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 						var res:String = evt.result.toString();
@@ -101,7 +101,7 @@
 						du.rCursor();
 						du.closeWs(wsMS);
 						
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if(res.substr(0,1) == "1"){
 							limpiar();
@@ -110,7 +110,7 @@
 						else
 							Alert.show(res.substr(2, res.length),titulo,4,null,null,global.iAlert);		
 					});
-					wsMS.setAccionModPrn.send(tipo, grupo, ciclo, "G", fecha, Application.application.U_ID);
+					wsMS.setAccionModPrn.send(tipo, grupo, ciclo, "G", fecha, global.obtenerUsuario());
 				}
 			}
 			

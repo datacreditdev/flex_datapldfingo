@@ -118,14 +118,17 @@
 			public function activaControles(tipoProd:String, prodCred:String, tipo:int):void{
 				//tipo = 1   CARGA PARAMETROS DEL PRODUCTO Y ACTIVA CONTROLES CAPTURA
 				//tipo = 2   SOLO ACTIVA LOS CONTROLES DE CAPTURA
-				initConexion();
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
 				du.sCursor();
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlControl = new XML(evt.result.toString());
 					
 					du.rCursor();
-					du.closeWs(wsMS);
+					du.closeWs(wsCat);
 					
 					if (_xmlControl.elements().length() > 0){
 						montoMin = Number(_xmlControl.Table[0].MONTOMIN);
@@ -146,7 +149,9 @@
 						}
 					}
 				});
-				wsMS.getActivaContSolic.send(tipoProd, prodCred);
+				params[0] = tipoProd;
+				params[1] = prodCred;
+				wsCat.getInfoGeneral.send(12, params);
 			}
 			
 			private function calculaTotalAmort():Number{
@@ -204,10 +209,10 @@
 						//SI LA SOLICITUD FUE AUTORIZADA PUEDE SER MODIFICADA POR MESA DE CONTROL
 						//ANTES DE QUE SEA AUTORIZADA POR TESORERIA
 						if(_xmlSolic.Table[0].SITUACION == 'A' && currentState == 'evaluacion'){
-							initConexion();
+							du.initWsCat(wsCat);
 							du.sCursor();
 					
-							du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+							du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 								_xmlPres = new XML(evt.result);
 								
 								if(_xmlPres.elements().length() == 0){
@@ -215,10 +220,13 @@
 									Alert.show("No es posible modificar la información. La solicitud ya fue Autorizada.",titulo,4,null,null,global.iAlert);
 								}
 								du.rCursor();
-								du.closeWs(wsMS);
+								du.closeWs(wsCat);
 							});
+							params[0] = cdgAcred;
+							params[1] = ciclo;
+							params[2] = autorizado;
 							//Consulta la tabla de prestamo para verificar que la situacion sea autorizado
-							wsMS.getSituacionPresAcred.send(cdgAcred, ciclo, autorizado);
+							wsCat.getInfoAcred.send(22, params);
 						}
 						cargaTablaAmort();
 						llenaRegistros();
@@ -361,7 +369,7 @@
 				if(formateaRegAcred() == true){ //valida que todos los clientes se hayan registrado con montos validos
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					//Servicio invocado en la etapa de registro de la solicitud
 					if(currentState == null){
 						wsMS.addEventListener(ResultEvent.RESULT, setAccionSolicESIA);
@@ -370,7 +378,7 @@
 													 info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
 													 info.formaDist, "I", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
 													 info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, 
-													 Application.application.U_ID, info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, 
+													 global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, 
 													 info.multPerio, info.diaEsp, coord, promotor, info.tasaFija, acred, montos, proyInv, emplGenH, emplGenM, 
 													 emplSostH, emplSostM, info.calle, info.cdgLugarEntFed, info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol,
 													 info.horario, info.reunion, info.autorCrr, sec);
@@ -384,7 +392,7 @@
 													   		info.pagoInteres, info.instrumento, info.factorTasa, info.metodoAplic, info.metodoCobro,
 													   		info.formaDist, "I", info.situacion, info.aplican, info.fecEntre, info.fecSolic, info.cdgTipoProd,
 													   		info.cdgProdCred, info.moneda, info.presidente, info.tesorero, info.secretario, 
-													   		Application.application.U_ID, info.formaEntre, info.nombreCheq, info.multPerio, info.diaEsp,coord, 
+													   		global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.multPerio, info.diaEsp,coord, 
 													   		promotor, info.tasaFija, acred, montos, proyInv, situacionAcred, rechazo, cantAutorAcred, info.calle, 
 													   		info.cdgLugarEntFed, info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol, info.horario, info.reunion, 
 													   		info.autorCrr, sec);
@@ -526,7 +534,7 @@
 			private function setAccionEvSolicESIA(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionEvSolicESIA);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){
@@ -539,7 +547,7 @@
 			private function setAccionSolicESIA(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionSolicESIA);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){

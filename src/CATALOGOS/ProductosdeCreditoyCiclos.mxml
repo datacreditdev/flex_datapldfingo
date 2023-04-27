@@ -114,14 +114,14 @@
 				du.initWsCat(wsCat);
 				du.sCursor();
 			 	if (tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
 					_xmlCiclo = new XML(evt.result);
 				
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 				
 					if (_xmlCiclo.elements().length() > 0){
 						dgCiclo.dataProvider = _xmlCiclo.Table;
@@ -148,14 +148,14 @@
 				du.initWsCat(wsCat);
 				du.sCursor();
 			 	if (tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
 					_xmlProd = new XML(evt.result);
 					
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 				
 					if (_xmlProd.elements().length() > 0){
 						dgProducto.dataProvider = _xmlProd.Table;
@@ -183,14 +183,14 @@
 					du.initWsCat(wsCat);
 					du.sCursor();
 					if(tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
 						_xmlTipoProd = new XML(evt.result);
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if (_xmlTipoProd.elements().length() > 0){
 							dgTipoProd.dataProvider = _xmlTipoProd.Table;
@@ -253,7 +253,7 @@
 					var ciclo:String = dgCiclo.selectedItem.CICLO;
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setEliminaCiclo);
 					wsMS.setEliminaCiclo.send(codTipoProd, codProd, ciclo);
 			    } 
@@ -265,7 +265,7 @@
 					var codProd:String = dgProducto.selectedItem.CODIGO;  
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setEliminaProd);
 					wsMS.setEliminaProd.send(codTipoProd, codProd);
 			    } 
@@ -276,7 +276,7 @@
 					var codTipoProd:String = dgTipoProd.selectedItem.CODIGO;
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionTipoProd);
 					wsMS.setAccionTipoProd.send(3, codTipoProd, "");
 			    } 
@@ -471,7 +471,7 @@
 			private function setAccionProd(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionProd);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -483,7 +483,7 @@
 			private function setAccionTipoProd(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionTipoProd);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")
@@ -495,7 +495,7 @@
 			private function setEliminaCiclo(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaCiclo);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -507,7 +507,7 @@
 			private function setEliminaProd(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaProd);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")

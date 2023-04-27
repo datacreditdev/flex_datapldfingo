@@ -94,14 +94,14 @@
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {
 					_xmlNiv = new XML(evt.result);
 					
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					if(_xmlNiv.elements().length() > 0){
 						lblUbicacion.text = _xmlNiv.Table[0].UBICACION;

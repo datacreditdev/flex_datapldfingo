@@ -89,9 +89,9 @@
 		public function guardaSector():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionSector);
-			wsMS.setAccionSector.send(tipoAccion, info.codigo, info.nombre, Application.application.U_ID);	
+			wsMS.setAccionSector.send(tipoAccion, info.codigo, info.nombre, global.obtenerUsuario());	
 		}
 	
 		public function init(tipo:int, codigo:String = null):void{
@@ -135,7 +135,7 @@
 		private function setAccionSector(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionSector);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

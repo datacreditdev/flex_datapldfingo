@@ -30,23 +30,29 @@
 		public var du:Utils;
 		
 		public function cargaInfoLoc(cdgLoc:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
 			tipoAccion = 2; 
 			this.title = "Edición";
 			
-			initConexion();
+			du.initWsCat(wsCat);
 			du.sCursor();
 					
-			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 				_xmlLoc = new XML(evt.result.toString()); 
 					
 				du.rCursor();
-				du.closeWs(wsMS);
+				du.closeWs(wsCat);
 					
 				if (_xmlLoc.elements().length() > 0){
 					llenaRegistros();
 				} 	
 			});
-			wsMS.getInfoLoc.send(txtCdgEntFed.text, txtCdgMunic.text, cdgLoc);
+			params[0] = txtCdgEntFed.text;
+			params[1] = txtCdgMunic.text;
+			params[2] = cdgLoc;
+			wsCat.getInfoRegistro.send(9, params);
 		}
 		
 		public function cerrar():void{
@@ -66,7 +72,7 @@
 		public function guardaLoc():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionLoc);
 			wsMS.setAccionLoc.send(tipoAccion, txtCdgEntFed.text, txtCdgMunic.text, info.codigo, 
 								   info.localidad, info.areaTel, info.tipo); 			
@@ -124,7 +130,7 @@
 		private function setAccionLoc(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionLoc);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

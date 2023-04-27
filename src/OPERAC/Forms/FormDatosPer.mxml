@@ -291,7 +291,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();						
+						global.desbloquear();						
 						
 						if (_xmlEntFed.elements().length() > 0){
 							formateaEntFed();
@@ -363,7 +363,7 @@
 								
 								txtCodigo.text = codigo;
 								
-								Application.application.desbloquear();
+								global.desbloquear();
 								du.rCursor();
 								du.closeWs(wsMS);
 							});

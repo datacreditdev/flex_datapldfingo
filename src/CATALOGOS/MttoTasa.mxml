@@ -81,7 +81,7 @@
 		public function guardaTasa():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionTasa);
 			wsMS.setAccionTasa.send(tipoAccion, info.instrumento, info.valDesde, info.tasa);	
 		}
@@ -125,7 +125,7 @@
 		private function setAccionTasa(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionTasa);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

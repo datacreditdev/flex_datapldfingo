@@ -127,7 +127,7 @@
 					var anio:String;
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					var fecRep:Date = Application.application._Current_Fecha;
 					
@@ -155,7 +155,7 @@
 						
 						du.closeWs(wsMS);
 						du.rCursor();
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if(res.substr(0,1) != "0"){
 							var tituloRep:String = tipo + "692819" + cadFec;

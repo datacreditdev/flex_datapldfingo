@@ -60,11 +60,11 @@
 		private function guardaGarantia():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionGarantia);
 			wsMS.setAccionGarantia.send(tipoAccion, txtCdgAcred.text, "I", sec, info.tipo, info.articulo, info.valorNominal,
 										info.valorContable, info.tipoProp, info.descripcion, info.factura, info.activa,
-										Application.application.U_ID); 			
+										global.obtenerUsuario()); 			
 		}
 	
 		public function init(cdgAcred:String, acred:String, tipoAccion:int, sec:String = ""):void{
@@ -113,7 +113,7 @@
 		private function setAccionGarantia(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionGarantia);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1")

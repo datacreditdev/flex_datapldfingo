@@ -54,18 +54,41 @@
 			}
 			
 			public function buscaCuenta():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if (txtCodCuenta.text != ""){
 					btnBusqCta.setFocus();
-					initConexion();
+					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
-					wsMS.addEventListener(ResultEvent.RESULT, getInfoCuenta);
-					wsMS.getInfoCuenta.send(5, txtCodCuenta.text, "", Application.application.U_ID);
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+						this._xmlCta = new XML(event.result);
+						
+						du.initWsCat(wsCat);
+						du.rCursor();
+						global.desbloquear();
+						
+						if (this._xmlCta.elements().length() > 0){
+							txtCuenta.text = _xmlCta.Table[0].BANCO;	
+						}
+						else{
+							txtCuenta.text = "";
+							Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+						}
+					});
+					params[0] = 5;
+					params[1] = txtCodCuenta.text;
+					params[2] = "";
+					params[3] = global.obtenerUsuario();
+					params[4] = "";
+					wsCat.getInfoRegistro.send(3, params);
 				}						
 			}
 			
 			public function cargaCoord():void{
-				_xmlCoord = Application.application._xmlCoord;
+				_xmlCoord = Application.application._xmlSuc;
 					
 				if (_xmlCoord.elements().length() > 0){
 					formateaCoord();
@@ -95,7 +118,7 @@
 						else	
 							Alert.show(res.substr(2,res.length),titulo,4,null,null,global.iAlert);	
 					});
-					wsMS.setAccionCancCheque.send(2, coord, cuenta, "", "", "", cheque, "", Application.application.U_ID);
+					wsMS.setAccionCancCheque.send(2, coord, cuenta, "", "", "", cheque, "", global.obtenerUsuario());
 				}
 			}
 			
@@ -152,21 +175,6 @@
 				for(var i:int = 0; i < cont; i++){
 					cheque[i] = n.toString();
 					n++;			
-				}
-			}
-			
-			private function getInfoCuenta(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getInfoCuenta);
-				this._xmlCta = new XML(event.result);
-				if (this._xmlCta.elements().length() > 0){
-					txtCuenta.text = _xmlCta.Table[0].BANCO;	
-				}
-				else{
-					txtCuenta.text = "";
-					Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 				}
 			}
 			

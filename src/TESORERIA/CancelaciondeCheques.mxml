@@ -91,14 +91,14 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void {
 						_xmlAcred = XML(event.result.toString());
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if(_xmlAcred.elements().length() > 0){
 							formateaListaAcred();
@@ -120,6 +120,9 @@
 			}
 			
 			public function buscaCuenta():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if (txtCodCuenta.text != ""){
 					if(cboCoordinacion.selectedIndex > 0){
 						var i:int;
@@ -127,11 +130,30 @@
 						btnBusqCta.setFocus();
 						i = _xmlCoord.Table.(NOMBRE.toString() == cboCoordinacion.selectedLabel).childIndex();
 						coord = coordObj[i + 1].id;
-						initConexion();
+						du.initWsCat(wsCat);
 						du.sCursor();
-						Application.application.bloquear();
-						wsMS.addEventListener(ResultEvent.RESULT, getInfoCuenta);
-						wsMS.getInfoCuenta.send(5, txtCodCuenta.text, "", Application.application.U_ID, coord);
+						global.bloquear();
+						
+						du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+							this._xmlCta = new XML(event.result);
+							
+							du.closeWs(wsCat);
+							du.rCursor();
+							global.desbloquear();
+							
+							if (this._xmlCta.elements().length() > 0)
+								txtCuenta.text = _xmlCta.Table[0].BANCO;
+							else{
+								txtCuenta.text = "";
+								Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+							}
+						});
+						params[0] = 5;
+						params[1] = txtCodCuenta.text;
+						params[2] = "";
+						params[3] = global.obtenerUsuario();
+						params[4] = coord;
+						wsCat.getInfoRegistro.send(3, params);
 					}
 					else
 						Alert.show("Seleccione una Sucursal.",titulo,4,null,null,global.iAlert);
@@ -150,7 +172,7 @@
 			}
 			
 			public function cargaCoord():void{
-				_xmlCoord = Application.application._xmlCoord;
+				_xmlCoord = Application.application._xmlSuc;
 					
 				if (_xmlCoord.elements().length() > 0){
 					formateaCoord();
@@ -186,7 +208,7 @@
 						else	
 							Alert.show("No es posible realizar el proceso de cancelación.",titulo,4,null,null,global.iAlert);	
 					});
-					wsMS.setAccionCancCheque.send(tipo, coord, cuenta, codigo, ciclo, tipoCred, acred, cheque, chequera, Application.application.U_ID);
+					wsMS.setAccionCancCheque.send(tipo, coord, cuenta, codigo, ciclo, tipoCred, acred, cheque, chequera, global.obtenerUsuario());
 				}
 			}
 			
@@ -279,20 +301,6 @@
 						tipoCred[n]	= "I";	
 						n++;
 					}
-				}
-			}
-			
-			private function getInfoCuenta(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getInfoCuenta);
-				this._xmlCta = new XML(event.result);
-				if (this._xmlCta.elements().length() > 0)
-					txtCuenta.text = _xmlCta.Table[0].BANCO;
-				else{
-					txtCuenta.text = "";
-					Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 				}
 			}
 			

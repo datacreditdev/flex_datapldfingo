@@ -41,17 +41,37 @@
 			}
 			
 			public function buscarAcred():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if (txtCodAcred.text != "" || txtPaterno.text != "" || txtNombre.text != ""){
 					btnBuscar.setFocus();
 					dgAcred.dataProvider = null;
 					
 					fecha = dtfFecha.text;
 					
-					initConexion();
+					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
-					wsMS.addEventListener(ResultEvent.RESULT, getAcredDispersion);
-					wsMS.getAcredDispersion.send(Application.application.U_ID, txtCodAcred.text, txtNombre.text, txtPaterno.text, fecha);
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+						this._xmlAcred = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						global.desbloquear();
+						
+						if (this._xmlAcred.elements().length() > 0){
+							formateaListaAcred();
+							dgAcred.dataProvider = acredObj;
+						}
+					});
+					params[0] = txtCodAcred.text;
+					params[1] = txtNombre.text;
+					params[2] = txtPaterno.text;
+					params[3] = dtfFecha.text;
+					params[4] = global.obtenerUsuario();
+					wsCat.getInfoAcred.send(21, params);
 				}	
 			}
 			
@@ -82,18 +102,6 @@
 					item.push(oItem);
 				}
 				acredObj = new ArrayCollection(item);
-			}
-			
-			private function getAcredDispersion(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getAcredDispersion);
-				this._xmlAcred = new XML(event.result);
-				if (this._xmlAcred.elements().length() > 0){
-					formateaListaAcred();
-					dgAcred.dataProvider = acredObj;
-				}
 			}
 			
 			public function initApp():void{

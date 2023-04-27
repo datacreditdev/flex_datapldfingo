@@ -183,12 +183,12 @@
 		public function guardaLineaCred():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionLineaCred);
 			wsMS.setAccionLineaCred.send(tipoAccion, info.cdgOF, info.cdgLC, info.contrato, info.descripcion, 
 									     info.otorgada, info.cdgTI, info.cantidad, info.plazo, info.montoMax,
 									     info.periodoRep, info.pagoCap, info.pagoInt, info.graciaCap, info.graciaInt, 
-									     info.tipoCred, info.tipo, info.recursos, Application.application.U_ID);	
+									     info.tipoCred, info.tipo, info.recursos, global.obtenerUsuario());	
 		}
 	
 		public function init(tipo:int, codOF:String, orgFond:String, codLC:String = null):void{
@@ -294,7 +294,7 @@
 		private function setAccionLineaCred(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionLineaCred);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

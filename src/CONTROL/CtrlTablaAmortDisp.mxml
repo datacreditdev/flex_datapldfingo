@@ -56,14 +56,14 @@
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 						
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlTabla = new XML(evt.result.toString());
 	
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					if(_xmlTabla.elements().length() > 0){
 						formateaTablaAmort();

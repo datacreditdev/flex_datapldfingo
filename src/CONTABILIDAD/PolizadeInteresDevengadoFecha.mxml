@@ -74,14 +74,14 @@
 					
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{																				
 						_xmlRes = new XML(evt.result);
 						
 						du.rCursor();
 						du.closeWs(wsMS);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if(_xmlRes.elements().length() >0){
 							formatearInfo();
@@ -92,7 +92,7 @@
 							Alert.show("No se pudo generar la póliza requerida.",titulo,4,null,null,global.iAlert);	
 						}
 					});
-					wsMS.getPolizaDesembolsosFecha.send(fecIni, fecFin, "1", Application.application.U_ID); 
+					wsMS.getPolizaDesembolsosFecha.send(fecIni, fecFin, "1", global.obtenerUsuario()); 
 				}
 			} 
 				

@@ -44,11 +44,11 @@
 			[Bindable]
 			public var dpGrupo:XMLList = new XMLList();
 			
+			private var du:Utils;
 			private var global:Globales;
 			public var wsMS:WebService;
 			public var rep:String;
 			public var titulo:String;
-			private var du:Utils;
 			
 			public function ejecuta():void{
 				btnGenerar.setFocus();
@@ -68,15 +68,18 @@
 			
 			//funcion que invoca la generacion de reportes en formato PDF
 			public function generar():void{
-				if(valida() == true){
-					initConexion();
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if(valida()){
+					du.initWsCat(wsCat);
 					du.sCursor();
 						
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlGrupo = new XML(evt.result.toString());
 						
 						du.rCursor();
-						du.closeWs(wsMS);
+						du.closeWs(wsCat);
 						
 						if(_xmlGrupo.elements().length() > 0){
 							dpGrupo = _xmlGrupo.Table.(ID.toString().substr(0, txtGrupo.length).toLowerCase() == txtGrupo.text.toLowerCase());
@@ -84,7 +87,7 @@
 								var id:String = "&id=" + rep;
 								var grupo:String = "&grupo=" + txtGrupo.text;
 								var ciclo:String = "&ciclo=" + txtCiclo.text;
-								var usuario:String = "&usuario=" + Application.application.U_ID;
+								var usuario:String = "&usuario=" + global.obtenerUsuario();
 								var nomUsuario:String = "&nomUsuario=" + Application.application.NOM_U_ID;
 								var consulta:String = global.urlPdf + id + grupo + ciclo + usuario + nomUsuario;
 								Application.application.muestraPdf(consulta);
@@ -93,7 +96,8 @@
 								Alert.show("No es posible generar el documento del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 						}	
 					});
-					wsMS.getGruposUsuario.send(Application.application.U_ID);
+					params[0] = global.obtenerUsuario();
+					wsCat.getCatalogoUsuario.send(4, params);
 				}
 			}			
 						

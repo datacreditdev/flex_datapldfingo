@@ -106,38 +106,110 @@
 			}
 			
 			public function buscarListaCB(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				var codIB:String = dgIB.selectedItem.CODIGO;
 				var codSB:String = dgSB.selectedItem.CODIGO;
 				dgCB.dataProvider = null;
-				initConexion();
+				du.initWsCat(wsCat);
 				du.sCursor();
 			 	if (tipo == 1)
-					Application.application.bloquear();
-				wsMS.addEventListener(ResultEvent.RESULT, getListaCuentaBancaria);
-				wsMS.getListaCuentaBancaria.send(codIB, codSB);
+					global.bloquear();
+					
+				du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+					this._xmlCB = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					global.desbloquear();
+					
+					if (this._xmlCB.elements().length() > 0){
+						dgCB.dataProvider = _xmlCB.Table;
+						
+						if(accionCB == 2){
+							dgCB.validateNow();
+							dgCB.verticalScrollPosition = vScroll;
+							dgCB.selectedIndex = indCB;
+							this.accionCB = 0;
+						}
+					}
+					seleccionarCB();
+				});
+				params[0] = codIB;
+				params[1] = codSB;
+				wsCat.getListado.send(26, params);
 			}
 			
 			public function buscarListaSB(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				var codIB:String = dgIB.selectedItem.CODIGO;
 				dgSB.dataProvider = null;
-				initConexion();
+				du.initWsCat(wsCat);
 				du.sCursor();
 			 	if (tipo == 1)
-					Application.application.bloquear();
-				wsMS.addEventListener(ResultEvent.RESULT, getListaSucBancaria);
-				wsMS.getListaSucBancaria.send(codIB);
+					global.bloquear();
+					
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+					this._xmlSB = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					global.desbloquear();
+					
+					if (this._xmlSB.elements().length() > 0){
+						dgSB.dataProvider = _xmlSB.Table;
+						
+						if(accionSB == 2){
+							dgSB.validateNow();
+							dgSB.verticalScrollPosition = vScroll;
+							dgSB.selectedIndex = indSB;
+							this.accionSB = 0;
+						}
+					}
+					seleccionarSB();
+				});
+				params[0] = codIB;
+				wsCat.getListado.send(25, params);
 			}
 			
 			public function buscarIB(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if (txtCodIB.text != "" || txtIB.text != ""){
 					btnBuscar.setFocus();
 					dgIB.dataProvider = null;
-					initConexion();
+					
+					du.initWsCat(wsCat);
 					du.sCursor();
 					if(tipo == 1)
-						Application.application.bloquear();
-					wsMS.addEventListener(ResultEvent.RESULT, getInstBancaria);
-					wsMS.getInstBancaria.send(txtCodIB.text, txtIB.text);
+						global.bloquear();
+						
+					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+						this._xmlIB = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						global.desbloquear();
+						
+						if (this._xmlIB.elements().length() > 0){
+							dgIB.dataProvider = _xmlIB.Table;
+							
+							if(accionIB == 2){
+								dgIB.validateNow();
+								dgIB.verticalScrollPosition = vScroll;
+								dgIB.selectedIndex = indIB;
+								this.accionIB = 0;
+							}
+						}
+						seleccionarIB();
+					});
+					params[0] = txtCodIB.text;
+					params[1] = txtIB.text;
+					wsCat.getListado.send(24, params);
 				}	
 			}
 
@@ -151,65 +223,6 @@
 			
 			public function eliminarIB():void{
 				Alert.show("¿Desea eliminar la Institución Bancaria seleccionada?", tituloIB, Alert.YES|Alert.NO,null, manejadorEliminarIB,global.iQuest);
-			}
-			
-			private function getListaCuentaBancaria(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getListaCuentaBancaria);
-				this._xmlCB = new XML(event.result);
-				
-				if (this._xmlCB.elements().length() > 0){
-					dgCB.dataProvider = _xmlCB.Table;
-					
-					if(accionCB == 2){
-						dgCB.validateNow();
-						dgCB.verticalScrollPosition = vScroll;
-						dgCB.selectedIndex = indCB;
-						this.accionCB = 0;
-					}
-				}
-				seleccionarCB();
-			}
-			
-			private function getListaSucBancaria(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getListaSucBancaria);
-				this._xmlSB = new XML(event.result);
-				
-				if (this._xmlSB.elements().length() > 0){
-					dgSB.dataProvider = _xmlSB.Table;
-					
-					if(accionSB == 2){
-						dgSB.validateNow();
-						dgSB.verticalScrollPosition = vScroll;
-						dgSB.selectedIndex = indSB;
-						this.accionSB = 0;
-					}
-				}
-				seleccionarSB();
-			}
-			
-			private function getInstBancaria(event:ResultEvent):void{
-				wsMS.disconnect();
-				du.rCursor();
-				Application.application.desbloquear();
-				wsMS.removeEventListener(ResultEvent.RESULT, getInstBancaria);
-				this._xmlIB = new XML(event.result);
-				if (this._xmlIB.elements().length() > 0){
-					dgIB.dataProvider = _xmlIB.Table;
-					
-					if(accionIB == 2){
-						dgIB.validateNow();
-						dgIB.verticalScrollPosition = vScroll;
-						dgIB.selectedIndex = indIB;
-						this.accionIB = 0;
-					}
-				}
-				seleccionarIB();
 			}
 			
 			public function iniVar():void{
@@ -246,10 +259,10 @@
 					var codCB:String = dgCB.selectedItem.CODIGO;
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionCuentaBancaria);
 					wsMS.setAccionCuentaBancaria.send(3, codIB, codSB, codCB, "", "", "", 0, 0, "", "", 0, 0, 
-												   	  Application.application.U_ID);
+												   	  global.obtenerUsuario());
 			    } 
 			}
 			
@@ -259,10 +272,10 @@
 					var codSB:String = dgSB.selectedItem.CODIGO;  
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionSucBancaria);
 					wsMS.setAccionSucBancaria.send(3, codIB, codSB, "", "", "", 0, 0, 0, 0, "", "", 0, 0, "", "", "",
-								 	     		  Application.application.U_ID);
+								 	     		  global.obtenerUsuario());
 			    } 
 			}
 			
@@ -271,10 +284,10 @@
 					var codIB:String = dgIB.selectedItem.CODIGO;
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionInstBancaria);
 					wsMS.setAccionInstBancaria.send(3, codIB, "", "", "", "", "", "", "", "", 
-								 	   		   	    "", "", Application.application.U_ID);
+								 	   		   	    "", "", global.obtenerUsuario());
 			    } 
 			}
 			
@@ -387,7 +400,6 @@
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
 				var Params:Array;
-				var i:int;
 				var cont:int;
 				
 				wsMS = du.initWs(wsMS);
@@ -398,7 +410,7 @@
 						
 					cont = dPermisos.elements().length();
 					
-					for(i = 0; i < cont; i++)
+					for(var i:int = 0; i < cont; i++)
 					{
 						switch(dPermisos.Table[i].OPCION.toString())
 						{
@@ -466,7 +478,7 @@
 			private function setAccionCuentaBancaria(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionCuentaBancaria);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -478,7 +490,7 @@
 			private function setAccionSucBancaria(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionSucBancaria);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -490,7 +502,7 @@
 			private function setAccionInstBancaria(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionInstBancaria);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")

@@ -113,14 +113,14 @@
 					du.initWsCat(wsCat);
 					du.sCursor();
 					if(tipo == 1)
-						Application.application.bloquear();
+						global.bloquear();
 						
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
 						_xmlReg = new XML(evt.result);
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();
+						global.desbloquear();
 						
 						if(_xmlReg.elements().length() > 0){
 							dgRegional.dataProvider = _xmlReg.Table;
@@ -148,14 +148,14 @@
 				du.initWsCat(wsCat);
 				du.sCursor();
 			 	if (tipo == 1)
-					Application.application.bloquear();
+					global.bloquear();
 					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
 					_xmlCoord = new XML(evt.result);
 				
 					du.rCursor();
 					du.closeWs(wsCat);
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					if (_xmlCoord.elements().length() > 0){
 						dpCoord = _xmlCoord.elements();
@@ -216,7 +216,7 @@
 					var codCoord:String = dgCoord.selectedItem.CODIGO;  
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionCoord);
 					wsMS.setAccionCoord.send(3, codReg, codCoord, "", "", "",
                                  			 "", "", "", "", "");
@@ -228,7 +228,7 @@
 					var codReg:String = dgRegional.selectedItem.CODIGO;
 			    	initConexion();
 			    	du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionReg);
 					wsMS.setAccionReg.send(3, codReg, "", "", "", "", "", "", "", "");
 			    } 
@@ -374,7 +374,7 @@
 			private function setAccionCoord(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionCoord);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
@@ -386,7 +386,7 @@
 			private function setAccionReg(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionReg);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")

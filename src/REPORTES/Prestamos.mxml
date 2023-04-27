@@ -71,7 +71,7 @@
 											  obj.dtfFinHasta.text, obj.dtfPagos.text, Number(obj.chkSitCart.selected), 
 											  Number(obj.chkSitTes.selected), Number(obj.chkSitSaldo.selected), 
 											  Number(obj.chkSitLiq.selected), Number(obj.chkSitDev.selected),   
-										      obj.tipoCart.selectedValue.toString(), Application.application.U_ID,
+										      obj.tipoCart.selectedValue.toString(), global.obtenerUsuario(),
 										      Application.application.NOM_U_ID, obj.cboRegion.selectedItem.codigo, 
 										      obj.cboSucursal.selectedItem.codigo, obj.cboAsesor.selectedItem.codigo);	
 				}

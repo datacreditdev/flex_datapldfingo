@@ -20,7 +20,6 @@
 			public var ArrPagos:ArrayCollection;
 			
 			public var myPattern:RegExp = /,/g;
-			public var wsMS:WebService;	
 			private var global:Globales;
 			private var du:Utils;
 			
@@ -29,21 +28,24 @@
 			public var disp:String;
 			
 			public function cargaTablaAmort(orgFond:String, nomOF:String, lineaCred:String, nomLC:String, disp:String, nomDisp:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				init();
 				this.orgFond = orgFond;
 				this.lineaCred = lineaCred;
 				this.disp = disp;
 				
-				Application.application.bloquear();
+				du.initWsCat(wsCat);
 				du.sCursor();
-				initConexion();
+				global.bloquear();
 						
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlRes = new XML(evt.result.toString());
 	
 					du.rCursor();
-					du.closeWs(wsMS);
-					Application.application.desbloquear();
+					du.closeWs(wsCat);
+					global.desbloquear();
 					
 					if(_xmlRes.elements().length() > 0){
 						dgReporte.dataProvider = _xmlRes.Table;
@@ -52,20 +54,16 @@
 						lblDisp.text = nomDisp;
 					}
 				});
-				wsMS.getTablaAmortDisp.send(orgFond, lineaCred, disp);
+				params[0] = orgFond;
+				params[1] = lineaCred;
+				params[2] = disp;
+				wsCat.getInfoRegistro.send(21, params);
 			}
 			
 			public function init():void{
 				global = new Globales();
 				du = new Utils();
 			}
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}
-			
 		]]>
 	</mx:Script>
 	<mx:DataGrid id="dgReporte" x="27.5" y="101" width="460" height="310" alpha="1.0" sortableColumns="false">

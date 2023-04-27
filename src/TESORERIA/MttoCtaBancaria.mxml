@@ -47,6 +47,9 @@
 		private var vResult:ValidationResultEvent;
 		
 		public function cargaInfoCB(tipo:int, codIB:String, instBanc:String, codSB:String, sucBanc:String, codCB:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
 			tipoAccion = tipo; 
 			this.title = "Edición";
 			//Datos de la Disposicion
@@ -54,20 +57,23 @@
 			info.cdgSB = codSB;
 			info.cdgCB = codCB;
 			
-			initConexion();
+			du.initWsCat(wsCat);
 			du.sCursor();
 			
-			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 				_xmlCB = new XML(evt.result.toString()); 
 					
 				du.rCursor();
-				du.closeWs(wsMS);
+				du.closeWs(wsCat);
 					
 				if (_xmlCB.elements().length() > 0){
 					llenaRegistros();
 				} 	
 			});
-			wsMS.getInfoCuentaBancaria.send(codIB, codSB, codCB);
+			params[0] = codIB;
+			params[1] = codSB;
+			params[2] = codCB;
+			wsCat.getInfoRegistro.send(8, params);
 		}
 		
 		public function cerrar():void{
@@ -99,7 +105,6 @@
 		}
 		
 		public function formateaMoneda():void{
-			var i:int;
 			var cont:int = _xmlMoneda.elements().length();
 			var oItem:Object;
 			var item:Array = new Array;
@@ -109,7 +114,7 @@
 			oItem.nombre = "--Seleccionar--";
 			item.push(oItem);
 				
-			for (i = 0; i < cont; i++){
+			for (var i:int = 0; i < cont; i++){
 				oItem = new Object();
 				oItem.id = _xmlMoneda.Table[i].CODIGO;	
 				oItem.nombre = _xmlMoneda.Table[i].NOMBRE;
@@ -121,11 +126,11 @@
 		public function guardaCtaBancaria():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionCuentaBancaria);
 			wsMS.setAccionCuentaBancaria.send(tipoAccion, info.cdgIB, info.cdgSB, info.cdgCB, info.numero, info.nombre, 
 											  info.titular, info.favor, info.saldo, info.moneda, info.tipo, info.activa, 
-									       	  Application.application.U_ID);	
+									       	  global.obtenerUsuario());	
 		}
 	
 		public function init(tipo:int, codIB:String, instBanc:String, codSB:String, sucBanc:String, codCB:String = null):void{
@@ -174,7 +179,6 @@
 		}	
 		
 		public function llenaRegistros():void{
-			var i:int;
 			txtCodCB.setFocus();
 			
 			txtCodCB.text = info.cdgCB;
@@ -183,7 +187,7 @@
 			txtTitular.text = _xmlCB.Table[0].TITULAR;
 			txtFavor.text = _xmlCB.Table[0].AFAVORDE;
 			txtSaldo.text = _xmlCB.Table[0].SALDOREFER;
-			for(i = 0; i < monedaObj.length; i++){
+			for(var i:int = 0; i < monedaObj.length; i++){
 				if(monedaObj[i].id == _xmlCB.Table[0].CDGMO.toString()){
 					cboMoneda.selectedIndex = i;
 					break;
@@ -196,7 +200,6 @@
 		public function registraInfoCB(tipo:int, codIB:String, instBanc:String, codSB:String, sucBanc:String):void{
 			var wsCat:WebService = new WebService;
 			var params:Array = new Array;
-			var i:int;
 			tipoAccion = tipo;
 			this.title = "Nuevo";
 			info.cdgIB = codIB;
@@ -225,7 +228,7 @@
 		private function setAccionCuentaBancaria(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCuentaBancaria);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){
@@ -292,8 +295,7 @@
 		<mx:RadioButtonGroup id="tipo"/>
 		<mx:RadioButton id="rdbDeposito" x="46" y="0" label="Depósito" groupName="tipo" value="D" width="76" selected="true"/>
 		<mx:RadioButton id="rdbPagadora" x="46" y="20" groupName="tipo" value="P" width="76" label="Pagadora"/>
-		<mx:RadioButton id="rdbAmbas" x="46" y="41" label="Ambas" groupName="tipo" value="A" width="76"/>
-	
+		<mx:RadioButton id="rdbAmbas" x="46" y="41" label="Ambas" groupName="tipo" value="A" width="76"/>	
 	</mx:Canvas>
 	<mx:Button id="btnAceptar" x="177" y="433" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
 	<mx:Button id="btnCancelar" x="259" y="433" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>

@@ -309,7 +309,7 @@
 				
 				permisos();
 				
-				_xmlCoord = Application.application._xmlCoord;
+				_xmlCoord = Application.application._xmlSuc;
 				
 				if (_xmlCoord.elements().length() > 0){
 					formateaCoord();
@@ -404,20 +404,6 @@
 									break;
 								}
 							}
-							
-							/*initConexion();
-							du.sCursor();
-					
-							du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
-								var codigo:String = evt.result.toString();
-								
-								txtCodigo.text = codigo;
-							
-								du.rCursor();
-								du.closeWs(wsMS);
-							});
-							//EXTRAE EL CODIGO CONSECUTIVO DE ACREDITADOS
-							wsMS.setCodigoAcredESIA.send();*/
 						}
 					});
 					//MUESTRA LAS ENTIDADES FEDERATIVAS DISPONIBLES

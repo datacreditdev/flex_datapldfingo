@@ -131,7 +131,7 @@
             
 	<mx:Script>
 		<![CDATA[
-			import Data.Modulo;
+		import Data.Modulo;
 		import CONTROL.pLoadingMsg;
 		import CONTROL.pLoading;
 		import PRINCIPAL.MainPrincipal;
@@ -191,17 +191,17 @@
         [Bindable]        
         public var _Current_Mod_Id:String;
         [Bindable]        
-        public var _xmlCoord:XML;
+        public var _xmlSuc:XML;
         [Bindable]
 		public var _xmlReg:XML;       
         
-        public var global:Globales
         public var Last_Mod_Id:String;
 		public var ws:WebService;
 		public var wsCat:WebService;
 		public var wsMS:WebService;
-		public var du:Utils;
-		  
+		private var du:Utils;
+		private var global:Globales
+          
         private var dp:XML;
         private var modulo:Modulo;
         private var loading:pLoading;
@@ -386,7 +386,7 @@
 							_xmlReg = new XML(event.result.toString());				
 							
 							du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
-								_xmlCoord = new XML(event.result.toString());				
+								_xmlSuc = new XML(event.result.toString());				
 								
 								du.rCursor();
 								du.closeWs(wsCat);
@@ -404,18 +404,19 @@
 				});
 				Params = new Array();
 				Params[0] = cadPerfil;
-				ws.ESLoginMethods.send(2,Params);	//  Método para obtener los módulos asignados al perfil del usuario 	
+				//Método para obtener los módulos asignados al perfil del usuario
+				ws.ESLoginMethods.send(2,Params); 	
 			});	
 			Params = new Array(2);
 			var objPwd:Object = txtPwd.text;
 			Params[0] = txtUsr.text;
-			Params[1] = objPwd.toString();			
-			ws.ESLoginMethods.send(1,Params); //Método para Login								
+			Params[1] = objPwd.toString();		
+			//Método para Login	
+			ws.ESLoginMethods.send(1,Params); 								
 		}
 		
 		private function fillMenu(evt:Event):void{
-			var Params:Array;
-			var r:String;							
+			var Params:Array;						
 			var cnv:Canvas = evt.currentTarget.selectedChild;				
 			var _Mod_Id:String = cnv.data.toString();	
 			var indice:int = evt.currentTarget.selectedIndex;
@@ -577,8 +578,7 @@
 				return false;
 			}
 			var arrayResult:Array = Validator.validateAll([vPass]);
-            if(arrayResult.length > 0)
-            {
+            if(arrayResult.length > 0){
                 Alert.show("Formato de la nueva contraseña incorrecto.\n\nIntroduzca una contraseña de 8 a 12 caracteres, que como mínimo tenga una letra y un número. Dicha contraseña no debe iniciar con un valor numérico","Mantenimiento de Usuario",4,null,null,global.iAlert);
                 return false;
             }

@@ -84,21 +84,23 @@
 			
 			//Realiza la busqueda de direccion del acreditado utilizando el codigo postal
 			public function buscaCodPostal():void{ 
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				txtCodPostal.text = StringUtil.trim(txtCodPostal.text);
 				if (txtCodPostal.text != "" && txtCodPostal.length == 5){
-					du = new Utils();
-					initConexion();
+					du.initWsCat(wsCat);
 					du.sCursor();
 					
 					_xmlDir = null;
 				
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					du.ejecutaWsMethod(wsCat, function(evt:ResultEvent):void {											
 						_xmlDir = new XML(evt.result.toString());
 					
 						limpiaDatosDir();
 						
 						du.rCursor();
-						du.closeWs(wsMS);
+						du.closeWs(wsCat);
 						
 						if(_xmlDir.elements().length() > 0){
 								
@@ -117,7 +119,8 @@
 							obtieneColonia();
 						}
 					});
-					wsMS.getDirCodPostal.send(txtCodPostal.text);
+					params[0] = txtCodPostal.text;
+					wsCat.getCatalogoGral.send(6, params);
 				}
 				else{
 					txtCodPostal.text = "";
@@ -128,8 +131,7 @@
 			}
 			
 			public function buscaColonia():void{
-				if(txtColonia.text != '')
-				{	
+				if(txtColonia.text != ''){	
 					dgColonia.selectedIndex = -1;
 					texto = txtColonia.text;					
 					colObj.filterFunction = filtraColonia;
@@ -152,8 +154,7 @@
 			}
 			
 			public function buscaEntidad():void{
-				if(txtEntFed.text != '')
-				{	
+				if(txtEntFed.text != ''){	
 					dgEntidad.selectedIndex = -1;
 					texto = txtEntFed.text;					
 					entObj.filterFunction = filtraEntidad;
@@ -176,8 +177,7 @@
 			}
 			
 			public function buscaLocalidad():void{
-				if(txtLocalidad.text != '')
-				{	
+				if(txtLocalidad.text != ''){	
 					dgLocalidad.selectedIndex = -1;
 					texto = txtLocalidad.text;					
 					locObj.filterFunction = filtraLocalidad;
@@ -200,8 +200,7 @@
 			}
 			
 			public function buscaMunicipio():void{
-				if(txtMunicipio.text != '')
-				{	
+				if(txtMunicipio.text != ''){	
 					dgMunicipio.selectedIndex = -1;
 					texto = txtMunicipio.text;					
 					munObj.filterFunction = filtraMunicipio;
@@ -281,7 +280,6 @@
 			}
 			
 			public function formateaColonia():void{
-				var i:int;
 				var cont:int = _xmlColonia.elements().length();
 				
 				colObj.filterFunction = null;
@@ -289,7 +287,7 @@
 				colObj.removeAll();
 				colObj.refresh();
 				
-				for (i = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					var oItem:Object = new Object();
 					oItem.nombre = _xmlColonia.Table[i].NOMBRE;
 					oItem.codigo = _xmlColonia.Table[i].CODIGO;
@@ -299,7 +297,6 @@
 			}
 			
 			public function formateaEntidad():void{
-				var i:int;
 				var cont:int = _xmlEntidad.elements().length();
 				
 				entObj.filterFunction = null;
@@ -307,7 +304,7 @@
 				entObj.removeAll();
 				entObj.refresh();
 				
-				for (i = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					var oItem:Object = new Object();
 					oItem.nombre = _xmlEntidad.Table[i].NOMBRE;
 					oItem.codigo = _xmlEntidad.Table[i].CODIGO;
@@ -316,7 +313,6 @@
 			}
 			
 			public function formateaLocalidad():void{
-				var i:int;
 				var cont:int = _xmlLocalidad.elements().length();
 				
 				locObj.filterFunction = null;
@@ -324,7 +320,7 @@
 				locObj.removeAll();
 				locObj.refresh();
 				
-				for (i = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					var oItem:Object = new Object();
 					oItem.nombre = _xmlLocalidad.Table[i].NOMBRE;
 					oItem.codigo = _xmlLocalidad.Table[i].CODIGO;
@@ -333,7 +329,6 @@
 			}
 			
 			public function formateaMunicipio():void{
-				var i:int;
 				var cont:int = _xmlMunicipio.elements().length();
 				
 				munObj.filterFunction = null;
@@ -341,7 +336,7 @@
 				munObj.removeAll();
 				munObj.refresh();
 				
-				for (i = 0; i < cont; i++){
+				for (var i:int = 0; i < cont; i++){
 					var oItem:Object = new Object();
 					oItem.nombre = _xmlMunicipio.Table[i].NOMBRE;
 					oItem.codigo = _xmlMunicipio.Table[i].CODIGO;
@@ -430,14 +425,16 @@
 			}
 			
 			public function obtieneColonia():void{
-				du = new Utils();
-				initConexion();
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
 				du.sCursor();
 				
 				colObj.removeAll();
 				colObj.refresh();
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlColonia = new XML(evt.result.toString());
 					
 					if(_xmlColonia.elements().length() > 0){
@@ -447,20 +444,26 @@
 					}
 					
 					du.rCursor();
-					du.closeWs(wsMS);
+					du.closeWs(wsCat);
 				});
-				wsMS.getColonia.send(datos.cdgLugarEntFed, datos.cdgLugarMun, datos.cdgLugarLoc, txtCodPostal.text);
+				params[0] = datos.cdgLugarEntFed;
+				params[1] = datos.cdgLugarMun;
+				params[2] = datos.cdgLugarLoc;
+				params[3] = txtCodPostal.text;
+				wsCat.getCatalogoGral.send(5, params);
 			}
 			
 			public function obtieneLocalidad():void{
-				du = new Utils();
-				initConexion();
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
 				du.sCursor();
 				
 				locObj.removeAll();
 				locObj.refresh();
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlLocalidad = new XML(evt.result.toString());
 					
 					if(_xmlLocalidad.elements().length() > 0){
@@ -470,34 +473,40 @@
 					}
 					
 					du.rCursor();
-					du.closeWs(wsMS);
+					du.closeWs(wsCat);
 					
 				});
-				wsMS.getLocalidad.send(datos.cdgLugarEntFed, datos.cdgLugarMun, txtCodPostal.text);
+				params[0] = datos.cdgLugarEntFed;
+				params[1] = datos.cdgLugarMun;
+				params[2] = txtCodPostal.text;
+				wsCat.getCatalogoGral.send(4, params);
 			}
 			
 			public function obtieneMunicipio():void{
-				du = new Utils();
-				initConexion();
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
 				du.sCursor();
 				
 				munObj.removeAll();
 				munObj.refresh();
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlMunicipio = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
 					
 					if(_xmlMunicipio.elements().length() > 0){
 						formateaMunicipio();
 						dgMunicipio.dataProvider = null;
 						dgMunicipio.dataProvider = munObj;
 					}
-					
-					du.rCursor();
-					du.closeWs(wsMS);
-					
 				});
-				wsMS.getMunicipio.send(datos.cdgLugarEntFed, txtCodPostal.text);
+				params[0] = datos.cdgLugarEntFed;
+				params[1] = txtCodPostal.text;
+				wsCat.getCatalogoGral.send(3, params);
 			}
 			
 			private function presColonia(event:KeyboardEvent):void{

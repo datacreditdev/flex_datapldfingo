@@ -94,7 +94,7 @@
 			public var actObj:ArrayCollection =  new ArrayCollection();
 			
 			public function cargaCoord():void{
-				_xmlCoord = Application.application._xmlCoord;
+				_xmlCoord = Application.application._xmlSuc;
 				
 				cboCoord.dataProvider = null;	
 					
@@ -148,7 +148,7 @@
 					wsMS = du.initWsMS(wsMS);
 					du.sCursor();
 					
-					Application.application.bloquear();
+					global.bloquear();
 								
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {																				
 						var res:String = evt.result.toString();	
@@ -157,7 +157,7 @@
 						du.closeWs(wsMS);	
 						wsMS = null;
 						
-						Application.application.desbloquear();
+						global.desbloquear();
 							
 						if(res.substr(0,1) == "1"){
 							Alert.show("Actividad registrada exitosamente.",titulo,4,null,null,global.iInfo);
@@ -166,7 +166,7 @@
 						else
 							Alert.show(res.substring(2,res.length - 1),titulo,4,null,null,global.iAlert);
 					});
-					wsMS.setAccionBitacoraOp.send(grupo, ciclo, coord, act, Application.application.U_ID, acred);
+					wsMS.setAccionBitacoraOp.send(grupo, ciclo, coord, act, global.obtenerUsuario(), acred);
 				}
 			}
 			

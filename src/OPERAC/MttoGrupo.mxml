@@ -30,23 +30,24 @@
 			private var global:Globales;
 			
 			public function cargaInfoGrupo(grupo:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				tipoAccion = 2;
 				du = new Utils();
 				global = new Globales();
 				formDGGrupo.cboCoordinacion.addEventListener(ListEvent.CHANGE, selecCoord);
-				var wsMS:WebService = new WebService();
 		
-				Application.application.bloquear();
+				global.bloquear();
 				
-				wsMS = du.initWsMS(wsMS);
+				du.initWsCat(wsCat);
 				du.sCursor();
 				
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlGrupo = new XML(evt.result);
 					
 					du.rCursor();
-					du.closeWs(wsMS);
-					wsMS = null;
+					du.closeWs(wsCat);
 					
 					if (_xmlGrupo.elements().length() > 0){
 						llenaRegistros();
@@ -54,9 +55,11 @@
 					else{
 						Alert.show("Error en la carga de Datos","Mantenimiento de Grupo",4,null,null,global.iAlert);
 					}
-					Application.application.desbloquear();
+					global.desbloquear();
 				});
-				wsMS.getInfoGrupo.send(1, grupo);
+				params[0] = 1;
+				params[1] = grupo;
+				wsCat.getInfoGrupo.send(1, params);
 			}
 			
 			public function cerrar():void{
@@ -74,7 +77,7 @@
 			public function guardaGrupo():void{
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionGrupo);
 				wsMS.setAccionGrupo.send(tipoAccion, info.codigo, info.nombre, info.fecha, info.cdgCoord,
 											 info.codPostal, info.cdgEnt, info.cdgMun, info.cdgLoc, info.cdgCol,
@@ -150,7 +153,7 @@
 			private function setAccionGrupo(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionGrupo);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){

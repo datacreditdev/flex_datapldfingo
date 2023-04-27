@@ -93,7 +93,7 @@
 							lblTotal.text = "";
 						}
 					});
-					wsRep.getRepDevPrn.send(tipo, dtfFecha.text, dtfFechaFinal.text, Application.application.U_ID);
+					wsRep.getRepDevPrn.send(tipo, dtfFecha.text, dtfFechaFinal.text, global.obtenerUsuario());
 				}	
 			}			
 						

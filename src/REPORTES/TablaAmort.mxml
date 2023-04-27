@@ -4,9 +4,10 @@
 	<!--Componente que permite simular la aplicación de los pagos capturados por el usuario-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
 			import mx.rpc.soap.WebService;
 			import mx.rpc.events.ResultEvent;
-			import Data.Globales;
 			import mx.core.Application;
 			import mx.containers.TitleWindow;			
 			import mx.managers.PopUpManager;
@@ -26,6 +27,7 @@
 			
 			public var myPattern:RegExp = /,/g;
 			public var wsMS:WebService;	
+			private var du:Utils;
 			private var global:Globales;
 			private var loading:pLoading;
 			
@@ -33,26 +35,45 @@
 			public var ciclo:String;
 			public var fecha:String;
 			
-			public function bloquear():void{
-				loading = pLoading(PopUpManager.createPopUp(this, pLoading, true));
-				PopUpManager.centerPopUp(loading);							
-			}
-			
 			public function calculaSaldo():void{
-				initConexion();
-				CursorManager.setBusyCursor();
-				wsMS.addEventListener(ResultEvent.RESULT, getEncTablaAmort);
-				wsMS.getEncTablaAmort.send(grupo, ciclo, fecha);
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+					this._xmlEnc = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+						
+					if (_xmlEnc.elements().length() > 0){
+						lblPagoComp.text = global.formatoMoneda(_xmlEnc.Table[0].DEUDAVENCIDA);
+						lblPagoEfec.text = global.formatoMoneda(_xmlEnc.Table[0].CANTIDAD);
+						lblMora.text = global.formatoMoneda(_xmlEnc.Table[0].SALDO);
+						lblPeriTran.text = _xmlEnc.Table[0].PERITRAN;
+						lblPeriPag.text = _xmlEnc.Table[0].PERIPAG;
+					}	
+				}); 
+				params[0] = grupo;
+				params[1] = ciclo;
+				params[2] = fecha;
+				wsCat.getInfoRegistro.send(37, params);
 			}
 				
 			public function cargaTablaAmort(grupo:String, ciclo:String, fecha:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				this.grupo = grupo;
 				this.ciclo = ciclo;
 				this.fecha = fecha;
+				
 				initConexion();
-				bloquear();
+				global.bloquear();
 				CursorManager.setBusyCursor();
-				wsMS.addEventListener(ResultEvent.RESULT, getEdoCuenta);
+				wsMS.addEventListener(ResultEvent.RESULT, getTablaAmort);
 				wsMS.getTablaAmort.send(grupo, ciclo);
 			}
 			
@@ -80,30 +101,15 @@
 				dgPagos.dataProvider = ArrPagos;
 			}
 			
-			private function getEdoCuenta(event:ResultEvent):void{
+			private function getTablaAmort(event:ResultEvent):void{
 				wsMS.disconnect();
 				CursorManager.removeBusyCursor();
-				wsMS.removeEventListener(ResultEvent.RESULT, getEdoCuenta);
+				wsMS.removeEventListener(ResultEvent.RESULT, getTablaAmort);
 				this._xmlCuenta = new XML(event.result);	
 				if (_xmlCuenta.elements().length() > 0){
 					formateaPagos();
 					modificaColor();
 					calculaSaldo();
-				}	
-			}
-			
-			private function getEncTablaAmort(event:ResultEvent):void{
-				wsMS.disconnect();
-				desbloquear();
-				CursorManager.removeBusyCursor();
-				wsMS.removeEventListener(ResultEvent.RESULT, getEncTablaAmort);
-				this._xmlEnc = new XML(event.result);	
-				if (_xmlEnc.elements().length() > 0){
-					lblPagoComp.text = global.formatoMoneda(_xmlEnc.Table[0].DEUDAVENCIDA);
-					lblPagoEfec.text = global.formatoMoneda(_xmlEnc.Table[0].CANTIDAD);
-					lblMora.text = global.formatoMoneda(_xmlEnc.Table[0].SALDO);
-					lblPeriTran.text = _xmlEnc.Table[0].PERITRAN;
-					lblPeriPag.text = _xmlEnc.Table[0].PERIPAG;
 				}	
 			}
 			
@@ -123,6 +129,7 @@
 			
 			public function init():void{
 				global = new Globales();
+				du = new Utils();
 			}
 			
 			public function initConexion():void{				

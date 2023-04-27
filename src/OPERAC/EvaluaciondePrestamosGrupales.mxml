@@ -86,85 +86,100 @@
 			}
 			
 			public function buscarGrupo():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array; 
+				
 				if (txtCodGrupo.text != "" || txtGrupo.text != ""){
 					btnBuscar.setFocus();
 					dgGrupos.dataProvider = null;
-					initConexion();
-					Application.application.bloquear();
-					CursorManager.setBusyCursor();
-					wsMS.addEventListener(ResultEvent.RESULT, getGrupos);
-					wsMS.getGrupos.send(Application.application.U_ID, txtCodGrupo.text, txtGrupo.text);
+					du.initWsCat(wsCat);
+					du.sCursor();
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+						this._xmlGrupos = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						global.desbloquear();
+						
+						if (this._xmlGrupos.elements().length() > 0){
+							dgGrupos.dataProvider = _xmlGrupos.Table;
+						}
+						seleccionaGrupo();
+					});
+					params[0] = global.obtenerUsuario();
+					params[1] = txtCodGrupo.text;
+					params[2] = txtGrupo.text;
+					wsCat.getListado.send(11, params);
 				}	
 			}
 			
 			public function buscarListaAcredSolic(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				var indice:int = dgGrupos.selectedIndex;
 				var grupo:String = this._xmlGrupos.Table[indice].CODIGO;
 				var indSolic:int = dgSolic.selectedIndex;
 				var ciclo:String = this._xmlSolic.Table[indSolic].CICLO;
 				dgAcred.dataProvider = null;
-				initConexion();
+				du.initWsCat(wsCat);
+				du.sCursor();
 			 	if (tipo == 1)
-					Application.application.bloquear();
-				CursorManager.setBusyCursor();
-				wsMS.addEventListener(ResultEvent.RESULT, getListaAcredSolic);
-				wsMS.getListaAcredSolic.send(grupo, ciclo);
+					global.bloquear();
+					
+				du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+					this._xmlAcred = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					global.desbloquear();
+					
+					if (this._xmlAcred.elements().length() > 0){
+						dgAcred.dataProvider = _xmlAcred.Table;
+					}
+					seleccionaAcred();
+				});
+				params[0] = grupo;
+				params[1] = ciclo;
+				wsCat.getListado.send(3, params);
 			}
 			
 			public function buscarListaSolic(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				var indice:int = dgGrupos.selectedIndex;
 				var grupo:String = this._xmlGrupos.Table[indice].CODIGO;
-				initConexion();
+				du.initWsCat(wsCat);
+			 	du.sCursor();
 			 	if(tipo == 1)
-			 		Application.application.bloquear();
-				CursorManager.setBusyCursor();
-				wsMS.addEventListener(ResultEvent.RESULT, getListaSolic);
-				wsMS.getListaSolic.send(grupo);
-			}
-
-			private function getGrupos(event:ResultEvent):void{
-				wsMS.disconnect();
-				Application.application.desbloquear();
-				CursorManager.removeBusyCursor();
-				wsMS.removeEventListener(ResultEvent.RESULT, getGrupos);
-				this._xmlGrupos = new XML(event.result);
-				if (this._xmlGrupos.elements().length() > 0){
-					dgGrupos.dataProvider = _xmlGrupos.Table;
-				}
-				seleccionaGrupo();
-			}
-			
-			private function getListaAcredSolic(event:ResultEvent):void{
-				wsMS.disconnect();
-				Application.application.desbloquear();
-				CursorManager.removeBusyCursor();
-				wsMS.removeEventListener(ResultEvent.RESULT, getListaAcredSolic);
-				this._xmlAcred = new XML(event.result);
-				if (this._xmlAcred.elements().length() > 0){
-					dgAcred.dataProvider = _xmlAcred.Table;
-				}
-				seleccionaAcred();
-			}
-			
-			private function getListaSolic(event:ResultEvent):void{
-				wsMS.disconnect();
-				Application.application.desbloquear();
-				CursorManager.removeBusyCursor();
-				wsMS.removeEventListener(ResultEvent.RESULT, getListaSolic);
-				this._xmlSolic = new XML(event.result);
-				if (this._xmlSolic.elements().length() > 0){
-					dgSolic.dataProvider = _xmlSolic.Table;
-					if (accionSolic == 2){
-						dgSolic.validateNow();
-						dgSolic.verticalScrollPosition = vScroll;
-						dgSolic.selectedIndex = indSolic;
-						this.accionSolic = 0;
+			 		global.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+					this._xmlSolic = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					global.desbloquear();
+					
+					if (this._xmlSolic.elements().length() > 0){
+						dgSolic.dataProvider = _xmlSolic.Table;
+						if (accionSolic == 2){
+							dgSolic.validateNow();
+							dgSolic.verticalScrollPosition = vScroll;
+							dgSolic.selectedIndex = indSolic;
+							this.accionSolic = 0;
+						}
+						activarContAcred(true);
 					}
-					activarContAcred(true);
-				}
-				else
-					activarContAcred(false);
-				seleccionaSolic();
+					else
+						activarContAcred(false);
+					seleccionaSolic();
+				});
+				params[0] = grupo;
+				wsCat.getListado.send(2, params);
 			}
 			
 			public function iniVar():void{

@@ -31,7 +31,6 @@
 		
 		public var infoObj:ArrayCollection = new ArrayCollection();
 
-		public var wsMS:WebService;	
 		public var codigo:String;
 		public var indice:int;
 		public var texto:String;
@@ -52,7 +51,7 @@
 		}
 		
 		public function buscaInfo():void{
-			if(txtDato.text != ''){	
+			if(txtDato.text != ""){	
 				dgInfo.selectedIndex = -1;
 				texto = txtDato.text;					
 				infoObj.filterFunction = filtraRegistro;
@@ -75,6 +74,7 @@
 				infoObj.filterFunction = null;
 				infoObj.refresh();
 				dgInfo.visible = false;
+				this.codigo = "";
 			}
 		}
 		
@@ -85,32 +85,31 @@
 			return isMatch; 
 		}
 	
-			public function filtraRegistro(item:Object):Boolean{
-				var isMatch:Boolean = false
-				if(item.nombre.toString().substr(0, texto.length).toLowerCase() == texto.toLowerCase())
-					isMatch = true 
-				return isMatch; 
-			}
+		public function filtraRegistro(item:Object):Boolean{
+			var isMatch:Boolean = false
+			if(item.nombre.toString().substr(0, texto.length).toLowerCase() == texto.toLowerCase())
+				isMatch = true 
+			return isMatch; 
+		}
+		
+		public function formateaInfo():void{
+			var cont:int = _xmlInfo.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
 			
-			public function formateaInfo():void{
-				var i:int;
-				var cont:int = _xmlInfo.elements().length();
-				var oItem:Object;
-				var item:Array = new Array;
-				
-				infoObj.filterFunction = null;
-				infoObj.refresh();
-				infoObj.removeAll();
-				infoObj.refresh();
-				
-				for (i = 0; i < cont; i++){
-					oItem = new Object();
-					oItem.nombre = _xmlInfo.Table[i].NOMBRE;
-					oItem.codigo = _xmlInfo.Table[i].CODIGO;
-					item.push(oItem);
-				}
-				infoObj = new ArrayCollection(item);
-			}	
+			infoObj.filterFunction = null;
+			infoObj.refresh();
+			infoObj.removeAll();
+			infoObj.refresh();
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.nombre = _xmlInfo.Table[i].NOMBRE;
+				oItem.codigo = _xmlInfo.Table[i].CODIGO;
+				item.push(oItem);
+			}
+			infoObj = new ArrayCollection(item);
+		}	
 		
 		public function init(_xmlInfo:XML, alto:Number):void{
 			this.height = alto;
@@ -126,6 +125,14 @@
 		public function limpiar():void{
 			txtDato.text = "";
 			codigo = "";
+		}
+		
+		public function obtieneCodigo():String{
+			return this.codigo;
+		}
+		
+		public function obtieneDato():String{
+			return txtDato.text;
 		}
 			
 		private function presRegistro(event:KeyboardEvent):void{

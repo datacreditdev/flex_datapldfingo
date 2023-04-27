@@ -63,7 +63,7 @@
 							lblTotal.text = "";
 						}
 					});
-					wsRep.getRepChequeImpreso.send(dtfFecha.text, dtfFechaFinal.text, Application.application.U_ID);
+					wsRep.getRepChequeImpreso.send(dtfFecha.text, dtfFechaFinal.text, global.obtenerUsuario());
 				}	
 			}			
 						

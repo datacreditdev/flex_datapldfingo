@@ -121,6 +121,8 @@
 			}
 			
 			public function buscarAcred(event:FlexEvent, tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
 				
 				switch(tipo){
 					case 1:
@@ -138,14 +140,14 @@
 					var acred:String = event.currentTarget.text;
 					var grupo:String = txtGrupo.text;
 					
-					initConexion();
+					du.initWsCat(wsCat);
 					du.sCursor();
 						
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlAcred = new XML(evt.result);
 							
 						du.rCursor();
-						du.closeWs(wsMS);
+						du.closeWs(wsCat);
 								
 						if(_xmlAcred.elements().length() > 0){
 							switch(tipo){
@@ -164,7 +166,10 @@
 							Alert.show("Código de cliente incorrecto.\n\nVerifique el dato capturado.",titulo,4,null,null,global.iAlert);					
 					});
 					//metodo que consulta que el cliente pertenezca al grupo
-					wsMS.getAcred.send(grupo, acred, "");
+					params[0] = grupo;
+					params[1] = acred;
+					params[2] = "";
+					wsCat.getInfoAcred.send(3, params);
 				}
 				else
 					Alert.show("Capture el código de acreditado.",titulo,4,null,null,global.iAlert);
@@ -172,17 +177,20 @@
 			
 			//funcion que consulta la mesa directiva del grupo
 			public function consultar(event:Event):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				var grupo:String = event.currentTarget.txtGrupo.text;
 				var ciclo:String = event.currentTarget.txtCiclo.text; 
 				
-				initConexion();
+				du.initWsCat(wsCat);
 				du.sCursor();
 						
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlGrupo = XML(evt.result.toString());
 						
 					du.rCursor();
-					du.closeWs(wsMS);
+					du.closeWs(wsCat);
 						
 					if(_xmlGrupo.elements().length() > 0){
 						event.currentTarget.txtGrupo.text = "";
@@ -203,7 +211,9 @@
 					else
 						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);	
 				});
-				wsMS.getMesaDirectiva.send(grupo, ciclo);	
+				params[0] = grupo;
+				params[1] = ciclo;
+				wsCat.getListado.send(8, params);
 			}
 			
 			public function enviar():void{
@@ -231,7 +241,7 @@
 							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);							
 					});
 					//metodo que envia los datos de la modificacion
-					wsMS.setAccionModMesaDir.send(grupo, ciclo, presidente, tesorero, secretario, Application.application.U_ID);
+					wsMS.setAccionModMesaDir.send(grupo, ciclo, presidente, tesorero, secretario, global.obtenerUsuario());
 				}
 				else
 					Alert.show("No es posible realizar el proceso de modificación.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);

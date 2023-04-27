@@ -44,15 +44,18 @@
 				lblMontoConv.text = "";
 		}
 		
-		public function cargaInfoOpRelevantes():void{	
-			initConexion();
+		public function cargaInfoOpRelevantes():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+				
+			du.initWsCat(wsCat)
 			du.sCursor();
 					
-			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 				_xmlLD = new XML(evt.result.toString()); 
 					
 				du.rCursor();
-				du.closeWs(wsMS);
+				du.closeWs(wsCat);
 					
 				if (_xmlLD.elements().length() > 0){
 					var montoMax:Number = Number(_xmlLD.Table[0].MONTOMAX);
@@ -62,16 +65,16 @@
 					calculaMonto();
 				} 	
 			});
-			wsMS.getInfoOpRelevantes.send();
+			wsCat.getInfoRegistro.send(38);
 		}
 		
 		public function enviar():void{
 			if(valida()){
 				initConexion();
-				Application.application.bloquear();
+				global.bloquear();
 				CursorManager.setBusyCursor();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionParamsOperativos);
-				wsMS.setAccionParamsOperativos.send(Number(txtMonto.text), Number(txtCambio.text), Application.application.U_ID);
+				wsMS.setAccionParamsOperativos.send(Number(txtMonto.text), Number(txtCambio.text), global.obtenerUsuario());
 			}	
 		}
 	
@@ -92,7 +95,7 @@
 		
 		private function setAccionParamsOperativos(event:ResultEvent):void{
 			wsMS.disconnect();
-			Application.application.desbloquear();
+			global.desbloquear();
 			CursorManager.removeBusyCursor();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionParamsOperativos);
 			var res:String = event.result.toString();

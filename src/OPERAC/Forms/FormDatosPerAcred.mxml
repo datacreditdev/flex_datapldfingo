@@ -230,7 +230,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsCat);
-						Application.application.desbloquear();						
+						global.desbloquear();						
 						
 						if (_xmlEntFed.elements().length() > 0){
 							formateaEntFed();
@@ -288,21 +288,6 @@
 								}
 									
 							}
-							initConexion();
-							du.sCursor();
-					
-							du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
-								var codigo:String = evt.result.toString();
-								
-								txtCodigo.text = codigo;
-								
-								Application.application.desbloquear();
-								du.rCursor();
-								du.closeWs(wsMS);
-							
-							});
-							//EXTRAE EL CODIGO CONSECUTIVO DE ACREDITADOS
-							wsMS.setCodigoAcredESIA.send();
 						}
 					});
 					//MUESTRA LAS ENTIDADES FEDERATIVAS DISPONIBLES

@@ -23,8 +23,9 @@ package Data
 		public var cdgPuesto:String;
 		public var lstSuc:String;
 		public var cdgPerfil:String;
-		public var activo:Boolean;
+		public var activo:String;
 		
+		public var guarda:Boolean;
 		
 		public function DatosPer()
 		{

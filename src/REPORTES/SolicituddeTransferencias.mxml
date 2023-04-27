@@ -37,7 +37,7 @@
 			
 			private function generar():void{
 				if(valida()){
-					Application.application.bloquear();
+					global.bloquear();
 					
 					initConexion();
 					du.sCursor();
@@ -59,7 +59,7 @@
 								
 								du.rCursor();
 								du.closeWs(wsRep);
-								Application.application.desbloquear();
+								global.desbloquear();
 								
 								dgReporte.dataProvider = null;
 								btnExportar.enabled = false;
@@ -76,14 +76,14 @@
 									lblTotal.text = "";
 								}	
 							});
-							wsRep.getRepSolicTrans.send(dtfFecha.text, secuencia, Application.application.U_ID);
+							wsRep.getRepSolicTrans.send(dtfFecha.text, secuencia, global.obtenerUsuario());
 						}
 						else{
 							Alert.show(res.substr(2, res.length - 2),titulo,4,null,null,global.iAlert);
-							Application.application.desbloquear();
+							global.desbloquear();
 						}
 					});
-					wsMS.setRegSolicTrans.send(dtfFecha.text, Application.application.U_ID);			
+					wsMS.setRegSolicTrans.send(dtfFecha.text, global.obtenerUsuario());			
 				}
 			}			
 						

@@ -40,13 +40,27 @@
 			}			
 						
 			public function buscarAcred():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if (txtCodAcred.text != "" || txtAcred.text != ""){
 					btnBuscarAcred.setFocus();
-					initConexion();
+					
+					du.initWsCat(wsCat);
 					du.sCursor();
-					Application.application.bloquear();
-					wsMS.addEventListener(ResultEvent.RESULT, getAcred);
-					wsMS.getAcred.send("", txtCodAcred.text, txtAcred.text);
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+						this._xmlAcred = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						global.desbloquear();
+					});
+					params[0] = "";
+					params[1] = txtCodAcred.text;
+					params[2] = txtAcred.text;
+					wsCat.getInfoAcred.send(3, params);
 				}
 			}
 			
@@ -68,7 +82,7 @@
 			private function getAcred(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, getAcred);
 				this._xmlAcred = new XML(event.result);
 			}
@@ -102,7 +116,7 @@
 				 	du = new Utils();
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 					var res:String = new String(evt.result.toString());
@@ -112,7 +126,7 @@
 						else
 							Alert.show(res.substr(2,res.length-1),"Alta Acreditados",4,null,null,global.iAlert);
 							
-						Application.application.desbloquear();
+						global.desbloquear();
 						du.rCursor();
 						du.closeWs(wsMS);	
 					});

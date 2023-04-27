@@ -30,26 +30,74 @@
 			public var ciclo:String;
 			
 			public function calculaSaldo():void{
-				initConexion();
-				wsMS.addEventListener(ResultEvent.RESULT, getTotalPagar);
-				wsMS.getTotalPagar.send(this.grupo, this.ciclo);
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+					var Pagos:ArrayCollection = dgPagos.dataProvider as ArrayCollection;
+					var _xmlTotal:XML;
+					var cont:int = Pagos.length;
+					var total:Number = 0;
+					var pagado:Number = 0;
+					var saldo:Number = 0;
+					
+					wsMS.disconnect();
+					CursorManager.removeBusyCursor();
+					wsMS.removeEventListener(ResultEvent.RESULT, getTotalPagar);
+					
+					_xmlTotal = new XML(event.result);
+					total = Number(_xmlTotal.Table[0].TOTAL); 
+					
+					for(var i:int = 0; i < cont; i++){
+						var monto:String = Pagos[i].MONTO 
+						pagado += Number(monto.replace(myPattern, "")); 
+					}
+					
+					saldo = total - pagado
+					
+					lblSaldo.text = "SALDO: " + global.formatoMoneda(saldo.toString());
+				});
+				params[0] = this.grupo;
+				params[1] = this.ciclo;
+				wsCat.getInfoGrupo.send(13, params);
 			}
 				
 			public function cargaEdoCuenta(Arr:ArrayCollection, grupo:String, ciclo:String):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
 				var n:int;
-				var i:int;
 				ArrPagos = Arr;
 				this.grupo = grupo;
 				this.ciclo = ciclo;
 				n = ArrPagos.length;
-				for(i = 0; i < n; i++){
+				
+				for(var i:int = 0; i < n; i++){
 					ArrPagos[i].MONTO = global.formatoDecimal(ArrPagos[i].MONTO);
 				} 
-				initConexion();
-				bloquear();
-				CursorManager.setBusyCursor();
-				wsMS.addEventListener(ResultEvent.RESULT, getEdoCuenta);
-				wsMS.getEdoCuenta.send(grupo, ciclo);
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				global.bloquear();
+				
+				du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+					this._xmlCuenta = new XML(event.result);
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					global.desbloquear();
+						
+					if (_xmlCuenta.elements().length() > 0){
+						formateaPagos();
+						modificaColor();
+						calculaSaldo();
+					}	
+				});
+				params[0] = grupo;
+				params[1] = ciclo;
+				wsCat.getInfoGrupo.send(12, params);
 			}
 			
 			public function cerrar():void{
@@ -58,9 +106,8 @@
 			
 			public function formateaPagos():void{
 				var cont:int = _xmlCuenta.elements().length();
-				var i:int;
 				
-				for(i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					var oItem:Object = new Object();
 					oItem.FECHA = _xmlCuenta.Table[i].FECHA;
 					oItem.MONTO = global.formatoDecimal(_xmlCuenta.Table[i].CANTIDAD);
@@ -72,47 +119,9 @@
 				
 			}
 			
-			private function getEdoCuenta(event:ResultEvent):void{
-				wsMS.disconnect();
-				desbloquear();
-				CursorManager.removeBusyCursor();
-				wsMS.removeEventListener(ResultEvent.RESULT, getEdoCuenta);
-				this._xmlCuenta = new XML(event.result);	
-				if (_xmlCuenta.elements().length() > 0){
-					formateaPagos();
-					modificaColor();
-					calculaSaldo();
-				}	
-			}
-			
-			private function getTotalPagar(event:ResultEvent):void{
-				var Pagos:ArrayCollection = dgPagos.dataProvider as ArrayCollection;
-				var _xmlTotal:XML;
-				var cont:int = Pagos.length;
-				var total:Number = 0;
-				var pagado:Number = 0;
-				var saldo:Number = 0;
-				var i:int;	
-				
-				wsMS.disconnect();
-				CursorManager.removeBusyCursor();
-				wsMS.removeEventListener(ResultEvent.RESULT, getTotalPagar);
-				
-				_xmlTotal = new XML(event.result);
-				total = Number(_xmlTotal.Table[0].TOTAL); 
-				
-				for(i = 0; i < cont; i++){
-					var monto:String = Pagos[i].MONTO 
-					pagado += Number(monto.replace(myPattern, "")); 
-				}
-				
-				saldo = total - pagado
-				
-				lblSaldo.text = "SALDO: " + global.formatoMoneda(saldo.toString()); 
-			}
-			
 			public function init():void{
 				global = new Globales();
+				du = new Utils();
 			}
 			
 			public function initConexion():void{				
@@ -125,15 +134,13 @@
 				dgPagos.rowColorFunction = seleccionaColor; 
 			}
 			public function ordenaPagos():void{
-				var i:int;
-				var j:int;
 				var n:int = ArrPagos.length;
 				var auxFecha:String;
 				var auxMonto:String;
 				var auxInd:Boolean;
 				
-				for(i = 0; i < n-1; i++){                           
-          			for(j = 0; j < n-1; j++){  
+				for(var i:int = 0; i < n-1; i++){                           
+          			for(var j:int = 0; j < n-1; j++){  
           				var fecIni:Date = DateField.stringToDate(ArrPagos[j].FECHA, "DD/MM/YYYY");
           				var fecFin:Date = DateField.stringToDate(ArrPagos[j+1].FECHA, "DD/MM/YYYY");
           				if(fecIni > fecFin){               

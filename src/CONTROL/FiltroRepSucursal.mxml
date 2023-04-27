@@ -42,7 +42,7 @@
 			}		
 			
 			public function cargaSucursal():void{
-				_xmlSuc = Application.application._xmlCoord.Table.(CDGRG.toString().toLowerCase() == cboRegion.selectedItem.codigo.toString().toLowerCase());
+				_xmlSuc = Application.application._xmlSuc.Table.(CDGRG.toString().toLowerCase() == cboRegion.selectedItem.codigo.toString().toLowerCase());
 						
 				sucObj.removeAll();
 				sucObj.refresh();	
@@ -99,7 +99,7 @@
 					var periodo:Number;
 					var fecha:String
 					var id:String = "&id=" + rep;
-					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var usuario:String = "&usuario=" + global.obtenerUsuario();
 					var nomUsuario:String = "&nomUsuario=" + Application.application.NOM_U_ID;
 					var region:String = "&region=" + cboRegion.selectedItem.codigo;
 					var coord:String = "&coord=" + cboSucursal.selectedItem.codigo;

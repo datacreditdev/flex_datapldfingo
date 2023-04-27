@@ -444,31 +444,38 @@
 			}	
 			
 			public function obtieneColonia():void{
-				var wsMS:WebService = new WebService(); 
-				wsMS = du.initWsMS(wsMS);
+				var wsCat:WebService = new WebService();
+				var params:Array = new Array; 
+				
+				du.initWsCat(wsCat);
 				du.sCursor();
 				
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat, function(evt:ResultEvent):void{											
 					_xmlColonia = new XML(evt.result.toString());
 					
 					du.rCursor();
-					du.closeWs(wsMS);
-					wsMS = null;
+					du.closeWs(wsCat);
 					
 					if(_xmlColonia.elements().length() > 0){
 						comColGrid.init(_xmlColonia, 70);
 						comColGrid.addEventListener("seleccionar",selecColonia);
 					}	
 				});
-				wsMS.getColonia.send(cdgEntFed, cdgMun, cdgLoc, "");
+				params[0] = cdgEntFed;
+				params[1] = cdgMun;
+				params[2] = cdgLoc;
+				params[3] = "";
+				wsCat.getCatalogoGral.send(5, params);
 			}
 				
 			public function obtieneLocalidad():void{
-				var wsMS:WebService = new WebService();
-				wsMS = du.initWsMS(wsMS);
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+
+				du.initWsCat(wsCat);
 				du.sCursor();
 				
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlLocalidad = new XML(evt.result.toString());
 						
 					if(_xmlLocalidad.elements().length() > 0){
@@ -477,31 +484,36 @@
 						comLocGrid.addEventListener("verificar",verifLocalidad);
 					}
 					du.rCursor();
-					du.closeWs(wsMS);
-					wsMS = null;		
+					du.closeWs(wsCat);
 				});
-				wsMS.getLocalidad.send(cdgEntFed, cdgMun, "");
+				params[0] = cdgEntFed;
+				params[1] = cdgMun;
+				params[2] = "";
+				wsCat.getCatalogoGral.send(4, params);
 			}
 				
 			public function obtieneMunicipio():void{
-				initConexion();
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
 				du.sCursor();
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlMunicipio = new XML(evt.result.toString());
+						
+					du.rCursor();
+					du.closeWs(wsCat);	
 						
 					if(_xmlMunicipio.elements().length() > 0){
 						comMunGrid.init(_xmlMunicipio, 130);
 						comMunGrid.addEventListener("seleccionar",selecMunic);
 						comMunGrid.addEventListener("verificar",verifMunic);
 					}
-						
-					du.rCursor();
-					du.closeWs(wsMS);
-					wsMS = null;
-						
 				});
-				wsMS.getMunicipio.send(cdgEntFed, "");
+				params[0] = cdgEntFed;
+				params[1] = "";
+				wsCat.getCatalogoGral.send(3, params);
 			}
 			
 			private function selecColonia(event:Event):void{

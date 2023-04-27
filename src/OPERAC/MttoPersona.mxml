@@ -48,14 +48,14 @@
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlPers = new XML(evt.result);	
 						
 					du.closeWs(wsCat);
 					du.rCursor();
-					Application.application.desbloquear();
+					global.desbloquear();
 					
 					if (_xmlPers.elements().length() > 0)
 						llenaRegistros();
@@ -103,9 +103,9 @@
 			public function guardaPersona():void{
 				initConexion();
 				du.sCursor();
-				Application.application.bloquear();
+				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionPersona);
-				wsMS.setAccionPersona.send(tipoAccion, Application.application.U_ID, 
+				wsMS.setAccionPersona.send(tipoAccion, global.obtenerUsuario(), 
 											 info.codigo, info.nombre, info.segNombre, info.aPaterno, 
 											 info.aMaterno, info.sexo, info.fecha, info.cdgNacPais, 
 											 info.cdgNacEntFed, info.cdgNac, info.rfc, info.curp, info.ife, 
@@ -200,7 +200,7 @@
 			private function setAccionPersona(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionPersona);
 				var res:String = event.result.toString();
 				var codigo:String;

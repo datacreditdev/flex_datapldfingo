@@ -38,14 +38,14 @@
 					ciclo = txtCiclo.text;
 					acred = txtAcred.text;
 					
-					Application.application.bloquear();
+					global.bloquear();
 					initConexion();
 					du.sCursor();
 							
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 						_xmlRep = new XML(evt.result.toString());
 						
-						Application.application.desbloquear();
+						global.desbloquear();
 						du.rCursor();
 						du.closeWs(wsMS);
 						
@@ -61,7 +61,7 @@
 						else
 							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);	
 					});
-					wsMS.getRepControlPagosAcred.send(grupo, ciclo, acred, dtfFecha.text, Application.application.U_ID,
+					wsMS.getRepControlPagosAcred.send(grupo, ciclo, acred, dtfFecha.text, global.obtenerUsuario(),
 												      Application.application.PUESTO);
 				}	
 			}
@@ -71,7 +71,7 @@
 					var consulta:String;
 					var id:String = "&id=" + rep;
 					var fecha:String = "&fecha=" + global.formatoFechaSep(dtfFecha.selectedDate,"-");
-					var usuario:String = "&usuario=" + Application.application.U_ID;
+					var usuario:String = "&usuario=" + global.obtenerUsuario();
 					var nomUsuario:String = "&nomUsuario=" + Application.application.NOM_U_ID;
 					var puesto:String = "&puesto=" + Application.application.PUESTO;
 					var grupo:String = "&grupo=" + txtGrupo.text;

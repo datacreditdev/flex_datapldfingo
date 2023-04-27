@@ -74,7 +74,7 @@
 		public function guardaInstBancaria():void{
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionInstBancaria);
 			wsMS.setAccionInstBancaria.send(tipoAccion, info.cdgIB, info.nombreIB);	
 		}
@@ -114,7 +114,7 @@
 		private function setAccionInstBancaria(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionInstBancaria);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){

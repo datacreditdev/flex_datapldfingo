@@ -47,16 +47,19 @@
 			private var global:Globales;
 						
 			private function generar(event:Event):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				if(comFiltroGrupoCiclo.valida()){
-					var wsMS:WebService = new WebService();
-					du.initWsMS(wsMS);
+					
+					du.initWsMS(wsCat);
 					du.sCursor();
 							
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlRep = new XML(evt.result.toString());
 						
 						du.rCursor();
-						du.closeWs(wsMS);
+						du.closeWs(wsCat);
 							
 						currentState = "resultado";							
 						if(_xmlRep.elements().length() > 0)
@@ -64,8 +67,11 @@
 						else
 							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 					});
-					wsMS.getSimulacion.send(comFiltroGrupoCiclo.obtieneCodigo(), comFiltroGrupoCiclo.obtieneCiclo(), "I",
-											comFiltroGrupoCiclo.obtieneFecha());	
+					params[0] = comFiltroGrupoCiclo.obtieneCodigo();
+					params[1] = comFiltroGrupoCiclo.obtieneCiclo();
+					params[2] = "I";
+					params[3] = comFiltroGrupoCiclo.obtieneFecha();
+					wsCat.getInfoGeneral.send(13, params);
 				}
 			}			
 						

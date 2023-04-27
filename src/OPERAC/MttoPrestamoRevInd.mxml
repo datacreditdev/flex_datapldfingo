@@ -4,6 +4,7 @@
 	xmlns:Control="OPERAC.Control.*">
 	<mx:Script>
 		<![CDATA[
+			import mx.messaging.channels.StreamingConnectionHandler;
 			import mx.events.MoveEvent;
 			import mx.events.FlexEvent;
 			import mx.events.CollectionEvent;
@@ -79,35 +80,38 @@
 			}
 			
 			public function actualizaListaProd(event:CollectionEvent):void{
-				activaControles(info.cdgProdCred, 2);
+				activaControles(info.cdgTipoProd, info.cdgProdCred, 2);
 			}
 			
 			public function actualizaProdCred(event:ListEvent):void{
-				activaControles(ComboBox(event.currentTarget).selectedItem.id, 1);
+				var formProd:FormProductoSolic = event.currentTarget as FormProductoSolic;
+				activaControles(formProd.obtieneTipoProd(), formProd.obtieneProdCred(), 1);
 			}
 			
 			//Funcion que actualiza la situacion de la solicitud
 			public function actualizaSituacion(situacion:String):void{
-				var i:int;
 				var cont:int = _xmlAcred.elements().length();
 				
-				for(i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					Arr[i].situacion = situacion;
 				}
 			}
 			
 			//funcion que permite activar los controles que integran la captura de la solicitud
-			public function activaControles(prodCred:String, tipo:int):void{
+			public function activaControles(tipoProd:String, prodCred:String, tipo:int):void{
 				//tipo = 1   CARGA PARAMETROS DEL PRODUCTO Y ACTIVA CONTROLES CAPTURA
 				//tipo = 2   SOLO ACTIVA LOS CONTROLES DE CAPTURA
-				initConexion();
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
 				du.sCursor();
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat, function(evt:ResultEvent):void {											
 					_xmlControl = new XML(evt.result.toString());
 					
 					du.rCursor();
-					du.closeWs(wsMS);
+					du.closeWs(wsCat);
 					
 					if (_xmlControl.elements().length() > 0){
 						montoMin = Number(_xmlControl.Table[0].MONTOMIN);
@@ -128,21 +132,23 @@
 						}
 					} 	
 				});
-				wsMS.getActivaContSolicESIA.send(prodCred);
+				params[0] = tipoProd;
+				params[1] = prodCred;
+				wsCat.getInfoGeneral.send(12, params);
 			}
 			
 			public function cargaAcred(grupo:String, ciclo:String, fecSolic:String):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
 				
-				initConexion();
+				du.initWsCat(wsCat);
 				du.sCursor();
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlAcred = new XML(evt.result.toString());
 					
 					du.rCursor();
-					du.closeWs(wsMS);
+					du.closeWs(wsCat);
 					
 					if (_xmlAcred.elements().length() > 0){
 						formateaAcred(ciclo, fecSolic);
@@ -150,7 +156,9 @@
 						formEntregaSolic.cargaAcred(acredObj);
 					} 	
 				});
-				wsMS.getListaAcredPrn.send(grupo, ciclo);
+				params[0] = grupo;
+				params[1] = ciclo;
+				wsCat.getListado.send(10, params);
 			}
 			
 			public function cargaInfoPrn(cdgAcred:String, nomAcred:String, ciclo:String, autorizado:String, sec:String, munic:String, coord:String, 
@@ -297,7 +305,7 @@
 				if(formateaRegAcred() == true){ //valida que todos los clientes se hayan registrado con montos validos
 					initConexion();
 					du.sCursor();
-					Application.application.bloquear();
+					global.bloquear();
 					//Servicio invocado en la etapa de registro del prestamo
 					if(info.situacion == 'T')
 						tipoAccion = 1;
@@ -306,7 +314,7 @@
 					else if(info.situacion == 'D')
 						tipoAccion = 3
 					wsMS.addEventListener(ResultEvent.RESULT, setAccionPrn);
-					wsMS.setAccionPrn.send(tipoAccion, Application.application.U_ID, cdgAcred, null, cdgAcred, txtCiclo.text, "I", info.entregado, 
+					wsMS.setAccionPrn.send(tipoAccion, global.obtenerUsuario(), cdgAcred, null, cdgAcred, txtCiclo.text, "I", info.entregado, 
 											   info.devolucion, info.situacion, info.fecEntre, info.fecSolic, acred, cantEntreAcred, situacionAcred, autorizado, sec);
 				}
 			}
@@ -402,7 +410,7 @@
 			private function setAccionPrn(event:ResultEvent):void{
 				wsMS.disconnect();
 				du.rCursor();
-				Application.application.desbloquear();
+				global.desbloquear();
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionPrn);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){

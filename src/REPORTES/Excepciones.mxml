@@ -35,21 +35,21 @@
 			private var global:Globales;
 
 			public function cargaExcepcion():void{
-				wsMS = new WebService();
+				var wsCat:WebService = new WebService;
 				
-				wsMS = du.initWsMS(wsMS);
+				du.initWsCat(wsCat);
 				du.sCursor();
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlExc = XML(evt.result.toString());
 						
 					du.rCursor();
-					du.closeWs(wsMS);
+					du.closeWs(wsCat);
 
 					formateaExcepcion();
 					cboExcepcion.dataProvider = excObj;						
 				});
-				wsMS.getExcepcion.send();		
+				wsCat.getCatalogoGral.send(26);		
 			}
 
 			public function exportar():void{
@@ -123,13 +123,7 @@
 				lblTitulo.text = titulo.toUpperCase();
 				limpiar();
 				cargaExcepcion();
-			}		
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
+			}			
 			
 			public function initConexionRep():void{				
 				wsRep = new WebService();			

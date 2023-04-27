@@ -85,20 +85,36 @@
 			}
 			
 			public function cargaDireccion():void{
-				var j:int;
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
 				var coord:String;
 				
-				for(j = 0; j < coordObj.length; j++){
+				for(var j:int = 0; j < coordObj.length; j++){
 					if (coordObj[j].nombre.toString() == cboCoordinacion.text){
 						coord = coordObj[j].id;
 						Application.application.SUC_ID = coordObj[j].id;
 					}
 				}
-				initConexion();
-				Application.application.bloquear();
-				CursorManager.setBusyCursor();
-				wsMS.addEventListener(ResultEvent.RESULT, getDirCoordESIA);
-				wsMS.getDirCoordESIA.send(coord);
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				global.bloquear();
+				
+				du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+					this._xmlDir = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					global.desbloquear();
+					
+					if (this._xmlDir.elements().length() > 0)
+						llenaDireccion();
+					else
+						limpiaCamposDir();
+				});
+				params[0] = coord;
+				wsCat.getCatalogoGral.send(7, params);
 			}
 			
 			public function enviarDatosGrupo(formData:DatosGrupo):void{
@@ -129,7 +145,6 @@
 			}
 			
 			public function formateaCoord():void{
-				var i:int;
 				var cont:int = _xmlCoord.elements().length();
 				var oItem:Object
 				
@@ -138,7 +153,7 @@
 				oItem.nombre = "--Seleccionar--";
 				coordObj.addItem(oItem);
 				
-				for (i = 0; i < cont; i++)
+				for (var i:int = 0; i < cont; i++)
 				{
 					oItem = new Object();
 					oItem.id = _xmlCoord.Table[i].CODIGO;	
@@ -148,28 +163,15 @@
 				}
 			}
 			
-			private function getDirCoordESIA(event:ResultEvent):void{
-				wsMS.disconnect();
-				Application.application.desbloquear();
-				CursorManager.removeBusyCursor();
-				wsMS.removeEventListener(ResultEvent.RESULT, getDirCoordESIA);
-				this._xmlDir = new XML(event.result);
-				if (this._xmlDir.elements().length() > 0)
-					llenaDireccion();
-				else
-					limpiaCamposDir();
-			}
-			
 			private function getRegGrupoESIA(event:ResultEvent):void{
 				wsMS.disconnect();
-				Application.application.desbloquear();
+				global.desbloquear();
 				CursorManager.removeBusyCursor();
 				wsMS.removeEventListener(ResultEvent.RESULT, getRegGrupoESIA);
 				_xmlCodigo = new XML(event.result);
 				if (_xmlCodigo.elements().length() > 0){
-					var i:int;
 					var codigo:String = _xmlCodigo.Table[0].CODIGO.toString();
-					for(i = codigo.length; i < 3; i++)
+					for(var i:int = codigo.length; i < 3; i++)
 						codigo = "0" + codigo;
 					txtCodigo.text = cboCoordinacion.selectedItem.id.toString() + codigo;
 				}
@@ -180,7 +182,7 @@
 				global = new Globales();
 				du = new Utils();
 				
-				_xmlCoord = Application.application._xmlCoord;
+				_xmlCoord = Application.application._xmlSuc;
 				
 				if (_xmlCoord.elements().length() > 0){
 					formateaCoord();

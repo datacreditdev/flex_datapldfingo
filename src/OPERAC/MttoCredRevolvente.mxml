@@ -87,7 +87,7 @@
 			var tipoProd:String = formProdSolic.cboTipoProd.selectedItem.id;
 			initConexion();
 			du.sCursor();
-			Application.application.bloquear();
+			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionCredRevolvente);
 			wsMS.setAccionCredRevolvente.send(tipoAccion, txtCodAcred.text, dtfAutorizado.text, dtfDesde.text,
 											  dtfHasta.text, Number(txtMonto.text), dtfFecLim.text, txtCodAut.text, 
@@ -145,7 +145,7 @@
 		private function setAccionCredRevolvente(event:ResultEvent):void{
 			wsMS.disconnect();
 			du.rCursor();
-			Application.application.desbloquear();
+			global.desbloquear();
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCredRevolvente);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){
