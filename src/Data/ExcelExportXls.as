@@ -13,8 +13,8 @@ package Data
 	 	private var du:Utils;
 	 	private var urlExcelExport:String;
 	    private var titulo:String;
-	 	private var disp:ExcelExportDispatcher;
-	 	public var isXls:Boolean = false;
+	 	private var disp:ExcelExportJsonDispatcher;
+	 	public var isXls:Boolean = true;
 	 	public var header:Boolean = false;
 			
 		public function ExcelExportXls():void{
@@ -25,7 +25,7 @@ package Data
 	        this.titulo = titulo;
 	        du = new Utils();
 	        du.rCursor();
-	        disp = new ExcelExportDispatcher(dg, dgTot, this.header);
+	        disp = new ExcelExportJsonDispatcher(dg, dgTot, this.header);
 	        disp.addEventListener(Event.COMPLETE, complete);
 	        disp.run();			
 		}
@@ -35,8 +35,8 @@ package Data
 			global = new Globales();
 			var u:URLRequest = new URLRequest(global.urlExpXls);
 			var variables:URLVariables = new URLVariables();
-			//variables.infoEnc = disp.strEnc;//Llenado de archivo JSON de encabezado	       
-			variables.infoXml = disp.str;//Llenado de archivo XML en un Obj string 
+			variables.infoEnc = disp.strEnc; //Llenado de archivo JSON de encabezado	       
+			variables.info = disp.str; //Llenado de archivo XML en un Obj string 
 			variables.titulo = this.titulo;
 			variables.xls = getIsXls() == true? "1":"0";	//1= xls, 0 = xlsx	
 			variables.hideHeader = this.header;	

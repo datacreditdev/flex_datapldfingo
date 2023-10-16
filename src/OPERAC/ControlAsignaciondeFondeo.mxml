@@ -607,8 +607,8 @@
 		public function limpiarCriteriosSelec():void{
 			txtImporte.text = "";
 			txtMontoMax.text = "";
-			dtfFecIni.selectedDate = Application.application._Current_Fecha;
-			dtfFecFin.selectedDate = Application.application._Current_Fecha;
+			dtfFecIni.selectedDate = global.obtenerFechaSistema();
+			dtfFecFin.selectedDate = global.obtenerFechaSistema();
 			cboSexo.selectedIndex = 0;
 			cargaRegion();
 			cboEntFed.selectedIndex = 0;

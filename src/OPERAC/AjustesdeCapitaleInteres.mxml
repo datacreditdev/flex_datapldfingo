@@ -199,7 +199,7 @@
 			}			
 			
 			private function limpiar():void{
-				var fec:Date = Application.application._Current_Fecha;
+				var fec:Date = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				saldoCap = 0;
 				saldoInt = 0;

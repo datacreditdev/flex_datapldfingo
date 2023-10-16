@@ -165,7 +165,7 @@
 			txtOF.text = orgFond;
 			txtCodLC.text = codLC;
 			txtLC.text = lineaCred;
-			txtDisp.selectedDate = Application.application._Current_Fecha;
+			txtDisp.selectedDate = global.obtenerFechaSistema();
 			//Codigo que permite ejecutar el efecto de apertura
 			openEffect.duration = 1000;
 			openEffect.play([this]);

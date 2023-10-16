@@ -325,7 +325,7 @@
 			}
 			
 			public function limpiar():void{
-				dtfFecha.selectedDate = Application.application._Current_Fecha;
+				dtfFecha.selectedDate = global.obtenerFechaSistema();
 				dgAcred.dataProvider = null;
 				cboCoordinacion.selectedIndex = 0;
 				txtCodCuenta.text = "";

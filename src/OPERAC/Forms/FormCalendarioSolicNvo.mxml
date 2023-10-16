@@ -120,7 +120,7 @@
 				du = new Utils();
 				
 				var diasFecEnt:int;
-				var fec:Date = Application.application._Current_Fecha;
+				var fec:Date = global.obtenerFechaSistema();
 				var fecEnt:Date; 
 				
 				du.initWsCat(wsCat);

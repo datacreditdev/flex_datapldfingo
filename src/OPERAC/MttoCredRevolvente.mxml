@@ -138,7 +138,7 @@
 			txtCodAut.text = autorizo;
 			txtAut.text = nomAutorizo;
 			
-			dtfAutorizado.selectedDate = Application.application._Current_Fecha;
+			dtfAutorizado.selectedDate = global.obtenerFechaSistema();
 			formProdSolic.init(null, 1);
 		}
 		

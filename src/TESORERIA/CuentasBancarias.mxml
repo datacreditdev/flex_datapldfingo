@@ -41,7 +41,7 @@
 			public var tituloIB:String;
 			public var tituloSB:String;
 			public var tituloCB:String;
-			public var du:Utils;
+		 	private var du:Utils;
 			private var global:Globales;
 			
 			//variables que especifican el indice del elemento 
@@ -118,20 +118,20 @@
 					global.bloquear();
 					
 				du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
-					this._xmlCB = new XML(event.result);
+					_xmlCB = new XML(event.result);
 					
 					du.closeWs(wsCat);
 					du.rCursor();
 					global.desbloquear();
 					
-					if (this._xmlCB.elements().length() > 0){
+					if (_xmlCB.elements().length() > 0){
 						dgCB.dataProvider = _xmlCB.Table;
 						
 						if(accionCB == 2){
 							dgCB.validateNow();
 							dgCB.verticalScrollPosition = vScroll;
 							dgCB.selectedIndex = indCB;
-							this.accionCB = 0;
+							accionCB = 0;
 						}
 					}
 					seleccionarCB();
@@ -153,20 +153,20 @@
 					global.bloquear();
 					
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
-					this._xmlSB = new XML(event.result);
+					_xmlSB = new XML(event.result);
 					
 					du.closeWs(wsCat);
 					du.rCursor();
 					global.desbloquear();
 					
-					if (this._xmlSB.elements().length() > 0){
+					if (_xmlSB.elements().length() > 0){
 						dgSB.dataProvider = _xmlSB.Table;
 						
 						if(accionSB == 2){
 							dgSB.validateNow();
 							dgSB.verticalScrollPosition = vScroll;
 							dgSB.selectedIndex = indSB;
-							this.accionSB = 0;
+							accionSB = 0;
 						}
 					}
 					seleccionarSB();
@@ -189,20 +189,20 @@
 						global.bloquear();
 						
 					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
-						this._xmlIB = new XML(event.result);
+						_xmlIB = new XML(event.result);
 						
 						du.closeWs(wsCat);
 						du.rCursor();
 						global.desbloquear();
 						
-						if (this._xmlIB.elements().length() > 0){
+						if (_xmlIB.elements().length() > 0){
 							dgIB.dataProvider = _xmlIB.Table;
 							
 							if(accionIB == 2){
 								dgIB.validateNow();
 								dgIB.verticalScrollPosition = vScroll;
 								dgIB.selectedIndex = indIB;
-								this.accionIB = 0;
+								accionIB = 0;
 							}
 						}
 						seleccionarIB();

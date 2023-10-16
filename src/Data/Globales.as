@@ -26,6 +26,7 @@ package Data
 		public var dias:Array = ['D','L','M','M','J','V','S']; 
 		
 		public var urlServ:String;
+		public var urlDocs:String;
 		public var urlExp:String;
 		public var urlExpTxt:String;
 		public var urlExpXls:String;
@@ -35,6 +36,7 @@ package Data
 				
 		public function Globales(){
 			var xmlServ:XMLList = new XMLList();
+			var xmlDocs:XMLList = new XMLList();
 			var xmlExp:XMLList = new XMLList();
 			var xmlExpTxt:XMLList = new XMLList();
 			var xmlExpXls:XMLList = new XMLList();
@@ -43,6 +45,7 @@ package Data
 			xmlResult = Application.application.wsStr;
 			
 			xmlServ = xmlResult.child("wsdlServ");
+			xmlDocs = xmlResult.child("urlDocs");
 			xmlExp = xmlResult.child("wsdlExp");
 			xmlExpTxt = xmlResult.child("wsdlExpTxt");
 			xmlExpXls = xmlResult.child("wsdlExpXls");
@@ -51,6 +54,7 @@ package Data
 
 			this.idEmpresa = "1";
 			this.urlServ = xmlServ.toString();
+			this.urlDocs = xmlDocs.toString();
 			this.urlExp = xmlExp.toString();
 			this.urlExpTxt = xmlExpTxt.toString();
 			this.urlExpXls = xmlExpXls.toString();
@@ -298,6 +302,10 @@ package Data
 					return "'" + texto;
 			}
 			return texto; 	
+		}
+		
+		public function obtenerFechaSistema():Date{
+			return Application.application._Current_Fecha;
 		}
     	
     	//funcion que permite obtener el indice del valor que se esta buscando en la coleccion

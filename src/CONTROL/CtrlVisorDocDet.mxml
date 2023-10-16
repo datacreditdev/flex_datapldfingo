@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" 
+	xmlns:CONTROL="CONTROL.*" creationPolicy="all">
+	
+	<!--Componente que permite mostrar los documentos de un acreditado-->
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Label;
+			import Data.Globales;
+			import Data.ImageCreator;
+			import Data.Utils;
+			import flash.display.*;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.Button;
+			import mx.controls.Image;
+			import mx.core.Application;
+			import mx.core.IFlexDisplayObject;
+			import mx.effects.easing.Elastic;
+			import mx.events.CollectionEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+
+			private var _xmlDocs:XML = new XML();
+
+			private var du:Utils;
+			private var global:Globales;
+			private var codigo:String;
+			private var titulo:String;
+			
+			public function cerrar():void{
+				if(comFormPdf.visible == true)
+					comFormPdf.ocultarPdf();	
+			}
+			
+			public function init(codigo:String, repo:String):void{				
+				global = new Globales();
+				du = new Utils();
+				
+				this.codigo = codigo;
+				
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				var cont:int;
+				var xpos:int = 10.5;
+				var ypos:int = 25;
+				var urlDoc:String;
+				var urlDoc1:String;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlDocs = new XML(evt.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					
+					var cont:int = _xmlDocs.elements().length();
+					
+					if(cont > 0){
+						if (cont <= 7){
+							cnvVista.height = 165;	
+							xpos = 22.25;
+						}
+						else{	
+							cnvVista.height = 180;
+							xpos = 10.5;
+							cnvContenedor.y = 202;
+						}	
+
+						for(var i:int = 0; i < cont; i++){
+							if(_xmlDocs.Table[i].FORMATO == "PDF"){
+								var imgPdf:Image = new Image();
+								var etiq:Label = new Label();
+								imgPdf.x = xpos;
+								imgPdf.y = ypos;
+								imgPdf.id = _xmlDocs.Table[i].REPO;
+								imgPdf.name = _xmlDocs.Table[i].ARCHIVO;
+								imgPdf.width = 105;
+								imgPdf.height = 135;
+								imgPdf.source = "assets/docPdf.png";
+								imgPdf.addEventListener(MouseEvent.CLICK, muestraPdf);
+								etiq.x = xpos + 10;
+								etiq.y = 5;
+								etiq.text = _xmlDocs.Table[i].ARCHIVO;
+								etiq.width = 100;
+								etiq.setStyle("textAlign","center")
+								cnvVista.addChild(imgPdf);
+								cnvVista.addChild(etiq);
+								xpos += 113;
+							}
+							else if(_xmlDocs.Table[i].FORMATO == "PNG"){
+								var img:Image = new Image();
+								img.x = xpos;
+								img.y = ypos;
+								img.id = "imagen" + (i + 1);
+								img.name = "imagen" + (i + 1);
+								img.width = 105;
+								img.height = 135;
+								img.scaleContent = true;
+								urlDoc = global.urlDocs + _xmlDocs.Table[i].REPO + "/" + _xmlDocs.Table[i].ARCHIVO + ".png";
+								
+								try{
+									img.load(urlDoc);
+									img.addEventListener(MouseEvent.CLICK, seleccionaImagen);
+									cnvVista.addChild(img);
+								}
+								catch(e:Error){
+									img.source = "assets/Error.png";
+									cnvVista.addChild(img);
+								}
+								xpos += 113; 
+							}
+						}
+					}
+					else
+						Alert.show("No se encontraron documentos relacionados con el acreditado.",titulo,4,null,null,global.iAlert);		
+				});
+				params[0] = codigo;
+				params[1] = repo;
+				wsCat.getInfoRegistro.send(33, params);
+				
+			}
+			
+			private function manipulaImagen(event:MouseEvent):void{
+				if (event.delta > 0){
+					imagen.scaleX += 0.1;
+					imagen.scaleY += 0.1;
+				}
+				else{
+					if(imagen.scaleX > 1){
+						imagen.scaleX -= 0.1;
+						imagen.scaleY -= 0.1;
+					}
+				}
+			}
+			
+			private function muestraPdf(event:Event):void{
+				var carpeta:String = Image(event.currentTarget).id;
+				var archivo:String = Image(event.currentTarget).name;
+				var urlPdf:String = global.urlDocs + carpeta + "/" + archivo + ".pdf"
+				imagen.visible = false;
+				comFormPdf.visible = true;
+				comFormPdf.muestraPdf(urlPdf);
+			}
+			
+			public function mueveVentana():void{
+				if(comFormPdf.visible == true){
+					comFormPdf.ocultarPdf();
+					comFormPdf.visible = false;
+				}
+			}
+			
+			private function seleccionaImagen(event:Event):void{
+				comFormPdf.ocultarPdf();
+				comFormPdf.visible = false;
+				imagen.scaleX = 1;
+				imagen.scaleY = 1;
+				imagen.source = Image(event.currentTarget).source.toString();
+				imagen.visible = true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas id="cnvVista" width="829.5" height="160" x="18.75" y="10" styleName="canvasMod"/>
+	<mx:Canvas id="cnvContenedor" width="829.5" height="470" x="18.75" y="186" styleName="canvasMod">
+		<mx:Canvas id="cnvImagen" width="800" height="445" x="14.75" y="10">
+			<mx:Image id="imagen" name="imagen" x="0" y="0" width="800" height="100%" horizontalAlign="left" mouseWheel="manipulaImagen(event)" scaleContent="true" visible="false"/>
+			<CONTROL:formPdf id="comFormPdf" x="0" y="0" width="800" height="100%" visible="false"/>
+		</mx:Canvas>	
+	</mx:Canvas>
+</mx:Canvas>

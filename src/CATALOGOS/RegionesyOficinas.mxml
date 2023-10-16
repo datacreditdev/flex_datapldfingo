@@ -407,11 +407,11 @@
 				<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="75"/>
 				<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="200"/>
 				<!--<mx:DataGridColumn headerText="CODIGO" dataField="CDGPE" width="75"/>-->
-				<mx:DataGridColumn headerText="GERENTE" dataField="NOMBRE_CL" width="200"/>
+				<mx:DataGridColumn headerText="RESPONSABLE" dataField="NOMBRE_CL" width="200"/>
 			</Data:columns>
 		</Data:RowColorDataGrid>
 	</mx:Canvas>
-	<mx:Label x="18" y="10" text="GERENCIA REGIONAL" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Label x="18" y="10" text="REGIONES" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 	<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 		<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarReg(1)" toolTip="Buscar Regional" width="40"/>
 		<mx:Button id="btnAgregar" x="105" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormReg(1)" toolTip="Registrar Regional" width="40"/>
@@ -432,7 +432,7 @@
 				<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="75"/>
 				<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="200"/>
 				<!--<mx:DataGridColumn headerText="CODIGO" dataField="CDGPE" width="75"/>-->
-				<mx:DataGridColumn headerText="COORDINADOR" dataField="NOMBRE_CL" width="200"/>
+				<mx:DataGridColumn headerText="RESPONSABLE" dataField="NOMBRE_CL" width="200"/>
 			</Data:columns>
 		</Data:RowColorDataGrid>
 	</mx:Canvas>
@@ -448,6 +448,6 @@
 		<mx:TextInput id="txtCoord" x="198.5" y="5" width="303" change="buscarCoord()" maxChars="50" editable="false"/>
 		<mx:TextInput id="txtCodCoord" x="64" y="5" width="68" change="buscarCoord()" maxChars="3" editable="false"/>
 	</mx:Canvas>
-	<mx:Label x="18.5" y="253" text="SUCURALES" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Label x="18.5" y="253" text="OFICINAS" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 	</mx:Canvas>
 </mx:Canvas>

@@ -67,7 +67,7 @@ package Data
 		
 		public function initWsAdmin(ws:WebService):WebService{			
 			ws.wsdl = this.strWsAdmin;
-			ws.loadWSDL();	
+			ws.loadWSDL();
 			ws.addEventListener(FaultEvent.FAULT, wsFault);						
 			return ws;		
 		}

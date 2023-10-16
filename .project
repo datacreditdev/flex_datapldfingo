@@ -19,7 +19,7 @@
 		<link>
 			<name>bin-debug</name>
 			<type>2</type>
-			<location>C:/inetpub/wwwroot/admin_datacredit</location>
+			<location>C:/inetpub/wwwroot/admin_datalatam1</location>
 		</link>
 		<link>
 			<name>bin-release1</name>
@@ -30,6 +30,11 @@
 			<name>bin-release2</name>
 			<type>2</type>
 			<location>C:/Deploy/FlexData</location>
+		</link>
+		<link>
+			<name>bin-release3</name>
+			<type>2</type>
+			<location>C:/Deploy/FlexDataLatam1</location>
 		</link>
 		<link>
 			<name>bin-release</name>

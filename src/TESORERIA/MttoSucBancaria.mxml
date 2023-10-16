@@ -469,8 +469,8 @@
 		<mx:TextInput id="txtTelefono" x="146.5" y="202" width="120" maxChars="10" restrict="0-9"/>
 	</mx:Canvas>
 	<mx:Label id="lblDom" x="21" y="211" text="Domicilio"/>
-	<mx:Button id="btnAceptar" x="158" y="552" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
-	<mx:Button id="btnCancelar" x="240" y="552" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:Button id="btnAceptar" x="183" y="548" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="235" y="548" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
 	<mx:Label id="lblLabora" x="136" y="480" text="Labora Sábados"/>
 	<mx:Canvas id="cnvLabora" x="136" y="499" width="190" height="40" styleName="canvasMod">
 		<mx:RadioButtonGroup id="labora"/>

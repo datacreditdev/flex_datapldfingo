@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="172" height="40" backgroundAlpha="1.0" 
 	verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	
 	<mx:DataGrid id="dgInfo" x="0" y="0" width="170" visible="false" showHeaders="false" 
 		itemClick="selecRegistro()" keyDown="presDGRegistro(event)">
 		<mx:columns>
@@ -12,6 +13,9 @@
 		[Event(name="seleccionar", type="seleccionar")]
 		[Event(name="verificar", type="verificar")]
 	</mx:Metadata>
+	
+	<mx:Validator id="datoV" source="{txtDato}" property="text" 
+	invalid="{txtDato.setFocus()}" triggerEvent="" requiredFieldError="Dato Requerido"/>
 	
 	<mx:Script>
 		<![CDATA[
@@ -51,7 +55,7 @@
 		}
 		
 		public function buscaInfo():void{
-			if(txtDato.text != ""){	
+			if(txtDato.text != ""){
 				dgInfo.selectedIndex = -1;
 				texto = txtDato.text;					
 				infoObj.filterFunction = filtraRegistro;
@@ -165,6 +169,15 @@
 			asignaIndice();
 		}
 		
+		public function validaDato():Boolean{
+			var invalidArray:Array;
+					
+			invalidArray = Validator.validateAll([datoV]);
+			if(invalidArray.length == 0)
+				return true;
+			return false;
+		}
+		
 		public function verificaInfo():void{
 			if (dgInfo.selectedIndex < 0 || txtDato.text == ""){
 				dgInfo.visible = false;
@@ -183,6 +196,6 @@
 			
 		]]>
 	</mx:Script>
-		<mx:TextInput id="txtDato" width="170" x="1" y="1" change="buscaInfo()" enter="selecRegistro()"  focusOut="verificaInfo()" 
+		<mx:TextInput id="txtDato" width="170" x="1" y="1" change="buscaInfo()" enter="selecRegistro()" focusOut="verificaInfo()" 
 			restrict="A-Z;a-z;Ñ;ñ;0-9; " keyDown="presRegistro(event)" visible="true"/>
 </mx:Canvas>

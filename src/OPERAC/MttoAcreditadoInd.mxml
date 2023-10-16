@@ -12,6 +12,26 @@
 			<mx:RemoveChild target="{cnvOtros}"/>
 			<mx:SetProperty target="{formPLDAcred}" name="width" value="470"/>
 			<mx:SetProperty target="{formPLDAcred}" name="x" value="59.5"/>
+			<mx:SetProperty target="{cnvDir}" name="label" value="Domicilio"/>
+			<mx:SetProperty target="{cnvDirNeg}" name="label" value="Dom. Fiscal"/>
+			<mx:SetProperty target="{cnvOficial}" name="label" value="Segmento Negocio"/>
+			<mx:SetProperty target="{cnvAdic}" name="label" value="Inf. Adicional KYC"/>
+			<mx:SetProperty target="{formOficialAcred}" name="y" value="10"/>
+			<mx:SetProperty target="{formDirAcred}" name="height" value="405"/>
+			<mx:SetProperty target="{formDPAcred}" name="width" value="530.5"/>
+			<mx:SetProperty target="{formDPAcred}" name="height" value="450"/>
+			<mx:SetProperty target="{formDPAcred}" name="x" value="29.25"/>
+			<mx:SetProperty target="{formDPAcred}" name="y" value="0"/>
+			<mx:SetProperty name="height" value="630"/>
+			<mx:SetProperty target="{btnConsBuro}" name="y" value="555"/>
+			<mx:SetProperty target="{btnDoc}" name="y" value="555"/>
+			<mx:SetProperty target="{btnAceptar}" name="y" value="555"/>
+			<mx:SetProperty target="{btnCancelar}" name="y" value="555"/>
+			<mx:SetProperty target="{tabNav}" name="height" value="496"/>
+			<mx:SetProperty target="{btnAceptar}" name="x" value="508"/>
+			<mx:SetProperty target="{btnCancelar}" name="x" value="556"/>
+			<mx:SetProperty target="{tabNav}" name="x" value="7.5"/>
+			<mx:SetProperty target="{tabNav}" name="y" value="51"/>
 		</mx:State>
 	</mx:states>
 	<mx:transitions>
@@ -25,15 +45,15 @@
 	
 	<mx:Script>
 		<![CDATA[
-			import Data.Permisos;
 			import CONTROL.CtrlVisorDoc;
-			import mx.containers.Panel;
-			import Data.EventAcred;
 			import Data.DatosAcred;
+			import Data.EventAcred;
 			import Data.Globales;
 			import Data.PdfExport;
-			import Data.Utils;
+			import Data.Permisos;
+			import Data.Utils;	
 			import mx.collections.ArrayCollection;
+			import mx.containers.Panel;
 			import mx.containers.TitleWindow;	
 			import mx.controls.Alert;
 			import mx.controls.ComboBox;
@@ -41,13 +61,14 @@
 			import mx.effects.easing.Elastic;
 			import mx.events.ListEvent;		
 			import mx.managers.PopUpManager;
-			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
 			import mx.rpc.soap.WebService;
 			
 			[Bindable]
 			private var info:DatosAcred;
-			private var _xmlAcred:XML =  new XML();
+			private var _xmlAcred:XML = new XML();
+			private var _xmlRepo:XML = new XML();
 			
 			private var tipoObj:ArrayCollection;
 			
@@ -149,13 +170,15 @@
 				wsMS.setAccionAcred.send(tipoAccion, global.obtenerUsuario(), this.grupo, info.codigo, 
 											 info.cdgco, info.nombre, info.segNombre, info.aPaterno, info.aMaterno, 
 											 info.sexo, info.fecha, info.cdgNacPais, info.cdgNacEntFed, info.cdgNac, info.rfc, 
-											 info.curp, info.ife, info.calle, info.noInt, info.noExt, info.entreCalles, info.telefono, 
-											 info.codPostal, info.cdgEntFed, info.entFed, info.cdgMun, info.municipio, info.cdgLoc, 
+											 info.curp, info.ife, info.fiel, info.calle, info.noInt, info.noExt, info.entreCalles, info.telefono, 
+											 info.codPostal, info.cdgPais, info.cdgEntFed, info.entFed, info.cdgMun, info.municipio, info.cdgLoc, 
 											 info.localidad, info.cdgCol, info.colonia, info.edoCivil, info.nivelEsc, info.depend, 
-											 info.marca, info.enano, info.cantEnano, info.cdgPr, info.cdgRec, info.calleNeg, 
-											 info.entreCallesNeg, info.telefonoNeg, info.cdgDirEntFedNeg, info.cdgMunNeg, info.cdgLocNeg,
-										 	 info.cdgColNeg, info.tipoPers, info.repLegal, info.detPer, info.origen, 
-										 	 info.destino, info.pep, info.propReal, info.provRec);
+											 info.marca, info.enano, info.cantEnano, info.cdgPr, info.cdgRec, info.calleNeg, info.noIntNeg,
+											 info.noExtNeg, info.entreCallesNeg, info.telefonoNeg, info.cdgPaisNeg, info.cdgEntFedNeg, info.cdgMunNeg, 
+											 info.cdgLocNeg, info.cdgColNeg, info.tipoPers, info.arrRepLegal, info.giro, info.origen, 
+										 	 info.destino, info.pep, info.propReal, info.provRec, info.figura, info.nomCom, info.telefono2, 
+										 	 info.email1, info.email2, info.contacto1, info.telCon1, info.emailCon1, info.contacto2,
+										 	 info.telCon2, info.emailCon2);
 			}
 			
 			public function initApp():void{
@@ -188,8 +211,6 @@
 				info.aPaterno = _xmlAcred.Table[0].PRIMAPE;
 				info.aMaterno = _xmlAcred.Table[0].SEGAPE;
 				info.tipoPers = _xmlAcred.Table[0].TIPOPERS;
-				info.repLegal = _xmlAcred.Table[0].REPLEGAL;
-				info.nomRepLegal = _xmlAcred.Table[0].NOMREPLEGAL;
 				info.cdgco = _xmlAcred.Table[0].CDGCO;
 				info.sexo = _xmlAcred.Table[0].SEXO;
 				info.fecha = _xmlAcred.Table[0].NACIMIENTO;
@@ -199,6 +220,12 @@
 				info.rfc = _xmlAcred.Table[0].RFC;	
 				info.curp = _xmlAcred.Table[0].CURP;
 				info.ife = _xmlAcred.Table[0].IFE;
+				info.figura = _xmlAcred.Table[0].FIGURA;
+				info.nomCom = _xmlAcred.Table[0].NOMCOM;
+				info.fiel = _xmlAcred.Table[0].FIEL;
+				info.telefono2 = _xmlAcred.Table[0].TELEFONO2;
+				info.email1 = _xmlAcred.Table[0].EMAIL1;
+				info.email2 = _xmlAcred.Table[0].EMAIL2;
 				
 				//Direccion del Acreditado
 				info.calle = _xmlAcred.Table[0].CALLE;
@@ -207,6 +234,8 @@
 				info.entreCalles = _xmlAcred.Table[0].ENTRECALLES;
 				info.telefono = _xmlAcred.Table[0].TELEFONO;
 				info.codPostal = _xmlAcred.Table[0].CDGPOSTAL;
+				info.cdgPais = _xmlAcred.Table[0].CDGPAI;
+				info.pais = _xmlAcred.Table[0].PAIS;
 				info.cdgEntFed = _xmlAcred.Table[0].CDGEF;
 				info.entFed = _xmlAcred.Table[0].ENTFED;
 				info.cdgMun = _xmlAcred.Table[0].CDGMU;
@@ -218,11 +247,15 @@
 				
 				//Direccion del Negocio
 				info.calleNeg = _xmlAcred.Table[0].CALLENEG;
+				info.noIntNeg = _xmlAcred.Table[0].NOINTNEG;
+				info.noExtNeg = _xmlAcred.Table[0].NOEXTNEG;
 				info.entreCallesNeg = _xmlAcred.Table[0].ENTRECALLESNEG;
 				info.telefonoNeg = _xmlAcred.Table[0].TELEFONONEG;
 				info.codPostalNeg = _xmlAcred.Table[0].CDGPOSTALNEG;
-				info.cdgDirEntFedNeg = _xmlAcred.Table[0].CDGEFNEG;
-				info.dirEntFedNeg = _xmlAcred.Table[0].ENTFEDNEG;
+				info.cdgPaisNeg = _xmlAcred.Table[0].CDGPAINEG;
+				info.paisNeg = _xmlAcred.Table[0].PAISNEG;
+				info.cdgEntFedNeg = _xmlAcred.Table[0].CDGEFNEG;
+				info.entFedNeg = _xmlAcred.Table[0].ENTFEDNEG;
 				info.cdgMunNeg = _xmlAcred.Table[0].CDGMUNEG;
 				info.municipioNeg = _xmlAcred.Table[0].MUNICNEG;
  				info.cdgLocNeg = _xmlAcred.Table[0].CDGLONEG; 
@@ -243,10 +276,16 @@
 				info.promotor = _xmlAcred.Table[0].PROMOTOR;
 				info.cdgRec = _xmlAcred.Table[0].CDGPRPE;
 				info.recuperador = _xmlAcred.Table[0].RECUPERADOR;
+				info.contacto1 = _xmlAcred.Table[0].CONTACTO1;
+				info.telCon1 = _xmlAcred.Table[0].TELCON1;
+				info.emailCon1 = _xmlAcred.Table[0].EMAILCON1;
+				info.contacto2 = _xmlAcred.Table[0].CONTACTO2;
+				info.telCon2 = _xmlAcred.Table[0].TELCON2;
+				info.emailCon2 = _xmlAcred.Table[0].EMAILCON2;
 				
 				//Informacion de Prevencion de Lavado de Dinero
-				info.detPer = _xmlAcred.Table[0].CDGTIPOPERS;
-				info.origen = _xmlAcred.Table[0].CDGORIREC;
+				info.giro = _xmlAcred.Table[0].CDGGIRO;
+				info.origen = _xmlAcred.Table[0].ORIGENREC;
 				info.destino = _xmlAcred.Table[0].CDGDESREC;
 				info.pep = _xmlAcred.Table[0].PEP;
 				info.propReal = _xmlAcred.Table[0].PROPREAL;
@@ -262,30 +301,56 @@
 				}
 				
 				modificaEstatus();
-				
-				formDPAcred.init(info);
+				formDPAcred.init(info, currentState);
 				formDPAcred.cboCoord.addEventListener(ListEvent.CHANGE, selecCoord);
-				formDirAcred.init(info);
-				formDirNegocio.init(info);
+				formDirAcred.init(info, currentState);
+				formDirNegocio.init(info, currentState);
 				formOtroAcred.init(info);
-				formOficialAcred.init(info);
-				formPLDAcred.init(info);
+				formOficialAcred.init(info, currentState);
+				formPLDAcred.init(info, currentState);
 			}
 			
 			private function modificaEstatus():void{
 				tabNav.selectedIndex = 0;
 				formDPAcred.asignaEstatus(cboTipoPers.selectedItem.id);
-				if(cboTipoPers.selectedItem.id == "F")
+				formDirAcred.asignaEstatus(cboTipoPers.selectedItem.id);
+				formDirNegocio.asignaEstatus(cboTipoPers.selectedItem.id);
+				formOficialAcred.asignaEstatus(cboTipoPers.selectedItem.id)
+				if(cboTipoPers.selectedItem.id == "F"){
 					currentState = "";
+					formDPAcred.width = 440;
+					formDPAcred.height = 396;
+				}
 				else if(cboTipoPers.selectedItem.id == "M")
 					currentState = "moral";
 			}
 			
 			private function muestraDocumentos():void{
-				var obj:DisplayObject = this;
-				var comVisor:CtrlVisorDoc = new CtrlVisorDoc();
-				comVisor = CtrlVisorDoc(PopUpManager.createPopUp(obj,CtrlVisorDoc,false));
-				PopUpManager.centerPopUp(comVisor);	
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var obj:DisplayObject = this.parent;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat, function(evt:ResultEvent):void{
+					_xmlRepo = new XML(evt.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					
+					if(_xmlRepo.elements().length() > 0){
+						var comVisor:CtrlVisorDoc = new CtrlVisorDoc();
+						
+						comVisor = CtrlVisorDoc(PopUpManager.createPopUp(obj,CtrlVisorDoc,false));
+						comVisor.init(info.codigo, _xmlRepo);
+						PopUpManager.centerPopUp(comVisor);
+					}
+					else
+						Alert.show("No se encontraron expedientes relacionados con el acreditado.",titulo,4,null,null,global.iAlert);				
+				});
+				params[0] = info.codigo;
+				wsCat.getInfoRegistro.send(40, params);
 			}
 			
 			public function permisos():void{
@@ -335,13 +400,13 @@
 				info = null;
 				this.title = "Nuevo";
 				cboTipoPers.enabled = true;
-				formDPAcred.init(info);
+				formDPAcred.init(info, currentState);
 				formDPAcred.cboCoord.addEventListener(ListEvent.CHANGE, selecCoord);
-				formDirAcred.init(info);
-				formDirNegocio.init(info);
+				formDirAcred.init(info, currentState);
+				formDirNegocio.init(info, currentState);
 				formOtroAcred.init(info);
-				formOficialAcred.init(info);
-				formPLDAcred.init(info);
+				formOficialAcred.init(info, currentState);
+				formPLDAcred.init(info, currentState);
 			} 
 			
 			private function selecCoord(event:ListEvent):void{
@@ -423,29 +488,29 @@
 		]]>
 	</mx:Script>
 	<mx:TabNavigator id="tabNav" width="591" height="450" x="10" y="52" creationPolicy="all" >
-		<mx:Canvas label="Datos Generales" width="100%" height="100%">
-			<Forms:FormDatosPerAcredInd id="formDPAcred" x="85.5" height="404" width="500"/>
+		<mx:Canvas label="Datos Generales" width="100%" height="100%" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+			<Forms:FormDatosPerAcredInd id="formDPAcred" x="74.5" height="396" width="440"/>
 		</mx:Canvas>
-		<mx:Canvas label="Dirección" width="100%" height="100%">	
-			<Forms:FormDirAcred id="formDirAcred" x="84.5" height="370" width="420"/>
+		<mx:Canvas id="cnvDir" label="Dirección" width="100%" height="100%">	
+			<Forms:FormDirAcred id="formDirAcred" x="84.5" height="390" width="420"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvDirNeg" label="Dir. Negocio" width="100%" height="100%">	
-			<Forms:FormDirNegocio id="formDirNegocio" x="84.5" height="370" width="420"/>
+			<Forms:FormDirNegocio id="formDirNegocio" x="84.5" width="420"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvOtros" label="Otros Datos" width="100%" height="100%">	
 			<Forms:FormOtroAcred id="formOtroAcred" x="94.5"/> 
 		</mx:Canvas>
-		<mx:Canvas label="Oficial de Crédito" width="100%" height="100%">	
+		<mx:Canvas id="cnvOficial" label="Origen Comercial" width="100%" height="100%">	
 			<Forms:FormOficialAcred id="formOficialAcred" x="94.5"/>
 		</mx:Canvas>
-		<mx:Canvas label="Inf. Adicional" width="100%" height="100%">
-			<Forms:FormPLDAcred id="formPLDAcred" x="59.5" width="470" y="10"/>
+		<mx:Canvas id="cnvAdic" label="Inf. Adicional" width="100%" height="100%">
+			<Forms:FormPLDAcred id="formPLDAcred" x="59.5" y="10"/>
 		</mx:Canvas>
 	</mx:TabNavigator>
 	<mx:Button id="btnCancelar" x="560" y="508" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
 	<mx:Button id="btnAceptar" x="512" y="508" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
-	<mx:Button id="btnConsBuro" x="10" y="508" click="consultaBuro()" label="Consulta Rep. Crédito" visible="false"/>
-	<mx:Button id="btnDoc" x="166" y="508" click="muestraDocumentos()" label="Ver Documentación" visible="false"/>
+	<mx:Button id="btnConsBuro" x="10" y="508" click="consultaBuro()" label="Consulta Rep. Crédito" visible="true"/>
+	<mx:Button id="btnDoc" x="166" y="508" click="muestraDocumentos()" label="Ver Documentación" visible="true"/>
 	<mx:Label x="144" y="18" text="Tipo Persona:"/>
 	<mx:ComboBox id="cboTipoPers" labelField="nombre" x="235" y="16" change="modificaEstatus()"/>
 </mx:TitleWindow>

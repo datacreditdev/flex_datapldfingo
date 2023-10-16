@@ -206,7 +206,7 @@
 				global = new Globales();
 				permiso = new Permisos();
 				
-				f = Application.application._Current_Fecha;
+				f = global.obtenerFechaSistema();
 				fecMin = new Date(f.getFullYear()-17,f.getMonth(),f.getDate());
 				fecMax = new Date(f.getFullYear()-80,f.getMonth(),f.getDate());
 				txtFecha.selectableRange = {rangeStart: fecMax, rangeEnd: fecMin};

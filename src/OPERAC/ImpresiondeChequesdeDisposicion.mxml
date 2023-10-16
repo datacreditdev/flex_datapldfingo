@@ -200,7 +200,7 @@
 					var ciclo:String = dgAcred.selectedItem.CICLO;
 					var coord:String = dgAcred.selectedItem.CDGCO;
 					var cuenta:String = txtCodCuenta.text;
-					var fecha:String = global.formatoFecha(Application.application._Current_Fecha);
+					var fecha:String = global.formatoFecha(global.obtenerFechaSistema());
 					var chqIni:String = txtChqIni.text;
 					var chqFin:String = txtChqFin.text;
 					var autorizado:String = dgAcred.selectedItem.AUTORCRR;
@@ -331,7 +331,7 @@
 				rep = "21";
 				titulo = "Impresión de Cheques";
 				lblTitulo.text = titulo.toUpperCase();
-				var fec:Date = Application.application._Current_Fecha;
+				var fec:Date = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 	
 			}
 			

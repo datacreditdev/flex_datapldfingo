@@ -27,8 +27,6 @@
 			
 			public var _xmlAcred:XML = new XML();            
 			
-			public var wsMS:WebService;	
-			
 			private var du:Utils;
 			private var global:Globales;
 			private var fecha:String;
@@ -55,13 +53,13 @@
 					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
-						this._xmlAcred = new XML(event.result);
+						_xmlAcred = new XML(event.result);
 						
 						du.closeWs(wsCat);
 						du.rCursor();
 						global.desbloquear();
 						
-						if (this._xmlAcred.elements().length() > 0){
+						if(_xmlAcred.elements().length() > 0){
 							formateaListaAcred();
 							dgAcred.dataProvider = acredObj;
 						}
@@ -110,15 +108,9 @@
 				permisos();
 				titulo = "Registro de Transferencia";
 				lblTitulo.text = titulo.toUpperCase();
-				var fec:Date = Application.application._Current_Fecha;
+				var fec:Date = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 	
 			}
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}			
 			
 			public function muestraFormTrans():void{
 				var codigo:String = dgAcred.selectedItem.CDGCL;
@@ -134,26 +126,26 @@
 			
 			public function permisos():void{
 				var perfil_id:String = Application.application.cadPerfil;
-				var i:int;
 				var cont:int;
 			}
+			
 		]]>
 	</mx:Script>
-	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="590" height="315">
-		<mx:Canvas x="513.5" y="87" width="61" height="37" styleName="canvasMod" visible="true">
+	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="630" height="315">
+		<mx:Canvas x="559" y="87" width="61" height="37" styleName="canvasMod" visible="true">
 			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarAcred()" toolTip="Buscar Acreditado" width="40"/>
 		</mx:Canvas>
-		<mx:Canvas x="12.75" y="87" width="492.75" height="37" styleName="canvasMod" visible="true">
+		<mx:Canvas x="12.75" y="87" width="538.25" height="37" styleName="canvasMod" visible="true">
 			<mx:Label id="lblCodAcred" x="6" y="7" text="Código:"/>
-			<mx:Label id="lblAcred" x="317.75" y="7" text="Paterno:"/>
-			<mx:TextInput id="txtPaterno" x="370.75" y="6" width="110" enter="buscarAcred()" maxChars="50"/>
-			<mx:TextInput id="txtCodAcred" x="55" y="6" width="68" enter="buscarAcred()" maxChars="6" restrict="0-9"/>
-			<mx:TextInput id="txtNombre" x="197.75" y="6" width="110" enter="buscarAcred()" maxChars="50"/>
-			<mx:Label id="lblNombre" x="144.75" y="7" text="Nombre:"/>
+			<mx:Label id="lblAcred" x="366.75" y="7" text="Paterno:"/>
+			<mx:TextInput id="txtPaterno" x="416.75" y="6" width="110" enter="buscarAcred()" maxChars="50"/>
+			<mx:TextInput id="txtCodAcred" x="49.75" y="6" width="68" enter="buscarAcred()" maxChars="6" restrict="0-9"/>
+			<mx:TextInput id="txtNombre" x="245.75" y="6" width="110" enter="buscarAcred()" maxChars="50"/>
+			<mx:Label id="lblNombre" x="130.75" y="7" text="Nombre/Razón Social:"/>
 		</mx:Canvas>
 		<mx:Label x="12.75" y="67" text="ACREDITADO" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-		<mx:Canvas id="cnvAcred" x="12.75" y="132" width="564.5" height="140" styleName="canvasMod" visible="true" verticalScrollPolicy="off">
-			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="542.5" height="120"
+		<mx:Canvas id="cnvAcred" x="12.75" y="132" width="607.25" height="140" styleName="canvasMod" visible="true" verticalScrollPolicy="off">
+			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="585.25" height="120"
 				sortableColumns="false" resizableColumns="false" doubleClickEnabled="true" itemDoubleClick="muestraFormTrans()"> 
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="50" editable="false"/>
@@ -169,6 +161,6 @@
 			<mx:DateField id="dtfFecha" x="214.75" y="6" width="100"/>
 		</mx:Canvas>
 		<mx:Label id="lblControl" x="12.75" y="279.95" width="368.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-		<mx:Button id="btnRegistrar" x="537.25" y="278.95" icon="@Embed(source='assets/button_ok.png')" enabled="true" toolTip="Registrar" width="40" click="muestraFormTrans()"/>
+		<mx:Button id="btnRegistrar" x="580" y="278.95" icon="@Embed(source='assets/button_ok.png')" enabled="true" toolTip="Registrar" width="40" click="muestraFormTrans()"/>
 	</mx:Canvas>
 </mx:Canvas>

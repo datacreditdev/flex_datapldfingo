@@ -42,7 +42,7 @@
 			public var tituloOF:String;
 			public var tituloLC:String;
 			public var tituloDisp:String;
-			public var du:Utils;
+			private var du:Utils;
 			private var global:Globales;
 			
 			//variables que especifican el indice del elemento 
@@ -119,13 +119,13 @@
 					global.bloquear();
 					
 				du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
-					this._xmlDisp = new XML(event.result);
+					_xmlDisp = new XML(event.result);
 					
 					du.closeWs(wsCat);
 					du.rCursor();
 					global.desbloquear();
 					
-					if (this._xmlDisp.elements().length() > 0){
+					if (_xmlDisp.elements().length() > 0){
 						dgDisp.dataProvider = _xmlDisp.Table;
 						
 						if(accionDisp == 2){
@@ -154,13 +154,13 @@
 					global.bloquear();
 				
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
-					this._xmlLC = new XML(event.result);
+					_xmlLC = new XML(event.result);
 					
 					du.closeWs(wsCat);
 					du.rCursor();
 					global.desbloquear();
 					
-					if (this._xmlLC.elements().length() > 0){
+					if (_xmlLC.elements().length() > 0){
 						dgLC.dataProvider = _xmlLC.Table;
 						
 						if(accionLC == 2){
@@ -189,13 +189,13 @@
 						global.bloquear();
 						
 					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
-						this._xmlOF = new XML(event.result);
+						_xmlOF = new XML(event.result);
 						
 						du.closeWs(wsCat);
 						du.rCursor();
 						global.desbloquear();
 						
-						if (this._xmlOF.elements().length() > 0){
+						if (_xmlOF.elements().length() > 0){
 							dgOF.dataProvider = _xmlOF.Table;
 							
 							if(accionOF == 2){
@@ -214,15 +214,15 @@
 			}
 
 			public function eliminarDisp():void{
-				Alert.show("¿Desea eliminar la Disposición seleccionada?", tituloDisp, Alert.YES|Alert.NO,null, manejadorEliminarDisp,global.iQuest);
+				Alert.show("¿Desea eliminar la Serie seleccionada?", tituloDisp, Alert.YES|Alert.NO,null, manejadorEliminarDisp,global.iQuest);
 			}
 			
 			public function eliminarLC():void{
-				Alert.show("¿Desea eliminar la Línea de Crédito seleccionada?", tituloLC, Alert.YES|Alert.NO,null, manejadorEliminarLC,global.iQuest);
+				Alert.show("¿Desea eliminar el Certificado seleccionado?", tituloLC, Alert.YES|Alert.NO,null, manejadorEliminarLC,global.iQuest);
 			}
 			
 			public function eliminarOF():void{
-				Alert.show("¿Desea eliminar la Organización Fondeadora seleccionada?", tituloOF, Alert.YES|Alert.NO,null, manejadorEliminarOF,global.iQuest);
+				Alert.show("¿Desea eliminar el Fondo seleccionado?", tituloOF, Alert.YES|Alert.NO,null, manejadorEliminarOF,global.iQuest);
 			}
 			
 			public function iniVar():void{
@@ -236,9 +236,9 @@
 				global = new Globales();
 				du = new Utils();
 				wsMS = new WebService();
-				tituloOF = "Mantenimiento de Org Fondeadora";
-				tituloLC = "Mantenimiento de Línea de Crédito";
-				tituloDisp = "Mantenimiento de Disposición";
+				tituloOF = "Mantenimiento de Fondo";
+				tituloLC = "Mantenimiento de Certificado";
+				tituloDisp = "Mantenimiento de Serie";
 				alta = false;
 				borrado = false;
 				consulta = false;
@@ -321,7 +321,7 @@
 								PopUpManager.centerPopUp(comMttoDisp);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de Disposición",tituloDisp,4,null,null,global.iAlert);
+								Alert.show("Debe seleccionar el registro de la Serie",tituloDisp,4,null,null,global.iAlert);
 						break;
 					}
 				}
@@ -357,7 +357,7 @@
 								
 							}
 							else
-								Alert.show("Debe seleccionar el registro de Línea de Crédito",tituloLC,4,null,null,global.iAlert);
+								Alert.show("Debe seleccionar el registro del Certificado",tituloLC,4,null,null,global.iAlert);
 						break;
 					}
 				}
@@ -389,7 +389,7 @@
 								PopUpManager.centerPopUp(comMttoOF);	
 							}
 							else
-								Alert.show("Debe seleccionar el registro de la Organización Fondeadora",tituloOF,4,null,null,global.iAlert); 
+								Alert.show("Debe seleccionar el registro del Fondo",tituloOF,4,null,null,global.iAlert); 
 							break;
 					}
 				}
@@ -398,23 +398,20 @@
 			public function permisos():void{
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
-				var Params:Array;
-				var i:int;
+				var ws:WebService = new WebService;
+				var Params:Array = new Array;
 				var cont:int;
 				
-				wsMS = du.initWs(wsMS);
+				du.initWs(ws);
 				du.sCursor();
-				//bloquear();
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
 					dPermisos = new XML(evt.result.toString());
 						
 					cont = dPermisos.elements().length();
 					
-					for(i = 0; i < cont; i++)
-					{
-						switch(dPermisos.Table[i].OPCION.toString())
-						{
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
 								break;	
@@ -430,14 +427,14 @@
 						}
 					}
 					btnAgregar.enabled = alta;
-					//desbloquear();
+					
 					du.rCursor();
-					du.closeWs(wsMS);					
+					du.closeWs(ws);					
 				});
 				Params = new Array();
 				Params[0] = perfil_id;
 				Params[1] = mod_id;
-				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+				ws.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
 			}
 			
 			public function seleccionarDisp():void{
@@ -508,7 +505,6 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionOrgFond);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")
-					//Alert.show("Grupo Eliminado","Mantenimiento de Grupo",4,null,null,global.iInfo);
 					buscarOF(1);
 				else
 					Alert.show(res.substr(2,res.length-1), tituloOF,4,null,null,global.iAlert);
@@ -527,7 +523,7 @@
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Label x="18" y="10" text="ORGANIZACIONES FONDEADORAS" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Label x="18" y="10" text="FONDOS" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarOF(1)" toolTip="Buscar Org. Fondeadora" width="40"/>
 			<mx:Button id="btnAgregar" x="106" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormOF(1)" toolTip="Registrar Org. Fondeadora" width="40"/>
@@ -554,7 +550,7 @@
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Label x="18.5" y="233" text="LÍNEAS DE CRÉDITO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Label x="18.5" y="233" text="CERTIFICADOS" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas x="540" y="217" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Button id="btnAgregarLC" x="106" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormLC(1)" toolTip="Agregar Linea Crédito" width="40"/>
 			<mx:Button id="btnEliminarLC" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarLC()" toolTip="Eliminar Línea Crédito" width="40"/>
@@ -574,7 +570,7 @@
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Label x="19.25" y="461" text="DISPOSICIONES" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Label x="19.25" y="461" text="SERIES" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas x="540" y="445" width="205.75" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Button id="btnAgregarDisp" x="106" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormDisp(1)" toolTip="Agregar Disposición" width="40"/>
 			<mx:Button id="btnEliminarDisp" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarDisp()" toolTip="Eliminar Disposición" width="40"/>

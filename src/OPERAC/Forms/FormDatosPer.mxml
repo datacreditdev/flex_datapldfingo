@@ -90,8 +90,8 @@
 			public var entFedObj:ArrayCollection = new ArrayCollection();
 			public var datos:DatosPersona = new DatosPersona();
 			
-			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS	
-			public var du:Utils;
+			public var wsMS:WebService;	
+			private var du:Utils;
 			private var global:Globales;
 			private var permiso:Permisos;
 			public var bandCURP:Boolean;
@@ -133,7 +133,7 @@
 					formData.segNombre = StringUtil.trim(txtSegNombre.text.toUpperCase());
 					formData.aPaterno = StringUtil.trim(txtAP.text.toUpperCase());
 					formData.aMaterno = StringUtil.trim(txtAM.text.toUpperCase());
-					formData.repLegal = codRepLegal;
+					//formData.repLegal = codRepLegal;
 					formData.fecha = txtFecha.text;
 					
 					if (rdbMasculino.selected == true)
@@ -270,7 +270,8 @@
 				global = new Globales();
 				permiso = new Permisos();
 				
-				f = Application.application._Current_Fecha;
+				f = global.obtenerFechaSistema();
+				codRepLegal = "";
 				
 				permisos();
 				
@@ -306,10 +307,10 @@
 							txtAP.text = info.aPaterno;
 							txtAM.text = info.aMaterno;
 							//Informacion relacionada con el representante legal
-							if(currentState == "moral"){
+							/*if(currentState == "moral"){
 								codRepLegal = info.repLegal;
 								txtRepLegal.text =  info.nomRepLegal;
-							}
+							}*/
 							if (info.sexo.toUpperCase() == "F")
 								rdbFemenino.selected = true;
 							else if (info.sexo.toUpperCase() == "M")
@@ -354,21 +355,6 @@
 									break;
 								}
 							}
-							
-							/*initConexion();
-							du.sCursor();
-					
-							du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
-								var codigo:String = evt.result.toString();
-								
-								txtCodigo.text = codigo;
-								
-								global.desbloquear();
-								du.rCursor();
-								du.closeWs(wsMS);
-							});
-							//EXTRAE EL CODIGO CONSECUTIVO DE PERSONAS
-							wsMS.setCodigoPersona.send();*/
 						}
 					});
 					//MUESTRA LAS ENTIDADES FEDERATIVAS DISPONIBLES

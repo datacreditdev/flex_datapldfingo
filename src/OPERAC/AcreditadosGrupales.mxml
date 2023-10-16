@@ -293,7 +293,7 @@
 					comMttoFecha = MttoSelFecha(PopUpManager.createPopUp(this,MttoSelFecha,true));
 					comMttoFecha.title = "Fecha de Baja";
 					comMttoFecha.lblFecha.text="Fecha de Baja del Cliente"; 
-					fec = Application.application._Current_Fecha;
+					fec = global.obtenerFechaSistema();
 					comMttoFecha.fechaMin = new Date(fec.fullYear,fec.month,fec.date - 1);
 					comMttoFecha.fechaMax = new Date(fec.fullYear,fec.month,fec.date - 1);
 					comMttoFecha.edita = false;

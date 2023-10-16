@@ -135,7 +135,7 @@
 				tipoAccion = 1;
 				du = new Utils();
 				global = new Globales();
-				var fecha:Date = Application.application._Current_Fecha;
+				var fecha:Date = global.obtenerFechaSistema();
 				formDGGrupo.cboCoordinacion.addEventListener(ListEvent.CHANGE, selecCoord);
 				info = new DatosGrupo();
 		

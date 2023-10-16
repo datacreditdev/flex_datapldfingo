@@ -297,8 +297,8 @@
 		<mx:RadioButton id="rdbPagadora" x="46" y="20" groupName="tipo" value="P" width="76" label="Pagadora"/>
 		<mx:RadioButton id="rdbAmbas" x="46" y="41" label="Ambas" groupName="tipo" value="A" width="76"/>	
 	</mx:Canvas>
-	<mx:Button id="btnAceptar" x="177" y="433" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
-	<mx:Button id="btnCancelar" x="259" y="433" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:Button id="btnAceptar" x="202" y="430" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="254" y="430" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
 	<mx:Label x="71.5" y="335" text="Tipo de Cuenta" width="130.75"/>
 	<mx:Canvas x="259" y="354" width="110.25" height="66" styleName="canvasMod">
 		<mx:RadioButtonGroup id="activa"/>

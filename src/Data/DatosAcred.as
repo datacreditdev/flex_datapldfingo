@@ -5,13 +5,15 @@ package Data
 	{
 		/*Variables que hacen referencia a la dirección del Negocio*/
 		public var calleNeg:String;
-		public var noInt:String;
-		public var noExt:String;
+		public var noExtNeg:String;
+		public var noIntNeg:String;
 		public var entreCallesNeg:String;
 		public var telefonoNeg:String;
+		public var cdgPaisNeg:String;
+		public var paisNeg:String;
 		public var codPostalNeg:String;
-		public var cdgDirEntFedNeg:String;
-		public var dirEntFedNeg:String;
+		public var cdgEntFedNeg:String;
+		public var entFedNeg:String;
 		public var cdgMunNeg:String;
 		public var municipioNeg:String;
 		public var cdgLocNeg:String;
@@ -35,6 +37,12 @@ package Data
 		public var promotor:String;
 		public var cdgRec:String;
 		public var recuperador:String;
+		public var contacto1:String;
+		public var telCon1:String;
+		public var emailCon1:String;
+		public var contacto2:String;
+		public var telCon2:String;
+		public var emailCon2:String;
 		public var guardaOficial:Boolean;
 		
 		public function DatosAcred()

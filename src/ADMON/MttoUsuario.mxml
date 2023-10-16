@@ -320,9 +320,11 @@
 			var perfil:ArrayCollection = dgPerfil.dataProvider as ArrayCollection;
 			perfil.filterFunction = filtraPerfil;
 			perfil.refresh();
+			
 			for(var i:int = 0; i < perfil.length; i++){
 				sPerfil += perfil[i].id + "|"; 	
 			}
+			
 			sPerfil = sPerfil.substr(0,sPerfil.length-1);
 			perfil.filterFunction = null;
 			perfil.refresh();
@@ -511,6 +513,8 @@
 		}
 		
 		public function llenaRegistros():void{
+			var i:int;
+			
 			txtUsuario.text = UsrInfo[0].CODIGO;
 			txtPwd.text = UsrInfo[0].CLAVE;
 			txtAPaterno.text = UsrInfo[0].PRIMAPE;
@@ -532,20 +536,20 @@
   			info.cdgLoc = UsrInfo[0].CDGLO
   			info.cdgCol = UsrInfo[0].CDGCOL
 			
-			for(var i:int = 0; i < nivelEscObj.length; i++){
+			for(i = 0; i < nivelEscObj.length; i++){
 				if(UsrInfo[0].NIVESCOLAR.toString() == nivelEscObj[i].id){
 					cboNivelEsc.selectedIndex = i;
 					break;
 				}
 			}
-			for(var i:int = 0; i < coordObj.length; i++){
+			for(i = 0; i < coordObj.length; i++){
 				if(UsrInfo[0].CDGCO == coordObj[i].id.toString()){
 					cboCoord.selectedIndex = i;
 					break;
 				}
 			}
 			
-			for(var i:int = 0; i < puestoObj.length; i++){
+			for(i = 0; i < puestoObj.length; i++){
 				if(UsrInfo[0].PUESTO.toString() == puestoObj[i].id.toString()){
 					cboPuesto.selectedIndex = i;
 					break;
@@ -799,7 +803,7 @@
 				<mx:TextInput width="200" id="txtTelefono" x="112" y="10"/>
 				<mx:ComboBox x="112" y="105" width="238" id="cboCoord" labelField="nombre"/>
 				<mx:ComboBox x="112" y="73" width="238" id="cboPuesto" labelField="nombre"/>
-				<mx:List x="114" y="137" width="236" height="136" labelField="NOMBRE" id="lstSucursales" allowMultipleSelection="true" ></mx:List>
+				<mx:List x="114" y="137" width="236" height="136" labelField="NOMBRE" id="lstSucursales" allowMultipleSelection="true" />
 				<mx:CheckBox id="chkActivo" x="114" y="281" label="Activo"/>
 			</mx:Canvas>
 		</mx:Canvas>

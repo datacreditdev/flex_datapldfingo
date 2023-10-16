@@ -193,7 +193,7 @@
 					var region:String = "&region=" + cboRegion.selectedItem.codigo;
 					var coord:String = "&coord=" + cboCoord.selectedItem.codigo;
 					var asesor:String = "&asesor=" + cboAsesor.selectedItem.codigo;
-					var fec:Date = Application.application._Current_Fecha;
+					var fec:Date = global.obtenerFechaSistema();
 					fecha = "&fecha=" + global.formatoFechaSep(fec, "-");
 					
 					if(currentState == null)

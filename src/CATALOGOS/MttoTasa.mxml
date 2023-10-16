@@ -119,7 +119,7 @@
 			txtValDesde.visible = false;
 			txtInstrumento.text = instrumento;
 			txtDescInst.text = descInst;
-			dtfValDesde.selectedDate = Application.application._Current_Fecha;
+			dtfValDesde.selectedDate = global.obtenerFechaSistema();
 		}
 		
 		private function setAccionTasa(event:ResultEvent):void{

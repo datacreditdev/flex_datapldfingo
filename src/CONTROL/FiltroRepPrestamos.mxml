@@ -200,7 +200,7 @@
 				cboSucursal.dataProvider = coordObj;
 				cboAsesor.dataProvider = asesorObj;
 				cargaRegion();		
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfIniDesde.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dtfIniHasta.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dtfFinDesde.selectedDate = null;

@@ -209,7 +209,7 @@
 				global = new Globales();
 				permiso = new Permisos();
 				
-				f = Application.application._Current_Fecha;
+				f = global.obtenerFechaSistema();
 				
 				permisos();
 				

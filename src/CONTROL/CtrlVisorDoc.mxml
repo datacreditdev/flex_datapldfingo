@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="845" height="785" layout="absolute" 
-	showCloseButton="true" close="cerrar()" creationPolicy="all" creationComplete="initApp()">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="871" height="113" layout="absolute" 
+	showCloseButton="true" close="cerrar()" creationPolicy="all" xmlns:CONTROL="CONTROL.*"  
+ 	move="mueveVentana()">
+	<mx:states>
+		<mx:State name="vista">
+			<mx:RemoveChild target="{cnvRepo}"/>
+			<mx:AddChild>
+				<mx:Canvas id="cnvContenedor" width="100%" height="100%" visible="true"/>	
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
 	
 	<mx:Metadata>
 		[Event(name="enviar", type="enviar")]
@@ -9,109 +18,93 @@
 	<!--Componente que permite mostrar los documentos de un acreditado-->
 	<mx:Script>
 		<![CDATA[
-			import mx.controls.Image;
-			import mx.controls.Button;
-			import Data.ImageCreator;
 			import Data.Globales;
+			import Data.ImageCreator;
 			import Data.Utils;
 			import flash.display.*;
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
+			import mx.controls.Button;
+			import mx.controls.Image;
 			import mx.core.Application;
+			import mx.core.IFlexDisplayObject;
 			import mx.effects.easing.Elastic;
 			import mx.events.CollectionEvent;
 			import mx.events.IndexChangedEvent;
 			import mx.managers.PopUpManager;
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.soap.WebService;
-			import mx.core.IFlexDisplayObject;
 
-			private var _xmlTabla:XML = new XML();
-			
-			public var imagenes:ArrayCollection;
-			
-			private var global:Globales;
+			private var _xmlRepo:XML = new XML();
+			private var repoObj:ArrayCollection;
+
 			private var du:Utils;
+			private var global:Globales;
+			private var codigo:String;
 			private var titulo:String;
-			public var contenedor:Sprite;
+			private var comVisorDet:CtrlVisorDocDet;
 			
 			private function cerrar():void{
+				if(comVisorDet)
+					comVisorDet.cerrar();
 				PopUpManager.removePopUp(this);
 			}
 			
-			public function initApp():void{
+			private function formateaRepo():void{
+				var cont:int = _xmlRepo.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.nombre = "--Seleccionar--";
+				oItem.id = "0";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlRepo.Table[i].REPO;
+					oItem.nombre = _xmlRepo.Table[i].REPO;	
+					item.push(oItem);
+				}
+				
+				repoObj = new ArrayCollection(item);
+			}
+			
+			public function init(codigo:String, _xmlRepo:XML):void{				
 				global = new Globales();
 				du = new Utils();
 				
-				/*Alert.show("nada");
-				var myCircle:Shape = new Shape();
-        
-				myCircle.graphics.beginFill(0xFF0000); //red
-				myCircle.graphics.drawCircle(25, 25, 50);
-				myCircle.graphics.endFill();
-        
-				this.addChild(myCircle);*/
-				/*Alert.show("Agregado");
-				 var ldr:Loader = new Loader();
-				 ldr.mask = rect;
-				 var url:String = "assets/login.png";
-				 var urlReq:URLRequest = new URLRequest(url);
-				 ldr.load(urlReq);
-				 contenedor.addChild(ldr);*/
+				this.title = "Expediente";
+				this.codigo = codigo;
+				this._xmlRepo = _xmlRepo;
 				
-			
+				this.height = Application.application.height - 25;
 				
-				/*addChild(contenedor);
-				Alert.show(this.toString());
-				contenedor.x = 10;
-				contenedor.y = 10;
-				
-				contenedor.addChild();
-				
-				var miTexto:TextField = new TextField(); // Creo el campo de texto
-				miTexto.text = "Hola @#♦*•#"; // Escribo lo que quiero que diga
-				obj.addChild(miTexto);
-				
-				var carga:Loader = new Loader(); // Creamos el contenedor de carga
-				carga.load(new URLRequest()); // Le damos el archivo a cargar
-				carga.contentLoaderInfo.addEventListener(Event.COMPLETE,function(){
-					//addChild(contenedor);
-					obj.addChild(carga);
-					Alert.show("termino la carga");
-					carga.x = 10;
-					carga.y = 10;
-					carga.width = 100;
-					carga.height = 100;
-				});*/
-				try{
-				
-					/*var button:Button = new Button();
-					button.label="close";
-					addChild(button);	
-					
-					var image:Image = new Image();
-					image.source = "assets/brushedMetal.JPG";
-					addChild(image);*/
-				
-					var zoom:ImageCreator = new ImageCreator(Application.application._Current_URL + "assets/brushedMetal.JPG", 100, 100, 2);
-					zoom.x = 150;
-					zoom.y = 300;
-					addChild(zoom);
+				if(_xmlRepo.elements().length() > 0){
+					formateaRepo();
+					cboRepo.dataProvider = repoObj;
 				}
-				catch(error:Error){
-					Alert.show("Error: " + error.message);
-				}	
+				else
+					Alert.show("No se encontraron expedientes relacionados con el acreditado.",titulo,4,null,null,global.iAlert);
 			}
 			
+			private function muestraDocumentos():void{
+				if(cboRepo.selectedIndex > 0){
+					var repo:String = cboRepo.selectedItem.id;
+					this.currentState = "vista";
+					comVisorDet = new CtrlVisorDocDet();
+					comVisorDet.init(codigo, repo);
+					cnvContenedor.addChild(comVisorDet);
+				}
+			}
+			
+			private function mueveVentana():void{
+				comVisorDet.mueveVentana();
+			}
 		]]>
 	</mx:Script>
-	<!--<mx:Canvas width="353.5" height="76" styleName="canvasMod" x="477.5" y="10">
-		<mx:Label x="48" y="42" text="Tipo:"/>
-		<mx:Label x="84" y="42" id="lblCodigo" textAlign="right"/>
-		<mx:Label x="28" y="10" text="Registro:"/>
-		<mx:Label x="84" y="10" id="lblCodigo0" textAlign="right"/>
+	<mx:Canvas id="cnvRepo" x="283.5" y="10" width="300" height="50" styleName="canvasMod">
+		<mx:Label id="lblRepo" text="Expediente:" x="34.5" y="14"/>
+		<mx:ComboBox id="cboRepo" labelField="descripcion" x="103.5" y="11" change="muestraDocumentos()"/>	
 	</mx:Canvas>
-	<mx:Button id="btnCerrar" x="390" y="712" label="Cerrar" click="cerrar()"/>
-	<mx:Canvas id="cnvContenedor" x="12" y="94" width="819" height="610">
-	</mx:Canvas>-->
 </mx:TitleWindow>

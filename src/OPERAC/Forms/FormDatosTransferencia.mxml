@@ -6,10 +6,11 @@
 	</mx:Metadata>
 	
 	<mx:NumberValidator id="montoV" source="{txtMonto}" property="text" 
-	triggerEvent="" invalid="{txtMonto.setFocus()}" decimalPointCountError="Capture correctamente la cantidad" precision="2" precisionError="Capture correctamente la cantidad" required="false"/>
+	triggerEvent="" invalid="{txtMonto.setFocus()}" decimalPointCountError="Capture correctamente la cantidad" 
+	precision="2" precisionError="Capture correctamente la cantidad" required="false"/>
 	
-	<mx:Validator id="cuentaV" source="{txtCuenta}" property="text" 
-	 invalid="{txtCuenta.setFocus()}" triggerEvent="" requiredFieldError="Dato Requerido"/>
+	<mx:Validator id="referenciaV" source="{txtReferencia}" property="text" 
+	 invalid="{txtReferencia.setFocus()}" triggerEvent="" requiredFieldError="Dato Requerido"/>
 	
 	<mx:Validator id="conceptoV" source="{txtConcepto}" property="text" 
 	invalid="{txtConcepto.setFocus()}" triggerEvent="" requiredFieldError="Dato Requerido"/>
@@ -60,7 +61,7 @@
 						}
 						else{
 							txtNomCuenta.text = "";
-							Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.","Entrega",4,null,null,global.iAlert);
+							Alert.show("No se ha encontrado información de la cuenta. Verifique los datos capturados.",titulo,4,null,null,global.iAlert);
 						}		
 					});
 					params[0] = "4";
@@ -98,12 +99,12 @@
 			}
 			
 			public function enviaTransferencia(formData:DatosDispersion):void{
-				var invalidArray:Array = Validator.validateAll([cuentaV, conceptoV, montoV, nomCuentaV]);
+				var invalidArray:Array = Validator.validateAll([conceptoV, montoV, nomCuentaV]);
 				
 				if(invalidArray.length == 0){	
 					formData.cdgMetodo = "T";
 					formData.cdgBanco = cboBanco.selectedItem.id;
-					formData.cuenta = txtCuenta.text;
+					formData.cuenta = txtReferencia.text;
 					formData.concepto = txtConcepto.text;
 					formData.monto = Number(txtMonto.text);
 					formData.fecha = dtfFecha.text;
@@ -140,7 +141,7 @@
 		<mx:ComboBox id="cboBanco" labelField="nombre" width="189"/>
 	</mx:FormItem>
 	<mx:FormItem label="Clabe:">
-		<mx:TextInput id="txtCuenta" maxChars="18" restrict="0-9" width="150"/>
+		<mx:TextInput id="txtReferencia" maxChars="18" restrict="0-9" width="150"/>
 	</mx:FormItem>
 	<mx:FormItem label="Concepto:">
 		<mx:TextArea id="txtConcepto" maxChars="30" width="300"/>

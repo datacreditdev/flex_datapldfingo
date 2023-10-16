@@ -269,7 +269,7 @@
 				habilitaControles(false);
 				ctrlFiltro.init(false);
 				ctrlFiltro.limpiar();
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				nivel.selectedValue = 2;
 				chkCartVig.selected = true;

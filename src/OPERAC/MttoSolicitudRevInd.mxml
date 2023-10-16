@@ -508,7 +508,7 @@
 				var estatus:String;
 				if (currentState != null)
 					estatus = currentState.toString();
-				var fecSolic:String = global.formatoFecha(Application.application._Current_Fecha);
+				var fecSolic:String = global.formatoFecha(global.obtenerFechaSistema());
 				this.coord = coord;
 				//ASIGNACION DE CODIGO DE ACREDITADO
 				this.cdgAcred = cdgAcred; 

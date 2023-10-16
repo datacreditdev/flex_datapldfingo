@@ -42,7 +42,7 @@
 				}
 				else{
 					tipo = 1;
-					fecha = global.formatoFechaSep(Application.application._Current_Fecha,"/");
+					fecha = global.formatoFechaSep(global.obtenerFechaSistema(),"/");
 				}
 				
 				initConexion();
@@ -94,7 +94,7 @@
 				dgReporte.dataProvider = null;
 				btnExportar.enabled = false;
 				lblTotal.text = "";
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 			}
 				

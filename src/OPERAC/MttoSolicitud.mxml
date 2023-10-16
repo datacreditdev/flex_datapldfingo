@@ -745,7 +745,7 @@
 				var estatus:String;
 				if (currentState != null)
 					estatus = currentState.toString();
-				var fecSolic:String = global.formatoFecha(Application.application._Current_Fecha);
+				var fecSolic:String = global.formatoFecha(global.obtenerFechaSistema());
 				this.coord = coord;
 				//ASIGNACION DE CODIGO DE GRUPO
 				this.grupo = cdgGrupo;
@@ -934,9 +934,11 @@
 			}
 			
 			public function validaSituacion():Boolean{
+				var i:int;
+				
 				//condicion que verifica la situacion de la solicitud
 				if(info.situacion != 'S'){
-					for(var i:int = 0; i < Arr.length; i++){
+					for(i = 0; i < Arr.length; i++){
 						if(Arr[i].sitAcred == 'S'){
 							Alert.show("El acreditado " + Arr[i].nombre + " se encuentra en situación " + Arr[i].situacion + ".\n\nModifique la condición del cliente","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 							return false;
@@ -944,7 +946,7 @@
 					}
 				}
 				if(info.situacion == 'S'){
-					for(var i:int = 0; i < Arr.length; i++){
+					for(i = 0; i < Arr.length; i++){
 						if(Arr[i].sitAcred != 'S'){
 							Alert.show("El acreditado " + Arr[i].nombre + " se encuentra en situación " + Arr[i].situacion + ".\n\nModifique la condición del cliente","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 							return false;

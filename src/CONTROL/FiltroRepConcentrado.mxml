@@ -169,7 +169,7 @@
 					var coord:String = "&coord=" + cboCoord.selectedItem.codigo;
 					if (currentState == null)
 						var asesor:String = "&asesor=" + cboAsesor.selectedItem.codigo;
-					var fec:Date = Application.application._Current_Fecha;
+					var fec:Date = global.obtenerFechaSistema();
 					if(fec.getDay() >= 5){
 						periodo = fec.getDay() - 4;
 						fecFin = new Date(fec.getFullYear(),fec.getMonth(),fec.getDate() - periodo); 

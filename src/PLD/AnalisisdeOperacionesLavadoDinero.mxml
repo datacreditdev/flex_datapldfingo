@@ -198,7 +198,7 @@
 			public function limpiar():void{
 				var fec:Date;
 				cboOperac.selectedIndex = 0;
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				currentState = "";
 				dtfFecIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				dtfFecFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 

@@ -201,7 +201,7 @@
 			titulo = "Mantenimiento de Línea de Crédito";
 			txtCodOF.text = codOF;
 			txtOF.text = orgFond;
-			txtOtor.selectedDate = Application.application._Current_Fecha;
+			txtOtor.selectedDate = global.obtenerFechaSistema();
 			//Codigo que permite ejecutar el efecto de apertura
 			openEffect.duration = 1000;
 			openEffect.play([this]);

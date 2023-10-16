@@ -637,7 +637,7 @@
 			}
 			
 			public function guardaControlPagos():void{
-				if(formateaRegAcred() == true){ //valida que todos los clientes cuenten con su asistencia registrada
+				if(formateaRegAcred()){ //valida que todos los clientes cuenten con su asistencia registrada
 					initConexion();
 					global.bloquear();
 					CursorManager.setBusyCursor();

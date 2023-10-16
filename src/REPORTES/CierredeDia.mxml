@@ -34,11 +34,11 @@
 						
 			private function exportar():void{
 				var dgE:ExcelExportXls = new ExcelExportXls();
-				dgE.loadDGInExcel(dgReporte,null,titulo + " del " + fecha);		
+				dgE.loadDGInExcel(dgReporte, null, titulo + " del " + fecha);		
 			}			
 						
 			public function generar(event:Event):void{
-				if(comFiltroFecha.valida() == true){
+				if(comFiltroFecha.valida()){
 					fecha = comFiltroFecha.dtfFecha.text;
 					
 					initConexion();
@@ -74,7 +74,7 @@
 				global = new Globales();
 				du = new Utils();
 				titulo = "Cierre de Día";
-				comFiltroFecha.init("0", titulo.toUpperCase(), "01/08/2009", global.formatoFecha(Application.application._Current_Fecha));
+				comFiltroFecha.init("0", titulo.toUpperCase(), "01/08/2009", global.formatoFecha(global.obtenerFechaSistema()));
 				comFiltroFecha.addEventListener("enviar",generar);
 				comFiltroFecha.addEventListener("limpiar",limpiar);
 			}		

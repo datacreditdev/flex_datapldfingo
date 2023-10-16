@@ -41,7 +41,6 @@
 			public var titulo:String;
 			private var global:Globales;
 			private var permiso:Permisos;
-			private var contenedor:Sprite;
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro
@@ -197,7 +196,7 @@
 					comMttoFecha = MttoSelFecha(PopUpManager.createPopUp(this,MttoSelFecha,true));
 					comMttoFecha.title = "Fecha de Baja";
 					comMttoFecha.lblFecha.text="Fecha de Baja del Cliente"; 
-					fec = Application.application._Current_Fecha;
+					fec = global.obtenerFechaSistema();
 					comMttoFecha.fechaMin = new Date(fec.fullYear,fec.month,fec.date - 1);
 					comMttoFecha.fechaMax = new Date(fec.fullYear,fec.month,fec.date - 1);
 					comMttoFecha.edita = false;
@@ -314,15 +313,15 @@
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60"/>
 					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="300"/>
-					<mx:DataGridColumn headerText="SUCURSAL" dataField="COORD" width="90"/>
-					<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="200"/>
+					<mx:DataGridColumn headerText="OFICINA" dataField="COORD" width="90"/>
+					<mx:DataGridColumn headerText="NOMBRE OFICINA" dataField="NOMCO" width="200"/>
 					<mx:DataGridColumn headerText="TIPO" dataField="TIPOPREST" width="90"/>
-					<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="70"/>
-					<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="170"/>
+					<!--<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="70"/>
+					<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="170"/>-->
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Label x="18" y="10" text="ACREDITADOS INDIVIDUALES" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Label x="18" y="10" text="ACREDITADOS" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas x="684" y="39" width="155" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarAcred()" toolTip="Buscar Acreditado" width="40"/>
 			<mx:Button id="btnAgregar" x="105" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormAcred(1)" toolTip="Registrar Acreditado" width="40"/>

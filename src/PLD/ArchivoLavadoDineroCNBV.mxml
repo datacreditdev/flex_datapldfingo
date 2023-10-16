@@ -148,8 +148,8 @@
 			/*	if(valida() == true){
 					var cadInfo:String = "";
 					var tipo:String = cboOperac.selectedItem.codigo;
-					var fecOp:String = global.formatoFechaYYYYMMDD(Application.application._Current_Fecha);
-			    	var fecNac:String = global.formatoFechaYYYYMMDD(Application.application._Current_Fecha);
+					var fecOp:String = global.formatoFechaYYYYMMDD(global.obtenerFechaSistema());
+			    	var fecNac:String = global.formatoFechaYYYYMMDD(global.obtenerFechaSistema());
 					var rfc:String = "TIAD841017";
 					var diaRep:String = (fecRep.date).toString();
 					var cadFec:String = fecRep.fullYear.toString().substring(2,4) + global.insertaCaracter(mesRep,'0',2 - mesRep.length,1) + global.insertaCaracter(diaRep,'0',2 - diaRep.length,1) + ".002";
@@ -217,7 +217,7 @@
 			public function limpiar():void{
 				var fec:Date;
 				cboOperac.selectedIndex = 0;
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				currentState = "";
 				dtfFecIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				dtfFecFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 

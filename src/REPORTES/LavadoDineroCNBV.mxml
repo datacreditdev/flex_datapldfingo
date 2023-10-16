@@ -273,7 +273,7 @@
 					var cadInfo:String;
 					var tipo:String;
 					
-					fecRep = Application.application._Current_Fecha;
+					fecRep = global.obtenerFechaSistema();
 					mesRep = (fecRep.month + 1).toString();
 								
 					if(cboOperac.selectedItem.codigo == "R"){

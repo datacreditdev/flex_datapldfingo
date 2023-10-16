@@ -111,7 +111,7 @@
 											 info.cdgNacEntFed, info.cdgNac, info.rfc, info.curp, info.ife, 
 											 info.calle, info.entreCalles, info.telefono, info.codPostal,
 											 info.cdgEntFed, info.cdgMun, info.cdgLoc, info.cdgCol, 
-											 info.tipoPers, info.repLegal);
+											 info.tipoPers, info.arrRepLegal);
 			}
 			
 			public function initApp():void{
@@ -137,7 +137,7 @@
 				info.aPaterno = _xmlPers.Table[0].PRIMAPE;
 				info.aMaterno = _xmlPers.Table[0].SEGAPE;
 				info.tipoPers = _xmlPers.Table[0].TIPOPERS;
-				info.repLegal = _xmlPers.Table[0].REPLEGAL;
+				//info.repLegal = _xmlPers.Table[0].REPLEGAL;
 				info.nomRepLegal = _xmlPers.Table[0].NOMREPLEGAL;
 				info.sexo = _xmlPers.Table[0].SEXO;
 				info.fecha = _xmlPers.Table[0].FECNAC

@@ -175,7 +175,7 @@
 						}	
 						else
 						{
-							fec = Application.application._Current_Fecha;
+							fec = global.obtenerFechaSistema();
 							fecEnt = global.seleccionaDiaHabilPost(new Date(fec.getFullYear(),fec.getMonth(),fec.getDate() + diasFecEnt));
 									
 							dtfSolicitud.selectedDate = fec;
@@ -204,13 +204,13 @@
 			}	
 			
 			public function validaEntrega():void{
-				var fecAct:String = global.formatoFechaYYYYMMDD(Application.application._Current_Fecha);
+				var fecAct:String = global.formatoFechaYYYYMMDD(global.obtenerFechaSistema());
 				var fecEnt:String = global.formatoFechaYYYYMMDD(dtfEntrega.selectedDate);
 				var fecSol:String = global.formatoFechaYYYYMMDD(dtfSolicitud.selectedDate);
 				/*if (fecEnt < fecAct){
 					Alert.show("La fecha de entrega debe ser igual o posterior a la fecha actual","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 					if(fecAct > fecSol)
-						dtfEntrega.selectedDate = Application.application._Current_Fecha;
+						dtfEntrega.selectedDate = global.obtenerFechaSistema();
 					else
 						dtfEntrega.selectedDate = dtfSolicitud.selectedDate;
 				}

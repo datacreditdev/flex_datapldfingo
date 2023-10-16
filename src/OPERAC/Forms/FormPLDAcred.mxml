@@ -1,14 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="465" height="300" creationPolicy="all" xmlns:Data="Data.*">
+<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="465" height="300" 
+	creationPolicy="all" xmlns:Data="Data.*">
+	<mx:states>
+		<mx:State name="moral">
+			<mx:RemoveChild target="{pep}"/>
+		</mx:State>
+	</mx:states>
 	<mx:Metadata>
 		[Event(name="enviarDatosAcred", type="Data.EventAcred")]
 	</mx:Metadata>
 	
-	<mx:NumberValidator id="tipoPersV" source="{cboTipoPers}" property="selectedIndex" 
+	<mx:NumberValidator id="tipoPersV" source="{cboGiro}" property="selectedIndex" 
 	minValue="1" triggerEvent="" lowerThanMinError="Tipo de Persona Requerido"/>
 
-	<mx:NumberValidator id="origenV" source="{cboOrigen}" property="selectedIndex" 
-	minValue="1" triggerEvent="" lowerThanMinError="Origen de Recursos Requerido"/>
+	<mx:Validator id="origenV" source="{txtOrigen}" property="text" 
+	invalid="{txtOrigen.setFocus()}" triggerEvent="" requiredFieldError="Origen de los Recursos Requerido"/>
 
 	<mx:NumberValidator id="destinoV" source="{cboDestino}" property="selectedIndex" 
 	minValue="1" triggerEvent="" lowerThanMinError="Destino de Recursos Requerido"/>
@@ -39,11 +45,11 @@
 			
 			private var origenObj:ArrayCollection = new ArrayCollection();
 			private var destinoObj:ArrayCollection = new ArrayCollection();
-			private var tipoPersObj:ArrayCollection = new ArrayCollection();
+			private var giroObj:ArrayCollection = new ArrayCollection();
 			public var datos:DatosAcred = new DatosAcred();
 			
 			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS
-			public var du:Utils;
+			private var du:Utils;
 			private var global:Globales;
 			private var vResult:ValidationResultEvent;
 			private var codPropReal:String;
@@ -69,12 +75,16 @@
 			
 			public function enviarDatosAcred(formData:DatosAcred):void{
 				if(valida()){
-					formData.detPer = cboTipoPers.selectedItem.id;
-					formData.origen = cboOrigen.selectedItem.id;
+					formData.giro = cboGiro.selectedItem.id;
+					formData.origen = txtOrigen.text;
 					formData.destino = cboDestino.selectedItem.id;
-					formData.pep = chkPep.selected == true ? "S":"N";
+					
 					formData.propReal = codPropReal;
 					formData.provRec = codProvRec;
+					
+					if(currentState == "")
+						formData.pep = chkPep.selected == true ? "S":"N";
+					
 					formData.guardaPLD = true;
 				}
 				else
@@ -122,8 +132,7 @@
 				origenObj = new ArrayCollection(item);
 			}
 			
-			private function formateaTipoPers():void{
-				var cont:int = _xmlTipoPers.elements().length();
+			private function formateaGiro():void{
 				var oItem:Object;
 				var item:Array = new Array();
 				
@@ -132,21 +141,51 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.id = "1";	
+				oItem.nombre = "Servicios Financieros";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "2";	
+				oItem.nombre = "Comercialización de Bienes";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "3";	
+				oItem.nombre = "Manufactura";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "4";	
+				oItem.nombre = "Construcción";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.id = "5";	
+				oItem.nombre = "Explotación de Recursos Naturales";
+				item.push(oItem);
+				
+				/*for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.id = _xmlTipoPers.Table[i].CODIGO.toString();	
 					oItem.nombre = _xmlTipoPers.Table[i].DESCRIPCION;
 					item.push(oItem);
-				}
-				tipoPersObj = new ArrayCollection(item);
+				}*/
+				
+				giroObj = new ArrayCollection(item);
 			}
 			
-			public function init(info:DatosAcred):void{
+			public function init(info:DatosAcred, estatus:String):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
 				var i:int;
+				
 				du = new Utils();
 				global = new Globales();
+				
+				currentState = estatus;
+				
 				permisos();
 				
 				du.initWsCat(wsCat);
@@ -165,13 +204,8 @@
 							du.closeWs(wsCat);
 							
 							if(_xmlTipoPers.elements().length() > 0){
-								formateaTipoPers();
-								cboTipoPers.dataProvider = tipoPersObj;
-							}
-							
-							if (_xmlOrigen.elements().length() > 0){
-								formateaOrigen();
-								cboOrigen.dataProvider = origenObj;
+								formateaGiro();
+								cboGiro.dataProvider = giroObj;
 							}
 							
 							if (_xmlDestino.elements().length() > 0){
@@ -180,18 +214,15 @@
 							}
 							
 							if (info != null){
-								for(i = 0; i < tipoPersObj.length; i++){
-									if (tipoPersObj[i].id == info.detPer){
-										cboTipoPers.selectedIndex = i;
+								for(i = 0; i < giroObj.length; i++){
+									if (giroObj[i].id == info.giro){
+										cboGiro.selectedIndex = i;
 										break;
 									}
 								}
-								for(i = 0; i < origenObj.length; i++){
-									if (origenObj[i].id == info.origen){
-										cboOrigen.selectedIndex = i;
-										break;
-									}
-								}
+								
+								txtOrigen.text = info.origen;
+								
 								for(i = 0; i < destinoObj.length; i++){
 									if (destinoObj[i].id == info.destino){
 										cboDestino.selectedIndex = i;
@@ -241,16 +272,16 @@
 	]]>
 	</mx:Script>
 	
-	<mx:FormItem label="Tipo Persona:" id="tipoPers" visible="true" width="420">
-		<Data:CustomComboBox id="cboTipoPers" labelField="nombre" width="295"/>
+	<mx:FormItem label="Giro, actividad u objeto:" id="giro" visible="true" width="430">
+		<Data:CustomComboBox id="cboGiro" labelField="nombre" width="295"/>
 	</mx:FormItem>
-	<mx:FormItem label="Origen de Recursos:" id="origen" visible="true" width="420">
-		<Data:CustomComboBox id="cboOrigen" labelField="nombre" width="295"/>
+	<mx:FormItem label="Origen de Recursos:" id="origen" visible="true" width="430">
+		<mx:TextInput id="txtOrigen" width="295"/>
 	</mx:FormItem>
-	<mx:FormItem label="Destino de Recursos:" id="destino" visible="true" width="420">
+	<mx:FormItem label="Destino de Recursos:" id="destino" visible="true" width="430">
 		<Data:CustomComboBox id="cboDestino" labelField="nombre" width="295"/>
 	</mx:FormItem>
-	<mx:FormItem>
+	<mx:FormItem id="pep">
 		<mx:CheckBox id="chkPep" label="Persona Políticamente Expuesta (PEP)"/>
 	</mx:FormItem>
 	<mx:FormItem label="Propietario Real:" id="propReal" visible="true" width="420">

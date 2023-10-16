@@ -104,7 +104,7 @@
 					var region:String = "&region=" + cboRegion.selectedItem.codigo;
 					var coord:String = "&coord=" + cboSucursal.selectedItem.codigo;
 					var asesor:String = "&asesor=000000";  
-					var fec:Date = Application.application._Current_Fecha;
+					var fec:Date = global.obtenerFechaSistema();
 					fecha = "&fecha=" + global.formatoFechaSep(fec, "-");
 					
 					//if(currentState == null)

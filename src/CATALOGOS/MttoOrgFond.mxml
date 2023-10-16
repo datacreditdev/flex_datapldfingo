@@ -71,30 +71,33 @@
 		public function buscaCodPostal():void{ 
 			txtCodPostal.text = StringUtil.trim(txtCodPostal.text);
 			if (txtCodPostal.text != "" && txtCodPostal.length == 5){
-				initConexion();
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
 				du.sCursor();
 				
 				_xmlDir = null;
 			
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlDir = new XML(evt.result.toString());
 				
 					limpiaDatosDir();
 					
 					du.rCursor();
-					du.closeWs(wsMS);
+					du.closeWs(wsCat);
 						
-					if(_xmlDir.elements().length() > 0){						
-						comEntGrid.txtDato.text = _xmlDir.Table[0].ENTFED;
-						comMunGrid.txtDato.text = _xmlDir.Table[0].MUNIC;
-						comLocGrid.txtDato.text = _xmlDir.Table[0].LOC;
-						comColGrid.txtDato.text = _xmlDir.Table[0].COL;	
+					if(_xmlDir.elements().length() > 0){
+						comEntGrid.asignaTexto(_xmlDir.Table[0].ENTFED);
+						comMunGrid.asignaTexto(_xmlDir.Table[0].MUNIC);
+						comLocGrid.asignaTexto(_xmlDir.Table[0].LOC);
+						comColGrid.asignaTexto(_xmlDir.Table[0].COL);
 						
-						comEntGrid.codigo = _xmlDir.Table[0].CDGEF;
-						comMunGrid.codigo = _xmlDir.Table[0].CDGMU;
-						comLocGrid.codigo = _xmlDir.Table[0].CDGLO;
-						comColGrid.codigo = _xmlDir.Table[0].CDGCOL;	
-							
+						comEntGrid.asignaCodigo(_xmlDir.Table[0].CDGEF);
+						comMunGrid.asignaCodigo(_xmlDir.Table[0].CDGMU);
+						comLocGrid.asignaCodigo(_xmlDir.Table[0].CDGLO);
+						comColGrid.asignaCodigo(_xmlDir.Table[0].CDGCOL);
+						
 						info.cdgEntFed = _xmlDir.Table[0].CDGEF;
 						info.cdgMun = _xmlDir.Table[0].CDGMU;
 						info.cdgLoc = _xmlDir.Table[0].CDGLO;
@@ -105,7 +108,8 @@
 						obtieneColonia();
 					}
 				});
-				wsMS.getDirCodPostal.send(txtCodPostal.text);
+				params[0] = txtCodPostal.text;
+				wsCat.getCatalogoGral.send(6, params);
 			}
 			else{
 				txtCodPostal.text = "";
@@ -264,14 +268,15 @@
 			}
 			txtCalle.text = _xmlOF.Table[0].CALLE;
 			txtCodPostal.text = _xmlOF.Table[0].CODPOSTAL;
-			comEntGrid.codigo = _xmlOF.Table[0].CDGEF;
-			comEntGrid.txtDato.text = _xmlOF.Table[0].ENTFED;
-			comMunGrid.codigo = _xmlOF.Table[0].CDGMU;
-			comMunGrid.txtDato.text = _xmlOF.Table[0].MUNIC;
-			comLocGrid.codigo = _xmlOF.Table[0].CDGLO;
-			comLocGrid.txtDato.text = _xmlOF.Table[0].LOC;
-			comColGrid.codigo = _xmlOF.Table[0].CDGCOL;
-			comColGrid.txtDato.text = _xmlOF.Table[0].COL;
+			comEntGrid.asignaCodigo(_xmlOF.Table[0].CDGEF);
+			comEntGrid.asignaTexto(_xmlOF.Table[0].ENTFED);
+			comMunGrid.asignaCodigo(_xmlOF.Table[0].CDGMU);
+			comMunGrid.asignaTexto(_xmlOF.Table[0].MUNIC);
+			comLocGrid.asignaCodigo(_xmlOF.Table[0].CDGLO);
+			comLocGrid.asignaTexto(_xmlOF.Table[0].LOC);
+			comColGrid.asignaCodigo(_xmlOF.Table[0].CDGCOL);
+			comColGrid.asignaTexto(_xmlOF.Table[0].COL);
+			
 			txtTelefono.text = _xmlOF.Table[0].TELEFONO;
 			
 			info.cdgEntFed = _xmlOF.Table[0].CDGEF;
@@ -477,8 +482,8 @@
 		]]>
 	</mx:Script>
 	<mx:Canvas id="cnvCont" x="21" y="10" width="420" height="138" styleName="canvasMod">
-		<mx:Label id="lblOF" x="63.5" y="9" text="Fondeadora:"/>
-		<mx:Label id="lblNombre" x="84.5" y="73" text="Nombre:"/>
+		<mx:Label id="lblOF" x="88.5" y="8" text="Código:"/>
+		<mx:Label id="lblNombre" x="58.5" y="72" text="Razón Social:"/>
 		<mx:Label id="lblTipo" x="101.5" y="41" text="Tipo:"/>
 		<mx:TextInput id="txtOF" x="137.5" y="7" width="50" maxChars="4" editable="false"/>
 		<mx:ComboBox id="cboTipo" x="137.5" y="38" width="120" change="modificarEstado()">
@@ -487,7 +492,7 @@
 		     <mx:Object label="Persona Física" value="1"/>	
 		    </mx:dataProvider>
 		</mx:ComboBox>
-		<mx:TextInput id="txtNombre" x="137.5" y="71" restrict="A-Z;a-z;Ñ;ñ; " maxChars="50" width="230"/>
+		<mx:TextInput id="txtNombre" x="137.5" y="71" restrict="A-Z;a-z;Ñ;ñ;0-9; " maxChars="50" width="230"/>
 	</mx:Canvas>
 	<mx:Canvas id="cnvDir" x="21" y="171" styleName="canvasMod" width="420" height="243">
 		<mx:Label id="lblCalle" x="107.5" y="12" text="Calle:"/>

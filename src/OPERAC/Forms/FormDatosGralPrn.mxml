@@ -110,8 +110,8 @@
 				du.initWsCat(wsCat);
 				du.sCursor();		
 				
-				dtfSolicitud.selectedDate = Application.application._Current_Fecha;
-				dtfInicio.selectedDate = Application.application._Current_Fecha;
+				dtfSolicitud.selectedDate = global.obtenerFechaSistema();
+				dtfInicio.selectedDate = global.obtenerFechaSistema();
 					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlMoneda = new XML(evt.result.toString());
@@ -176,13 +176,13 @@
 			}
 			
 			public function validaEntrega():void{
-				var fecAct:String = global.formatoFechaYYYYMMDD(Application.application._Current_Fecha);
+				var fecAct:String = global.formatoFechaYYYYMMDD(global.obtenerFechaSistema());
 				var fecIni:String = global.formatoFechaYYYYMMDD(dtfInicio.selectedDate);
 				var fecSol:String = global.formatoFechaYYYYMMDD(dtfSolicitud.selectedDate);
 				if (fecIni < fecAct){
 					Alert.show("La fecha de entrega debe ser igual o posterior a la fecha actual","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 					if(fecAct > fecSol)
-						dtfInicio.selectedDate = Application.application._Current_Fecha;
+						dtfInicio.selectedDate = global.obtenerFechaSistema();
 					else
 						dtfInicio.selectedDate = dtfSolicitud.selectedDate;
 				}

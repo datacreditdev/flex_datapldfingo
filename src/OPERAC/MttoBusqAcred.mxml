@@ -187,7 +187,7 @@
             	comMttoFecha = MttoSelFecha(PopUpManager.createPopUp(this,MttoSelFecha,true));
 				comMttoFecha.title = "Fecha de Incorporación";
 				comMttoFecha.lblFecha.text = "Fecha de Incorporación del Cliente"; 
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				comMttoFecha.fechaMin = fec;
 				comMttoFecha.fechaMax = fec; 
 				comMttoFecha.edita = false;

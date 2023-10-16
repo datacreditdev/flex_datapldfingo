@@ -128,10 +128,10 @@
 				info.origen = _xmlAcred.Table[0].CDGORIREC;
 				info.destino = _xmlAcred.Table[0].CDGDESREC;
 			
-				formDPAcred.init(info);
-				formDirAcred.init(info);
+				formDPAcred.init(info, currentState);
+				formDirAcred.init(info, currentState);
 				formOtroAcred.init(info);
-				formPLDAcred.init(info);
+				formPLDAcred.init(info, currentState);
 				formEvAcred.init(info);
 			}
 		]]>

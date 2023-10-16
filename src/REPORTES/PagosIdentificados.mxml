@@ -95,7 +95,7 @@
 			public function initApp():void{
 				global = new Globales();
 				du = new Utils();
-				var f:Date = Application.application._Current_Fecha;
+				var f:Date = global.obtenerFechaSistema();
 				var fecMin:Date = new Date(f.getFullYear(),f.getMonth()-1,1);
 				var fecMax:Date = new Date(f.getFullYear(),f.getMonth(),f.getDate());
 				//dtfFecha.selectableRange = {rangeStart: new Date(fecMin), rangeEnd: new Date(fecMax)};
@@ -116,7 +116,7 @@
 				dgReporte.dataProvider = null;
 				btnExportar.enabled = false;
 				lblTotal.text = "";
-				fec = Application.application._Current_Fecha;
+				fec = global.obtenerFechaSistema();
 				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dtfFechaFinal.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				cboFecha.selectedIndex = 0;

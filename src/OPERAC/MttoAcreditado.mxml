@@ -183,7 +183,7 @@
 				info.cantEnano = _xmlAcred.Table[0].CANTENANO;
 			
 				formDPAcred.init(info);
-				formDirAcred.init(info);
+				formDirAcred.init(info, currentState);
 				formOtroAcred.init(info);
 			}
 			
@@ -204,7 +204,7 @@
 				txtGrupo.text = cdgGrupo + " " + nomGrupo;
 				info = null;
 				formDPAcred.init(info);
-				formDirAcred.init(info);
+				formDirAcred.init(info, currentState);
 				formOtroAcred.init(info);
 			} 
 			

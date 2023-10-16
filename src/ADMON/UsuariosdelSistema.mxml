@@ -16,16 +16,15 @@
 		<![CDATA[
 			import Data.Globales;
 			import Data.Utils;
-			import mx.events.CloseEvent;
 			import mx.controls.Alert;
 			import mx.core.Application;
+			import mx.events.CloseEvent;
 			import mx.managers.PopUpManager;
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.soap.WebService;
 			
 			public var ind:int;
 			public var vScroll:Number;
-			private var ws:WebService;
 			private var du:Utils;
 			private var global:Globales;
 			
@@ -36,6 +35,7 @@
 			
 			public function activa(_xmlAcc:XML):void{
 				var v_acciones:int = _xmlAcc.elements().length();
+				
 				for (var i:int = 0; i < v_acciones; i++){
 					var dObj:DisplayObject;
 					var str:String = _xmlAcc.Table[i].OBJETO;
@@ -47,18 +47,22 @@
 			}
 			
 			private function cargaUsuario():void{
-				var Params:Array;
-				ws = du.initWs(ws);
-				global.bloquear();
+				var ws:WebService = new WebService;
+				
+				du.initWs(ws);
 				du.sCursor();
+				global.bloquear();
+				
 				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
 					dpUsuarios = new XML(evt.result.toString());	
-					buscaUsuario();
+					
 					global.desbloquear();
 					du.rCursor();
 					du.closeWs(ws);	
+					
+					buscaUsuario();
 				});
-				ws.ES_Admin_Usuarios.send(4,null);
+				ws.ES_Admin_Usuarios.send(4, null);
 			}
 			
 			private function initApp():void{
@@ -91,24 +95,30 @@
 			}
 			
 			private function eliminaUsuario(evt:CloseEvent):void{
-				var ID_USR:String = '0';
-				ID_USR = dgUsuarios.selectedItem.CODIGO;
+				var Params:Array = new Array();
+				var ws:WebService = new WebService;
+				var codigo:String;
+				
+				codigo = dgUsuarios.selectedItem.CODIGO;
+				
 				if(evt.detail == Alert.YES){
-					ws = du.initWs(ws);
+					du.initWs(ws);
 					du.sCursor();
+					
 					du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{
 						var res:String = evt.result.toString();
+						
+						du.closeWs(ws);
+						du.rCursor();
+						
 						if(res.substr(0,1) == "1"){
 							txtBusqueda.text = "";
 							cargaUsuario();	
 						}
 						else
 							Alert.show(res.substr(2,res.length - 1),"Mantenimiento de Usuarios",4,null,eliminaUsuario,du.iAlert,4);
-						du.closeWs(ws);
-						du.rCursor();
 					});
-					var Params:Array = new Array();
-					Params[0] = ID_USR;
+					Params[0] = codigo;
 					ws.ES_Admin_Usuarios.send(3,Params);
 				}
 			}

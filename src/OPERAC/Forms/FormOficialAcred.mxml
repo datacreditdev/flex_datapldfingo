@@ -1,104 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="300">
-<mx:DataGrid id="dgPersonal" x="120" y="33" width="245" visible="false" showHeaders="false" alpha="0.7" itemClick="selecciona()" keyDown="presDGPersonal(event)">
-	<mx:columns>
-		<mx:DataGridColumn dataField="nombre"/>
-	</mx:columns>
-</mx:DataGrid>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="300" xmlns:control="CONTROL.*">
+	<mx:states>
+		<mx:State name="moral">
+			<mx:SetProperty target="{lblPromotor}" name="text" value="Socio Comercial:"/>
+			<mx:SetProperty target="{lblPromotor}" name="x" value="28"/>
+			<!--<mx:SetProperty target="{txtPromotor}" name="width" value="280"/>-->
+			<mx:SetProperty name="width" value="450"/>
+			<mx:RemoveChild target="{lblRecuperador}"/>
+			<mx:RemoveChild target="{comRecGrid}"/>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Contacto 1" id="contacto1" x="50.5" y="40">
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Nombre contacto:" id="nomCon1" width="396.5" x="16.5" y="68">
+					<mx:TextInput id="txtNomCon1" width="280" restrict="A-Z;a-z;Ñ;ñ; "/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Correo:" id="emailCon1" visible="true" width="346.5" x="66.5" y="98">
+					<mx:TextInput id="txtEmailCon1" width="280"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Teléfono:" id="telCon1" visible="true" x="57.5" y="128" width="240">
+					<mx:TextInput id="txtTelCon1"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Contacto 2" id="contacto2" x="50.5" y="160">
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Nombre contacto:" id="nomCon2" width="396.5" x="16.5" y="188">
+					<mx:TextInput id="txtNomCon2" width="280" restrict="A-Z;a-z;Ñ;ñ; "/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Correo:" id="emailCon2" visible="true" width="346.5" x="66.5" y="218">
+					<mx:TextInput id="txtEmailCon2" width="280"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Teléfono:" id="telCon2" visible="true" x="57.5" y="248" width="240">
+					<mx:TextInput id="txtTelCon2"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:SetProperty target="{comPromGrid}" name="x" value="121"/>
+		</mx:State>
+	</mx:states>
+	
 	<mx:Metadata>
 		[Event(name="enviarOficialAcred", type="Data.EventAcred")]
 	</mx:Metadata>
 	
-	<mx:Validator id="promotorV" source="{txtPromotor}" property="text" 
-	invalid="{txtPromotor.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Promotor Requerido"/>
-	
-	<mx:Validator id="recuperadorV" source="{txtRecuperador}" property="text" 
-	invalid="{txtRecuperador.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Recuperador Requerido"/>
-
 	<mx:Script>
 		<![CDATA[
-			import Data.Utils;
-			import Data.Globales;
-			import mx.controls.Alert;
-			import mx.validators.Validator;
 			import Data.DatosAcred;
 			import Data.EventAcred;
+			import Data.Globales;
+			import Data.Utils;
 			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
 			import mx.core.Application;
-			import mx.containers.TitleWindow;			
-			import mx.managers.PopUpManager;
-			import mx.effects.easing.Elastic;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
-			import mx.rpc.events.FaultEvent;
+			import mx.effects.easing.Elastic;			
 			import mx.events.*;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.validators.Validator;
 			
 			[Bindable]
 			private var _xmlPersonal:XML =  new XML();
-			[Bindable]
-			private var dpPersonal:XMLList;
 			
-			public var Arr:ArrayCollection = new ArrayCollection();
+			public var persObj:ArrayCollection = new ArrayCollection();
 			public var datos:DatosAcred = new DatosAcred();
 			public var wsMS:WebService;
-			public var du:Utils;
 			public var texto:String;
 			public var tipoAccion:int;
 			private var suc:String;
+			private var du:Utils;
 			private var global:Globales;
+				
+			public function asignaEstatus(tipoPersona:String):void{
+				if(tipoPersona == "F")
+					currentState = "";
+				else if(tipoPersona == "M")
+					currentState = "moral";
+			}	
 					
 			public function asignaSucursal(suc:String):void{
 				if(this.suc != suc){
 					this.suc = suc;
 					limpiar();
-				}
-			}		
-						
-			public function buscaPromotor(event:Event):void{
-				if(TextInput(event.currentTarget).text != ''){	
-					dgPersonal.selectedIndex = -1;
-					texto = TextInput(event.currentTarget).text;					
-					Arr.filterFunction = filtraPersonal;
-					Arr.refresh();
-					if (Arr.length > 0){
-						dgPersonal.validateNow();
-						dgPersonal.scrollToIndex(0);
-						dgPersonal.selectedIndex = 0;
-						dgPersonal.y = 33;
-						dgPersonal.visible = true;
-						this.setChildIndex(dgPersonal,this.numChildren - 1);	
-					}
-					else
-						dgPersonal.visible = false;									
-				}
-				else{
-					Arr.filterFunction = null;
-					Arr.refresh();
-					dgPersonal.visible = false;
-				}
-			}		
-			
-			public function buscaRecuperador(event:Event):void{
-				if(TextInput(event.currentTarget).text != ''){	
-					dgPersonal.selectedIndex = -1;
-					texto = TextInput(event.currentTarget).text;					
-					Arr.filterFunction = filtraPersonal;
-					Arr.refresh();
-					if (Arr.length > 0){
-						dgPersonal.validateNow();
-						dgPersonal.scrollToIndex(0);
-						dgPersonal.selectedIndex = 0;
-						dgPersonal.y = 68;
-						dgPersonal.visible = true;
-						this.setChildIndex(dgPersonal,this.numChildren - 1);	
-					}
-					else
-						dgPersonal.visible = false;									
-				}
-				else{
-					Arr.filterFunction = null;
-					Arr.refresh();
-					dgPersonal.visible = false;
 				}
 			}		
 						
@@ -113,8 +109,12 @@
 					_xmlPersonal = new XML(evt.result.toString());
 					
 					if (_xmlPersonal.elements().length() > 0){
-						formateaPersonal();
-						dgPersonal.dataProvider = Arr;
+						comPromGrid.init(_xmlPersonal, 130);
+						comPromGrid.addEventListener("seleccionar",selecPromotor);
+						comPromGrid.addEventListener("verificar",verificaPromotor);
+						comRecGrid.init(_xmlPersonal, 130);
+						comRecGrid.addEventListener("seleccionar",selecRecuperador);
+						comRecGrid.addEventListener("verificar",verificaRecuperador);
 					}		
 					du.rCursor();
 					du.closeWs(wsCat);
@@ -125,12 +125,31 @@
 						
 			public function enviarOficialAcred(formData:DatosAcred):void{
 				if(formData.cdgco != null && formData.cdgco.toString() != ""){
-					var invalidArray:Array = Validator.validateAll([promotorV, recuperadorV]);
-					if(invalidArray.length == 0){	
+					var promotorV:Boolean = true;
+					var recuperadorV:Boolean = true;
+					
+					if(currentState == ""){
+						promotorV = comPromGrid.validaDato();
+						recuperadorV = comRecGrid.validaDato();	
+					}
+					else if(currentState == "moral")
+						promotorV = comPromGrid.validaDato();
+						
+					if(promotorV && recuperadorV){	
 						formData.cdgPr = datos.cdgPr;
-						formData.promotor = txtPromotor.text;
-						formData.cdgRec = datos.cdgRec;
-						formData.recuperador = txtRecuperador.text;
+						//formData.promotor = txtPromotor.text;
+						if(currentState == ""){
+							formData.cdgRec = datos.cdgRec;
+							//formData.recuperador = txtRecuperador.text;
+						}
+						else if(currentState == "moral"){
+							formData.contacto1 = txtNomCon1.text;
+							formData.telCon1 = txtTelCon1.text;
+							formData.emailCon1 = txtEmailCon1.text;
+							formData.contacto2 = txtNomCon2.text;
+							formData.telCon2 = txtTelCon2.text;
+							formData.emailCon2 = txtEmailCon2.text;
+						}
 						formData.guardaOficial = true;
 					}
 					else
@@ -142,49 +161,29 @@
 				dispatchEvent(event);
 			}
 			
-			private function filtraCaptura(item:Object):Boolean{
-				var isMatch:Boolean = false
-				if(texto.toLowerCase().search(item.nombre.toLowerCase()) != -1)
-					isMatch = true 
-				return isMatch; 
-			}
-			
-			private function filtraPersonal(item:Object):Boolean{
-				var isMatch:Boolean = false
-				if(item.nombre.toString().substr(0, texto.length).toLowerCase() == texto.toLowerCase())
-					isMatch = true 
-				return isMatch; 	
-			}
-
-			public function formateaPersonal():void{
-				var i:int;
-				var cont:int = _xmlPersonal.elements().length();
-				var oItem:Object;
-				var item:Array = new Array;
-				
-				Arr.filterFunction = null;
-				Arr.refresh();
-				Arr.removeAll();
-				Arr.refresh();
-				
-				for (i = 0; i < cont; i++){
-					oItem = new Object();
-					oItem.nombre = _xmlPersonal.Table[i].NOMBREC;
-					oItem.codigo = _xmlPersonal.Table[i].CODIGO;
-					item.push(oItem);
-				}
-				Arr = new ArrayCollection(item);
-			}
-			
-			public function init(info:DatosAcred):void{
+			public function init(info:DatosAcred, estatus:String):void{
 				global = new Globales();
 				du = new Utils();
 				
+				currentState = estatus;
+				
 				if (info != null){
 					datos.cdgPr = info.cdgPr;
-					txtPromotor.text = info.promotor;
-					datos.cdgRec = info.cdgRec;
-					txtRecuperador.text = info.recuperador;
+					comPromGrid.asignaTexto(info.promotor);
+					
+					if(currentState == ""){
+						datos.cdgRec = info.cdgRec;
+						comRecGrid.asignaTexto(info.recuperador);
+					}
+					else if(currentState == "moral"){
+						txtNomCon1.text = info.contacto1;
+						txtTelCon1.text = info.telCon1;
+						txtEmailCon1.text = info.emailCon1;
+						txtNomCon2.text = info.contacto2;
+						txtTelCon2.text = info.telCon2;
+						txtEmailCon2.text = info.emailCon2;
+					}
+					
 					this.suc = info.cdgco;
 					if(this.suc != null)
 						cargaPersonal();				
@@ -198,90 +197,39 @@
 			}	
 
 			private function limpiar():void{
-				txtPromotor.text = "";
-				txtRecuperador.text = "";
-			}
-
-			public function presPersonal(event:KeyboardEvent):void{
-				if(event.keyCode == Keyboard.DOWN){
-					dgPersonal.setFocus();
-				}	
-			}
-
-			public function presDGPersonal(event:KeyboardEvent):void{
-				if(event.keyCode == Keyboard.ENTER){
-					if(dgPersonal.y == 33){
-						selecciona();
-						txtPromotor.setFocus();
-					}
-					else if(dgPersonal.y == 68){
-						selecciona();
-						txtRecuperador.setFocus();
-					}
-				}	
+				comPromGrid.limpiar();
+				comRecGrid.limpiar();
+				
+				datos.cdgPr = "";
+				datos.cdgRec = "";
 			}
 			
-			public function selecciona():void{
-				if(dgPersonal.selectedIndex >= 0){
-					var indice:int = dgPersonal.selectedIndex;
-					if(dgPersonal.y == 33){
-						if (datos.cdgPr != Arr[indice].codigo){
-							txtPromotor.text = Arr[indice].nombre;
-							datos.cdgPr = Arr[indice].codigo;
-						}
-						else
-							txtPromotor.text = Arr[indice].nombre;
-					}
-					else if(dgPersonal.y == 68){
-						if (datos.cdgRec != Arr[indice].codigo){
-							txtRecuperador.text = Arr[indice].nombre;
-							datos.cdgRec = Arr[indice].codigo;
-						}
-						else
-							txtRecuperador.text = Arr[indice].nombre;
-					}
-					dgPersonal.visible = false;
-				}
+			private function selecPromotor(event:Event):void{
+				datos.cdgPr = event.currentTarget.codigo;
 			}
 			
-			public function verificaPromotor():void{
-				if (dgPersonal.selectedIndex < 0){
-					dgPersonal.visible = false;
-					texto = txtPromotor.text;
-					Arr.filterFunction = filtraCaptura;
-					Arr.refresh();
-					if (Arr.length == 0){
-						txtPromotor.text = "";
-						datos.cdgPr = "";
-					}
-					Arr.filterFunction = null;
-					Arr.refresh();
-				}
+			private function selecRecuperador(event:Event):void{
+				datos.cdgRec = event.currentTarget.codigo;
 			}
 			
-			public function verificaRecuperador():void{
-				if (dgPersonal.selectedIndex < 0){
-					dgPersonal.visible = false;
-					texto = txtRecuperador.text;
-					Arr.filterFunction = filtraCaptura;
-					Arr.refresh();
-					if (Arr.length == 0){
-						txtRecuperador.text = "";
-						datos.cdgRec = "";
-					}
-					Arr.filterFunction = null;
-					Arr.refresh();
-				}	
+			private function verificaPromotor():void{
+				if(comPromGrid.obtieneCodigo() == ""){
+					comPromGrid.limpiar();
+					datos.cdgPr = "";
+				} 
 			}
 			
+			private function verificaRecuperador():void{
+				if(comRecGrid.obtieneCodigo() == ""){
+					comRecGrid.limpiar();
+					datos.cdgRec = "";
+				} 
+			}
 	]]>
 	</mx:Script>
-	<mx:FormItem label="Asesor:" id="promotor" width="302"  x="63" y="10">
-		<mx:TextInput id="txtPromotor" width="235" change="buscaPromotor(event)" enter="selecciona()" focusOut="verificaPromotor()" 
-			restrict="A-Z;a-z;Ñ;ñ; " keyDown="presPersonal(event)"/>
-	</mx:FormItem>
-	<mx:FormItem label="Recuperador:" id="recuperador" width="330" x="35" y="44">
-		<mx:TextInput id="txtRecuperador" width="235" change="buscaRecuperador(event)" enter="selecciona()" focusOut="verificaRecuperador()" 
-			restrict="A-Z;a-z;Ñ;ñ; " keyDown="presPersonal(event)"/>	
-	</mx:FormItem>
+	
+	<mx:Label id="lblPromotor" text="Asesor:" x="77" y="12"/>
+	<control:TextGrid id="comPromGrid" x="129" height="24" y="10" width="235"/>
+	<mx:Label id="lblRecuperador" text="Recuperador:" x="50" y="44"/>
+	<control:TextGrid id="comRecGrid" x="129" height="24" y="42" width="235"/>
 </mx:Canvas>

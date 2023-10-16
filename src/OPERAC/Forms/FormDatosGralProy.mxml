@@ -180,12 +180,12 @@
 		public function init(cdgAcred:String):void{
 			var wsCat:WebService = new WebService;
 			var params:Array = new Array;
-			var fecha:Date = Application.application._Current_Fecha;
+			var fecha:Date = global.obtenerFechaSistema();
 			
 			global = new Globales();
 			du = new Utils();
 			
-			dtfActualiza.selectedDate = Application.application._Current_Fecha;
+			dtfActualiza.selectedDate = global.obtenerFechaSistema();
 		
 			du.initWsCat(wsCat);
 			du.sCursor();

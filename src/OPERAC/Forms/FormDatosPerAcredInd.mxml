@@ -1,37 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="420" height="420" creationPolicy="all">
+<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="430" height="394" creationPolicy="all" 
+	horizontalScrollPolicy="off" verticalScrollPolicy="off">
 	<mx:states>
 		<mx:State name="moral">
+			<mx:RemoveChild target="{txtSegNombre}"/>
+			<mx:RemoveChild target="{AP}"/>
+			<mx:RemoveChild target="{AM}"/>
 			<mx:RemoveChild target="{sexo}"/>
 			<mx:RemoveChild target="{entidad}"/>
-			<mx:RemoveChild target="{nacionalidad}"/>
 			<mx:RemoveChild target="{pais}"/>
 			<mx:RemoveChild target="{curp}"/>
 			<mx:RemoveChild target="{ife}"/>
-			<mx:SetProperty target="{nombre}" name="label" value="Razón Social:"/>
-			<mx:RemoveChild target="{txtSegNombre}"/>
-			<mx:SetProperty target="{txtNombre}" name="width" value="300"/>
+			<mx:SetProperty target="{txtCodigo}" name="width" value="100"/>
+			<mx:SetProperty name="width" value="510"/>
+			<mx:SetProperty target="{nombre}" name="label" value="Denominación o Razón Social:"/>
+			<mx:SetProperty target="{nombre}" name="width" value="464"/>
+			<mx:SetProperty target="{txtNombre}" name="width" value="290"/>
+			<mx:SetProperty target="{txtNombre}" name="restrict" value="A-Z;a-z;Ñ;ñ;0-9; "/>
 			<mx:SetProperty target="{txtRfc}" name="editable" value="true"/>
-			<mx:RemoveChild target="{AP}"/>
-			<mx:RemoveChild target="{AM}"/>
-			<mx:SetProperty name="width" value="490"/>
-			<mx:SetProperty target="{nombre}" name="width" value="430"/>
-			<mx:AddChild position="after" relativeTo="{nombre}">
-				<mx:FormItem label="Representante Legal:" id="repLegal" visible="true" width="430">
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Representante Legal:" id="repLegal" visible="true" width="485" height="50">
 					<mx:Canvas>
-						<mx:TextInput id="txtRepLegal" width="232"/>
-						<mx:Button id="btnRepLegal" icon="@Embed(source='assets/ico_lupa.png')" x="240" click="mostrarFormPers()"/>
+						<mx:List id="lstRepLegal" width="220" height="50" labelField="nombre"/>	
+						<mx:Button id="btnAgregarRepLegal" icon="@Embed(source='assets/add.png')" width="40" x="228" click="mostrarFormPers()" y="1"/>
+						<mx:Button id="btnEliminarRepLegal" icon="@Embed(source='assets/delete-icon.png')" width="40" x="276" click="confirmarElimRepLegal()" y="1"/>
 					</mx:Canvas>	
 				</mx:FormItem>
 			</mx:AddChild>
+			<mx:AddChild relativeTo="{fecha}" position="before">
+				<mx:FormItem label="Nombre Comercial:" id="nomCom" visible="true" width="465">
+					<mx:Canvas>
+						<mx:TextInput id="txtNomCom" width="290" restrict="A-Z;a-z;Ñ;ñ; "/>
+					</mx:Canvas>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{repLegal}" position="before">
+				<mx:FormItem label="Teléfono 1:" id="tel1" visible="true">
+					<mx:TextInput id="txtTel1"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{repLegal}" position="before">
+				<mx:FormItem label="Teléfono 2:" id="tel2" visible="true">
+					<mx:TextInput id="txtTel2"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{repLegal}" position="before">
+				<mx:FormItem label="Correo 1:" id="email1" visible="true" width="465">
+					<mx:TextInput id="txtEmail1" width="290"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{repLegal}" position="before">
+				<mx:FormItem label="Correo 2:" id="correo2" visible="true" width="465">
+					<mx:TextInput id="txtEmail2" width="290"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:SetProperty target="{fecha}" name="width" value="370"/>
 			<mx:SetProperty target="{fecha}" name="label" value="Fecha Constitución:"/>
-			<mx:SetProperty target="{txtCodigo}" name="width" value="100"/>
+			<mx:AddChild relativeTo="{nomCom}" position="before">
+				<mx:FormItem label="Régimen Capital:" id="figura" visible="true" width="465">
+					<mx:Canvas>
+						<mx:ComboBox id="cboFigura" labelField="nombre" width="290"/>
+					</mx:Canvas>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:SetProperty target="{nacionalidad}" name="width" value="370"/>
+			<mx:AddChild relativeTo="{nacionalidad}" position="after">
+				<mx:FormItem label="Fiel:" id="fiel" visible="true" width="465">
+					<mx:Canvas>
+						<mx:CheckBox id="chkFiel"/>
+						<mx:TextInput id="txtCertFiel" x="25" width="190" restrict="A-Z;a-z;Ñ;ñ;0-9; "/>
+					</mx:Canvas>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:SetProperty target="{coord}" name="width" value="370"/>
+			<mx:RemoveChild target="{rfc}"/>
+			<mx:AddChild relativeTo="{nombre}" position="before" target="{rfc}"/>
+			<mx:RemoveChild target="{coord}"/>
+			<mx:AddChild relativeTo="{tel1}" position="before" target="{coord}"/>
+			<mx:SetProperty name="height" value="450"/>
 		</mx:State>
 	</mx:states>
 	<mx:transitions>
 		<mx:Transition fromState="*" toState="*">		
 			<mx:Parallel>
-				<mx:Fade duration="500" target="{repLegal}"/> 
+				<mx:Fade duration="500" target="{this}"/>
 			</mx:Parallel>
 		</mx:Transition>
 	</mx:transitions>
@@ -43,9 +95,6 @@
 	<mx:Validator id="nombreV" source="{txtNombre}" property="text" 
 	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Acreditado Requerido"/>
 	
-	<mx:Validator id="repLegalV" source="{txtRepLegal}" property="text" 
-	invalid="{txtRepLegal.setFocus()}" triggerEvent="" requiredFieldError="Representante Legal Requerido"/>
-	 
 	<mx:Validator id="aPaternoV" source="{txtAP}" property="text" 
 	invalid="{txtAP.setFocus()}" triggerEvent="" requiredFieldError="Apellido Paterno Requerido"/> 
 	
@@ -61,42 +110,44 @@
 	<mx:Validator id="curpV" source="{txtCurp}" property="text" 
 	invalid="{txtCurp.setFocus()}" triggerEvent="" requiredFieldError="CURP Requerida"/>
 	
-	<!--<mx:Validator id="ifeV" source="{txtIfe}" property="text" 
-	invalid="{txtIfe.setFocus()}" triggerEvent="" requiredFieldError="IFE Requerido"/>-->
+	<mx:Validator id="fielV" source="{txtCertFiel}" property="text" 
+	invalid="{txtCertFiel.setFocus()}" triggerEvent="" requiredFieldError="Certificado Fiel Requerido"/>
 
 	<mx:Script>
 		<![CDATA[
-			import Data.Permisos;
-			import OPERAC.MttoBusqPersona;
 			import Data.DatosAcred;
 			import Data.EventAcred;
 			import Data.Globales;
+			import Data.Permisos;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.core.Application;
 			import mx.containers.TitleWindow;			
 			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
 			import mx.events.ValidationResultEvent;
-			import mx.managers.PopUpManager;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;	
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.rpc.xml.SimpleXMLDecoder;
 			import mx.utils.ArrayUtil;
 			import mx.utils.StringUtil;
 			import mx.validators.Validator;
-
-			private var _xmlCoord:XML =  new XML();
-			private var _xmlDatos:XML =  new XML();
-			private var _xmlEntFed:XML =  new XML();
-			private var _xmlPais:XML =  new XML();
+			import OPERAC.MttoBusqPersona;
 			
-			public var coordArr:Array = new Array();
+			private var _xmlCoord:XML = new XML();
+			private var _xmlDatos:XML = new XML();
+			private var _xmlEntFed:XML = new XML();
+			private var _xmlPais:XML = new XML();
+			private var _xmlRepLegal:XML = new XML();
 			
-			public var coordObj:ArrayCollection = new ArrayCollection();
-			public var paisObj:ArrayCollection = new ArrayCollection();
-			public var entFedObj:ArrayCollection = new ArrayCollection();
+			public var figObj:ArrayCollection;
+			public var coordObj:ArrayCollection;
+			public var paisObj:ArrayCollection;
+			public var entFedObj:ArrayCollection;
+			public var persObj:ArrayCollection = new ArrayCollection();
 			public var datos:DatosAcred = new DatosAcred();
 			
 			private var du:Utils;
@@ -105,30 +156,51 @@
 			private var codRepLegal:String;
 			private var vResult:ValidationResultEvent;
 			private var tipoAccion:int;
-			public var wsMS:WebService;	
 			public var bandCURP:Boolean;
 			public var f:Date;
 			public var fecMin:Date;
 			public var fecMax:Date;
 			
-			private function agregarPers(evt:Event):void{
-				var comBusqPers:MttoBusqPersona = evt.currentTarget as MttoBusqPersona;
-				codRepLegal = comBusqPers.obtenerCodigo();
-				txtRepLegal.text = comBusqPers.obtenerNombre();
-			}
-			
-			public function asignaEstatus(estatus:String):void{
-				if(estatus == "M")
+			public function asignaEstatus(tipoPersona:String):void{
+				if(tipoPersona == "F"){
+					currentState = "";
+					this.width = 430;
+					this.height = 394; 	
+				}
+				else if(tipoPersona == "M"){
 					currentState = "moral";
-				else if(estatus == "F")
-					currentState = null;
+					cboFigura.dataProvider = figObj;
+				}
 			}
 			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
+			private function agregarPers(evt:Event):void{
+				var oItem:Object = new Object();
+				var comBusqPers:MttoBusqPersona = evt.currentTarget as MttoBusqPersona;
+				
+				oItem.codigo = comBusqPers.obtenerCodigo();	
+				oItem.nombre = comBusqPers.obtenerNombre();
+				
+				persObj.addItem(oItem);
+				persObj.refresh();
+				
+				lstRepLegal.dataProvider = persObj;
+			}
+			
+			private function confirmarElimRepLegal():void{
+				if(lstRepLegal.selectedIndex < 0){
+					Alert.show("Debe seleccionar un registro.","Representante Legal",4,null,null,du.iAlert);
+					return;
+				}				
+				Alert.show("¿Desea eliminar el registro seleccionado?","Representante Legal",3,null,eliminarRepLegal,du.iQuest,4);
+			}
+			
+			private function eliminarRepLegal(evt:CloseEvent):void{
+				if(evt.detail == Alert.YES){
+					persObj.removeItemAt(lstRepLegal.selectedIndex);
+					persObj.refresh();
+					lstRepLegal.dataProvider = persObj;
+				}
+			}
 			
 			public function enviarDatosAcred(formData:DatosAcred):void{
 				var invalidArray:Array;
@@ -136,15 +208,19 @@
 				if(currentState == null)
 					invalidArray = Validator.validateAll([nombreV, aPaternoV, fechaV, rfcV, curpV]);
 				//Validacion de campos para Persona Moral
-				else if(currentState == "moral")
-					invalidArray = Validator.validateAll([nombreV, repLegalV, fechaV, rfcV]);
+				else if(currentState == "moral"){
+					if(chkFiel.selected && txtCertFiel.text == "")
+						invalidArray = Validator.validateAll([nombreV, fechaV, rfcV, fielV]);
+					else
+						invalidArray = Validator.validateAll([nombreV, fechaV, rfcV]);
+				}
 				if(invalidArray.length == 0){	
 					formData.codigo = txtCodigo.text;
 					formData.nombre = StringUtil.trim(txtNombre.text.toUpperCase());
 					formData.segNombre = StringUtil.trim(txtSegNombre.text.toUpperCase());
 					formData.aPaterno = StringUtil.trim(txtAP.text.toUpperCase());
 					formData.aMaterno = StringUtil.trim(txtAM.text.toUpperCase());
-					formData.repLegal = codRepLegal;
+					formData.arrRepLegal = obtieneRepLegal();
 					formData.fecha = txtFecha.text;
 					
 					if (rdbMasculino.selected == true)
@@ -165,6 +241,16 @@
 					formData.rfc = txtRfc.text;
 					formData.curp = txtCurp.text;
 					formData.ife = StringUtil.trim(txtIfe.text); 
+					
+					if(currentState == "moral"){
+						formData.figura = cboFigura.selectedItem.codigo;
+						formData.nomCom = txtNomCom.text;
+						formData.fiel = txtCertFiel.text;
+						formData.telefono = txtTel1.text;
+						formData.telefono2 = txtTel2.text;
+						formData.email1 = txtEmail1.text;
+						formData.email2 = txtEmail2.text;
+					}
 					
 					formData.guardaDatos = true;
 				}
@@ -189,7 +275,6 @@
 					oItem.id = _xmlCoord.Table[i].CODIGO;	
 					oItem.nombre = _xmlCoord.Table[i].NOMBRE;
 					item.push(oItem);
-					coordArr[i + 1] = _xmlCoord.Table[i].NOMBRE.toString();
 				}
 				coordObj = new ArrayCollection(item);
 			}
@@ -215,6 +300,38 @@
 				entFedObj = new ArrayCollection(item);
 			}
 			
+			public function formateaFigura():void{
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.codigo = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "1";	
+				oItem.nombre = "SOFOM ENR";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "2";	
+				oItem.nombre = "SOFOM ER";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "3";	
+				oItem.nombre = "SA de CV";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "4";	
+				oItem.nombre = "SAPI de CV";
+				item.push(oItem);
+					
+				figObj = new ArrayCollection(item);
+			}
+			
 			public function formateaPais(cadInfo:String):void{
 				var oItem:Object;
 				var array:Array;
@@ -230,6 +347,20 @@
 				array = ArrayUtil.toArray(data.NewDataSet.Table);   
 				paisObj = new ArrayCollection(array);
 				paisObj.addItemAt(oItem, 0);
+			}
+			
+			private function formateaRepLegal():void{
+				var cont:int = _xmlRepLegal.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlRepLegal.Table[i].CODIGO;
+					oItem.nombre = _xmlRepLegal.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				persObj = new ArrayCollection(item);
 			}
 			
 			private function generaCURP():void{
@@ -291,7 +422,7 @@
 				}
 			}
 			
-			public function init(info:DatosAcred):void{
+			public function init(info:DatosAcred, estatus:String):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
 				
@@ -299,7 +430,9 @@
 				global = new Globales();
 				permiso = new Permisos();
 				
-				f = Application.application._Current_Fecha;
+				currentState = estatus;
+				
+				f = global.obtenerFechaSistema();
 				tipoAccion = 1;
 				
 				//Codigo encargado de limitar la fecha de nacimiento del cliente
@@ -337,7 +470,10 @@
 						if (_xmlEntFed.elements().length() > 0){
 							formateaEntFed();
 							cboEntidad.dataProvider = entFedObj;
-						}
+						}		
+						
+						//Formatea el listado de figuras
+						formateaFigura();
 					
 						if (info != null){
 							var j:int;
@@ -349,8 +485,41 @@
 							txtAM.text = info.aMaterno;
 							//Informacion relacionada con el representante legal
 							if(currentState == "moral"){
-								codRepLegal = info.repLegal;
-								txtRepLegal.text =  info.nomRepLegal;
+								du.initWsCat(wsCat);
+								du.sCursor();
+								
+								du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+									_xmlRepLegal = new XML(evt.result.toString());
+									
+									du.rCursor();
+									du.closeWs(wsCat);
+								
+									//carga info de los representantes legales
+									formateaRepLegal();
+									lstRepLegal.dataProvider = persObj; 
+								});
+								//CONSULTA EL LISTADO DE REP LEGALES
+								params[0] = info.codigo;
+								wsCat.getInfoAcred.send(23, params);
+									
+								//Asigna el objeto de figura
+								cboFigura.dataProvider = figObj;
+								for(j = 0; j < figObj.length; j++){
+									if (figObj[j].codigo.toString() == info.figura){
+										cboFigura.selectedIndex = j;
+										break;
+									}
+								}
+								
+								txtNomCom.text = info.nomCom;
+								if(info.fiel != ""){
+									chkFiel.selected = true;
+									txtCertFiel.text = info.fiel;	
+								}
+								txtTel1.text = info.telefono;
+								txtTel2.text = info.telefono2;
+								txtEmail1.text = info.email1;
+								txtEmail2.text = info.email2;
 							}
 							if(info.sexo != null){
 								if (info.sexo.toUpperCase() == "F")
@@ -431,6 +600,20 @@
 				PopUpManager.centerPopUp(comBusqPers);
 			}
 			
+			private function obtieneRepLegal():Array{
+				var arrRepLegal:Array = new Array;
+				var lista:ArrayCollection = lstRepLegal.dataProvider as ArrayCollection;
+				var cont:int = lista.length;
+				
+				if(cont > 0)
+					for(var i:int = 0; i < cont; i++)
+						arrRepLegal[i] = lista[i].codigo;
+				else
+					arrRepLegal[0] = "";
+					
+				return arrRepLegal;
+			}
+			
 			public function permisos():void{
 				if(permiso.permisosModAcred(Application.application.PERFIL_ID)){
 					txtRfc.editable = true;
@@ -460,7 +643,7 @@
 			<mx:RadioButton id="rdbMasculino" label="Masculino" x="80" focusOut="generaCURP()"/>	
 		</mx:Canvas>	
 	</mx:FormItem>
-	<mx:FormItem label="Sucursal:" id="coord" visible="true" width="330">
+	<mx:FormItem label="Oficina asignada:" id="coord" visible="true" width="290">
 		<mx:Canvas>
 			<mx:ComboBox id="cboCoord" labelField="nombre" width="170"/>
 		</mx:Canvas>	

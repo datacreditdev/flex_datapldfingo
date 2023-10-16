@@ -20,8 +20,8 @@ package Data
 		public var frm_11:formPdf;
 		public var frm_12:EvaluaciondePrestamosGrupales;
 		public var frm_14:EntregadePrestamosGrupales;
-		public var frm_15:Localidades;
-		public var frm_16:RegionalesySucursales;
+		public var frm_15:CatalogoSEPOMEX;
+		public var frm_16:RegionesyOficinas;
 		public var frm_17:SituaciondeCartera;
 		public var frm_18:PagosEsperados;
 		public var frm_19:ProductosdeCreditoyCiclos;
@@ -30,7 +30,8 @@ package Data
 		public var frm_23:AntiguedaddeSaldos;
 		public var frm_25:ControldeAhorros;
 		public var frm_26:ControldeAsistencia;
-		public var frm_27:SolicituddeCredito;
+		public var frm_27:OPERAC.SolicituddeCredito;
+		public var frm_28:REPORTES.SolicituddeCredito;
 		public var frm_31:SolicituddeCreditoComunitario;
 		public var frm_34:AgendaDiariadeAsesor;
 		public var frm_38:CierredeDia;
@@ -39,7 +40,7 @@ package Data
 		public var frm_48:ReimpresiondeOrdenesdePago;
 		public var frm_49:ImpresiondeBurodeCredito;
 		public var frm_50:AdministraciondeOrdenesdePago;
-		public var frm_51:Acreditadosindividuales;
+		public var frm_51:RegistrodeAcreditados;
 		public var frm_52:ExcepcionesGL;
 		public var frm_53:Prestamos;
 		public var frm_54:CausasdeRechazo;
@@ -64,14 +65,14 @@ package Data
 		public var frm_77:ConciliaciondeGarantiaLiquida;
 		public var frm_78:SaldosalCierre;
 		public var frm_79:AjustesManuales;
-		public var frm_80:RegistrodeAjustes;
+		public var frm_80:AjustesdeCapitaleInteres;
 		public var frm_81:InteresDevengado;
 		public var frm_82:CifrasControlContabilidad;
 		public var frm_83:CifrasControlOperaciones;
 		public var frm_84:DevoluciondePrestamo;
 		public var frm_86:ReportedeClientes;
 		public var frm_87:EstadodeCuentaGrupal;
-		public var frm_88:OrganizacionesFondeadoras;
+		public var frm_88:Fondos;
 		public var frm_89:AsignaciondeFondeo;
 		public var frm_90:ControldePagos;
 		public var frm_91:AsignacionIndividualdeFondeo;
@@ -85,9 +86,8 @@ package Data
 		public var frm_104:SaldoPromedioMensual;
 		public var frm_105:ReportedeAsignaciondeFondeo;
 		public var frm_107:PlandePagosIndividual;
-		public var frm_109:SolicituddePrestamosindividuales;
-		public var frm_110:EvaluaciondePrestamosindividuales;
-		public var frm_111:EntregadePrestamosindividuales;
+		public var frm_110:EvaluaciondeCredito;
+		public var frm_111:EntregadeCredito;
 		public var frm_112:ImpresiondeChequesIndividuales;
 		public var frm_114:EstadodeCuentaIndividual;
 		public var frm_115:CorreccionesIndividuales;
@@ -99,8 +99,8 @@ package Data
 		public var frm_121:EntregadeDisposicionesIndividuales;
 		public var frm_122:SolicituddePrestamosRevolventes;
 		public var frm_123:ImpresiondeChequesdeDisposicion;
-		public var frm_124:AdministraciondePersonas;
-		public var frm_125:RegistrodeAjustesComisionySeguro;
+		public var frm_124:KYCPersonasPFyPM;
+		public var frm_125:AjustesdeComisionySeguro;
 		public var frm_126:AnalisisdeAlertas;
 		public var frm_127:IdentificaciondeAcreditados;
 		public var frm_128:ArchivoLavadoDineroCNBV;
@@ -124,7 +124,7 @@ package Data
 		public var frm_144:PolizadePagosFecha;
 		public var frm_145:PolizadePagosMensual;
 		
-		public var frm_146:CargaArchivoTabladeAmortizacion;
+		public var frm_146:CargadeTabladeAmortizacion;
 		
 		public function Modulo()
 		{

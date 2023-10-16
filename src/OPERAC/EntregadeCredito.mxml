@@ -293,8 +293,8 @@
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
 					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="250"/>
-					<mx:DataGridColumn headerText="SUCURSAL" dataField="COORD" width="80"/>
-					<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="170"/>
+					<mx:DataGridColumn headerText="OFICINA" dataField="COORD" width="80"/>
+					<mx:DataGridColumn headerText="NOMBRE OFICINA" dataField="NOMCO" width="170"/>
 					<!--<mx:DataGridColumn headerText="EJECUTIVO" dataField="ASESOR" width="100"/>-->
 					<mx:DataGridColumn headerText="NOMBRE EJECUTIVO" dataField="NOMASESOR" width="200"/>
 				</Data:columns>

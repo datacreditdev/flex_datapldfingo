@@ -54,7 +54,7 @@
 			this.ciclo = ciclo;
 			txtCdgAcred.text = cdgAcred;
 			txtAcreditado.text = acred;
-			formDatosTrans.txtCuenta.setFocus();
+			formDatosTrans.txtReferencia.setFocus();
 			formDatosTrans.txtMonto.text = monto.toString();
 			formDatosTrans.dtfFecha.text = fecha;
 			tipoAccion = 1;

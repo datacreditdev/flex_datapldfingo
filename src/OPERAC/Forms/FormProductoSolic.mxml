@@ -114,7 +114,7 @@
 			public function filtraProdCred(item:Object):Boolean{
 				var isMatch:Boolean = false
 				var d:Date = DateField.stringToDate(item.fecVal.toString(),"DD/MM/YYYY")
-				if(d >= Application.application._Current_Fecha)
+				if(d >= global.obtenerFechaSistema())
 					isMatch = true 
 				return isMatch; 
 			}
@@ -146,7 +146,7 @@
 				oItem = new Object();
 				oItem.id = "0";	
 				oItem.nombre = "--Seleccionar--";
-				oItem.fecVal = DateField.dateToString(Application.application._Current_Fecha,"DD/MM/YYYY");
+				oItem.fecVal = DateField.dateToString(global.obtenerFechaSistema(),"DD/MM/YYYY");
 				prodCredObj.addItem(oItem);
 				
 				for (var i:int = 0; i < cont; i++){		

@@ -147,7 +147,7 @@
 				var Pagos:ArrayCollection = dgPagos.dataProvider as ArrayCollection;
 				var rColor:uint;
 				var fecReg:Date = DateField.stringToDate(Pagos[rowIndex].FECHA, "DD/MM/YYYY");
-				if (fecReg < Application.application._Current_Fecha){ 
+				if (fecReg < global.obtenerFechaSistema()){ 
 					//rColor = 0xd03737;
 					if(Pagos[rowIndex].NUMERO != 0)
 						if(indicaAmortVenc(rowIndex) == true)

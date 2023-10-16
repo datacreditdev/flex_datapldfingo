@@ -9,7 +9,7 @@ package Data
 		public var aPaterno:String;
 		public var aMaterno:String;
 		public var tipoPers:String;
-		public var repLegal:String;
+		public var arrRepLegal:Array;
 	    public var nomRepLegal:String;
 		public var sexo:String;
 		public var cdgco:String;
@@ -20,12 +20,22 @@ package Data
 		public var rfc:String;
 		public var curp:String;
 		public var ife:String;
+		public var figura:String;
+		public var nomCom:String;
+		public var fiel:String;
+		public var telefono2:String;
+		public var email1:String;
+		public var email2:String;
 		public var guardaDatos:Boolean;
 		
 		/*Variables que hacen referencia a la dirección de la Persona*/
 		public var calle:String;
+		public var noExt:String;
+		public var noInt:String;
 		public var entreCalles:String;
 		public var telefono:String;
+		public var cdgPais:String;
+		public var pais:String;
 		public var codPostal:String;
 		public var cdgEntFed:String;
 		public var entFed:String;
@@ -38,7 +48,7 @@ package Data
 		public var guardaDir:Boolean;
 				
 		/*Variables que hacen referencia a informacion de Prevención de Lavado de Dinero*/
-		public var detPer:String;
+		public var giro:String;
 		public var origen:String;
 		public var destino:String;
 		public var pep:String;
