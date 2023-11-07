@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="440" height="220">
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		private var du:Utils;
+		private var global:Globales;
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var titulo:String;
+		private var opcion:int;
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		private function enviar():void{	
+			if(validar()){
+				dispatchEvent(new Event("enviar"));
+				cerrar();
+			}
+		}
+		
+		public function init(opcion:int):void{
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Registro de Delegado Fiduciario";
+			this.title = titulo;
+			this.opcion = opcion;
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			txtNomDF.setFocus();
+		}
+		
+		public function obtenerCargo():String{
+			return txtCargoDF.text;
+		}
+		
+		public function obtenerEmail():String{
+			return txtEmailDF.text;
+		}
+		
+		public function obtenerNombre():String{
+			return txtNomDF.text;
+		}
+		
+		public function obtenerTelefono():String{
+			return txtTelDF.text;
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function validar():Boolean{
+			if (txtNomDF.text == ""){
+				Alert.show("Debe capturar el nombre del delegado",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(txtCargoDF.text == ""){
+				Alert.show("Debe capturar el cargo del delegado",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(txtTelDF.text == ""){
+				Alert.show("Debe capturar el teléfono del delegado",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(txtEmailDF.text == ""){
+				Alert.show("Debe capturar el email del delegado",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}
+		
+		]]>
+		
+	</mx:Script>
+	<mx:Canvas x="13" y="10" width="410" height="130" styleName="canvasMod">
+		<mx:Label id="lblNomDF" x="24.5" y="9" text="Nombre:"/>
+		<mx:TextInput id="txtNomDF" x="77.5" y="8" width="311"/>
+		<mx:Label id="lblCargoDF" x="32.5" y="39" text="Cargo:"/>
+		<mx:TextInput id="txtCargoDF" x="77.5" y="38" width="180"/>
+		<mx:Label id="lblTelDF" x="19.5" y="69" text="Teléfono:"/>
+		<mx:TextInput id="txtTelDF" x="77.5" y="68" width="180" maxChars="15" restrict="0-9"/>
+		<mx:Label id="lblEmailDF" x="37.5" y="99" text="Email:"/>
+		<mx:TextInput id="txtEmailDF" x="77.5" y="98" width="311"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="335" y="148" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="383" y="148" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

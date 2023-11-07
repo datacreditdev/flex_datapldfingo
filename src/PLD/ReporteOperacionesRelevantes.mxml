@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" height="100%" width="100%" xmlns:forms="forms.*" 
+	xmlns:Data="Data.*" xmlns:Administracion="Administracion.*" creationPolicy="all" creationComplete="initApp()">
+
+	<mx:Script>
+		<![CDATA[
+		
+		import Data.Globales;
+		import Data.Utils;
+		import Data.ExcelExportXls;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.CloseEvent;
+		import mx.events.EffectEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.xml.SimpleXMLDecoder;
+		import mx.utils.ArrayUtil;  
+		import mx.validators.Validator;	
+		
+		private var _xmlInfo:XML = new XML();
+		
+		public var infoObj:ArrayCollection = new ArrayCollection();
+		
+		private var global:Globales;
+		private var du:Utils;
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var texto:String;
+		public var control:Number;
+		private var vResult:ValidationResultEvent;
+	
+		private function consultar():void{		
+			var cont:int;
+			 
+			var fecIni:String = dtfFecIni.text;
+			var fecFin:String = dtfFecFin.text;
+			
+			initConexionRep();
+			du.sCursor();
+			global.bloquear();
+			
+			dgReg.dataProvider = null;
+			
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlInfo = new XML(evt.result.toString());
+					
+				du.closeWs(wsMS);
+				du.rCursor();
+				global.desbloquear();
+					
+				if(_xmlInfo.elements().length() > 0){
+					formateaInfo();
+					dgReg.dataProvider = infoObj;
+					cont = _xmlInfo.elements().length();
+					lblTotal.text = cont + " Registro(s)";
+					btnExportar.enabled = true;
+				}
+				else{
+					Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					lblTotal.text = "";
+				}
+			});			
+			wsMS.getRepAnalisisAlertas.send(fecIni, fecFin);
+
+		}
+		
+	 	private function formateaPeriodo():void{
+			var oItem:Object;
+			var cont:int = _xmlInfo.elements().length();
+			var item:Array = new Array;			
+			
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();				
+				oItem.ALTA = _xmlInfo.Table[i].FALTA;
+				oItem.DESCALERTA = _xmlInfo.Table[i].DESCALERTA;
+				oItem.SECUENCIA = _xmlInfo.Table[i].SECUENCIA;				
+				oItem.CDGCL = _xmlInfo.Table[i].CDGCL;
+				oItem.NOMCL = _xmlInfo.Table[i].NOMCL;
+				oItem.COD_ASESOR = _xmlInfo.Table[i].COD_ASESOR;
+				oItem.NOM_ASESOR = _xmlInfo.Table[i].NOM_ASESOR;
+				oItem.REP = _xmlInfo.Table[i].REP;
+				oItem.NOREP = _xmlInfo.Table[i].NOREP;
+				oItem.REGISTROPE = _xmlInfo.Table[i].REGISTROPE;
+				oItem.NOMREGPE = _xmlInfo.Table[i].NOMREGPE;				
+				item.push(oItem);	
+			}
+			infoObj = new ArrayCollection(item);
+		}
+		
+		public function initApp():void{
+			global = new Globales();
+			du = new Utils();
+			titulo = "Reporte Operaciones Relevantes";
+			lblTitulo.text = titulo.toUpperCase();
+			formateaPeriodo();
+		}		
+				
+		private function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsMS.loadWSDL();
+		}
+		
+		private function limpiar():void{
+			cboPerio.selectedIndex = 0;
+			cboAnio.selectedIndex = 0;
+		}
+		
+				
+		public function exportar():void{
+			var dgE:ExcelExportXls = new ExcelExportXls(); 
+			dgE.loadDGInExcel(dgReg,null, titulo);		
+		}
+		]]>
+	</mx:Script>
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas width="320" height="171" backgroundColor="#ffffff" backgroundAlpha="1.0" id="canvas1">
+		<mx:Canvas id="cnvFondeo" x="21" y="55" width="280" height="74" styleName="canvasMod">
+			<mx:Label id="lblFecIni" x="10" y="10" text="Periodo:"/>
+			<mx:ComboBox id="cboPerio" width="200" x="62" y="7"/>
+			<mx:Label id="lblFecFin" x="26" y="42" text="Año:"/>
+			<mx:ComboBox id="cboAnio" width="74" x="62" y="39"/>
+		</mx:Canvas>
+		<mx:Button x="80.5" y="137" label="Generar" click="consultar()"/>
+		<mx:Button x="168.5" y="137" label="Limpiar" width="71" height="24" click="limpiar()"/>
+		<mx:Label id="lblFiltro" x="21" y="36" text="Criterios de Selección"/>
+		<mx:Label id="lblTitulo" x="21" y="10" width="280" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	</mx:Canvas>
+</mx:Canvas>

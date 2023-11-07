@@ -1,33 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="500" height="530" xmlns:Data="Data.*">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="500" height="595" xmlns:Data="Data.*">
 	<mx:states>
 		<mx:State name="subcuenta">
-			<mx:SetProperty name="height" value="555"/>
-			<mx:SetProperty target="{lblUsoCta}" name="y" value="384"/>
-			<mx:SetProperty target="{lblEstatusCta}" name="y" value="384"/>
-			<mx:SetProperty target="{canvas1}" name="y" value="403"/>
-			<mx:SetProperty target="{canvas2}" name="y" value="403"/>
-			<mx:SetProperty target="{btnAceptar}" name="y" value="481"/>
-			<mx:SetProperty target="{btnCancelar}" name="y" value="481"/>
-			<mx:SetProperty target="{canvas3}" name="height" value="290"/>
+			<mx:SetProperty name="height" value="625"/>
+			<mx:SetProperty target="{canvas3}" name="height" value="350"/>
 			<mx:SetProperty target="{lblAlias}" name="y" value="135"/>
-			<mx:SetProperty target="{lblOtor}" name="y" value="165"/>
 			<mx:SetProperty target="{txtAlias}" name="y" value="134"/>
-			<mx:SetProperty target="{txtTitular}" name="y" value="164"/>
-			<mx:SetProperty target="{lblCantidad}" name="y" value="195"/>
-			<mx:SetProperty target="{txtFavor}" name="y" value="194"/>
-			<mx:SetProperty target="{lblPlazo}" name="y" value="225"/>
-			<mx:SetProperty target="{txtSaldo}" name="y" value="224"/>
-			<mx:SetProperty target="{cboMoneda}" name="y" value="254"/>
-			<mx:SetProperty target="{lblMoneda}" name="y" value="257"/>
 			<mx:AddChild relativeTo="{canvas3}" position="lastChild">
-				<mx:TextInput id="txtCtaAsoc" x="123.5" y="104" width="170.5"/>
+				<mx:TextInput id="txtCtaAsoc" x="123.5" y="196" width="170.5"/>
 			</mx:AddChild>
 			<mx:SetProperty target="{txtAlias}" name="x" value="123"/>
 			<mx:SetProperty target="{lblAlias}" name="x" value="83"/>
 			<mx:AddChild relativeTo="{canvas3}" position="lastChild">
-				<mx:Label id="lblCtaAsoc" x="24.5" y="105" text="Cuenta Asociada:"/>
+				<mx:Label id="lblCtaAsoc" x="24.5" y="197" text="Cuenta Asociada:"/>
 			</mx:AddChild>
+			<mx:SetProperty target="{lblUsoCta}" name="y" value="448"/>
+			<mx:SetProperty target="{lblEstatusCta}" name="y" value="448"/>
+			<mx:SetProperty target="{canvas1}" name="y" value="467"/>
+			<mx:SetProperty target="{btnAceptar}" name="y" value="545"/>
+			<mx:SetProperty target="{btnCancelar}" name="y" value="545"/>
+			<mx:SetProperty target="{canvas2}" name="y" value="467"/>
+			<mx:SetProperty target="{txtTitular}" name="y" value="226"/>
+			<mx:SetProperty target="{lblOtor}" name="y" value="227"/>
+			<mx:SetProperty target="{lblCantidad}" name="y" value="257"/>
+			<mx:SetProperty target="{txtFavor}" name="y" value="256"/>
+			<mx:SetProperty target="{txtSaldo}" name="y" value="286"/>
+			<mx:SetProperty target="{lblSaldo}" name="y" value="287"/>
+			<mx:SetProperty target="{lblMoneda}" name="y" value="319"/>
+			<mx:SetProperty target="{cboMoneda}" name="y" value="316"/>
+			<mx:SetProperty target="{cboTipoCta}" name="y" value="164"/>
+			<mx:SetProperty target="{lblTipoCta}" name="y" value="167"/>
 		</mx:State>
 	</mx:states>
 	
@@ -123,6 +125,8 @@
 			if(invalidArray.length == 0){	
 				info.cdgCB = txtCodigo.text;
 				info.numero = txtNumero.text;
+				info.clabe = txtClabe.text;
+				info.swift = txtSwift.text;
 				info.nombre = txtAlias.text;
 				info.tipoCta = cboTipoCta.selectedItem.id;
 				
@@ -198,7 +202,7 @@
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionCuentaBancaria);
 			wsMS.setAccionCuentaBancaria.send(tipoAccion, info.cdgIB, info.cdgSB, info.cdgCB, info.numero, info.tipoCta, 
 											  info.cdgCBAsoc, info.nombre, info.titular, info.favor, info.saldo, info.moneda, 
-											  info.tipo, info.activa, global.obtenerUsuario());	
+											  info.tipo, info.activa, info.clabe, info.swift, global.obtenerUsuario());	
 		}
 	
 		public function init(tipo:int, codIB:String, instBanc:String, codSB:String, sucBanc:String, codCB:String = null):void{
@@ -256,6 +260,8 @@
 			
 			txtCodigo.text = info.cdgCB;
 			txtNumero.text = _xmlCB.Table[0].NUMERO;
+			txtClabe.text = _xmlCB.Table[0].CLABE;
+			txtSwift.text = _xmlCB.Table[0].SWIFT;
 			
 			for(i = 0; i < tipoCtaObj.length; i++){
 				if(tipoCtaObj[i].id == _xmlCB.Table[0].TIPOCTA.toString()){
@@ -370,37 +376,41 @@
 		<mx:TextInput id="txtCodSB" x="124.5" y="37" width="50" editable="false"/>
 		<mx:TextInput id="txtSB" x="182.5" y="37" width="252" editable="false"/>
 	</mx:Canvas>
-	<mx:Canvas x="20" y="87" width="460" height="260" styleName="canvasMod" id="canvas3">
-		<mx:Label id="lblCantidad" x="55.5" y="165" text="A favor de:" textAlign="right"/>
-		<mx:Label id="lblAlias" x="83.5" y="105" text="Alias:" textAlign="right"/>
-		<mx:Label id="lblOtor" x="78.5" y="135" text="Titular:" textAlign="right"/>
+	<mx:Canvas x="20" y="87" width="460" height="320" styleName="canvasMod" id="canvas3">
+		<mx:Label id="lblCantidad" x="55.5" y="225" text="A favor de:" textAlign="right"/>
+		<mx:Label id="lblAlias" x="83" y="133" text="Alias:" textAlign="right"/>
+		<mx:Label id="lblOtor" x="78.5" y="195" text="Titular:" textAlign="right"/>
 		<mx:Label id="lblcodDisp" x="74.5" y="12" text="Código:" textAlign="right"/>
 		<mx:Label id="lblContrato" x="70.5" y="44" text="Número:" textAlign="right"/>
-		<mx:Label id="lblPlazo" x="22.5" y="195" text="Saldo Referencial:" textAlign="right"/>
+		<mx:Label id="lblSaldo" x="22.5" y="255" text="Saldo Referencial:" textAlign="right"/>
 		<mx:TextInput id="txtCodigo" x="123.5" y="10" width="50" maxChars="3" editable="false"/>
 		<mx:TextInput id="txtNumero" x="123.5" y="42" width="109" maxChars="150"/>
-		<mx:TextInput id="txtAlias" x="123.5" y="104" width="280" maxChars="150"/>
-		<mx:TextInput id="txtTitular" x="123.5" y="134" width="279.5" maxChars="150"/>
-		<mx:TextInput id="txtFavor" x="123.5" y="164" width="279.5"/>
-		<mx:TextInput id="txtSaldo" x="123.5" y="194" width="110.25" maxChars="13" restrict="0-9;." change="validaMonto(event)"/>
-		<mx:Label id="lblMoneda" x="69.5" y="227" text="Moneda:" textAlign="right"/>
-		<Data:CustomComboBox id="cboMoneda" x="123.5" y="224" width="230" labelField="nombre"/>
-		<Data:CustomComboBox id="cboTipoCta" x="123.5" y="72" width="230" labelField="nombre" change="modificarTipoCta()"/>
-		<mx:Label id="lblMoneda0" x="35.5" y="75" text="Tipo de Cuenta:" textAlign="right"/>
+		<mx:TextInput id="txtAlias" x="123" y="132" width="280" maxChars="150"/>
+		<mx:TextInput id="txtTitular" x="123.5" y="194" width="279.5" maxChars="150"/>
+		<mx:TextInput id="txtFavor" x="123.5" y="224" width="279.5"/>
+		<mx:TextInput id="txtSaldo" x="123.5" y="254" width="110.25" maxChars="13" restrict="0-9;." change="validaMonto(event)"/>
+		<mx:Label id="lblMoneda" x="69.5" y="287" text="Moneda:" textAlign="right"/>
+		<Data:CustomComboBox id="cboMoneda" x="123.5" y="284" width="230" labelField="nombre"/>
+		<Data:CustomComboBox id="cboTipoCta" x="123" y="162" width="230" labelField="nombre" change="modificarTipoCta()"/>
+		<mx:Label id="lblTipoCta" x="35" y="165" text="Tipo de Cuenta:" textAlign="right"/>
+		<mx:TextInput id="txtClabe" x="123.5" y="72" width="150" maxChars="18" restrict="0-9"/>
+		<mx:TextInput id="txtSwift" x="123" y="102" width="280" maxChars="30"/>
+		<mx:Label id="lblClabe" x="80.5" y="73" text="Clabe:" textAlign="right"/>
+		<mx:Label id="lblSwift" x="56.5" y="103" text="Swift / BIC:" textAlign="right"/>
 	</mx:Canvas>
-	<mx:Canvas x="98.85" y="372" width="170" height="66" styleName="canvasMod" id="canvas1">
+	<mx:Canvas x="98.85" y="439" width="170" height="66" styleName="canvasMod" id="canvas1">
 		<mx:RadioButtonGroup id="tipo"/>
 		<mx:RadioButton id="rdbDeposito" x="46" y="0" label="Receptora" groupName="tipo" value="D" width="90" selected="true"/>
 		<mx:RadioButton id="rdbPagadora" label="Dispersora" x="46" y="20" groupName="tipo" value="P" width="90"/>
 		<mx:RadioButton id="rdbAmbas" x="46" y="41" label="Ambas" groupName="tipo" value="A" width="76"/>	
 	</mx:Canvas>
-	<mx:Button id="btnAceptar" x="201" y="450" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
-	<mx:Button id="btnCancelar" x="255" y="450" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
-	<mx:Label id="lblUsoCta" x="99.35" y="353" text="Uso de la Cuenta"/>
-	<mx:Canvas x="286.85" y="372" width="110.25" height="66" styleName="canvasMod" id="canvas2">
+	<mx:Button id="btnAceptar" x="201" y="517" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="255" y="517" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:Label id="lblUsoCta" x="99.35" y="420" text="Uso de la Cuenta"/>
+	<mx:Canvas x="286.85" y="439" width="110.25" height="66" styleName="canvasMod" id="canvas2">
 		<mx:RadioButtonGroup id="activa"/>
 		<mx:RadioButton id="rdbSi" x="35.6" y="6" label="Si" groupName="activa" value="S" width="60" selected="true"/>
 		<mx:RadioButton id="rdbNo" x="35.6" y="30" groupName="activa" value="N" width="60" label="No"/>
 	</mx:Canvas>
-	<mx:Label  id="lblEstatusCta" x="287.35" y="353" text="Activa"/>
+	<mx:Label  id="lblEstatusCta" x="287.35" y="420" text="Activa"/>
 </mx:TitleWindow>

@@ -12,21 +12,20 @@
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
-			import mx.core.Application;
 			import mx.containers.TitleWindow;		
-			import mx.managers.PopUpManager;
 			import mx.controls.Alert;
+			import mx.core.Application;
 			import mx.effects.easing.Elastic;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.utils.ObjectUtil;
 			
+			private var du:Utils;
 			private var global:Globales;
-			public var wsMS:WebService;
 			public var rep:String;
 			public var titulo:String;
-			private var du:Utils;
 			
 			public function ejecuta():void{
 				btnGenerar.setFocus();
@@ -70,15 +69,13 @@
 				du = new Utils();
 			}		
 			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
-		
 			public function limpiar():void{
 				txtAcred.text = "";
 				txtAcred.setFocus();
+			}
+			
+			public function obtenerCodigo():String{
+				return txtAcred.text;
 			}
 				
 			public function valida():Boolean{
@@ -91,7 +88,7 @@
 		]]>
 	</mx:Script>
 	<mx:Label id="lblTitulo" x="16.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-	<mx:Canvas x="17.95" y="53.5" width="247.54999" height="74.5" styleName="canvasMod" id="canvas1">
+	<mx:Canvas x="17.95" y="53.5" width="247.54999" height="74.5" styleName="canvasMod">
 		<mx:Label id="lblAcred" x="10" y="27.5" text="Codigo de Cliente:" width="98.5" height="20"/>
 		<mx:TextInput id="txtAcred" x="108.5" y="25.5" maxChars="6" restrict="0-9" enter="ejecuta()"/>
 	</mx:Canvas>

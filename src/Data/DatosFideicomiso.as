@@ -20,6 +20,11 @@ package Data
 		public var arrMiemCT:Array;
 		public var presCT:String;
 		public var secCT:String
+		public var arrSecDF:Array;
+		public var arrNomDF:Array;
+		public var arrCargoDF:Array;
+		public var arrTelDF:Array;
+		public var arrEmailDF:Array;
 		public var nomDF:String;
 		public var cargoDF:String;
 		public var emailDF:String;

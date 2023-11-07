@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" height="100%" width="100%" xmlns:forms="forms.*" 
+	xmlns:Data="Data.*" xmlns:Administracion="Administracion.*" creationPolicy="all" creationComplete="initApp()">
+
+	<mx:Script>
+		<![CDATA[
+		
+		import Data.Globales;
+		import Data.Utils;
+		import Data.ExcelExportXls;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.CloseEvent;
+		import mx.events.EffectEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.rpc.xml.SimpleXMLDecoder;
+		import mx.utils.ArrayUtil;  
+		import mx.validators.Validator;	
+		import Data.ExcelExportXls;
+		private var _xmlInfo:XML = new XML();
+		
+		public var estObj:ArrayCollection = new ArrayCollection();
+		public var infoObj:ArrayCollection = new ArrayCollection();
+		
+		private var global:Globales;
+		private var du:Utils;
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		public var texto:String;
+		public var control:Number;
+		private var vResult:ValidationResultEvent;
+		
+		private function actualizarAlertas(event:Event):void{
+			consultar();
+		}
+		
+		private function consultar():void{
+			var cont:int;
+			var fecIni:String = dtfFecIni.text;
+			var fecFin:String = dtfFecFin.text;
+			
+			initConexionRep();
+			du.sCursor();
+			global.bloquear();
+			
+			dgReg.dataProvider = null;
+			
+			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				_xmlInfo = new XML(evt.result.toString());
+					
+				du.closeWs(wsMS);
+				du.rCursor();
+				global.desbloquear();
+					
+				if(_xmlInfo.elements().length() > 0){
+					formateaInfo();
+					dgReg.dataProvider = infoObj;
+					cont = _xmlInfo.elements().length();
+					lblTotal.text = cont + " Registro(s)";
+					btnExportar.enabled = true;
+				}
+				else{
+					Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+					lblTotal.text = "";
+				}
+			});			
+			wsMS.getRepPersonasExpuestas.send(fecIni, fecFin);
+		}
+		
+		private function formateaInfo():void{
+			var oItem:Object;
+			var cont:int = _xmlInfo.elements().length();
+			var item:Array = new Array;
+			
+			infoObj.removeAll();
+			infoObj.refresh();
+			
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				//oItem.FREG = _xmlInfo.Table[i].FREG;
+				oItem.FREGISTRO = _xmlInfo.Table[i].FREGISTRO;
+				oItem.CDGCL = _xmlInfo.Table[i].CDGCL;
+				oItem.NOMBRECL = _xmlInfo.Table[i].NOMBRECL;
+				oItem.NIVEL = _xmlInfo.Table[i].NIVEL;
+				oItem.OBSERVACION = _xmlInfo.Table[i].OBSERVACION;
+				oItem.CDGPE = _xmlInfo.Table[i].CDGPE;
+				oItem.NOMUSUARIO = _xmlInfo.Table[i].NOMUSUARIO;
+				 
+				item.push(oItem);	
+			}
+			infoObj = new ArrayCollection(item);
+		}
+		
+		public function initApp():void{
+			global = new Globales();
+			du = new Utils();
+			titulo = "Reporte de Consultas PEP";
+			lblTitulo.text = titulo.toUpperCase();
+			limpiar();
+		}		
+
+		private function initConexionRep():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsMS.loadWSDL();
+		}
+		
+		private function limpiar():void{
+			var fec:Date;
+			dtfFecIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			dtfFecFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			dgReg.dataProvider = null;
+			lblTotal.text = "";
+		}
+		
+		private function exportar():void{
+			var dgE:ExcelExportXls = new ExcelExportXls(); 
+			dgE.loadDGInExcel(dgReg,null, titulo);		
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas width="800" height="480" backgroundColor="#ffffff" backgroundAlpha="1.0" id="canvas1">
+		<mx:Button x="129" y="108" label="Consultar" click="consultar()"/>
+		<mx:Button x="217" y="108" label="Limpiar" width="71" height="24" click="limpiar()"/>
+		<mx:Label id="lblFiltro" x="21" y="36" text="Criterios de Selección"/>
+		<mx:Label id="lblTitulo" x="21" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<Data:RowColorDataGrid id="dgReg" x="20" y="140" width="760" height="301" horizontalScrollPolicy="on" sortableColumns="true" 
+			doubleClickEnabled="true">
+			<Data:columns>			
+				<mx:DataGridColumn headerText="FECHA CONSULTA" dataField="FREGISTRO" width="130"/>
+				<mx:DataGridColumn headerText="CODIGO CLIENTE" dataField="CDGCL" width="130"/>
+				<mx:DataGridColumn headerText="NOMBRE CLIENTE" dataField="NOMBRECL" width="220"/>
+				<mx:DataGridColumn headerText="NIVEL" dataField="NIVEL" width="90"/>
+				<mx:DataGridColumn headerText="OBSERVACION" dataField="OBSERVACION" width="200"/>
+				<mx:DataGridColumn headerText="USUARIO" dataField="CDGPE" width="100"/>
+				<mx:DataGridColumn headerText="NOMBRE USUARIO" dataField="NOMUSUARIO" width="200"/>				
+			</Data:columns>
+		</Data:RowColorDataGrid>
+		<mx:Label id="lblTotal" x="20" y="449" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+		<mx:Button id="btnExportar" x="677" y="108" label="Exportar Excel" click="exportar()" enabled="false"/>
+		<mx:Canvas id="cnvFondeo" x="21" y="55" width="375.1" height="45" styleName="canvasMod">
+			<mx:Label id="lblFecIni" x="11" y="12" text="Fecha Inicial:"/>
+			<mx:DateField id="dtfFecIni" width="90" x="86" y="10"/>
+			<mx:Label id="lblFecFin" x="197.05" y="12" text="Fecha Final:"/>
+			<mx:DateField id="dtfFecFin" width="90" x="268.05" y="10"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

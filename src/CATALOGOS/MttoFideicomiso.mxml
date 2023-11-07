@@ -35,7 +35,9 @@
 		private var _xmlPartFid:XML = new XML();
 		private var _xmlMiemCM:XML = new XML();
 		private var _xmlMiemCT:XML = new XML();
+		private var _xmlDelFid:XML = new XML();
 		
+		private var delFidObj:ArrayCollection = new ArrayCollection();
 		private var miemCMObj:ArrayCollection = new ArrayCollection();
 		private var miemCTObj:ArrayCollection = new ArrayCollection();
 		private var partFidObj:ArrayCollection = new ArrayCollection();
@@ -48,19 +50,20 @@
 		public var tipoAccion:int;
 		public var titulo:String;
 		
-		private function agregarPartFid(evt:Event):void{
+		private function agregarDelFid(evt:Event):void{
 			var oItem:Object = new Object();
-			var comPartFid:MttoPartFid = evt.currentTarget as MttoPartFid;
+			var comDelFid:MttoDelegadoFid = evt.currentTarget as MttoDelegadoFid;
 			
 			oItem.sec = "0";
-			oItem.nombre = comPartFid.obtenerNombre();
-			oItem.codFig = comPartFid.obtenerCodFigura();
-			oItem.nomFig = comPartFid.obtenerNomFigura();
+			oItem.nombre = comDelFid.obtenerNombre();
+			oItem.cargo = comDelFid.obtenerCargo();
+			oItem.telefono = comDelFid.obtenerTelefono();
+			oItem.email = comDelFid.obtenerEmail();
 				
-			partFidObj.addItem(oItem);
-			partFidObj.refresh();
+			delFidObj.addItem(oItem);
+			delFidObj.refresh();
 				
-			dgPartes.dataProvider = partFidObj;
+			dgDelFid.dataProvider = delFidObj;
 		}
 		
 		private function agregarMiemFid(evt:Event):void{
@@ -82,6 +85,21 @@
 				miemCTObj.refresh();
 				lstMiemCT.dataProvider = miemCTObj;
 			}	
+		}
+		
+		private function agregarPartFid(evt:Event):void{
+			var oItem:Object = new Object();
+			var comPartFid:MttoPartFid = evt.currentTarget as MttoPartFid;
+			
+			oItem.sec = "0";
+			oItem.nombre = comPartFid.obtenerNombre();
+			oItem.codFig = comPartFid.obtenerCodFigura();
+			oItem.nomFig = comPartFid.obtenerNomFigura();
+				
+			partFidObj.addItem(oItem);
+			partFidObj.refresh();
+				
+			dgPartes.dataProvider = partFidObj;
 		}
 		
 		private function cargarInfo(codigo:String):void{
@@ -126,15 +144,29 @@
 						du.ejecutaWsMethod(wsCat,function(ev:ResultEvent):void{
 							_xmlMiemCT = new XML(ev.result.toString());
 							
-							du.closeWs(wsCat);
-							du.rCursor();	
-							
 							if (_xmlMiemCT.elements().length() > 0){
 								formatearMiembro(2, _xmlMiemCT);
 								lstMiemCT.dataProvider = miemCTObj;	
 							}
 							else
-								lstMiemCT.dataProvider = null
+								lstMiemCT.dataProvider = null;
+							
+							du.ejecutaWsMethod(wsCat,function(ev:ResultEvent):void{
+								_xmlDelFid = new XML(ev.result.toString());
+								
+								du.closeWs(wsCat);
+								du.rCursor();
+								
+								if (_xmlDelFid.elements().length() > 0){
+									formatearDelFid();
+									dgDelFid.dataProvider = delFidObj;	
+								}
+								else
+									dgDelFid.dataProvider = null;
+							
+							});
+							params[0] = codigo;
+							wsCat.getListado.send(62, params);
 						});
 						params[0] = codigo;
 						wsCat.getListado.send(59, params);
@@ -154,6 +186,23 @@
             closeEffect.duration = 500;
             closeEffect.play([this], playReverse);
             closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		private function confirmarElimDelFid():void{
+			var titulo:String = "Delegado Fiduciario";
+			var ind:int = dgDelFid.selectedIndex;
+				
+			if(ind < 0){
+				Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+				return;
+			}				
+			Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,function(ev:CloseEvent):void{
+																					if(ev.detail == Alert.YES){
+																						delFidObj.removeItemAt(ind);
+																						delFidObj.refresh();
+																						dgDelFid.dataProvider = delFidObj;
+																					}
+			},du.iQuest,4);
 		}
 		
 		private function confirmarElimMiembro(opcion:int):void{
@@ -225,16 +274,34 @@
 				info.presCT = txtPresCT.text;
 				info.secCT = txtSecCT.text;
 				
-				info.nomDF = txtNomDF.text;
-				info.cargoDF = txtCargoDF.text;
-				info.emailDF = txtEmailDF.text;
-				info.telDF = txtTelDF.text;
+				info.arrSecDF = obtenerDelFid(0);
+				info.arrNomDF = obtenerDelFid(1);
+				info.arrCargoDF = obtenerDelFid(2);
+				info.arrTelDF = obtenerDelFid(3);
+				info.arrEmailDF = obtenerDelFid(4);
 				info.guarda = true;
 			}
 			else
 				info.guarda = false;
 				
 			validar();
+		}
+		
+		private function formatearDelFid():void{
+			var cont:int = _xmlDelFid.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.sec = _xmlDelFid.Table[i].SECUENCIA;
+				oItem.nombre = _xmlDelFid.Table[i].NOMBRE;
+				oItem.cargo = _xmlDelFid.Table[i].CARGO;
+				oItem.telefono = _xmlDelFid.Table[i].TELEFONO;
+				oItem.email = _xmlDelFid.Table[i].EMAIL;
+				item.push(oItem);
+			}
+			delFidObj = new ArrayCollection(item);
 		}
 		
 		private function formatearMiembro(tipo:int, _xmlInfo:XML):void{
@@ -278,8 +345,8 @@
 			wsMS.setAccionFideicomiso.send(tipoAccion, info.cdgFid, info.numFid, info.fechaFid, info.arrSecPartFid, 
 										   info.arrNomPartFid, info.arrFigPartFid, info.finFid, info.arrSecMiemCM, 
 										   info.arrMiemCM, info.presCM, info.secCM, info.arrSecMiemCT, info.arrMiemCT, 
-										   info.presCT, info.secCT, info.nomDF, info.cargoDF, info.emailDF, info.telDF, 
-										   global.obtenerUsuario());	 
+										   info.presCT, info.secCT, info.arrSecDF, info.arrNomDF, info.arrCargoDF, 
+										   info.arrTelDF, info.arrEmailDF, global.obtenerUsuario());	 
 		}
 	
 		public function init(tipo:int, codigo:String = null):void{
@@ -315,11 +382,13 @@
 			
 			txtPresCT.text = _xmlFid.Table[0].PRESCT;
 			txtSecCT.text = _xmlFid.Table[0].SECCT;
-			
-			txtNomDF.text = _xmlFid.Table[0].NOMDF;
-			txtCargoDF.text = _xmlFid.Table[0].CARGODF;
-			txtEmailDF.text = _xmlFid.Table[0].EMAILDF;
-			txtTelDF.text = _xmlFid.Table[0].TELDF; 
+		}
+		
+		private function mostrarFormDelFid():void{
+			var comDelFid:MttoDelegadoFid = new MttoDelegadoFid;
+			comDelFid = MttoDelegadoFid(PopUpManager.createPopUp(this,MttoDelegadoFid,true));
+			comDelFid.addEventListener("enviar", agregarDelFid);
+			PopUpManager.centerPopUp(comDelFid);
 		}
 		
 		private function mostrarFormMiembro(opcion:int):void{
@@ -336,6 +405,31 @@
 			comPartFid.init();
 			comPartFid.addEventListener("enviar", agregarPartFid);
 			PopUpManager.centerPopUp(comPartFid);
+		}
+		
+		private function obtenerDelFid(tipo:int):Array{
+			var arrDelFid:Array = new Array;
+			var lista:ArrayCollection = dgDelFid.dataProvider as ArrayCollection;
+			var cont:int = lista.length;
+			
+			if(cont > 0){
+				for(var i:int = 0; i < cont; i++){
+					if(tipo == 0)
+						arrDelFid[i] = lista[i].sec;
+					else if(tipo == 1)
+						arrDelFid[i] = lista[i].nombre;
+					else if(tipo == 2)
+						arrDelFid[i] = lista[i].cargo;
+					else if(tipo == 3)
+						arrDelFid[i] = lista[i].telefono;
+					else if(tipo == 4)
+						arrDelFid[i] = lista[i].email;
+				}
+			}
+			else
+				arrDelFid[0] = "";
+				
+			return arrDelFid;
 		}
 		
 		private function obtenerMiembro(tipo:int):Array{
@@ -400,6 +494,7 @@
 			dgPartes.dataProvider = null;
 			lstMiemCM.dataProvider = null;
 			lstMiemCT.dataProvider = null;
+			dgDelFid.dataProvider = null;
 				
 			du.ejecutaWsMethod(wsCat, function(evt:ResultEvent):void {											
 				var _xmlCod:XML = new XML(evt.result.toString());
@@ -486,15 +581,17 @@
 			</mx:Canvas>
 		</mx:Canvas>
 		<mx:Canvas id="cnvDelFid" label="Delegado Fiduciario" width="100%" height="100%" verticalScrollPolicy="off" horizontalScrollPolicy="off">
-			<mx:Canvas x="51.5" y="9" width="500" height="160">
-				<mx:Label id="lblNomDF" x="70.5" y="23" text="Nombre:"/>
-				<mx:TextInput id="txtNomDF" x="123.5" y="22" width="311"/>
-				<mx:Label id="lblCargoDF" x="78.5" y="53" text="Cargo:"/>
-				<mx:TextInput id="txtCargoDF" x="123.5" y="52" width="180"/>
-				<mx:Label id="lblTelDF" x="65.5" y="83" text="Teléfono:"/>
-				<mx:TextInput id="txtTelDF" x="123.5" y="82" width="180" maxChars="15" restrict="0-9"/>
-				<mx:Label id="lblEmailDF" x="83.5" y="113" text="Email:"/>
-				<mx:TextInput id="txtEmailDF" x="123.5" y="112" width="311"/>
+			<mx:Canvas x="9.25" y="10" width="584.5" height="160">
+				<mx:DataGrid id="dgDelFid" width="525" y="8" x="5" height="145">
+					<mx:columns>
+						<mx:DataGridColumn headerText="NOMBRE" editable="false" dataField="nombre" width="130"/>
+						<mx:DataGridColumn headerText="CARGO" editable="false" dataField="cargo" width="100"/>
+						<mx:DataGridColumn headerText="TELEFONO" editable="false" dataField="telefono" width="80"/>
+						<mx:DataGridColumn headerText="EMAIL" editable="false" dataField="email" width="100"/>
+					</mx:columns>
+				</mx:DataGrid> 
+				<mx:Button id="btnAgregarDelFid" icon="@Embed(source='assets/add.png')" width="40" x="538" click="mostrarFormDelFid()" y="9"/>
+				<mx:Button id="btnEliminarDelFid" icon="@Embed(source='assets/delete-icon.png')" width="40" x="538" click="confirmarElimDelFid()" y="42"/>
 			</mx:Canvas>
 		</mx:Canvas>
 	</mx:TabNavigator>

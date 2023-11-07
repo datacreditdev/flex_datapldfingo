@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%"  
+	creationPolicy="all" creationComplete="initApp()" xmlns:Data="Data.*" x="12.5" y="42">
+
+	<!--Componente de Reporte de Operaciones Fraccionadas-->
+	<mx:Script>
+		<![CDATA[
+			import mx.formatters.DateFormatter;
+			import Data.ExcelExportXls;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.formatters.NumberFormatter;		
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.utils.ObjectUtil;
+
+			private var _xmlRep:XML =  new XML();
+			
+			private var wsMS:WebService;
+			private var titulo:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			private var anio:Number;
+			private var mes:Number;
+			private var mesDesc:String;
+			private var tipoReporte:String;
+			
+			private function exportar():void{
+				var dgE:ExcelExportXls = new ExcelExportXls();
+				dgE.loadDGInExcel(dgReporte,null,titulo + " " + mesDesc + " " + anio);
+			}
+						
+			private function generar():void{
+				if(validar()){
+					anio = cbxAnio.selectedItem.id;
+					mes = cbxMes.selectedItem.id;
+					mesDesc = cbxMes.selectedItem.nombre;
+					tipoReporte = tipo.selectedValue.toString();
+					
+					initConexion();
+					du.sCursor();
+					global.bloquear();
+					
+					_xmlRep = null;
+					dgReporte.dataProvider = null;
+					btnExportar.enabled = false;
+					lblTotal.text = "";
+					
+					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+						_xmlRep = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsMS);
+						global.desbloquear();
+						
+						if(_xmlRep.elements().length() > 0){
+							dgReporte.dataProvider = _xmlRep.Table;
+							lblTotal.text = _xmlRep.elements().length() + " Registro(s)";
+							btnExportar.enabled = true; 
+						}
+						else{
+							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							lblTotal.text = "";
+						}
+					});
+					wsMS.getRepOperacionesFrac.send(mes, anio, tipoReporte, global.obtenerUsuario());
+				}
+			}			
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Operaciones Fraccionadas";
+				lblTitulo.text = titulo.toUpperCase(); 
+				cbxAnio.dataProvider = global.formateaAnio();
+				cbxMes.dataProvider = global.formateaMes();
+			}		
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			private function limpiar():void{				
+				dgReporte.dataProvider = null;
+				lblTotal.text = "";
+				btnExportar.enabled = false;
+				cbxAnio.dataProvider = global.formateaAnio();
+				cbxMes.dataProvider = global.formateaMes();
+				tipo.selectedValue = null;
+			}
+			
+			private function validar():Boolean{
+				if(cbxMes.selectedIndex <= 0){
+					Alert.show("Seleccione el mes de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(cbxAnio.selectedIndex <= 0){
+					Alert.show("Seleccione el año de consulta.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				if(tipo.selectedValue == null){
+					Alert.show("Seleccione el modo de presentación.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas id="cnvCarga" x="0" y="0" width="789" height="400" backgroundColor="#FFFFFF" backgroundAlpha="1.0">
+		<mx:Canvas x="10" y="53" width="300" height="78" styleName="canvasMod">
+			<mx:Label x="10" y="13" text="Mes:" id="lblMes"/>
+			<mx:ComboBox id="cbxMes" labelField="nombre" x="46" y="10" width="111"/>
+			<mx:Label x="168" y="13" text="Año" id="lblAnio"/>
+			<mx:ComboBox id="cbxAnio" labelField="id" x="201" y="10" width="72"/>
+			<mx:RadioButtonGroup id="tipo"/>
+			<mx:RadioButton x="122.85" y="44" label="Individual" groupName="tipo" value="I"/>
+			<mx:RadioButton x="201" y="44" label="Agrupado" groupName="tipo" value="G"/>
+			<mx:Label x="10" y="46" text="Modo Presentación:" id="lblMes0"/>
+		</mx:Canvas>
+		<mx:Button x="94.3" y="139" label="Generar" click="generar()" id="btnGenerar"/>
+		<mx:Button x="173.3" y="139" label="Limpiar" click="limpiar()" id="btnLimpiar"/>
+		<Data:RowColorDataGrid id="dgReporte" sortableColumns="true" x="10" y="171" width="769" 
+			visible="true" height="190" horizontalScrollPolicy="auto" verticalScrollPolicy="auto">
+			<Data:columns>
+				<mx:DataGridColumn headerText="SUCURSAL" dataField="NOM_SUCURSAL" width="150"/>
+				<mx:DataGridColumn headerText="COD. GRUPO" dataField="COD_GRUPO" width="90"/>
+				<mx:DataGridColumn headerText="NOM. GRUPO" dataField="NOM_GRUPO" width="180"/>
+				<mx:DataGridColumn headerText="CICLO." dataField="CICLO" width="50"/>
+				<mx:DataGridColumn headerText="COD. ACREDITADO" dataField="CDGCL" width="120"/>
+				<mx:DataGridColumn headerText="ACREDITADO" dataField="NOM_CL" width="180"/>
+				<mx:DataGridColumn headerText="FECHA REAL DEPOSITO" dataField="FREALDEP" width="150"/>
+				<mx:DataGridColumn headerText="CANTIDAD" dataField="PRORRATEO" width="80"/>
+				<mx:DataGridColumn headerText="VALOR" dataField="VALOR" width="80"/>
+				<mx:DataGridColumn headerText="MONTO USD" dataField="MONTOUSD" width="80"/>
+			</Data:columns>
+		</Data:RowColorDataGrid>
+		<mx:Label id="lblTotal" x="10" y="369" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+		<mx:Button id="btnExportar" x="676" y="139" label="Exportar Excel" click="exportar()" enabled="false"/>
+		<mx:Label id="lblTitulo" x="10" y="10" width="300" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Label x="10" y="34" text="Criterios de Selección" width="124.25"/>
+	</mx:Canvas>
+</mx:Canvas>

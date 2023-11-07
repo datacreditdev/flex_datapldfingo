@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="450" height="300" creationPolicy="all" xmlns:Data="Data.*">
+
+	<mx:Script>
+		<![CDATA[
+			import Data.EventAcred;
+			import Data.DatosAcred;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.validators.Validator;
+			import mx.events.ValidationResultEvent;	
+			
+			private var _xmlDestino:XML =  new XML();
+			private var _xmlOrigen:XML =  new XML();
+			private var _xmlTipoPers:XML =  new XML();
+			
+			private var origenObj:ArrayCollection = new ArrayCollection();
+			private var destinoObj:ArrayCollection = new ArrayCollection();
+			private var tipoPersObj:ArrayCollection = new ArrayCollection();
+			public var datos:DatosAcred = new DatosAcred();
+			
+			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS
+			public var du:Utils;
+			private var global:Globales;
+			private var vResult:ValidationResultEvent;
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}	
+			
+			
+			
+			private function formateaDestino():void{
+				var cont:int = _xmlDestino.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlDestino.Table[i].CODIGO.toString();	
+					oItem.nombre = _xmlDestino.Table[i].DESCRIPCION;
+					item.push(oItem);
+				}
+				destinoObj = new ArrayCollection(item);
+			}
+			
+			private function formateaOrigen():void{
+				var cont:int = _xmlOrigen.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlOrigen.Table[i].CODIGO.toString();	
+					oItem.nombre = _xmlOrigen.Table[i].DESCRIPCION;
+					item.push(oItem);
+				}
+				origenObj = new ArrayCollection(item);
+			}
+			
+			private function formateaTipoPers():void{
+				var cont:int = _xmlTipoPers.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlTipoPers.Table[i].CODIGO.toString();	
+					oItem.nombre = _xmlTipoPers.Table[i].DESCRIPCION;
+					item.push(oItem);
+				}
+				tipoPersObj = new ArrayCollection(item);
+			}
+			
+			public function init(info:DatosAcred):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				var i:int;
+				du = new Utils();
+				global = new Globales();
+			 
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlTipoPers = new XML(evt.result.toString());
+						
+					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						_xmlOrigen = new XML(evt.result.toString());
+						
+						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+							_xmlDestino = new XML(evt.result.toString());
+					
+							du.rCursor();
+							du.closeWs(wsCat);
+							
+							if(_xmlTipoPers.elements().length() > 0){
+								formateaTipoPers();
+								 
+							}
+							
+							if (_xmlOrigen.elements().length() > 0){
+								formateaOrigen();
+								 
+							}
+							
+							if (_xmlDestino.elements().length() > 0){
+								formateaDestino();
+								 
+							}
+							
+							if (info != null){
+								for(i = 0; i < tipoPersObj.length; i++){
+									if (tipoPersObj[i].id == info.tipoPers){										
+										txtTipoPers.text = tipoPersObj[i].nombre;
+										break;
+									}
+								}
+								for(i = 0; i < origenObj.length; i++){
+									if (origenObj[i].id == info.origen){
+										txtOrigen.text = origenObj[i].nombre;
+										break;
+									}
+								}
+								for(i = 0; i < destinoObj.length; i++){
+									if (destinoObj[i].id == info.destino){
+										txtDestino.text = destinoObj[i].nombre;
+										break;
+									}
+								}
+							}
+						});
+						//Obtiene informacion de Destino de los recursos de la actividad
+						wsCat.getCatalogoGral.send(34);
+					});
+					//Obtiene informacion de Origen de los recursos de la actividad
+					wsCat.getCatalogoGral.send(33);
+				});
+				//Obtiene informacion de los Tipos de Persona 
+				wsCat.getCatalogoGral.send(35);
+			}
+			
+			 
+	]]>
+	</mx:Script>
+	<mx:FormItem label="Tipo Persona:">
+		<mx:TextInput width="287" id="txtTipoPers" editable="false"/>
+	</mx:FormItem>
+	<mx:FormItem label="Origen de Recursos:">
+		<mx:TextInput width="287" id="txtOrigen" editable="false"/>
+	</mx:FormItem>
+	<mx:FormItem label="Destino de Recursos:">
+		<mx:TextInput width="287" id="txtDestino" editable="false"/>
+	</mx:FormItem>
+</mx:Form>

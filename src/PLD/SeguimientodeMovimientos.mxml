@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="620" height="408" backgroundAlpha="1.0" 
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="540" height="408" backgroundAlpha="1.0" 
 	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
-	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:control="CONTROL.*" xmlns:Data="Data.*">
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:local="CONTROL.*" xmlns:Data="Data.*">
 	
 	<mx:Script>
 		<![CDATA[
@@ -9,7 +9,6 @@
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
-			import mx.containers.TitleWindow;
 			import mx.controls.Alert;
 			import mx.core.Application;
 			import mx.effects.easing.Elastic;	
@@ -27,15 +26,15 @@
 			private var du:Utils;
 			private var global:Globales;
 		
-			private function exportar():void{
+			public function exportar():void{
 				var dgE:ExcelExportXls = new ExcelExportXls(); 
 				dgE.loadDGInExcel(dgReporte,null,titulo);		
 			}
 		
-			private function generar(event:Event):void{	
-				if(comAcredCiclo.valida() == true){
-					var codigo:String = comAcredCiclo.txtAcred.text;
-					var ciclo:String = comAcredCiclo.txtCiclo.text;
+			public function generar(event:Event):void{	
+				/*if(comFiltroGrupoCiclo.valida() == true){
+					var grupo:String = comFiltroGrupoCiclo.txtGrupo.text;
+					var ciclo:String = comFiltroGrupoCiclo.txtCiclo.text;
 					initConexion();
 					du.sCursor();
 							
@@ -61,8 +60,8 @@
 							lblTotal.text = "";
 						}
 					});
-					wsMS.getRepSeguimientoMovs.send(codigo, ciclo);	
-				}
+					wsMS.getRepHistPrnAcred.send(grupo, ciclo);	
+				}*/
 			}			
 						
 			public function initApp():void{
@@ -70,9 +69,9 @@
 				du = new Utils();
 				rep = "0";
 				titulo = "Seguimiento de Movimientos";
-				comAcredCiclo.init("0",titulo);
-				comAcredCiclo.addEventListener("enviar",generar);
-				comAcredCiclo.addEventListener("limpiar",limpiar);
+				comFiltroGrupoCiclo.init("0",titulo);
+				comFiltroGrupoCiclo.addEventListener("enviar",generar);
+				comFiltroGrupoCiclo.addEventListener("limpiar",limpiar);
 			}		
 			
 			private function initConexion():void{				
@@ -81,7 +80,7 @@
 				wsMS.loadWSDL();
 			}	
 		
-			private function limpiar(event:Event):void{
+			public function limpiar(event:Event):void{
 				dgReporte.dataProvider = null;
 				lblTotal.text = "";
 				btnExportar.enabled = false;
@@ -90,20 +89,16 @@
 		]]>
 	</mx:Script>
 	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
-	<mx:DataGrid id="dgReporte" x="18.45" y="182" width="580" visible="true" height="187" horizontalScrollPolicy="auto">
+	<mx:DataGrid id="dgReporte" x="18.45" y="182" width="500" visible="true" height="187" horizontalScrollPolicy="auto">
 		<mx:columns>
-			<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCLNS" width="90"/>
-			<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMCLNS" width="180"/>
-			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="55"/>
-			<mx:DataGridColumn headerText="FECHA" dataField="FECHA" width="90"/>
-			<mx:DataGridColumn headerText="MONTO" dataField="MONTO" width="90"/>
-			<mx:DataGridColumn headerText="PAGADO CAPITAL" dataField="CAPITAL" width="120"/>
-			<mx:DataGridColumn headerText="PAGADO INTERES" dataField="INTERES" width="120"/>
-			<mx:DataGridColumn headerText="PAGADO RECARGOS" dataField="RECARGOS" width="120"/>
-			<mx:DataGridColumn headerText="CUENTA" dataField="CDGCB" width="90"/>							
+			<mx:DataGridColumn headerText="FECHA" dataField="CDGCL" width="90"/>
+			<mx:DataGridColumn headerText="MONTO" dataField="NOMBRE_CL" width="90"/>
+			<mx:DataGridColumn headerText="PAGADO CAPITAL" dataField="CDGNS" width="120"/>
+			<mx:DataGridColumn headerText="PAGADO INTERES" dataField="GRUPO" width="120"/>
+			<mx:DataGridColumn headerText="CUENTA" dataField="NOMBRE_CL" width="90"/>							
 		</mx:columns>
 	</mx:DataGrid>
-	<mx:Button id="btnExportar" x="495.45" y="146" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Button id="btnExportar" x="414.45" y="146" label="Exportar Excel" click="exportar()" enabled="false"/>
 	<mx:Label id="lblTotal" x="18.45" y="377" width="500" fontWeight="bold" fontStyle="italic" fontSize="12"/>
-	<control:FiltroAcredCiclo id="comAcredCiclo"/>
+	<local:FiltroAcredCiclo id="comFiltroGrupoCiclo"/>
 </mx:Canvas>

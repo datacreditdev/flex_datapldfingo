@@ -8,10 +8,8 @@
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
-			import mx.containers.TitleWindow;
 			import mx.controls.Alert;
 			import mx.controls.DataGrid;
-			import mx.controls.dataGridClasses.DataGridItemRenderer;  
 			import mx.core.Application;
 			import mx.effects.easing.Elastic;
 			import mx.events.CloseEvent;
@@ -30,7 +28,7 @@
 			public var _xmlAcred:XML = new XML();
 			
 			public var wsMS:WebService;	
-			public var du:Utils;
+			private var du:Utils;
 			private var global:Globales;
 			
 			//variables que especifican el indice del elemento 
@@ -121,6 +119,7 @@
 					this.vScroll = dgAcred.verticalScrollPosition;
 					var acred:String = dgAcred.selectedItem.CODIGO;
 					comMttoAcredInd.addEventListener(Event.REMOVED_FROM_STAGE, actualizarAcred);
+					comMttoAcredInd.setEstadoFormularios(false);
 					comMttoAcredInd.cargaInfoAcred(acred);
 				}
 				else
@@ -128,7 +127,6 @@
 			}
 		]]>
 	</mx:Script>
-	
 	<mx:Canvas width="860" height="510" backgroundColor="#ffffff" backgroundAlpha="1.0">
 		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="820.5" height="400" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="798.5" height="378"

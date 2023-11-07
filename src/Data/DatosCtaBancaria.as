@@ -9,6 +9,8 @@ package Data
 		public var numero:String;
 		public var cdgCB:String;
 		public var nombre:String;
+		public var clabe:String;
+		public var swift:String;
 		public var tipoCta:String;
 		public var cdgCBAsoc:String;
 		public var titular:String;

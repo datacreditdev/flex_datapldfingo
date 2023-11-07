@@ -300,7 +300,7 @@
 		<mx:Label id="lblClave" x="36" y="41" text="Clave:"/>
 		<mx:Label id="lblCuentas" x="23" y="133" text="Cuentas:"/>
 		<mx:TextInput id="txtCodigo" x="79" y="10" width="50" maxChars="3" editable="false"/>
-		<mx:TextInput id="txtClave" x="79" y="40" width="109" maxChars="6"/>
+		<mx:TextInput id="txtClave" x="79" y="40" width="109" maxChars="10"/>
 		<mx:DateField id="dtfFecha" width="109" x="79" y="70"/>
 		<mx:TextInput id="txtAlias" x="79" y="100" width="190"/>
 		<mx:DataGrid id="dgCuentas" x="79" y="130" height="138" width="371.75">

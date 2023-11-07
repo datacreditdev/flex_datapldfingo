@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:FormsPLD="PLD.Forms.*" layout="absolute" width="540" height="560" 
-	showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*" creationComplete="initApp()" 
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:FormsPLD="PLD.Forms.*" layout="absolute" width="540" height="590" 
+	showCloseButton="true" close="cerrar()" xmlns:Forms="PLD.Forms.*" creationComplete="initApp()" 
 	creationPolicy="all">
 	
 	<mx:Script>
@@ -10,7 +10,6 @@
 			import Data.PdfExport;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
-			import mx.containers.TitleWindow;	
 			import mx.controls.Alert;
 			import mx.core.Application;
 			import mx.effects.easing.Elastic;
@@ -31,6 +30,11 @@
 			public var titulo:String;
 			private var du:Utils;
 			private var global:Globales;
+			private var estado:Boolean;
+			
+			public function setEstadoFormularios(estado:Boolean):void{
+				this.estado = estado;
+			}
 			
 			public function cargaInfoAcred(acred:String):void{
 				var wsCat:WebService = new WebService;
@@ -128,10 +132,10 @@
 				info.origen = _xmlAcred.Table[0].CDGORIREC;
 				info.destino = _xmlAcred.Table[0].CDGDESREC;
 			
-				formDPAcred.init(info, currentState);
-				formDirAcred.init(info, currentState);
+				formDPAcred.init(info);
+				formDirAcred.init(info);
 				formOtroAcred.init(info);
-				formPLDAcred.init(info, currentState);
+				formPLDAcred.init(info);
 				formEvAcred.init(info);
 			}
 		]]>
@@ -150,7 +154,8 @@
 			<Forms:FormPLDAcred id="formPLDAcred" x="31.5" width="455" y="44"/>
 		</mx:Canvas>
 		<mx:Canvas label="Evaluación" width="100%" height="100%">
-			<FormsPLD:FormNivelRiesgo id="formEvAcred" x="1" width="516" y="0" height="468"/>
+			<FormsPLD:FormNivelRiesgo id="formEvAcred" x="1" width="516" y="0" height="470"/>
 		</mx:Canvas>
 	</mx:TabNavigator>
+	<mx:Button id="btnCancelar" x="490" y="518" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
 </mx:TitleWindow>

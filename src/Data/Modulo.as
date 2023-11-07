@@ -103,8 +103,7 @@ package Data
 		public var frm_125:AjustesdeComisionySeguro;
 		public var frm_126:AnalisisdeAlertas;
 		public var frm_127:IdentificaciondeAcreditados;
-		public var frm_128:ArchivoLavadoDineroCNBV;
-		public var frm_129:PLD.HistoricodePrestamosAcreditado;
+		public var frm_129:PLD.HistoricodePrestamosdeAcreditado;
 		public var frm_130:SeguimientodeMovimientos;
 		public var frm_131:ParametrosPLD;
 		

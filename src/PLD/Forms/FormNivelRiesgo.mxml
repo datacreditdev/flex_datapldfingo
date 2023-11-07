@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="514" height="462" creationPolicy="all" xmlns:Data="Data.*">
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="518" height="470" creationPolicy="all" xmlns:Data="Data.*">
 	<mx:Metadata>
 		[Event(name="enviarDatosAcred", type="Data.EventAcred")]
 	</mx:Metadata>
@@ -13,8 +13,7 @@
 			import mx.controls.Alert;
 			import mx.validators.Validator;
 			import mx.collections.ArrayCollection;
-			import mx.core.Application;
-			import mx.containers.TitleWindow;			
+			import mx.core.Application;			
 			import mx.managers.PopUpManager;
 			import mx.effects.easing.Elastic;
 			import mx.rpc.soap.WebService;
@@ -35,7 +34,6 @@
 			private var vResult:ValidationResultEvent;
 			
 			private function formateaRegistro():void{
-				var i:int;
 				var cont:int = _xmlReg.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -44,7 +42,7 @@
 				oItem.fecha = "--Seleccionar--";
 				item.push(oItem);	
 				
-				for(i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.fecha = _xmlReg.Table[i].FECREG;
 					item.push(oItem);
@@ -76,7 +74,7 @@
 				});
 				//Obtiene el Listado de los distintos Analisis de Nivel de Riesgo del Acreditado
 				params[0] = acred;
-				wsCat.getListado.send(51, params);	
+				wsCat.getListado.send(48, params);	
 			}
 			
 			public function initConexion():void{				
@@ -108,7 +106,7 @@
 						lblTipoPers.text = _xmlNiv.Table[0].TIPOPERS;
 						lblAntAct.text = _xmlNiv.Table[0].ANTACT; 
 						lblActEco.text = _xmlNiv.Table[0].ACTECO;
-						lblUbicNeg.text = _xmlNiv.Table[0].UBICNEG;
+						lblTipoCred.text = _xmlNiv.Table[0].TIPOCRED;
 						lblHist.text = _xmlNiv.Table[0].HISTORIAL;
 						lblMonto.text = _xmlNiv.Table[0].MONTO;
 						lblOrigen.text = _xmlNiv.Table[0].ORIGEN;
@@ -120,7 +118,7 @@
 						lblTipoPers.text = "";
 						lblAntAct.text = "";
 						lblActEco.text = "";
-						lblUbicNeg.text = "";
+						lblTipoCred.text = "";
 						lblHist.text = "";
 						lblMonto.text = "";
 						lblOrigen.text = "";
@@ -135,12 +133,12 @@
 			}
 	]]>
 	</mx:Script>
-	<mx:Label text="Fecha Evaluación:" x="99" y="13"/>
-	<mx:ComboBox id="cboRegistro" labelField="fecha" x="200" y="10" width="140" change="selecNivelRiesgo()"/>
-	<mx:Canvas styleName="canvasMod" x="9" y="42" height="418" width="496"> 
-		<mx:Canvas y="24" styleName="canvasMod" width="482" height="124" x="6">
-			<mx:Form x="1" y="1" width="479" height="121" verticalScrollPolicy="off">
-				<mx:FormItem label="Nacionalidad:" id="ubicacion" visible="true">
+	<mx:Label text="Fecha Evaluación:" x="101" y="13"/>
+	<mx:ComboBox id="cboRegistro" labelField="fecha" x="202" y="10" width="140" change="selecNivelRiesgo()"/>
+	<mx:Canvas styleName="canvasMod" x="11" y="42" height="418" width="496"> 
+		<mx:Canvas y="27" styleName="canvasMod" width="482" height="101" x="6">
+			<mx:Form x="1" y="1" width="479" height="98" verticalScrollPolicy="off">
+				<mx:FormItem label="Ubicación Geográfica:" id="ubicacion" visible="true">
 					<mx:Label id="lblUbicacion"/>
 				</mx:FormItem>
 				<mx:FormItem label="Tipo Persona:" id="tipoPers" visible="true">
@@ -149,23 +147,23 @@
 				<mx:FormItem label="Antigüedad Actividad:" id="antAct" visible="true">
 					<mx:Label id="lblAntAct"/>
 				</mx:FormItem>
-				<mx:FormItem label="Historial:" id="historial" visible="true">
-					<mx:Label id="lblHist"/>
-				</mx:FormItem>
 			</mx:Form>
 		</mx:Canvas>
-		<mx:Canvas y="175" styleName="canvasMod" width="482" height="76" x="6">
-			<mx:Form x="1" y="1" width="478" height="73" verticalScrollPolicy="off">
+		<mx:Canvas y="155" styleName="canvasMod" width="482" height="50" x="6">
+			<mx:Form x="1" y="1" width="478" height="45" verticalScrollPolicy="off" horizontalScrollPolicy="off">
 				<mx:FormItem label="Actividad Económica:" id="actEco" visible="true">
 					<mx:Label id="lblActEco"/>
 				</mx:FormItem>
-				<mx:FormItem label="Ubicación Negocio:" id="ubicNeg" visible="true">
-					<mx:Label id="lblUbicNeg"/>
-				</mx:FormItem>
 			</mx:Form>
 		</mx:Canvas>
-		<mx:Canvas y="278" styleName="canvasMod" width="482" height="102" x="6">
-			<mx:Form x="1" y="0" width="478" height="100" verticalScrollPolicy="off">
+		<mx:Canvas y="232" styleName="canvasMod" width="482" height="148" x="6">
+			<mx:Form x="1" y="0" width="478" height="145" verticalScrollPolicy="off">
+				<mx:FormItem label="Tipo Crédito:" id="tipoCred" visible="true">
+					<mx:Label id="lblTipoCred"/>
+				</mx:FormItem>
+				<mx:FormItem label="Historial:" id="historial" visible="true">
+					<mx:Label id="lblHist"/>
+				</mx:FormItem>
 				<mx:FormItem label="Monto:" id="monto" visible="true">
 					<mx:Label id="lblMonto"/>
 				</mx:FormItem>
@@ -179,8 +177,8 @@
 		</mx:Canvas>
 		<mx:Label text="Nivel Riesgo:" visible="true" fontStyle="italic" fontWeight="bold" fontSize="13" x="155" y="387"/>
 		<mx:Label id="lblNivel" fontStyle="italic" fontWeight="bold" fontSize="13" x="249" y="387"/>		
-		<mx:Label text="Información Personal" x="8" y="5"/>
-		<mx:Label text="Actividad Económica" x="7" y="156"/>
-		<mx:Label text="Productos y Servicios" x="7" y="259"/>
+		<mx:Label text="Información Personal" x="8" y="8"/>
+		<mx:Label text="Actividad Económica" x="7" y="136"/>
+		<mx:Label text="Productos y Servicios" x="7" y="213"/>
 	</mx:Canvas>
 </mx:Canvas>

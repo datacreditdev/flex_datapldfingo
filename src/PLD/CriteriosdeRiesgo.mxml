@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" height="100%" width="100%" xmlns:forms="forms.*" 
+	xmlns:Data="Data.*" xmlns:Administracion="Administracion.*" creationPolicy="all" creationComplete="initApp()">
+
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.Utils;
+		import Data.ExcelExportXls;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.CloseEvent;
+		import mx.events.EffectEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.utils.ArrayUtil;  
+		import mx.validators.Validator;	
+		
+		private var _xmlCrit:XML =  new XML();
+		private var _xmlFactor:XML =  new XML();
+		private var _xmlInfo:XML =  new XML();
+		private var _xmlRep:XML =  new XML();
+		private var _xmlTipo:XML = new XML();
+		
+		private var nivelObj:ArrayCollection = new ArrayCollection();
+		private var critObj:ArrayCollection = new ArrayCollection();
+		private var factorObj:ArrayCollection = new ArrayCollection();
+		private var tipoObj:ArrayCollection = new ArrayCollection();
+		
+		private var global:Globales;
+		private var du:Utils;
+		public var wsMS:WebService;
+		public var wsRep:WebService;		
+		public var titulo:String;
+		
+		private function cargaCriterio():void{
+			critObj.removeAll();
+			critObj.refresh();
+			
+			nivelObj.removeAll();
+			nivelObj.refresh();
+			
+			cboCriterio.selectedIndex = 0;
+					
+			if(cboTipoCrit.selectedItem.id != ""){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array();
+			
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlCrit = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlCrit.elements().length() > 0){
+						formateaCriterio();
+						cboCriterio.dataProvider = critObj;									
+					} 					
+				});
+				params[0] = cboTipoCrit.selectedItem.id;
+				wsCat.getCatalogoGral.send(64, params);
+			}
+		}
+		
+		private function cargaInfoCriterio():void{
+			nivelObj.removeAll();
+			nivelObj.refresh();
+					
+			if(cboCriterio.selectedItem.id != ""){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array();
+			
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlInfo = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					formateaNivel();
+					cboNivel.dataProvider = nivelObj;
+					
+					if (_xmlInfo.elements().length() > 0){
+						for(var i:int = 0; i < nivelObj.length; i++){
+							if(String(_xmlInfo.Table[0].VALORSOFOM) == String(nivelObj[i].id)){
+								cboNivel.selectedIndex = i;	
+							}							
+						}
+					} 					
+				});
+				params[0] = cboCriterio.selectedItem.id;
+				wsCat.getInfoRegistro.send(34, params);
+			}
+		}
+		
+		private function cargaTipoCrit():void{
+			tipoObj.removeAll();
+			tipoObj.refresh();
+			
+			critObj.removeAll();
+			critObj.refresh();
+					
+			nivelObj.removeAll();
+			nivelObj.refresh();
+			
+			cboTipoCrit.selectedIndex = 0;
+					
+			if(cboFactor.selectedItem.id != ""){
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array();
+			
+				du.initWsCat(wsCat);
+				du.sCursor();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlTipo = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsCat);
+					
+					if (_xmlTipo.elements().length() > 0){
+						formateaTipoCrit();
+						cboTipoCrit.dataProvider = tipoObj;									
+					} 					
+				});
+				params[0] = cboFactor.selectedItem.id;
+				wsCat.getCatalogoGral.send(63, params);
+			}
+		}
+		
+		private function exportar():void{
+			if(validaExp()){
+				initConexionRep();
+				du.sCursor();
+				
+				var factor:String = cboFactor.selectedItem.id;
+				var tipoCrit:String = cboTipoCrit.selectedItem.id;
+						
+				du.ejecutaWsMethod(wsRep,function(evt:ResultEvent):void {											
+					_xmlRep = new XML(evt.result.toString());
+					
+					du.rCursor();
+					du.closeWs(wsRep);
+					
+					dgReporte.dataProvider = null;
+					
+					if (_xmlRep.elements().length() > 0){
+						dgReporte.dataProvider = _xmlRep.Table;
+						var dgE:ExcelExportXls = new ExcelExportXls(); 
+						dgE.loadDGInExcel(dgReporte,null,titulo);									
+					} 					
+				});
+				wsRep.getRepCriterioRiesgo.send(factor, tipoCrit);
+			}
+		}
+		
+		private function guardaCriterio():void{
+			if (valida()){
+		     	initConexion();// falta iniciar conexion
+				du.sCursor();
+				
+				var tipoCrit:String = cboTipoCrit.selectedItem.id;
+				var criterio:String = cboCriterio.selectedItem.id;
+				var nivel:String = cboNivel.selectedItem.id;
+				
+				global.bloquear();
+				wsMS.addEventListener(ResultEvent.RESULT, setAccionCriterioRiesgo);
+			    wsMS.setAccionCriterioRiesgo.send(tipoCrit, criterio, nivel);			    								
+			}		    									
+		}
+		
+		 private function setAccionCriterioRiesgo(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			global.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionCriterioRiesgo);
+			wsMS = null;
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1")				 
+				Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);				 		  
+			else
+ 				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iError);	
+		}
+		
+		private function formateaCriterio():void {
+			var cont:int = _xmlCrit.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			oItem = new Object();
+			oItem.id = "";	
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.id = _xmlCrit.Table[i].CODIGO;	
+				oItem.desc = _xmlCrit.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			critObj = new ArrayCollection(item);
+		}
+		
+		private function formateaFactor():void {
+			var cont:int = _xmlFactor.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			oItem = new Object();
+			oItem.id = "";	
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.id = _xmlFactor.Table[i].CODIGO;	
+				oItem.desc = _xmlFactor.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			factorObj = new ArrayCollection(item);
+		}
+		
+		private function formateaNivel():void {
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			oItem = new Object();
+			oItem.id = "";	
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "1";	
+			oItem.desc = "Bajo";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "2";	
+			oItem.desc = "Medio";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "3";	
+			oItem.desc = "Alto";
+			item.push(oItem);
+			
+			nivelObj = new ArrayCollection(item);
+		}
+		
+		private function formateaTipoCrit():void {
+			var cont:int = _xmlTipo.elements().length();
+			var oItem:Object;
+			var item:Array = new Array();
+			
+			oItem = new Object();
+			oItem.id = "";	
+			oItem.desc = "--Seleccionar--";
+			item.push(oItem);
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.id = _xmlTipo.Table[i].CODIGO;	
+				oItem.desc = _xmlTipo.Table[i].DESCRIPCION;
+				item.push(oItem);
+			}
+			tipoObj = new ArrayCollection(item);
+		}
+		
+		public function initApp():void{
+			global = new Globales();
+			du = new Utils();
+			titulo = "Catálogo de Criterios de Riesgo";
+			lblTitulo.text = titulo.toUpperCase();
+			obtieneFactor();
+		}
+		
+		public function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function initConexionRep():void{				
+			wsRep = new WebService();			
+			wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
+			wsRep.loadWSDL();
+		}
+		
+		private function modificaCriterio():void{
+			cargaInfoCriterio();
+		}
+		
+		private function modificaFactor():void{
+			cargaTipoCrit();
+		}
+		
+		private function modificaTipo():void{
+			cargaCriterio();
+		}
+		
+	 	private function obtieneFactor():void{
+	 		var wsCat:WebService = new WebService;
+			var params:Array = new Array();
+	 		
+	 	    du.initWsCat(wsCat);
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlFactor = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsCat);
+				
+				if (_xmlFactor.elements().length() > 0){
+					formateaFactor();
+					cboFactor.dataProvider = factorObj;									
+				} 					
+			});
+			wsCat.getCatalogoGral.send(62);
+	 	}
+		
+		private function limpiar():void{
+			cboFactor.selectedIndex = 0;
+			cboTipoCrit.selectedIndex = 0;
+			cboFactor.selectedIndex = 0;
+			cboNivel.selectedIndex = 0;
+		}
+		
+		private function valida():Boolean{
+			if(cboFactor.selectedIndex == 0){
+				Alert.show("Debe seleccionar el Factor de Riesgo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cboTipoCrit.selectedIndex == 0){
+				Alert.show("Debe seleccionar el Tipo de Criterio.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cboCriterio.selectedIndex == 0){
+				Alert.show("Debe seleccionar el Criterio de Riesgo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cboNivel.selectedIndex == 0){
+				Alert.show("Debe seleccionar el Nivel de Riesgo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}
+		
+		private function validaExp():Boolean{
+			if(cboFactor.selectedIndex == 0){
+				Alert.show("Debe seleccionar el Factor de Riesgo.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(cboTipoCrit.selectedIndex == 0){
+				Alert.show("Debe seleccionar el Tipo de Criterio.",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}
+				
+		]]>
+	</mx:Script>
+	<mx:Canvas width="460" height="220" backgroundColor="#ffffff" backgroundAlpha="1.0" id="canvas1">
+		<mx:Label id="lblTitulo" x="21" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="21" y="39" width="420.5" height="140" styleName="canvasMod">
+			<mx:Label id="lblNivel" x="36" y="108" text="Nivel Riesgo:"/>
+			<mx:Label id="lblFactor" x="13" y="13" text="Factor de Riesgo:"/>
+			<mx:ComboBox id="cboFactor"  tabIndex="3" x="111" y="10" width="290" labelField="desc" change="modificaFactor()"/>
+			<mx:Label id="lblTipoCrit"  x="23" y="45" text="Tipo de Criterio:"/>
+			<mx:Label id="lblCriterio"  x="10" y="77" text="Criterio de Riesgo:"/>
+			<mx:ComboBox id="cboTipoCrit"  tabIndex="4" x="111" y="42" width="290" labelField="desc" change="modificaTipo()"/>
+			<mx:ComboBox id="cboCriterio"  tabIndex="4" x="111" y="74" width="290" labelField="desc" change="modificaCriterio()"/>
+			<mx:ComboBox id="cboNivel"  tabIndex="4" x="111" y="105" width="100" labelField="desc"/>
+		</mx:Canvas>
+		<mx:Button id="btnGuardar"  tabIndex="7" x="293.5" y="186" click="guardaCriterio()" label="Guardar"/>
+		<mx:Button id="btnExportar"  tabIndex="7" x="371.5" y="186" click="exportar()" label="Exportar"/>
+		<mx:DataGrid id="dgReporte" x="281" y="11" width="160.5" visible="false">
+			<mx:columns>
+				<mx:DataGridColumn headerText="FACTOR RIESGO" dataField="FACT_RIESGO"/>
+				<mx:DataGridColumn headerText="TIPO CRITERIO" dataField="TIPO_CRITERIO"/>
+				<mx:DataGridColumn headerText="CRITERIO RIESGO" dataField="CRITERIO_RIESGO"/>
+				<mx:DataGridColumn headerText="NIVEL RIESGO" dataField="NIVEL_RIESGO"/>
+			</mx:columns>
+		</mx:DataGrid>
+	</mx:Canvas>
+</mx:Canvas>

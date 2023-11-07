@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="370" creationPolicy="all">
+
+	<mx:Script>
+		<![CDATA[
+			import Data.EventAcred;
+			import Data.DatosAcred;
+			import Data.Utils;
+			import Data.Globales;
+			import mx.validators.Validator;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;			
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.effects.easing.Elastic;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.StringUtil;
+			
+			public function init(info:DatosAcred):void{
+				if (info != null){
+					txtCalle.text = info.calle;
+					txtEntreCalles.text = info.entreCalles;
+					txtTelefono.text = info.telefono;
+					txtCodPostal.text = info.codPostal;
+					txtEntFed.text = info.entFed;
+					txtMunicipio.text = info.municipio;
+					txtLocalidad.text = info.localidad;
+					txtColonia.text = info.colonia;						
+				}
+			}
+			
+			
+	]]>
+	</mx:Script>
+	
+	<mx:FormItem label="Calle:" id="calle" visible="true" x="111.5" y="22" width="224">
+		<mx:TextInput id="txtCalle" maxChars="80" width="170" editable="false"/>
+	</mx:FormItem>
+	<mx:FormItem label="Entre las callles:" id="entreCalles" visible="true" x="59.5" y="54" width="276">
+		<mx:TextInput id="txtEntreCalles" width="170" editable="false"/>	
+	</mx:FormItem>
+	<mx:FormItem label="Teléfono:" id="telefono" visible="true" x="92.5" y="86" width="243">
+		<mx:TextInput id="txtTelefono"  width="171" editable="false"/>
+	</mx:FormItem>
+	<mx:FormItem label="Código Postal:" id="codPostal" visible="true" x="69.5" y="118" width="266">
+		<mx:TextInput id="txtCodPostal"  width="172" editable="false"/>
+	</mx:FormItem>
+	<mx:FormItem label="Entidad Federativa:" id="EntFed" visible="true" x="45.5" y="150" width="290">
+		<mx:TextInput id="txtEntFed" width="173"  editable="false"/>
+	</mx:FormItem>
+	<mx:FormItem label="Municipio:" id="municipio" visible="true" x="89.5" y="182" width="246">
+		<mx:TextInput id="txtMunicipio" width="174" editable="false"/>
+	</mx:FormItem>
+	<mx:FormItem label="Localidad:" id="localidad" visible="true" x="89.5" y="214" width="247">
+		<mx:TextInput id="txtLocalidad" width="173"  editable="false"/>
+	</mx:FormItem>
+	<mx:FormItem label="Colonia:" id="colonia" visible="true" x="99.5" y="246" width="237">
+		<mx:TextInput id="txtColonia" width="175"  editable="false"/>
+	</mx:FormItem>
+</mx:Canvas>

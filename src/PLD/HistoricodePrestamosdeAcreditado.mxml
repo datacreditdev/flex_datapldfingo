@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="408" backgroundAlpha="1.0" 
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="800" height="420" backgroundAlpha="1.0" 
 	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
-	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:local="*" xmlns:Data="Data.*">
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:local="CONTROL.*" xmlns:Data="Data.*">
 	
 	<mx:Script>
 		<![CDATA[
@@ -9,7 +9,6 @@
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
-			import mx.containers.TitleWindow;
 			import mx.controls.Alert;
 			import mx.core.Application;
 			import mx.effects.easing.Elastic;	
@@ -23,7 +22,6 @@
 			
 			public var wsMS:WebService;
 			public var titulo:String;
-			public var rep:String;
 			private var du:Utils;
 			private var global:Globales;
 		
@@ -32,9 +30,10 @@
 				dgE.loadDGInExcel(dgReporte,null,titulo);		
 			}
 		
-			private function generar():void{	
-				if(valida()){
-					var acred:String = txtAcred.text;
+			private function generar(event:Event):void{	
+				if(comFiltroAcreditado.valida()){
+					var acred:String = comFiltroAcreditado.obtenerCodigo();
+					
 					initConexion();
 					du.sCursor();
 							
@@ -50,7 +49,7 @@
 						
 						var cont:Number = _xmlRep.elements().length()
 														
-						if(_xmlRep.elements().length() > 0){
+						if(cont > 0){
 							dgReporte.dataProvider = _xmlRep.Table;
 							btnExportar.enabled = true;
 							lblTotal.text = cont.toString() + " Registro(s)"; 
@@ -67,9 +66,10 @@
 			public function initApp():void{
 				global = new Globales();
 				du = new Utils();
-				rep = "0";
-				titulo = "Histórico de Préstamos Acreditado";
-				lblTitulo.text = titulo.toUpperCase();
+				titulo = "Histórico de Préstamos de Acreditado";
+				comFiltroAcreditado.init("0",titulo);
+				comFiltroAcreditado.addEventListener("enviar",generar);
+				comFiltroAcreditado.addEventListener("limpiar",limpiar);
 			}		
 			
 			private function initConexion():void{				
@@ -79,42 +79,45 @@
 			}	
 		
 			private function limpiar(event:Event):void{
-				dgReporte.dataProvider = null;
-				txtAcred.text = "";
 				lblTotal.text = "";
+				dgReporte.dataProvider = null;
 				btnExportar.enabled = false;
 			}
 			
-			private function valida():Boolean{
-				if(txtAcred.text == ""){
-					Alert.show("Capture el código de acreditado.",titulo,4,null,null,global.iAlert);
-					return false;
-				}
-				return true;
+			private function mostrarEdoCuenta():void{
+				var consulta:String;
+				var id:String;
+				var grupo:String;
+				var acred:String;
+				var ciclo:String;
+				var usuario:String = global.obtenerUsuario();
+				
+				id = "&id=59";
+				grupo = "&grupo=" + dgReporte.selectedItem.CDGNS;
+				acred = "&acred=" + dgReporte.selectedItem.CDGCL;
+				ciclo = "&ciclo=" + dgReporte.selectedItem.CICLO; 
+				usuario = "&usuario=" + usuario; 
+				consulta = global.urlPdf + id + grupo + acred + ciclo + usuario;
+				navigateToURL(new URLRequest(consulta), "_blank");
 			}
-			
 		]]>
 	</mx:Script>
-	<mx:DataGrid id="dgReporte" x="18.45" y="182" width="763.05" visible="true" height="187" horizontalScrollPolicy="on">
+	<mx:DataGrid id="dgReporte" x="18.45" y="184" width="763.05" visible="true" height="197" horizontalScrollPolicy="on" itemDoubleClick="mostrarEdoCuenta()" 
+		doubleClickEnabled="true">
 		<mx:columns>
 			<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
 			<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMBRE_CL" width="200"/>
+			<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="100"/>
+			<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="150"/>
 			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
 			<mx:DataGridColumn headerText="INICIO" dataField="FINICIO" width="80"/>
 			<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANTENTRE" width="125"/>
-			<mx:DataGridColumn headerText="SITUACION" dataField="SITUA" width="150"/>
+			<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION" width="150"/>
 			<mx:DataGridColumn headerText="% INCREMENTO" dataField="PORC_INC" width="125"/>	
-			<mx:DataGridColumn headerText="ASESOR" dataField="ASESOR" width="150"/>
+			<mx:DataGridColumn headerText="ASESOR" dataField="NOM_ASESOR" width="150"/>
 		</mx:columns>
 	</mx:DataGrid>
-	<mx:Button id="btnExportar" x="670" y="146" label="Exportar Excel" click="exportar()" enabled="false"/>
-	<mx:Label id="lblTotal" x="18.45" y="377" width="680.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
-	<mx:Label id="lblTitulo" x="16.5" y="10" width="260" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-	<mx:Canvas x="17.95" y="53.5" width="132.8" height="74.5" styleName="canvasMod" id="canvas1">
-		<mx:Label id="lblAcred" x="29.5" y="10" text="Acreditado" height="20"/>
-		<mx:TextInput id="txtAcred" x="29.5" y="28.5" maxChars="6" restrict="0-9" enter="generar()"/>
-	</mx:Canvas>
-	<mx:Label x="16.5" y="34" text="Criterios de Selección" width="124.25"/>
-	<mx:Button x="65" y="146" label="Generar" id="btnGenerar" click="generar()"/>
-	<mx:Button x="144" y="146" label="Limpiar" width="71" height="24" click="limpiar(event)" id="btnLimpiar"/>
+	<mx:Button id="btnExportar" x="678.5" y="152" label="Exportar Excel" click="exportar()" enabled="false"/>
+	<mx:Label id="lblTotal" x="18.45" y="389" width="680.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
+	<local:FiltroAcreditado id="comFiltroAcreditado"/>
 </mx:Canvas>

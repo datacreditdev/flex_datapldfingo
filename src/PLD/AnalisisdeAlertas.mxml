@@ -7,6 +7,7 @@
 		
 		import Data.Globales;
 		import Data.Utils;
+		import Data.ExcelExportXls;
 		import mx.collections.ArrayCollection;
 		import mx.controls.Alert;
 		import mx.core.Application;
@@ -26,8 +27,8 @@
 		public var estObj:ArrayCollection = new ArrayCollection();
 		public var infoObj:ArrayCollection = new ArrayCollection();
 		
-		private var du:Utils;
 		private var global:Globales;
+		private var du:Utils;
 		public var wsMS:WebService;	
 		public var tipoAccion:int;
 		public var titulo:String;
@@ -38,7 +39,7 @@
 		private function actualizarAlertas(event:Event):void{
 			consultar();
 		}
-		
+	
 		private function consultar():void{
 			var wsCat:WebService = new WebService;
 			var params:Array = new Array;
@@ -80,7 +81,6 @@
 			else
 				Alert.show("Debe seleccionar el estatus de la Alerta.",titulo,4,null,null,global.iAlert);	
 		}
-		
 		private function formateaEstatus():void{
 			var oItem:Object;
 			var item:Array = new Array;
@@ -89,8 +89,8 @@
 			estObj.refresh();
 			
 			oItem = new Object();
-			oItem.codigo = "0";
-			oItem.nombre = "--Seleccionar--";
+			oItem.codigo = "";
+			oItem.nombre = "-- Seleccione --";
 			item.push(oItem);	
 			
 			oItem = new Object();
@@ -108,32 +108,30 @@
 			
 		private function formateaInfo():void{
 			var oItem:Object;
-			var i:int;
 			var cont:int = _xmlInfo.elements().length();
 			var item:Array = new Array;
 			
 			infoObj.removeAll();
 			infoObj.refresh();
 			
-			for(i = 0; i < cont; i++){
+			for(var i:int = 0; i < cont; i++){
 				oItem = new Object();
-				oItem.FREG = _xmlInfo.Table[i].FREG;
+				//oItem.FREG = _xmlInfo.Table[i].FREG;
 				oItem.ALTA = _xmlInfo.Table[i].FALTA;
 				oItem.DESCALERTA = _xmlInfo.Table[i].DESCALERTA;
-				oItem.SECUENCIA = _xmlInfo.Table[i].SECUENCIA;
-				oItem.DESCRIPCION = _xmlInfo.Table[i].DESCRIPCION;
-				oItem.DESCTIPO = _xmlInfo.Table[i].DESCTIPO;
+				oItem.SECUENCIA = _xmlInfo.Table[i].SECUENCIA;//eSTE SI
+				//oItem.DESCRIPCION = _xmlInfo.Table[i].DESCRIPCION;
 				oItem.DESCESTATUS = _xmlInfo.Table[i].DESCESTATUS;
 				oItem.CDGCL = _xmlInfo.Table[i].CDGCL;
 				oItem.NOMCL = _xmlInfo.Table[i].NOMCL;
+				oItem.COD_ASESOR = _xmlInfo.Table[i].COD_ASESOR;
+				oItem.NOM_ASESOR = _xmlInfo.Table[i].NOM_ASESOR;
 				oItem.REP = Boolean(Number(_xmlInfo.Table[i].REP.toString()));
 				oItem.NOREP = Boolean(Number(_xmlInfo.Table[i].NOREP.toString()));
 				oItem.REGISTROPE = _xmlInfo.Table[i].REGISTROPE;
 				oItem.NOMREGPE = _xmlInfo.Table[i].NOMREGPE;
-				oItem.ACTUALIZAPE = _xmlInfo.Table[i].ACTUALIZAPE;
-				oItem.NOMACTPE = _xmlInfo.Table[i].NOMACTPE;
-				oItem.REPORTADO = _xmlInfo.Table[i].REPORTADO;
-				oItem.JUSTIFICA = _xmlInfo.Table[i].JUSTIFICA;
+				//oItem.DESCTIPO = _xmlInfo.Table[i].DESCTIPO;			
+			    //oItem.JUSTIFICA = _xmlInfo.Table[i].JUSTIFICA;
 				item.push(oItem);	
 			}
 			infoObj = new ArrayCollection(item);
@@ -147,12 +145,12 @@
 			formateaEstatus();
 			cboEstatus.dataProvider = estObj;
 		}		
-		
-		public function initConexion():void{				
+	
+		private function initConexionRep():void{				
 			wsMS = new WebService();			
-			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
 			wsMS.loadWSDL();
-		}	
+		}
 		
 		private function limpiar():void{
 			cboEstatus.selectedIndex = 0;
@@ -171,10 +169,9 @@
 			PopUpManager.centerPopUp(comDictamen);
 			comDictamen.init(alta, sec);
 		}
-				
+		 
 		]]>
 	</mx:Script>
-	
 	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
         allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
 	
@@ -196,12 +193,12 @@
 			doubleClickEnabled="true" itemDoubleClick="muestraDictamen()">
 			<Data:columns>
 				<mx:DataGridColumn headerText="FECHA" dataField="ALTA" width="90"/>
-				<mx:DataGridColumn headerText="TIPO" dataField="DESCALERTA" width="220"/>
+				<mx:DataGridColumn headerText="TIPO" dataField="DESCALERTA" width="290"/>
 				<mx:DataGridColumn headerText="ESTATUS" dataField="DESCESTATUS" width="80"/>
 				<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
 				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMCL" width="200"/>
-				<mx:DataGridColumn headerText="FUNCIONARIO" dataField="CDGPE" width="100"/>
-				<mx:DataGridColumn headerText="NOMBRE FUNCIONARIO" dataField="NOMPE" width="200"/>
+				<mx:DataGridColumn headerText="FUNCIONARIO" dataField="COD_ASESOR" width="100"/>
+				<mx:DataGridColumn headerText="NOMBRE FUNCIONARIO" dataField="NOM_ASESOR" width="200"/>
 				<mx:DataGridColumn headerText="REPORTADO" dataField="REP" textAlign="center" rendererIsEditor="true" width="90" editorDataField="selected">
 					<mx:itemRenderer>
 						<mx:Component>
@@ -218,8 +215,6 @@
 				</mx:DataGridColumn>
 				<mx:DataGridColumn headerText="USUARIO" dataField="REGISTROPE" width="80"/>
 				<mx:DataGridColumn headerText="NOMBRE USUARIO" dataField="NOMREGPE" width="150"/>
-				<mx:DataGridColumn headerText="DICTAMINÓ" dataField="ACTUALIZAPE" width="80"/>
-				<mx:DataGridColumn headerText="NOMBRE DICTAMINÓ" dataField="NOMACTPE" width="150"/>
 			</Data:columns>
 		</Data:RowColorDataGrid>
 		<mx:Label id="lblTotal" x="20.95" y="429" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>
