@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="490" height="140">
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		private var du:Utils;
+		private var global:Globales;
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var titulo:String;
+		private var opcion:int;
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		private function enviar():void{	
+			if(validar()){
+				dispatchEvent(new Event("enviar"));
+				cerrar();
+			}
+		}
+		
+		public function init(opcion:int):void{
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Registro de Miembro";
+			this.title = titulo;
+			this.opcion = opcion;
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			txtNombre.setFocus();
+		}
+		
+		public function obtenerNombre():String{
+			return txtNombre.text;
+		}
+		
+		public function obtenerOpcion():int{
+			return this.opcion;
+		}
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function validar():Boolean{
+			if (txtNombre.text == ""){
+				Alert.show("Debe capturar el nombre del miembro",titulo,4,null,null,global.iAlert);
+				return false;
+			}	
+			return true;
+		}
+		
+		]]>
+		
+	</mx:Script>
+	<mx:Canvas x="13" y="10" width="460" height="50" styleName="canvasMod">
+		<mx:Label id="lblNombre" x="17.8" y="13" text="Miembro:"/>
+		<mx:TextInput id="txtNombre" x="73.85" y="12" width="368.25"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="385" y="68" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="433" y="68" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

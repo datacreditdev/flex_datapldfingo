@@ -1,0 +1,503 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="650" 
+	height="580" xmlns:control="CONTROL.*">
+	
+	<mx:Validator id="fideicomisoV" source="{txtCodigo}" property="text" 
+	invalid="{txtCodigo.setFocus()}" triggerEvent="" requiredFieldError="Código Requerido"/>
+	
+	<mx:Validator id="numFidV" source="{txtNumFid}" property="text" 
+	invalid="{txtNumFid.setFocus()}" triggerEvent="" requiredFieldError="Número Requerido"/>
+	
+	<mx:Validator id="fecFidV" source="{dtfFechaFid}" property="text" 
+	invalid="{dtfFechaFid.setFocus()}" triggerEvent="" requiredFieldError="Fceha Requerida"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.DatosFideicomiso;
+		import Data.EventFideicomiso;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.CloseEvent;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.utils.StringUtil;
+		import mx.validators.Validator;	
+		
+		[Bindable]
+		private var info:DatosFideicomiso;
+		private var _xmlFid:XML = new XML();
+		private var _xmlPartFid:XML = new XML();
+		private var _xmlMiemCM:XML = new XML();
+		private var _xmlMiemCT:XML = new XML();
+		
+		private var miemCMObj:ArrayCollection = new ArrayCollection();
+		private var miemCTObj:ArrayCollection = new ArrayCollection();
+		private var partFidObj:ArrayCollection = new ArrayCollection();
+		
+		private var du:Utils;
+		private var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		
+		private function agregarPartFid(evt:Event):void{
+			var oItem:Object = new Object();
+			var comPartFid:MttoPartFid = evt.currentTarget as MttoPartFid;
+			
+			oItem.sec = "0";
+			oItem.nombre = comPartFid.obtenerNombre();
+			oItem.codFig = comPartFid.obtenerCodFigura();
+			oItem.nomFig = comPartFid.obtenerNomFigura();
+				
+			partFidObj.addItem(oItem);
+			partFidObj.refresh();
+				
+			dgPartes.dataProvider = partFidObj;
+		}
+		
+		private function agregarMiemFid(evt:Event):void{
+			var opcion:int;
+			var oItem:Object = new Object();
+			var comMiemFid:MttoMiemFid = evt.currentTarget as MttoMiemFid;
+			
+			opcion = comMiemFid.obtenerOpcion();
+			oItem.sec = "0";
+			oItem.nombre = comMiemFid.obtenerNombre();
+			
+			if(opcion == 1){
+				miemCMObj.addItem(oItem);
+				miemCMObj.refresh();
+				lstMiemCM.dataProvider = miemCMObj;
+			}
+			else if(opcion == 2){
+				miemCTObj.addItem(oItem);
+				miemCTObj.refresh();
+				lstMiemCT.dataProvider = miemCTObj;
+			}	
+		}
+		
+		private function cargarInfo(codigo:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			tipoAccion = 2; 
+			this.title = "Edición";
+			//Datos del Fideicomiso
+			info.cdgFid = codigo;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlFid = new XML(evt.result.toString()); 
+					
+				if (_xmlFid.elements().length() > 0){
+					llenarRegistros();
+				} 	
+				
+				du.ejecutaWsMethod(wsCat,function(ev:ResultEvent):void{
+					_xmlPartFid = new XML(ev.result.toString());
+					
+					if (_xmlPartFid.elements().length() > 0){
+						formatearPartFid();
+						dgPartes.dataProvider = partFidObj;	
+					}
+					else 
+						dgPartes.dataProvider = null;
+					
+					du.ejecutaWsMethod(wsCat,function(ev:ResultEvent):void{
+						_xmlMiemCM = new XML(ev.result.toString());
+						
+						if (_xmlMiemCM.elements().length() > 0){
+							formatearMiembro(1, _xmlMiemCM);
+							lstMiemCM.dataProvider = miemCMObj;	
+						}
+						else
+							lstMiemCM.dataProvider = null;
+						
+						du.ejecutaWsMethod(wsCat,function(ev:ResultEvent):void{
+							_xmlMiemCT = new XML(ev.result.toString());
+							
+							du.closeWs(wsCat);
+							du.rCursor();	
+							
+							if (_xmlMiemCT.elements().length() > 0){
+								formatearMiembro(2, _xmlMiemCT);
+								lstMiemCT.dataProvider = miemCTObj;	
+							}
+							else
+								lstMiemCT.dataProvider = null
+						});
+						params[0] = codigo;
+						wsCat.getListado.send(59, params);
+					});
+					params[0] = codigo;
+					wsCat.getListado.send(58, params);
+				});
+				params[0] = codigo;
+				wsCat.getListado.send(57, params);
+			});
+			params[0] = codigo;
+			wsCat.getInfoRegistro.send(42, params);
+		}
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		private function confirmarElimMiembro(opcion:int):void{
+			var titulo:String = "Miembro";
+			var ind:int;
+			
+			if(opcion == 1)
+				ind = lstMiemCM.selectedIndex;
+			else if(opcion == 2)
+				ind = lstMiemCT.selectedIndex;
+				
+			if(ind < 0){
+				Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+				return;
+			}				
+			Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,function(ev:CloseEvent):void{
+																					if(ev.detail == Alert.YES){
+																						if(opcion == 1){
+																							miemCMObj.removeItemAt(ind);
+																							miemCMObj.refresh();
+																							lstMiemCM.dataProvider = miemCMObj;
+																						}	
+																						else if(opcion == 2){
+																							miemCTObj.removeItemAt(ind);
+																							miemCTObj.refresh();
+																							lstMiemCT.dataProvider = miemCTObj;
+																						}
+																					}
+			},du.iQuest,4);
+		}
+		
+		private function confirmarElimPartFid():void{
+			var titulo:String = "Partes del Fideicomiso";
+			var ind:int = dgPartes.selectedIndex;
+				
+			if(ind < 0){
+				Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+				return;
+			}				
+			Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,function(ev:CloseEvent):void{
+																					if(ev.detail == Alert.YES){
+																						partFidObj.removeItemAt(ind);
+																						partFidObj.refresh();
+																						dgPartes.dataProvider = partFidObj;
+																					}
+			},du.iQuest,4);
+		}
+	
+		private function enviar():void{
+			var invalidArray:Array = Validator.validateAll([fideicomisoV, numFidV, fecFidV]);	
+			
+			if(invalidArray.length == 0){	
+				info.cdgFid = txtCodigo.text;
+				info.numFid = txtNumFid.text;
+				info.fechaFid = dtfFechaFid.text;
+				
+				info.arrSecPartFid = obtenerPartFid(0);
+				info.arrNomPartFid = obtenerPartFid(1);
+				info.arrFigPartFid = obtenerPartFid(2);
+				info.finFid = txtFinFid.text;
+				
+				info.arrSecMiemCM = obtenerMiembro(0);
+				info.arrMiemCM = obtenerMiembro(1);
+				info.presCM = txtPresCM.text;
+				info.secCM = txtSecCM.text;
+				
+				info.arrSecMiemCT = obtenerMiembro(2);
+				info.arrMiemCT = obtenerMiembro(3);
+				info.presCT = txtPresCT.text;
+				info.secCT = txtSecCT.text;
+				
+				info.nomDF = txtNomDF.text;
+				info.cargoDF = txtCargoDF.text;
+				info.emailDF = txtEmailDF.text;
+				info.telDF = txtTelDF.text;
+				info.guarda = true;
+			}
+			else
+				info.guarda = false;
+				
+			validar();
+		}
+		
+		private function formatearMiembro(tipo:int, _xmlInfo:XML):void{
+			var cont:int = _xmlInfo.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.sec = _xmlInfo.Table[i].SECUENCIA;
+				oItem.nombre = _xmlInfo.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			if(tipo == 1)	
+				miemCMObj = new ArrayCollection(item);
+			else if(tipo == 2)
+				miemCTObj = new ArrayCollection(item);
+		}
+		
+		private function formatearPartFid():void{
+			var cont:int = _xmlPartFid.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.sec = _xmlPartFid.Table[i].SECUENCIA;
+				oItem.nombre = _xmlPartFid.Table[i].NOMBRE;
+				oItem.codFig = _xmlPartFid.Table[i].CDGFIG;
+				oItem.nomFig = _xmlPartFid.Table[i].NOMFIG;
+				item.push(oItem);
+			}
+			partFidObj = new ArrayCollection(item);
+		}
+					
+		private function guardarFideicomiso():void{
+			initConexion();
+			du.sCursor();
+			//global.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionFideicomiso);
+			wsMS.setAccionFideicomiso.send(tipoAccion, info.cdgFid, info.numFid, info.fechaFid, info.arrSecPartFid, 
+										   info.arrNomPartFid, info.arrFigPartFid, info.finFid, info.arrSecMiemCM, 
+										   info.arrMiemCM, info.presCM, info.secCM, info.arrSecMiemCT, info.arrMiemCT, 
+										   info.presCT, info.secCT, info.nomDF, info.cargoDF, info.emailDF, info.telDF, 
+										   global.obtenerUsuario());	 
+		}
+	
+		public function init(tipo:int, codigo:String = null):void{
+			global = new Globales(); 
+			du = new Utils();
+			info = new DatosFideicomiso();
+			titulo = "Mantenimiento de Fideicomiso";
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			if(tipo == 1)
+				registrarInfoFideicomiso();
+			else if(tipo == 2)
+				cargarInfo(codigo);
+		}
+		
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function llenarRegistros():void{
+			txtCodigo.text = _xmlFid.Table[0].CODIGO;
+			txtNumFid.text = _xmlFid.Table[0].NUMERO;
+			dtfFechaFid.text = _xmlFid.Table[0].FECFID;
+			
+			txtFinFid.text = _xmlFid.Table[0].FINES;
+			
+			txtPresCM.text = _xmlFid.Table[0].PRESCM;
+			txtSecCM.text = _xmlFid.Table[0].SECCM;
+			
+			txtPresCT.text = _xmlFid.Table[0].PRESCT;
+			txtSecCT.text = _xmlFid.Table[0].SECCT;
+			
+			txtNomDF.text = _xmlFid.Table[0].NOMDF;
+			txtCargoDF.text = _xmlFid.Table[0].CARGODF;
+			txtEmailDF.text = _xmlFid.Table[0].EMAILDF;
+			txtTelDF.text = _xmlFid.Table[0].TELDF; 
+		}
+		
+		private function mostrarFormMiembro(opcion:int):void{
+			var comMiemFid:MttoMiemFid = new MttoMiemFid;
+			comMiemFid = MttoMiemFid(PopUpManager.createPopUp(this,MttoMiemFid,true));
+			comMiemFid.init(opcion);
+			comMiemFid.addEventListener("enviar", agregarMiemFid);
+			PopUpManager.centerPopUp(comMiemFid);
+		}
+		
+		private function mostrarFormPartFid():void{
+			var comPartFid:MttoPartFid = new MttoPartFid;
+			comPartFid = MttoPartFid(PopUpManager.createPopUp(this,MttoPartFid,true));
+			comPartFid.init();
+			comPartFid.addEventListener("enviar", agregarPartFid);
+			PopUpManager.centerPopUp(comPartFid);
+		}
+		
+		private function obtenerMiembro(tipo:int):Array{
+			var arrMiembro:Array = new Array;
+			var lista:ArrayCollection;
+			var cont:int;
+			
+			if(tipo == 0 || tipo == 1)
+				lista = lstMiemCM.dataProvider as ArrayCollection;
+			else if(tipo == 2 || tipo == 3)
+				lista = lstMiemCT.dataProvider as ArrayCollection;
+			
+			cont = lista.length;
+			
+			if(cont > 0){
+				for(var i:int = 0; i < cont; i++){
+					if(tipo == 0 || tipo == 2)
+						arrMiembro[i] = lista[i].sec;
+					else if(tipo == 1 || tipo == 3)
+						arrMiembro[i] = lista[i].nombre;
+				}
+			}
+			else
+				arrMiembro[0] = "";
+				
+			return arrMiembro;
+		}
+		
+		private function obtenerPartFid(tipo:int):Array{
+			var arrPartFid:Array = new Array;
+			var lista:ArrayCollection = dgPartes.dataProvider as ArrayCollection;
+			var cont:int = lista.length;
+			
+			if(cont > 0){
+				for(var i:int = 0; i < cont; i++){
+					if(tipo == 0)
+						arrPartFid[i] = lista[i].sec;
+					else if(tipo == 1)
+						arrPartFid[i] = lista[i].nombre;
+					else if(tipo == 2)
+						arrPartFid[i] = lista[i].codFig;
+				}
+			}
+			else
+				arrPartFid[0] = "";
+				
+			return arrPartFid;
+		}
+		
+		private function registrarInfoFideicomiso():void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			tipoAccion = 1;
+			this.title = "Nuevo";
+			
+			txtCodigo.setFocus();
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			dgPartes.dataProvider = null;
+			lstMiemCM.dataProvider = null;
+			lstMiemCT.dataProvider = null;
+				
+			du.ejecutaWsMethod(wsCat, function(evt:ResultEvent):void {											
+				var _xmlCod:XML = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if(_xmlCod.elements().length() > 0){
+					txtCodigo.text = _xmlCod.Table[0].CDGFID;
+				}
+			});
+			wsCat.getInfoRegistro.send(41, params);
+		}
+		
+		private function setAccionFideicomiso(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			global.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionFideicomiso);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1")
+				cerrar();	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+	
+		private function validar():void{
+			if (info.guarda == true)
+				guardarFideicomiso();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Canvas id="cnvCont" x="21" y="10" width="605" height="244" styleName="canvasMod">
+		<mx:Label id="lblCodigo" x="88.5" y="8" text="Código:"/>
+		<mx:TextInput id="txtCodigo" x="137.5" y="7" width="50" maxChars="4" editable="false"/>
+		<mx:Label id="lblNumFid" x="31.5" y="38" text="No. de Fideicomiso:"/>
+		<mx:TextInput id="txtNumFid" x="137.5" y="37" maxChars="10" width="120"/>
+		<mx:Label id="lblFechaFid" x="15.5" y="68" text="Fecha del Fideicomiso:"/>
+		<mx:DateField id="dtfFechaFid" x="137.5" y="67" width="120"/>
+		<mx:Label id="lblPartFid" x="14.5" y="97" text="Partes del Fideicomiso:"/>
+		<mx:DataGrid id="dgPartes" x="137.5" y="97" height="105" width="400">
+			<mx:columns>
+				<mx:DataGridColumn headerText="NOMBRE" editable="false" dataField="nombre" width="180"/>
+				<mx:DataGridColumn headerText="FIGURA" editable="false" dataField="nomFig" width="100"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Button id="btnAgregarPartFid" icon="@Embed(source='assets/add.png')" width="40" x="545.5" click="mostrarFormPartFid()" y="97"/>
+		<mx:Button id="btnEliminarPartFid" icon="@Embed(source='assets/delete-icon.png')" width="40" x="545.5" click="confirmarElimPartFid()" y="129"/>
+		<mx:Label id="lblFinFid" x="19.5" y="211" text="Fines del Fideicomiso:"/>
+		<mx:TextInput id="txtFinFid" x="137.5" y="210" restrict="A-Z;a-z;Ñ;ñ;0-9; " maxChars="50" width="400"/>		
+	</mx:Canvas>
+	<mx:Label id="lblOrgGob" x="21" y="262" text="Organos de Gobierno"/>
+	<mx:TabNavigator id="tabNav" width="605" height="214" x="21" y="285" creationPolicy="all" >
+		<mx:Canvas id="cnvComMon" label="Comité de Monitoreo" width="100%" height="100%" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+			<mx:Canvas x="51.5" y="9" width="500" height="160">
+				<mx:Label id="lblMiemCM" x="64.5" y="9" text="Miembros:"/>
+				<mx:List id="lstMiemCM" x="126.5" y="9" height="80" width="311" labelField="nombre"/>
+				<mx:Button id="btnAgregarMiemCM" icon="@Embed(source='assets/add.png')" width="40" x="445.5" y="10" click="mostrarFormMiembro(1)" />
+				<mx:Button id="btnEliminarMiemCM" icon="@Embed(source='assets/delete-icon.png')" width="40" x="445.5" y="43" click="confirmarElimMiembro(1)"/>
+				<mx:Label id="lblPresCM" x="60.5" y="98" text="Presidente:"/>
+				<mx:TextInput id="txtPresCM" x="126.5" y="97" width="311"/>
+				<mx:Label id="lblSecCM" x="60.5" y="128" text="Secretario:"/>
+				<mx:TextInput id="txtSecCM" x="126.5" y="127" width="311"/>
+			</mx:Canvas>
+		</mx:Canvas>
+		<mx:Canvas id="cnvComTec" label="Comité Técnico" width="100%" height="100%" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+			<mx:Canvas x="51.5" y="9" width="500" height="160">
+				<mx:Label id="lblMiemCT" x="64.5" y="9" text="Miembros:"/>
+				<mx:List id="lstMiemCT" x="126.5" y="9" height="80" width="311" labelField="nombre"/>
+				<mx:Button id="btnAgregarMiemCT" icon="@Embed(source='assets/add.png')" width="40" x="445.5" y="10" click="mostrarFormMiembro(2)"/>
+				<mx:Button id="btnEliminarMiemCT" icon="@Embed(source='assets/delete-icon.png')" width="40" x="445.5" y="43" click="confirmarElimMiembro(2)" />
+				<mx:Label id="lblPresCT" x="60.5" y="98" text="Presidente:"/>
+				<mx:TextInput id="txtPresCT" x="126.5" y="97" width="311"/>
+				<mx:Label id="lblSecCT" x="60.5" y="128" text="Secretario:"/>
+				<mx:TextInput id="txtSecCT" x="126.5" y="127" width="311"/>
+			</mx:Canvas>
+		</mx:Canvas>
+		<mx:Canvas id="cnvDelFid" label="Delegado Fiduciario" width="100%" height="100%" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+			<mx:Canvas x="51.5" y="9" width="500" height="160">
+				<mx:Label id="lblNomDF" x="70.5" y="23" text="Nombre:"/>
+				<mx:TextInput id="txtNomDF" x="123.5" y="22" width="311"/>
+				<mx:Label id="lblCargoDF" x="78.5" y="53" text="Cargo:"/>
+				<mx:TextInput id="txtCargoDF" x="123.5" y="52" width="180"/>
+				<mx:Label id="lblTelDF" x="65.5" y="83" text="Teléfono:"/>
+				<mx:TextInput id="txtTelDF" x="123.5" y="82" width="180" maxChars="15" restrict="0-9"/>
+				<mx:Label id="lblEmailDF" x="83.5" y="113" text="Email:"/>
+				<mx:TextInput id="txtEmailDF" x="123.5" y="112" width="311"/>
+			</mx:Canvas>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Button id="btnAceptar" x="538" y="507" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="586" y="507" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+</mx:TitleWindow>

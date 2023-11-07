@@ -1,5 +1,5 @@
 package Data
-{
+{	
 	[Bindable]
 	public class DatosCtaBancaria
 	{
@@ -9,6 +9,8 @@ package Data
 		public var numero:String;
 		public var cdgCB:String;
 		public var nombre:String;
+		public var tipoCta:String;
+		public var cdgCBAsoc:String;
 		public var titular:String;
 		public var favor:String;
 		public var saldo:Number;

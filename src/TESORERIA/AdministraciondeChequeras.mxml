@@ -28,7 +28,7 @@
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.soap.WebService;
-			import OPERAC.MttoCuenta;            
+			import OPERAC.MttoBusqCuenta;            
 
 			[Bindable]
 			public var dPermisos:XML = new XML();
@@ -70,7 +70,7 @@
 			}
 			
 			public function actualizaCta(event:Event):void{
-				var comMttoCta:MttoCuenta = event.currentTarget as MttoCuenta; 
+				var comMttoCta:MttoBusqCuenta = event.currentTarget as MttoBusqCuenta; 
 				txtCodCuenta.text = comMttoCta.dgCuenta.selectedItem.CODIGO; 
 				txtCuenta.text = comMttoCta.dgCuenta.selectedItem.BANCO;
 				buscaListaChq(1);	
@@ -219,8 +219,8 @@
 			}
 			
 			public function muestraFormCta():void{
-				var comMttoCta:MttoCuenta = new MttoCuenta();
-				comMttoCta = MttoCuenta(PopUpManager.createPopUp(this,MttoCuenta,true));
+				var comMttoCta:MttoBusqCuenta = new MttoBusqCuenta();
+				comMttoCta = MttoBusqCuenta(PopUpManager.createPopUp(this,MttoBusqCuenta,true));
 				comMttoCta.init(5);
 				comMttoCta.addEventListener("enviar", actualizaCta);
 				PopUpManager.centerPopUp(comMttoCta);	
@@ -296,7 +296,7 @@
 	<mx:Canvas width="798.5" height="400" backgroundColor="#FFFFFF" backgroundAlpha="1">
 		<mx:Label x="18" y="10" text="ADMINISTRACIÓN DE CHEQUERAS" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas x="87.5" y="39" width="412.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Label id="lblCuenta" x="10" y="7" text="CUENTA:" width="53"/>
+			<mx:Label id="lblCuenta" x="19" y="7" text="Cuenta:"/>
 			<mx:TextInput id="txtCodCuenta" x="69.5" y="5" width="45.5" maxChars="2" restrict="0-9" enter="buscaCuenta()"/>
 			<mx:TextInput id="txtCuenta" x="123" y="5" width="225.5" editable="false"/>
 			<mx:Button id="btnBuscar" x="359.5" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="muestraFormCta()" toolTip="Buscar Cuenta" width="40"/>

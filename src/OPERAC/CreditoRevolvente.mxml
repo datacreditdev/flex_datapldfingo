@@ -362,9 +362,8 @@
 		</mx:Canvas>
 		<mx:Canvas id="cnvDetalle2" x="18.5" y="494" width="763.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="false" verticalScrollPolicy="off">
 			<Data:RowColorDataGrid id="dgGarantia" x="10" y="10" width="741.5" height="124"
-				sortableColumns="false"
-			  	draggableColumns="false" 
-				resizableColumns="false" verticalScrollPolicy="on" itemClick="seleccionaAcred()"> 
+				sortableColumns="false" draggableColumns="false" resizableColumns="false" 
+				verticalScrollPolicy="on" itemClick="seleccionaAcred()"> 
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="50"/>
 					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="180"/>

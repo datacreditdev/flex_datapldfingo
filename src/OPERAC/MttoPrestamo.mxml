@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" xmlns:control="control.*" layout="absolute" width="844" 
-	height="600" title="Edición" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*" xmlns:Control="OPERAC.Control.*">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" xmlns:control="control.*" 
+	layout="absolute" width="844" height="600" title="Edición" showCloseButton="true" close="cerrar()" 
+	xmlns:Forms="OPERAC.Forms.*" xmlns:Control="OPERAC.Control.*">
 	<mx:Script>
 		<![CDATA[
 			import mx.events.MoveEvent;

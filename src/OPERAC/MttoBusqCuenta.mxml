@@ -22,7 +22,6 @@
             import mx.managers.DragManager;
             import mx.collections.IList;
 			
-			[Bindable]
 			public var _xmlCta:XML =  new XML();
 			
 			public var global:Globales; 
@@ -44,14 +43,14 @@
 					global.bloquear();
 					
 					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
-						this._xmlCta = new XML(event.result);
+						_xmlCta = new XML(event.result);
 						
 						du.closeWs(wsCat);
 						du.rCursor();
 						global.desbloquear();
 						
 						if (_xmlCta.elements().length() > 0){
-							formateaCuenta();
+							formatearCuenta();
 							dgCuenta.dataProvider = ctaObj;
 						}
 					});
@@ -75,7 +74,7 @@
 				}
 			}
 			
-			public function formateaCuenta():void{
+			public function formatearCuenta():void{
 				var cont:int = _xmlCta.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -84,6 +83,7 @@
 					oItem = new Object();
 					oItem.CODIGO = _xmlCta.Table[i].CODIGO;
 					oItem.BANCO = _xmlCta.Table[i].BANCO + " - " + _xmlCta.Table[i].NUMERO;
+					oItem.NOMBRE = _xmlCta.Table[i].NOMBRE;
 					item.push(oItem);
 				}
 				ctaObj = new ArrayCollection(item);
@@ -111,6 +111,18 @@
 					PopUpManager.removePopUp(this);
 			}
 			
+			public function obtenerBanco():String{
+				return dgCuenta.selectedItem.BANCO;
+			}
+			
+			public function obtenerCodigo():String{
+				return dgCuenta.selectedItem.CODIGO;
+			}
+			
+			public function obtenerNombre():String{
+				return dgCuenta.selectedItem.NOMBRE;
+			}
+			
 			public function validar():Boolean{
 				if(dgCuenta.selectedIndex < 0){
 					Alert.show("No se ha seleccionado la Cuenta Bancaria.",titulo,4,null,null,global.iAlert);
@@ -131,6 +143,7 @@
 		<mx:columns>
 			<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
 			<mx:DataGridColumn headerText="BANCO" dataField="BANCO"/>
+			<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE"/>
 		</mx:columns>
 	</mx:DataGrid>
 	<mx:Button id="btnBusqCta" x="393" y="10" icon="@Embed(source='assets/ico_lupa.png')" click="buscarCuenta()" toolTip="Buscar Cuenta" width="40"/>

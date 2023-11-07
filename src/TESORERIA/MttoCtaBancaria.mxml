@@ -1,11 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="500" height="510" xmlns:Data="Data.*">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="500" height="530" xmlns:Data="Data.*">
+	<mx:states>
+		<mx:State name="subcuenta">
+			<mx:SetProperty name="height" value="555"/>
+			<mx:SetProperty target="{lblUsoCta}" name="y" value="384"/>
+			<mx:SetProperty target="{lblEstatusCta}" name="y" value="384"/>
+			<mx:SetProperty target="{canvas1}" name="y" value="403"/>
+			<mx:SetProperty target="{canvas2}" name="y" value="403"/>
+			<mx:SetProperty target="{btnAceptar}" name="y" value="481"/>
+			<mx:SetProperty target="{btnCancelar}" name="y" value="481"/>
+			<mx:SetProperty target="{canvas3}" name="height" value="290"/>
+			<mx:SetProperty target="{lblAlias}" name="y" value="135"/>
+			<mx:SetProperty target="{lblOtor}" name="y" value="165"/>
+			<mx:SetProperty target="{txtAlias}" name="y" value="134"/>
+			<mx:SetProperty target="{txtTitular}" name="y" value="164"/>
+			<mx:SetProperty target="{lblCantidad}" name="y" value="195"/>
+			<mx:SetProperty target="{txtFavor}" name="y" value="194"/>
+			<mx:SetProperty target="{lblPlazo}" name="y" value="225"/>
+			<mx:SetProperty target="{txtSaldo}" name="y" value="224"/>
+			<mx:SetProperty target="{cboMoneda}" name="y" value="254"/>
+			<mx:SetProperty target="{lblMoneda}" name="y" value="257"/>
+			<mx:AddChild relativeTo="{canvas3}" position="lastChild">
+				<mx:TextInput id="txtCtaAsoc" x="123.5" y="104" width="170.5"/>
+			</mx:AddChild>
+			<mx:SetProperty target="{txtAlias}" name="x" value="123"/>
+			<mx:SetProperty target="{lblAlias}" name="x" value="83"/>
+			<mx:AddChild relativeTo="{canvas3}" position="lastChild">
+				<mx:Label id="lblCtaAsoc" x="24.5" y="105" text="Cuenta Asociada:"/>
+			</mx:AddChild>
+		</mx:State>
+	</mx:states>
 	
-	<mx:Validator id="cuentaV" source="{txtCodCB}" property="text" 
-	invalid="{txtCodCB.setFocus()}" triggerEvent="" requiredFieldError="Código Requerido"/>
+	<mx:Validator id="cuentaV" source="{txtCodigo}" property="text" 
+	invalid="{txtCodigo.setFocus()}" triggerEvent="" requiredFieldError="Código Requerido"/>
 	
 	<mx:Validator id="numeroV" source="{txtNumero}" property="text" 
 	invalid="{txtNumero.setFocus()}" triggerEvent="" requiredFieldError="Número Requerido"/>
+	
+	<mx:NumberValidator id="tipoCtaV" source="{cboTipoCta}" property="selectedIndex"
+	 minValue="1" triggerEvent="" lowerThanMinError="Tipo de Cuenta Requerida"/>
 	
 	<mx:Validator id="saldoV" source="{txtSaldo}" property="text" 
 	invalid="{txtSaldo.setFocus()}" triggerEvent="" requiredFieldError="Saldo Requerido"/>
@@ -35,18 +68,19 @@
 		private var _xmlCB:XML =  new XML();
 		private var _xmlMoneda:XML =  new XML();
 		
-		public var monedaObj:ArrayCollection = new ArrayCollection();
+		private var monedaObj:ArrayCollection = new ArrayCollection();
+		private var tipoCtaObj:ArrayCollection = new ArrayCollection();
 		
-		public var global:Globales;
+		private var du:Utils;
+		private var global:Globales;
 		public var openEffect:Effect = new WipeDown();
 		public var closeEffect:Effect = new WipeDown();
 		public var wsMS:WebService;	
 		public var tipoAccion:int;
 		public var titulo:String;
-		public var du:Utils;
 		private var vResult:ValidationResultEvent;
 		
-		public function cargaInfoCB(tipo:int, codIB:String, instBanc:String, codSB:String, sucBanc:String, codCB:String):void{
+		private function cargaInfoCB(tipo:int, codIB:String, instBanc:String, codSB:String, sucBanc:String, codCB:String):void{
 			var wsCat:WebService = new WebService;
 			var params:Array = new Array;
 			
@@ -87,9 +121,16 @@
 			var invalidArray:Array = Validator.validateAll([cuentaV, numeroV, saldoV, monedaV]);
 				
 			if(invalidArray.length == 0){	
-				info.cdgCB = txtCodCB.text;
+				info.cdgCB = txtCodigo.text;
 				info.numero = txtNumero.text;
-				info.nombre = txtNombre.text;
+				info.nombre = txtAlias.text;
+				info.tipoCta = cboTipoCta.selectedItem.id;
+				
+				if(currentState == "subcuenta")
+					info.cdgCBAsoc = txtCtaAsoc.text;
+				else
+					info.cdgCBAsoc = "";
+				
 				info.titular = txtTitular.text;
 				info.favor = txtFavor.text;
 				info.saldo = Number(txtSaldo.text);
@@ -104,7 +145,7 @@
 			validaFinal();
 		}
 		
-		public function formateaMoneda():void{
+		private function formatearMoneda():void{
 			var cont:int = _xmlMoneda.elements().length();
 			var oItem:Object;
 			var item:Array = new Array;
@@ -123,14 +164,41 @@
 			monedaObj = new ArrayCollection(item);
 		}
 		
+		private function formatearTipoCta():void{
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			oItem = new Object();
+			oItem.id = "0";	
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "1";	
+			oItem.nombre = "Cuenta General";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "2";	
+			oItem.nombre = "Cuenta del Suplemento";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.id = "3";	
+			oItem.nombre = "Subcuenta";
+			item.push(oItem);
+				
+			tipoCtaObj = new ArrayCollection(item);
+		}
+		
 		public function guardaCtaBancaria():void{
 			initConexion();
 			du.sCursor();
 			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionCuentaBancaria);
-			wsMS.setAccionCuentaBancaria.send(tipoAccion, info.cdgIB, info.cdgSB, info.cdgCB, info.numero, info.nombre, 
-											  info.titular, info.favor, info.saldo, info.moneda, info.tipo, info.activa, 
-									       	  global.obtenerUsuario());	
+			wsMS.setAccionCuentaBancaria.send(tipoAccion, info.cdgIB, info.cdgSB, info.cdgCB, info.numero, info.tipoCta, 
+											  info.cdgCBAsoc, info.nombre, info.titular, info.favor, info.saldo, info.moneda, 
+											  info.tipo, info.activa, global.obtenerUsuario());	
 		}
 	
 		public function init(tipo:int, codIB:String, instBanc:String, codSB:String, sucBanc:String, codCB:String = null):void{
@@ -159,10 +227,13 @@
 				du.closeWs(wsCat);
 						
 				if (_xmlMoneda.elements().length() > 0){
-					formateaMoneda();
+					formatearMoneda();
 					cboMoneda.dataProvider = monedaObj;
-					
 				} 	
+				
+				formatearTipoCta();
+				cboTipoCta.dataProvider = tipoCtaObj;
+				
 				if(tipo == 1)
 					registraInfoCB(tipo, codIB, instBanc, codSB, sucBanc);
 				else if(tipo == 2)
@@ -178,26 +249,50 @@
 			wsMS.loadWSDL();
 		}	
 		
-		public function llenaRegistros():void{
-			txtCodCB.setFocus();
+		private function llenaRegistros():void{
+			var i:int;
 			
-			txtCodCB.text = info.cdgCB;
+			txtCodigo.setFocus();
+			
+			txtCodigo.text = info.cdgCB;
 			txtNumero.text = _xmlCB.Table[0].NUMERO;
-			txtNombre.text = _xmlCB.Table[0].NOMBRE;
+			
+			for(i = 0; i < tipoCtaObj.length; i++){
+				if(tipoCtaObj[i].id == _xmlCB.Table[0].TIPOCTA.toString()){
+					cboTipoCta.selectedIndex = i;
+					break;
+				}
+			}
+			
+			modificarTipoCta();
+			
+			if(currentState == "subcuenta")
+				txtCtaAsoc.text = _xmlCB.Table[0].CDGCBASOC;
+			
+			txtAlias.text = _xmlCB.Table[0].NOMBRE;
 			txtTitular.text = _xmlCB.Table[0].TITULAR;
 			txtFavor.text = _xmlCB.Table[0].AFAVORDE;
 			txtSaldo.text = _xmlCB.Table[0].SALDOREFER;
-			for(var i:int = 0; i < monedaObj.length; i++){
+			
+			for(i = 0; i < monedaObj.length; i++){
 				if(monedaObj[i].id == _xmlCB.Table[0].CDGMO.toString()){
 					cboMoneda.selectedIndex = i;
 					break;
 				}
 			}
+			
 			tipo.selectedValue = _xmlCB.Table[0].TIPO;
 			activa.selectedValue = _xmlCB.Table[0].ACTIVO;
 		}
+		
+		private function modificarTipoCta():void{
+			if(cboTipoCta.selectedIndex == 3)
+				currentState = "subcuenta";
+			else
+				currentState = "";
+		}
 			
-		public function registraInfoCB(tipo:int, codIB:String, instBanc:String, codSB:String, sucBanc:String):void{
+		private function registraInfoCB(tipo:int, codIB:String, instBanc:String, codSB:String, sucBanc:String):void{
 			var wsCat:WebService = new WebService;
 			var params:Array = new Array;
 			tipoAccion = tipo;
@@ -205,7 +300,7 @@
 			info.cdgIB = codIB;
 			info.cdgSB = codSB;
 			
-			txtCodCB.setFocus();
+			txtCodigo.setFocus();
 			
 			du.initWsCat(wsCat);
 			du.sCursor();
@@ -218,7 +313,7 @@
 				wsCat = null;
 					
 				if(_xmlCod.elements().length() > 0){
-					txtCodCB.text = _xmlCod.Table[0].CDGCB;
+					txtCodigo.text = _xmlCod.Table[0].CDGCB;
 				}
 			});
 			//Codigo de Cuenta Bancaria
@@ -268,42 +363,44 @@
 	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
         allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
 	<mx:Canvas x="20.5" y="9" width="459.5" height="70" styleName="canvasMod">
-		<mx:Label id="lblOF" x="14.5" y="9" text="Institución Bancaria:"/>
-		<mx:Label id="lblOF0" x="19.5" y="39" text="Sucursal Bancaria:"/>
+		<mx:Label id="lblIB" x="14.5" y="9" text="Institución Bancaria:"/>
+		<mx:Label id="lblSB" x="19.5" y="39" text="Sucursal Bancaria:"/>
 		<mx:TextInput id="txtCodIB" x="123.5" y="7" width="50" editable="false"/>
 		<mx:TextInput id="txtIB" x="181.5" y="7" width="253" editable="false"/>
 		<mx:TextInput id="txtCodSB" x="124.5" y="37" width="50" editable="false"/>
 		<mx:TextInput id="txtSB" x="182.5" y="37" width="252" editable="false"/>
 	</mx:Canvas>
-	<mx:Canvas x="20" y="87" width="460" height="240" styleName="canvasMod">
-		<mx:Label id="lblCantidad" x="56" y="140" text="A favor de:" textAlign="right"/>
-		<mx:Label id="lblDesc" x="70.5" y="76" text="Nombre:" textAlign="right"/>
-		<mx:Label id="lblOtor" x="78.5" y="108" text="Titular:" textAlign="right"/>
+	<mx:Canvas x="20" y="87" width="460" height="260" styleName="canvasMod" id="canvas3">
+		<mx:Label id="lblCantidad" x="55.5" y="165" text="A favor de:" textAlign="right"/>
+		<mx:Label id="lblAlias" x="83.5" y="105" text="Alias:" textAlign="right"/>
+		<mx:Label id="lblOtor" x="78.5" y="135" text="Titular:" textAlign="right"/>
 		<mx:Label id="lblcodDisp" x="74.5" y="12" text="Código:" textAlign="right"/>
 		<mx:Label id="lblContrato" x="70.5" y="44" text="Número:" textAlign="right"/>
-		<mx:Label id="lblPlazo" x="21.25" y="172" text="Saldo Referencial:" textAlign="right"/>
-		<mx:TextInput id="txtCodCB" x="123.5" y="10" width="50" maxChars="3" editable="false"/>
+		<mx:Label id="lblPlazo" x="22.5" y="195" text="Saldo Referencial:" textAlign="right"/>
+		<mx:TextInput id="txtCodigo" x="123.5" y="10" width="50" maxChars="3" editable="false"/>
 		<mx:TextInput id="txtNumero" x="123.5" y="42" width="109" maxChars="150"/>
-		<mx:TextInput id="txtNombre" x="123.5" y="74" width="280" maxChars="150"/>
-		<mx:TextInput id="txtTitular" x="124" y="106" width="279.5" maxChars="150"/>
-		<mx:TextInput id="txtFavor" x="124" y="138" width="279.5"/>
-		<mx:TextInput id="txtSaldo" x="122.25" y="170" width="110.25" maxChars="13" restrict="0-9;." change="validaMonto(event)"/>
-		<mx:Label id="lblMoneda" x="68.25" y="204" text="Moneda:" textAlign="right"/>
-		<Data:CustomComboBox id="cboMoneda" x="122.25" y="201" width="230" labelField="nombre"/>
+		<mx:TextInput id="txtAlias" x="123.5" y="104" width="280" maxChars="150"/>
+		<mx:TextInput id="txtTitular" x="123.5" y="134" width="279.5" maxChars="150"/>
+		<mx:TextInput id="txtFavor" x="123.5" y="164" width="279.5"/>
+		<mx:TextInput id="txtSaldo" x="123.5" y="194" width="110.25" maxChars="13" restrict="0-9;." change="validaMonto(event)"/>
+		<mx:Label id="lblMoneda" x="69.5" y="227" text="Moneda:" textAlign="right"/>
+		<Data:CustomComboBox id="cboMoneda" x="123.5" y="224" width="230" labelField="nombre"/>
+		<Data:CustomComboBox id="cboTipoCta" x="123.5" y="72" width="230" labelField="nombre" change="modificarTipoCta()"/>
+		<mx:Label id="lblMoneda0" x="35.5" y="75" text="Tipo de Cuenta:" textAlign="right"/>
 	</mx:Canvas>
-	<mx:Canvas x="71" y="354" width="170" height="66" styleName="canvasMod">
+	<mx:Canvas x="98.85" y="372" width="170" height="66" styleName="canvasMod" id="canvas1">
 		<mx:RadioButtonGroup id="tipo"/>
-		<mx:RadioButton id="rdbDeposito" x="46" y="0" label="Depósito" groupName="tipo" value="D" width="76" selected="true"/>
-		<mx:RadioButton id="rdbPagadora" x="46" y="20" groupName="tipo" value="P" width="76" label="Pagadora"/>
+		<mx:RadioButton id="rdbDeposito" x="46" y="0" label="Receptora" groupName="tipo" value="D" width="90" selected="true"/>
+		<mx:RadioButton id="rdbPagadora" label="Dispersora" x="46" y="20" groupName="tipo" value="P" width="90"/>
 		<mx:RadioButton id="rdbAmbas" x="46" y="41" label="Ambas" groupName="tipo" value="A" width="76"/>	
 	</mx:Canvas>
-	<mx:Button id="btnAceptar" x="202" y="430" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
-	<mx:Button id="btnCancelar" x="254" y="430" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
-	<mx:Label x="71.5" y="335" text="Tipo de Cuenta" width="130.75"/>
-	<mx:Canvas x="259" y="354" width="110.25" height="66" styleName="canvasMod">
+	<mx:Button id="btnAceptar" x="201" y="450" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="255" y="450" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:Label id="lblUsoCta" x="99.35" y="353" text="Uso de la Cuenta"/>
+	<mx:Canvas x="286.85" y="372" width="110.25" height="66" styleName="canvasMod" id="canvas2">
 		<mx:RadioButtonGroup id="activa"/>
 		<mx:RadioButton id="rdbSi" x="35.6" y="6" label="Si" groupName="activa" value="S" width="60" selected="true"/>
 		<mx:RadioButton id="rdbNo" x="35.6" y="30" groupName="activa" value="N" width="60" label="No"/>
 	</mx:Canvas>
-	<mx:Label x="259.5" y="335" text="Activa" width="130.75"/>
+	<mx:Label  id="lblEstatusCta" x="287.35" y="353" text="Activa"/>
 </mx:TitleWindow>

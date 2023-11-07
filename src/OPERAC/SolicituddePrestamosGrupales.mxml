@@ -430,8 +430,8 @@
 			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarGrupo()" toolTip="Buscar Grupo" width="40"/>
 		</mx:Canvas>
 		<mx:Canvas x="98.25" y="39" width="550.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Label id="lblCodGrupo" x="10" y="7" text="CODIGO:" width="53"/>
-			<mx:Label id="lblGrupo" x="137" y="7" text="GRUPO:" width="52.5"/>
+			<mx:Label id="lblCodGrupo" x="17" y="7" text="Código:"/>
+			<mx:Label id="lblGrupo" x="143" y="7" text="Grupo:"/>
 			<mx:TextInput id="txtGrupo" x="187" y="5" width="351.5" enter="buscarGrupo()" maxChars="50"/>
 			<mx:TextInput id="txtCodGrupo" x="64" y="5" width="68" enter="buscarGrupo()" maxChars="6" restrict="0-9"/>
 		</mx:Canvas>

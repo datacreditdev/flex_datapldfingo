@@ -11,5 +11,5 @@
 	<wsdlExpXls>http://datacredit.webredirect.org/ExpExcelJson/ExcelLib.aspx</wsdlExpXls>
 	<wsdlCC>http://150.150.23.11/ws_consCirc_datalatam1/service.asmx?wsdl</wsdlCC>
 	
-	<urlDocs>http://datacredit.webredirect.org/admin/DOCS/</urlDocs>
+	<urlDocs>http://datacredit.webredirect.org/DOCS/</urlDocs>
 </Configuration>

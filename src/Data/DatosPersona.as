@@ -51,10 +51,11 @@ package Data
 		public var giro:String;
 		public var origen:String;
 		public var destino:String;
+		public var otroDesRec:String;
 		public var pep:String;
-		public var propReal:String;
+		public var arrPropReal:Array;
 		public var nomPropReal:String;
-		public var provRec:String;
+		public var arrProvRec:Array;
 		public var nomProvRec:String;
 		public var guardaPLD:Boolean; 		
 				

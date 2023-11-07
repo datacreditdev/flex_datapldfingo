@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="560" 
+	height="420" xmlns:Data="Data.*">
+	
+	<mx:Validator id="claveV" source="{txtClave}" property="text" 
+	invalid="{txtClave.setFocus()}" triggerEvent="" requiredFieldError="Clave Requerida"/>
+	
+	<mx:Validator id="fechaV" source="{dtfFecha}" property="text" 
+	invalid="{dtfFecha.setFocus()}" triggerEvent="" requiredFieldError="Fecha Requerida"/>
+	
+	<mx:Validator id="aliasV" source="{txtAlias}" property="text" 
+	invalid="{txtAlias.setFocus()}" triggerEvent="" requiredFieldError="Alias Requerido"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import OPERAC.MttoBusqCuenta;
+		import Data.DatosSuplemento;
+		import Data.EventSuplemento;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.CloseEvent;
+		import mx.events.EffectEvent;
+		import mx.managers.PopUpManager;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		import mx.events.ValidationResultEvent;
+		
+		[Bindable]
+		private var info:DatosSuplemento;
+		
+		private var _xmlSup:XML = new XML();
+		private var _xmlCta:XML = new XML();
+		
+		private var ctaObj:ArrayCollection = new ArrayCollection;
+		
+		private var du:Utils;
+		private var global:Globales;
+		public var openEffect:Effect = new WipeDown();
+		public var closeEffect:Effect = new WipeDown();
+		public var wsMS:WebService;	
+		public var tipoAccion:int;
+		public var titulo:String;
+		private var vResult:ValidationResultEvent;
+		
+		private function agregarCuentaSup(evt:Event):void{
+			var oItem:Object = new Object();
+			var comCuentaSup:MttoBusqCuenta = evt.currentTarget as MttoBusqCuenta;
+			
+			oItem.codigo = comCuentaSup.obtenerCodigo();
+			oItem.banco = comCuentaSup.obtenerBanco();
+			oItem.nombre = comCuentaSup.obtenerNombre();
+				
+			ctaObj.addItem(oItem);
+			ctaObj.refresh();
+				
+			dgCuentas.dataProvider = ctaObj;
+		}
+		
+		private function cargaInfoSup(tipo:int, codFid:String, fideicomiso:String, codSup:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array;
+			
+			tipoAccion = tipo; 
+			this.title = "Edición";
+			//Datos del Suplemento
+			info.cdgFid = codFid;
+			info.cdgSup = codSup;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+			
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				_xmlSup = new XML(evt.result.toString()); 
+				
+				if (_xmlSup.elements().length() > 0){
+					llenaRegistros();
+				} 	
+				
+				du.ejecutaWsMethod(wsCat,function(ev:ResultEvent):void{
+					_xmlCta = new XML(ev.result.toString());
+					
+					du.closeWs(wsCat);
+					du.rCursor();	
+					
+					if (_xmlCta.elements().length() > 0){
+						formatearCuenta();
+						dgCuentas.dataProvider = ctaObj;	
+					}
+					else
+						dgCuentas.dataProvider = null
+				});
+				params[0] = codFid;
+				params[1] = codSup;
+				wsCat.getListado.send(61, params);
+				
+			});
+			params[0] = codFid;
+			params[1] = codSup;
+			wsCat.getInfoRegistro.send(44, params);
+		}
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		private function confirmarElimCuenta():void{
+			var titulo:String = "Cuentas del Suplemento";
+			var ind:int = dgCuentas.selectedIndex;
+				
+			if(ind < 0){
+				Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+				return;
+			}				
+			Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,function(ev:CloseEvent):void{
+																					if(ev.detail == Alert.YES){
+																						ctaObj.removeItemAt(ind);
+																						ctaObj.refresh();
+																						dgCuentas.dataProvider = ctaObj;
+																					}
+			},du.iQuest,4);
+		}
+	
+		private function enviar():void{
+			var invalidArray:Array = Validator.validateAll([claveV, fechaV, aliasV]);
+				
+			if(invalidArray.length == 0){	
+				info.cdgSup = txtCodigo.text;
+				info.clave = txtClave.text;
+				info.alias = txtAlias.text;
+				info.fecha = dtfFecha.text;
+				
+				info.arrCuentas = obtenerCuentas();
+				
+				info.guarda = true;
+			}
+			else
+				info.guarda = false;
+
+			validar();
+		}
+		
+		private function formatearCuenta():void{
+			var cont:int = _xmlCta.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlCta.Table[i].CODIGO;
+				oItem.banco = _xmlCta.Table[i].BANCO + " - " + _xmlCta.Table[i].NUMERO;
+				oItem.nombre = _xmlCta.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			ctaObj = new ArrayCollection(item);
+		}
+		
+		private function guardar():void{
+			initConexion();
+			du.sCursor();
+			global.bloquear();
+			wsMS.addEventListener(ResultEvent.RESULT, setAccionSuplemento);
+			wsMS.setAccionSuplemento.send(tipoAccion, info.cdgFid, info.cdgSup, info.clave, info.fecha,
+										  info.alias, info.arrCuentas, global.obtenerUsuario());	
+		}
+	
+		public function init(tipo:int, codFid:String, fideicomiso:String, codSup:String = null):void{
+			var wsCat:WebService = new WebService();
+			var params: Array = new Array();
+			
+			global = new Globales(); 
+			du = new Utils();
+			info = new DatosSuplemento();
+			titulo = "Mantenimiento de Suplemento";
+			txtCodFid.text = codFid;
+			txtFideicomiso.text = fideicomiso;
+			dtfFecha.selectedDate = global.obtenerFechaSistema();
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			
+			if(tipo == 1)
+				registrar(tipo, codFid, fideicomiso); 
+			 else if(tipo == 2)
+			 	cargaInfoSup(tipo, codFid, fideicomiso, codSup);	
+		}
+		
+		private function initConexion():void{				
+			wsMS = new WebService();			
+			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.loadWSDL();
+		}	
+		
+		private function llenaRegistros():void{
+			txtCodigo.setFocus();
+			
+			txtCodigo.text = info.cdgSup;
+			txtClave.text = _xmlSup.Table[0].CLAVE;
+			dtfFecha.text = _xmlSup.Table[0].FECSUP;
+			txtAlias.text = _xmlSup.Table[0].ALIAS;
+		}
+		
+		private function mostrarFormCuenta():void{
+			var comCuentaSup:MttoBusqCuenta = new MttoBusqCuenta;
+			comCuentaSup = MttoBusqCuenta(PopUpManager.createPopUp(this,MttoBusqCuenta,true));
+			comCuentaSup.init(3);
+			comCuentaSup.addEventListener("enviar", agregarCuentaSup);
+			PopUpManager.centerPopUp(comCuentaSup);
+		}
+		
+		private function obtenerCuentas():Array{
+			var arrCuentas:Array = new Array;
+			var lista:ArrayCollection = dgCuentas.dataProvider as ArrayCollection;
+			var cont:int = lista.length;
+			
+			if(cont > 0)
+				for(var i:int = 0; i < cont; i++)
+					arrCuentas[i] = lista[i].codigo;
+			else
+				arrCuentas[0] = "";
+				
+			return arrCuentas;
+		}
+			
+		private function registrar(tipo:int, codFid:String, fideicomiso:String):void{
+			var wsCat:WebService = new WebService;
+			var params:Array = new Array; 
+			
+			tipoAccion = tipo;
+			this.title = "Nuevo";
+			info.cdgFid = codFid;
+			
+			txtCodigo.setFocus();
+			
+			dgCuentas.dataProvider = null;
+			
+			du.initWsCat(wsCat);
+			du.sCursor();
+				
+			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				var _xmlCod:XML = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsCat);
+					
+				if(_xmlCod.elements().length() > 0){
+					txtCodigo.text = _xmlCod.Table[0].CDGSUP;
+				}
+			});
+			params[0] = codFid;
+			wsCat.getInfoRegistro.send(43, params);
+		}
+		
+		private function setAccionSuplemento(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			global.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionSuplemento);
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1")
+				cerrar();	
+			else
+				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+		}
+		
+		public function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		public function validar():void{
+			if (info.guarda)
+				guardar();
+			else
+				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+		}
+		
+		]]>
+	</mx:Script>
+	
+	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
+	<mx:Canvas x="90.5" y="10" width="375" height="40" styleName="canvasMod">
+		<mx:Label id="lblOF" x="14.5" y="9" text="Fideicomiso:"/>
+		<mx:TextInput id="txtCodFid" x="85.5" y="7" width="50" editable="false"/>
+		<mx:TextInput id="txtFideicomiso" x="143.5" y="7" width="221" editable="false"/>
+	</mx:Canvas>
+	<mx:Canvas x="22.6" y="58" width="510.75" height="280" styleName="canvasMod">
+		<mx:Label id="lblFecha" x="33" y="71" text="Fecha:"/>
+		<mx:Label id="lblCodigo" x="30" y="11" text="Código:"/>
+		<mx:Label id="lblAlias" x="39" y="101" text="Alias:"/>
+		<mx:Label id="lblClave" x="36" y="41" text="Clave:"/>
+		<mx:Label id="lblCuentas" x="23" y="133" text="Cuentas:"/>
+		<mx:TextInput id="txtCodigo" x="79" y="10" width="50" maxChars="3" editable="false"/>
+		<mx:TextInput id="txtClave" x="79" y="40" width="109" maxChars="6"/>
+		<mx:DateField id="dtfFecha" width="109" x="79" y="70"/>
+		<mx:TextInput id="txtAlias" x="79" y="100" width="190"/>
+		<mx:DataGrid id="dgCuentas" x="79" y="130" height="138" width="371.75">
+			<mx:columns>
+				<mx:DataGridColumn headerText="CODIGO" editable="false" dataField="codigo" width="60"/>
+				<mx:DataGridColumn headerText="BANCO" editable="false" dataField="banco" width="100"/>
+				<mx:DataGridColumn headerText="NOMBRE" editable="false" dataField="nombre" width="100"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Button id="btnAgregarCtas" icon="@Embed(source='assets/add.png')" width="40" x="458.75" y="130" click="mostrarFormCuenta()"/>
+		<mx:Button id="btnEliminarCtas" icon="@Embed(source='assets/delete-icon.png')" width="40" x="458.75" y="162" click="confirmarElimCuenta()" />
+	</mx:Canvas>
+	<mx:Button id="btnCancelar" x="493.35" y="346" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:Button id="btnAceptar" x="445.35" y="346" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+</mx:TitleWindow>

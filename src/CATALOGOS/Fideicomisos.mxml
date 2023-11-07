@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" height="100%" 
+	xmlns:forms="forms.*" xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" 
+	xmlns:Administracion="Administracion.*">
+	
+	<!--Componente que permite observar el listado de Fideicomisos disponibles-->
+	<mx:Script>
+		<![CDATA[
+			import Data.Globales;
+			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;    
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			
+			public var _xmlFid:XML = new XML();
+			public var _xmlSup:XML = new XML();
+			[Bindable]
+			public var dPermisos:XML = new XML();
+			
+			public var wsMS:WebService;	
+			private var tituloFideicomiso:String;
+			private var tituloSuplemento:String;
+			private var du:Utils;
+			private var global:Globales;
+			
+			//variables que especifican el indice del elemento 
+			//seleccionado al realizar la modificacion del registro
+			public var accionFid:int;
+			public var accionSup:int;
+			public var indFid:int;
+			public var indSup:int;
+			public var vScroll:Number;
+			
+			//variables que indican los permisos disponibles para el usuario
+			public var alta:Boolean = new Boolean();
+			public var borrado:Boolean = new Boolean();
+			public var consulta:Boolean = new Boolean();
+			public var edicion:Boolean = new Boolean();
+			
+			private function activarContSup(band:Boolean):void{
+				if(alta == true)
+					btnAgregarSup.enabled = band;
+				btnDatosSup.enabled = band;
+			}
+			
+			private function activarContModSup(band:Boolean):void{
+				if(borrado == true)
+					btnEliminarSup.enabled = band;
+				if(edicion == true)	
+					btnEditarSup.enabled = band;
+			}
+			
+			private function activarContFid(band:Boolean):void{
+				if(edicion == true)
+					btnEditar.enabled = band;
+				if(borrado == true)
+					btnEliminar.enabled = band;
+			}
+			
+			private function actualizarSup(event:Event):void{
+				buscarListaSup(1);
+			}
+			
+			private function actualizarFid(event:Event):void{
+				buscarFid(1);
+			}
+			
+			private function buscarListaSup(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				var codFid:String = dgFid.selectedItem.CODIGO;
+				dgSup.dataProvider = null;
+				du.initWsCat(wsCat);
+				du.sCursor();
+			 	if (tipo == 1)
+					global.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+					_xmlSup = new XML(event.result);
+					
+					du.closeWs(wsCat);
+					du.rCursor();
+					global.desbloquear();
+					
+					if (_xmlSup.elements().length() > 0){
+						dgSup.dataProvider = _xmlSup.Table;
+						
+						if(accionSup == 2){
+							dgSup.validateNow();
+							dgSup.verticalScrollPosition = vScroll;
+							dgSup.selectedIndex = indSup;
+							this.accionSup = 0;
+						}
+					}
+					seleccionarSup();
+				});
+				params[0] = codFid;
+				wsCat.getListado.send(60, params);
+			}
+			
+			private function buscarFid(tipo:int):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtCodFid.text != "" || txtFid.text != ""){
+					btnBuscar.setFocus();
+					dgFid.dataProvider = null;
+					du.initWsCat(wsCat);
+					du.sCursor();
+					if(tipo == 1)
+						global.bloquear();
+						
+					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
+						_xmlFid = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						global.desbloquear();
+						
+						if (_xmlFid.elements().length() > 0){
+							dgFid.dataProvider = _xmlFid.Table;
+							
+							if(accionFid == 2){
+								dgFid.validateNow();
+								dgFid.verticalScrollPosition = vScroll;
+								dgFid.selectedIndex = indFid;
+								this.accionFid = 0;
+							}
+						}
+						seleccionarFid();	
+					});
+					params[0] = txtCodFid.text;
+					params[1] = txtFid.text;
+					wsCat.getListado.send(56, params);
+				}	
+			}
+
+			private function eliminarSup():void{
+				Alert.show("¿Desea eliminar el Suplemento seleccionado?", tituloSuplemento, Alert.YES|Alert.NO,null, manejadorEliminarSup,global.iQuest);
+			}
+			
+			private function eliminarFid():void{
+				Alert.show("¿Desea eliminar el Fideicomiso seleccionado?", tituloFideicomiso, Alert.YES|Alert.NO,null, manejadorEliminarFid,global.iQuest);
+			}
+			
+			public function iniVar():void{
+				this.indFid = -1;
+				this.indSup = -1;
+				this.vScroll = -1;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				wsMS = new WebService();
+				tituloFideicomiso = "Mantenimiento de Fideicomiso";
+				tituloSuplemento = "Mantenimiento de Suplemento";
+				alta = false;
+				borrado = false;
+				consulta = false;
+				edicion = false;
+				permisos();
+			}
+			
+			public function initConexion():void{				
+				wsMS = new WebService();			
+				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.loadWSDL();
+			}
+			
+			private function manejadorEliminarSup(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codFid:String = dgFid.selectedItem.CODIGO;
+					var codSup:String = dgSup.selectedItem.CODIGO;  
+			    	initConexion();
+			    	du.sCursor();
+					global.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionSup);
+					wsMS.setAccionSuplemento.send(3, codFid, codSup, "", "", "", "", global.obtenerUsuario());
+			    } 
+			}
+			
+			private function manejadorEliminarFid(e:CloseEvent):void{
+				if(e.detail==Alert.YES){
+					var codFid:String = dgFid.selectedItem.CODIGO;
+			    	initConexion();
+			    	du.sCursor();
+					global.bloquear();
+					wsMS.addEventListener(ResultEvent.RESULT, setAccionFid);
+					wsMS.setAccionFideicomiso.send(3, codFid, "", "", "", "", "", "", "", "", "", 
+								 	   		   	   "", "", "", "", "", "", global.obtenerUsuario());
+			    } 
+			}
+			
+			private function mostrarFormSup(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				if (edicion){
+					var codFid:String = dgFid.selectedItem.CODIGO;
+					var fideicomiso:String = dgFid.selectedItem.NUMERO;
+					var comMttoSup:MttoSuplemento = new MttoSuplemento();
+					switch(tipo){
+						case 1: 
+							comMttoSup = MttoSuplemento(PopUpManager.createPopUp(this,MttoSuplemento,true)); 
+							comMttoSup.addEventListener(Event.REMOVED_FROM_STAGE, actualizarSup);
+							comMttoSup.init(tipo, codFid, fideicomiso);
+							PopUpManager.centerPopUp(comMttoSup);
+							break;
+						case 2: 
+							if (dgSup.selectedIndex >= 0){
+								accionSup = tipo;
+								comMttoSup = MttoSuplemento(PopUpManager.createPopUp(this,MttoSuplemento,true)); 
+								var codSup:String = dgSup.selectedItem.CODIGO;
+								var suplemento:String = dgSup.selectedItem.DESCRIPCION;
+								var indice:int = dgSup.selectedIndex;
+								iniVar();
+								this.indSup = indice;
+								this.vScroll = dgSup.verticalScrollPosition;
+								comMttoSup.addEventListener(Event.REMOVED_FROM_STAGE, actualizarSup);
+								comMttoSup.init(tipo, codFid, fideicomiso, codSup);
+								PopUpManager.centerPopUp(comMttoSup);
+								
+							}
+							else
+								Alert.show("Debe seleccionar el registro del Suplemento",tituloSuplemento,4,null,null,global.iAlert);
+						break;
+					}
+				}
+			}
+			
+			private function mostrarFormFid(tipo:int):void{
+				//tipo = 1 NUEVO REGISTRO
+				//tipo = 2 MODIFICA REGISTRO
+				var comMttoFid:MttoFideicomiso = new MttoFideicomiso();
+				comMttoFid = MttoFideicomiso(PopUpManager.createPopUp(this,MttoFideicomiso,true)); 
+				if(edicion == true){
+					switch(tipo){
+						case 1: 
+							comMttoFid.addEventListener(Event.REMOVED_FROM_STAGE, actualizarFid);
+							comMttoFid.init(tipo);
+							PopUpManager.centerPopUp(comMttoFid);
+							break;
+						case 2: 
+							if (dgFid.selectedIndex >= 0){
+								accionFid = tipo;
+								var codFid:String = dgFid.selectedItem.CODIGO;
+								var fideicomiso:String = dgFid.selectedItem.NOMBRE;
+								var indice:int = dgFid.selectedIndex;
+								iniVar();
+								this.indFid = indice;
+								this.vScroll = dgFid.verticalScrollPosition;
+								comMttoFid.addEventListener(Event.REMOVED_FROM_STAGE, actualizarFid);
+								comMttoFid.init(tipo, codFid);
+								PopUpManager.centerPopUp(comMttoFid);	
+							}
+							else
+								Alert.show("Debe seleccionar el registro del Fideicomiso",tituloFideicomiso,4,null,null,global.iAlert); 
+							break;
+					}
+				}
+			}
+			
+			private function permisos():void{
+				var mod_id:String = Application.application._Current_Mod_Id;
+				var perfil_id:String = Application.application.cadPerfil;
+				var ws:WebService = new WebService;
+				var Params:Array = new Array;
+				var cont:int;
+				
+				du.initWs(ws);
+				du.sCursor();
+					
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
+					dPermisos = new XML(evt.result.toString());
+						
+					cont = dPermisos.elements().length();
+					
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
+							case "C":
+								consulta = true;
+								break;	
+							case "B":
+								borrado = true;
+								break;
+							case "I":
+								alta = true;
+								break;
+							case "E":
+								edicion = true;
+								break;				
+						}
+					}
+					btnAgregar.enabled = alta;
+					
+					du.rCursor();
+					du.closeWs(ws);					
+				});
+				Params = new Array();
+				Params[0] = perfil_id;
+				Params[1] = mod_id;
+				ws.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+			}
+			
+			private function seleccionarSup():void{
+				if (dgSup.selectedIndex >= 0){
+					activarContModSup(true);
+				}
+				else{
+					activarContModSup(false);
+				}
+			}
+			
+			private function seleccionarFid():void{
+				dgSup.dataProvider = null;
+				activarContModSup(false);
+				if (dgFid.selectedIndex >= 0){
+					activarContFid(true);
+					activarContSup(true);
+				}
+				else{
+					activarContFid(false);
+					activarContSup(false);
+				}
+			}
+			
+			private function setAccionSup(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				global.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionSup);
+				var res:String = new String(event.result.toString());
+				if (res.substr(0,1) == "1")
+					buscarListaSup(1);
+				else
+					Alert.show(res.substr(2,res.length-1), tituloSuplemento,4,null,null,global.iAlert);
+			}
+
+			private function setAccionFid(event:ResultEvent):void{
+				wsMS.disconnect();
+				du.rCursor();
+				global.desbloquear();
+				wsMS.removeEventListener(ResultEvent.RESULT, setAccionFid);
+				var res:String = new String(event.result);
+				if (res.substr(0,1) == "1")
+					buscarFid(1);
+				else
+					Alert.show(res.substr(2,res.length-1), tituloFideicomiso,4,null,null,global.iAlert);
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas width="765" height="455" styleName="canvasComp">	
+		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="726.5" height="125" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgFid" x="10" y="10" width="700.5" height="100" sortableColumns="true" 
+			 	resizableColumns="true" verticalScrollPolicy="on" itemClick="seleccionarFid()" 
+				itemDoubleClick="mostrarFormFid(2)" doubleClickEnabled="true"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+					<mx:DataGridColumn headerText="NUMERO" dataField="NUMERO" width="250"/>
+					<mx:DataGridColumn headerText="FECHA" dataField="FECFID" width="100"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18" y="10" text="FIDEICOMISOS" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarFid(1)" toolTip="Buscar Fideicomiso" width="40"/>
+			<mx:Button id="btnAgregar" x="106" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormFid(1)" toolTip="Registrar Fideicomiso" width="40"/>
+			<mx:Button id="btnEliminar" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarFid()" enabled="false" toolTip="Eliminar Fideicomiso" width="40"/>
+			<mx:Button id="btnEditar" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormFid(2)" toolTip="Editar Fideicomiso" width="40"/>
+		</mx:Canvas>
+		<mx:Canvas x="18.5" y="39" width="513.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Label id="lblCodFid" x="15" y="6" text="Código:"/>
+			<mx:Label id="lblFid" x="132.5" y="6" text="Número:"/>
+			<mx:TextInput id="txtFid" x="185.5" y="5" width="316" enter="buscarFid(1)" maxChars="50"/>
+			<mx:TextInput id="txtCodFid" x="64" y="5" width="50" enter="buscarFid(1)" maxChars="4"/>
+		</mx:Canvas>
+		<mx:Canvas id="cnvProdCred" x="19.25" y="262" width="726.5" height="175" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<Data:RowColorDataGrid id="dgSup" x="10" y="10" width="704.5" height="150"
+			    draggableColumns="false" verticalScrollPolicy="on" 
+				horizontalScrollPolicy="auto" itemClick="seleccionarSup()" doubleClickEnabled="true"
+				itemDoubleClick="mostrarFormSup(2)"> 
+				<Data:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60"/>
+					<mx:DataGridColumn headerText="CLAVE" dataField="CLAVE" width="100"/>
+					<mx:DataGridColumn headerText="FECHA" dataField="FECSUP" width="80"/>
+					<mx:DataGridColumn headerText="ALIAS" dataField="ALIAS" width="130"/>
+				</Data:columns>
+			</Data:RowColorDataGrid>
+		</mx:Canvas>
+		<mx:Label x="18.5" y="233" text="SUPLEMENTOS" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+		<mx:Canvas x="540" y="217" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+			<mx:Button id="btnAgregarSup" x="106" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormSup(1)" toolTip="Agregar Suplemento" width="40"/>
+			<mx:Button id="btnEliminarSup" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarSup()" toolTip="Eliminar Suplemento" width="40"/>
+			<mx:Button id="btnEditarSup" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormSup(2)" toolTip="Editar Suplemento" width="40"/>
+			<mx:Button id="btnDatosSup" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaSup(1)" enabled="false" toolTip="Suplemento" width="40"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

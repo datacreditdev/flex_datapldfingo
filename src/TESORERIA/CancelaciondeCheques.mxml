@@ -12,7 +12,7 @@
 	<!--Componente de cancelacion de Cheques-->
 	<mx:Script>
 		<![CDATA[
-			import OPERAC.MttoCuenta;
+			import OPERAC.MttoBusqCuenta;
 			import Data.Globales;
 			import Data.Utils;
 			import Data.TxtExport;
@@ -65,7 +65,7 @@
 			public var coordObj:ArrayCollection =  new ArrayCollection();
 			
 			public function actualizaCta(event:Event):void{
-				var comMttoCta:MttoCuenta = event.currentTarget as MttoCuenta;
+				var comMttoCta:MttoBusqCuenta = event.currentTarget as MttoBusqCuenta;
 				txtCodCuenta.text = comMttoCta.dgCuenta.selectedItem.CODIGO;
 				txtCuenta.text = comMttoCta.dgCuenta.selectedItem.BANCO;			
 			}
@@ -337,8 +337,8 @@
 			
 			public function muestraFormCta():void{
 				limpiaListaAcred();
-				var comMttoCta:MttoCuenta = new MttoCuenta();
-				comMttoCta = MttoCuenta(PopUpManager.createPopUp(this,MttoCuenta,true));
+				var comMttoCta:MttoBusqCuenta = new MttoBusqCuenta();
+				comMttoCta = MttoBusqCuenta(PopUpManager.createPopUp(this,MttoBusqCuenta,true));
 				comMttoCta.init(5);
 				comMttoCta.addEventListener("enviar", actualizaCta);
 				PopUpManager.centerPopUp(comMttoCta);

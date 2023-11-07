@@ -531,8 +531,8 @@
 			<mx:Button id="btnEditar" x="58" y="3" width="40" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormIB(2)" toolTip="Editar Institución Bancaria"/>
 		</mx:Canvas>
 		<mx:Canvas x="18.5" y="39" width="513.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Label id="lblCodIB" x="10" y="7" text="CODIGO:" width="53"/>
-			<mx:Label id="lblIB" x="127" y="7" text="NOMBRE:" width="59.5"/>
+			<mx:Label id="lblCodIB" x="10" y="7" text="Código:"/>
+			<mx:Label id="lblIB" x="127" y="7" text="Nombre:"/>
 			<mx:TextInput id="txtIB" x="185.5" y="5" width="316" enter="buscarIB(1)" maxChars="50"/>
 			<mx:TextInput id="txtCodIB" x="64" y="5" width="50" enter="buscarIB(1)" maxChars="4"/>
 		</mx:Canvas>
@@ -563,14 +563,12 @@
 				sortableColumns="true" resizableColumns="true" verticalScrollPolicy="on" 
 				itemClick="seleccionarCB()" doubleClickEnabled="true" doubleClick="mostrarFormCB(2)"> 
 				<Data:columns>
-					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60"/>
-					<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="170"/>
-					<mx:DataGridColumn headerText="NUMERO" dataField="NUMERO" width="70"/>
-					<mx:DataGridColumn headerText="TIPO" dataField="TIPOCTA" width="80"/>
-					<!--<mx:DataGridColumn headerText="CUENTA CONTABLE" dataField="CTACONTABLE" width="120"/>
-					<mx:DataGridColumn headerText="DIVISION" dataField="DIVISION" width="80"/>
-					<mx:DataGridColumn headerText="DEPTO" dataField="DEPTO" width="70"/>-->
-					<mx:DataGridColumn headerText="ACTIVA" dataField="ACTIVA" width="70"/>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="45"/>
+					<mx:DataGridColumn headerText="NUMERO" dataField="NUMERO" width="50"/>
+					<mx:DataGridColumn headerText="ALIAS" dataField="NOMBRE" width="120"/>
+					<mx:DataGridColumn headerText="TIPO" dataField="TIPOCUENTA" width="110"/>
+					<mx:DataGridColumn headerText="USO" dataField="TIPOMOV" width="70"/>
+					<mx:DataGridColumn headerText="ACTIVA" dataField="ACTIVA" width="60"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>

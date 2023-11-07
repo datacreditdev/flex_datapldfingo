@@ -10,8 +10,6 @@
 	<mx:states>
 		<mx:State name="moral">
 			<mx:RemoveChild target="{cnvOtros}"/>
-			<mx:SetProperty target="{formPLDAcred}" name="width" value="470"/>
-			<mx:SetProperty target="{formPLDAcred}" name="x" value="59.5"/>
 			<mx:SetProperty target="{cnvDir}" name="label" value="Domicilio"/>
 			<mx:SetProperty target="{cnvDirNeg}" name="label" value="Dom. Fiscal"/>
 			<mx:SetProperty target="{cnvOficial}" name="label" value="Segmento Negocio"/>
@@ -45,6 +43,7 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import mx.controls.CheckBox;
 			import CONTROL.CtrlVisorDoc;
 			import Data.DatosAcred;
 			import Data.EventAcred;
@@ -114,6 +113,12 @@
 				wsCat.getInfoAcred.send(1, params);	
 			}
 			
+			private function copiaDomicilio(evt:MouseEvent):void{
+				var chkMismoDom:CheckBox = evt.currentTarget as CheckBox;
+				if(chkMismoDom.selected)
+					formDirNegocio.recibeDatos(formDirAcred.copiaDatos());
+			}
+			
 			public function cerrar():void{
 				PopUpManager.removePopUp(this);
 			}
@@ -176,9 +181,9 @@
 											 info.marca, info.enano, info.cantEnano, info.cdgPr, info.cdgRec, info.calleNeg, info.noIntNeg,
 											 info.noExtNeg, info.entreCallesNeg, info.telefonoNeg, info.cdgPaisNeg, info.cdgEntFedNeg, info.cdgMunNeg, 
 											 info.cdgLocNeg, info.cdgColNeg, info.tipoPers, info.arrRepLegal, info.giro, info.origen, 
-										 	 info.destino, info.pep, info.propReal, info.provRec, info.figura, info.nomCom, info.telefono2, 
-										 	 info.email1, info.email2, info.contacto1, info.telCon1, info.emailCon1, info.contacto2,
-										 	 info.telCon2, info.emailCon2);
+										 	 info.destino, info.otroDesRec, info.pep, info.arrPropReal, info.arrProvRec, info.figura, 
+										 	 info.nomCom, info.telefono2, info.email1, info.email2, info.contacto1, info.telCon1, info.emailCon1, 
+										 	 info.contacto2, info.telCon2, info.emailCon2);
 			}
 			
 			public function initApp():void{
@@ -284,15 +289,12 @@
 				info.emailCon2 = _xmlAcred.Table[0].EMAILCON2;
 				
 				//Informacion de Prevencion de Lavado de Dinero
-				info.giro = _xmlAcred.Table[0].CDGGIRO;
-				info.origen = _xmlAcred.Table[0].ORIGENREC;
+				info.giro = _xmlAcred.Table[0].GIRO;
+				info.origen = _xmlAcred.Table[0].CDGORIREC;
 				info.destino = _xmlAcred.Table[0].CDGDESREC;
+				info.otroDesRec = _xmlAcred.Table[0].OTRODESREC;
 				info.pep = _xmlAcred.Table[0].PEP;
-				info.propReal = _xmlAcred.Table[0].PROPREAL;
-				info.nomPropReal = _xmlAcred.Table[0].NOMPROPREAL;
-				info.provRec = _xmlAcred.Table[0].PROPREC;
-				info.nomProvRec = _xmlAcred.Table[0].NOMPROVREC;
-			
+				
 				for(var i:int = 0; i < tipoObj.length; i++){
 					if(info.tipoPers == tipoObj[i].id.toString()){
 						cboTipoPers.selectedIndex = i;
@@ -305,6 +307,7 @@
 				formDPAcred.cboCoord.addEventListener(ListEvent.CHANGE, selecCoord);
 				formDirAcred.init(info, currentState);
 				formDirNegocio.init(info, currentState);
+				formDirNegocio.chkMismoDom.addEventListener(MouseEvent.CLICK, copiaDomicilio);
 				formOtroAcred.init(info);
 				formOficialAcred.init(info, currentState);
 				formPLDAcred.init(info, currentState);
@@ -503,8 +506,8 @@
 		<mx:Canvas id="cnvOficial" label="Origen Comercial" width="100%" height="100%">	
 			<Forms:FormOficialAcred id="formOficialAcred" x="94.5"/>
 		</mx:Canvas>
-		<mx:Canvas id="cnvAdic" label="Inf. Adicional" width="100%" height="100%">
-			<Forms:FormPLDAcred id="formPLDAcred" x="59.5" y="10"/>
+		<mx:Canvas id="cnvAdic" label="Inf. Adicional" width="100%" height="100%" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+			<Forms:FormPLDAcred id="formPLDAcred" x="44.5" y="10" width="500"/>
 		</mx:Canvas>
 	</mx:TabNavigator>
 	<mx:Button id="btnCancelar" x="560" y="508" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>

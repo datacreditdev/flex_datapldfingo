@@ -28,7 +28,7 @@
 			import Data.EventSolic;
 			import Data.Globales;
 			import Data.Utils;
-			import OPERAC.MttoCuenta;
+			import OPERAC.MttoBusqCuenta;
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.core.Application;
@@ -67,7 +67,7 @@
 			}
 			
 			public function actualizarCta(event:Event):void{
-				var comMttoCta:MttoCuenta = event.currentTarget as MttoCuenta; 
+				var comMttoCta:MttoBusqCuenta = event.currentTarget as MttoBusqCuenta; 
 				txtCodCuenta.text = comMttoCta.dgCuenta.selectedItem.CODIGO; 
 				txtCuenta.text = comMttoCta.dgCuenta.selectedItem.BANCO;
 				buscaCuenta();		
@@ -202,8 +202,8 @@
 			}
 			
 			public function muestraFormCta():void{
-				var comMttoCta:MttoCuenta = new MttoCuenta();
-				comMttoCta = MttoCuenta(PopUpManager.createPopUp(this,MttoCuenta,true));
+				var comMttoCta:MttoBusqCuenta = new MttoBusqCuenta();
+				comMttoCta = MttoBusqCuenta(PopUpManager.createPopUp(this,MttoBusqCuenta,true));
 				comMttoCta.init(5);
 				comMttoCta.addEventListener("enviar", actualizarCta);
 				PopUpManager.centerPopUp(comMttoCta);	

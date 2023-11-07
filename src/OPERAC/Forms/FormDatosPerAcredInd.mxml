@@ -432,6 +432,8 @@
 				
 				currentState = estatus;
 				
+				lstRepLegal.dataProvider = null;
+				
 				f = global.obtenerFechaSistema();
 				tipoAccion = 1;
 				
@@ -500,6 +502,7 @@
 								});
 								//CONSULTA EL LISTADO DE REP LEGALES
 								params[0] = info.codigo;
+								params[1] = "RL"
 								wsCat.getInfoAcred.send(23, params);
 									
 								//Asigna el objeto de figura

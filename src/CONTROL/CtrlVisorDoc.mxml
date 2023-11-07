@@ -56,14 +56,14 @@
 				var item:Array = new Array;
 				
 				oItem = new Object();
-				oItem.nombre = "--Seleccionar--";
 				oItem.id = "0";
+				oItem.descripcion = "--Seleccionar--";
 				item.push(oItem);
 				
 				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.id = _xmlRepo.Table[i].REPO;
-					oItem.nombre = _xmlRepo.Table[i].REPO;	
+					oItem.descripcion = _xmlRepo.Table[i].REPO;	
 					item.push(oItem);
 				}
 				

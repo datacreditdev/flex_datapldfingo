@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="465" height="300" 
+<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="490" height="300" 
 	creationPolicy="all" xmlns:Data="Data.*">
 	<mx:states>
 		<mx:State name="moral">
@@ -10,12 +10,12 @@
 		[Event(name="enviarDatosAcred", type="Data.EventAcred")]
 	</mx:Metadata>
 	
-	<mx:NumberValidator id="tipoPersV" source="{cboGiro}" property="selectedIndex" 
-	minValue="1" triggerEvent="" lowerThanMinError="Tipo de Persona Requerido"/>
+	<mx:Validator id="giroV" source="{txtGiro}" property="text" 
+	invalid="{txtGiro.setFocus()}" triggerEvent="" requiredFieldError="Giro Requerido"/>
 
-	<mx:Validator id="origenV" source="{txtOrigen}" property="text" 
-	invalid="{txtOrigen.setFocus()}" triggerEvent="" requiredFieldError="Origen de los Recursos Requerido"/>
-
+	<mx:NumberValidator id="origenV" source="{cboOrigen}" property="selectedIndex" 
+	minValue="1" triggerEvent="" lowerThanMinError="Origen de Recursos Requerido"/>
+	
 	<mx:NumberValidator id="destinoV" source="{cboDestino}" property="selectedIndex" 
 	minValue="1" triggerEvent="" lowerThanMinError="Destino de Recursos Requerido"/>
 
@@ -32,23 +32,27 @@
 			import mx.containers.TitleWindow;			
 			import mx.managers.PopUpManager;
 			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.ValidationResultEvent;
 			import mx.rpc.soap.WebService;
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
 			import mx.validators.Validator;
-			import mx.events.ValidationResultEvent;
 			import OPERAC.MttoBusqPersona;	
 			
 			private var _xmlDestino:XML =  new XML();
 			private var _xmlOrigen:XML =  new XML();
 			private var _xmlTipoPers:XML =  new XML();
+			private var _xmlPropReal:XML =  new XML();
+			private var _xmlProvRec:XML =  new XML();
 			
 			private var origenObj:ArrayCollection = new ArrayCollection();
 			private var destinoObj:ArrayCollection = new ArrayCollection();
 			private var giroObj:ArrayCollection = new ArrayCollection();
+			public var provRecObj:ArrayCollection = new ArrayCollection();
+			public var propRealObj:ArrayCollection = new ArrayCollection();
 			public var datos:DatosAcred = new DatosAcred();
 			
-			public var wsMS:WebService;   //variable utilizada para las llamadas asincronas de WS
 			private var du:Utils;
 			private var global:Globales;
 			private var vResult:ValidationResultEvent;
@@ -56,31 +60,74 @@
 			private var codProvRec:String;
 			
 			private function agregarPropReal(evt:Event):void{
+				var oItem:Object = new Object();
 				var comBusqPers:MttoBusqPersona = evt.currentTarget as MttoBusqPersona;
-				codPropReal = comBusqPers.obtenerCodigo();
-				txtPropReal.text = comBusqPers.obtenerNombre();
+				
+				oItem.codigo = comBusqPers.obtenerCodigo();	
+				oItem.nombre = comBusqPers.obtenerNombre();
+				
+				propRealObj.addItem(oItem);
+				propRealObj.refresh();
+				
+				lstPropReal.dataProvider = propRealObj;
 			}
 			
 			private function agregarProvRec(evt:Event):void{
+				var oItem:Object = new Object();
 				var comBusqPers:MttoBusqPersona = evt.currentTarget as MttoBusqPersona;
-				codProvRec = comBusqPers.obtenerCodigo();
-				txtProvRec.text = comBusqPers.obtenerNombre();
+				
+				oItem.codigo = comBusqPers.obtenerCodigo();	
+				oItem.nombre = comBusqPers.obtenerNombre();
+				
+				provRecObj.addItem(oItem);
+				provRecObj.refresh();
+				
+				lstProvRec.dataProvider = provRecObj;
 			}
 			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
+			private function confirmarElimPropReal():void{
+				var titulo:String = "Propietario Real";
+				if(lstPropReal.selectedIndex < 0){
+					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					return;
+				}				
+				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarPropReal,du.iQuest,4);
+			}
+			
+			private function confirmarElimProvRec():void{
+				var titulo:String = "Proveedor de Recursos";
+				if(lstProvRec.selectedIndex < 0){
+					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					return;
+				}				
+				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarProvRec,du.iQuest,4);
+			}
+			
+			private function eliminarPropReal(evt:CloseEvent):void{
+				if(evt.detail == Alert.YES){
+					propRealObj.removeItemAt(lstPropReal.selectedIndex);
+					propRealObj.refresh();
+					lstPropReal.dataProvider = propRealObj;
+				}
+			}
+			
+			private function eliminarProvRec(evt:CloseEvent):void{
+				if(evt.detail == Alert.YES){
+					provRecObj.removeItemAt(lstProvRec.selectedIndex);
+					provRecObj.refresh();
+					lstProvRec.dataProvider = provRecObj;
+				}
+			}
 			
 			public function enviarDatosAcred(formData:DatosAcred):void{
 				if(valida()){
-					formData.giro = cboGiro.selectedItem.id;
-					formData.origen = txtOrigen.text;
+					formData.giro = txtGiro.text;
+					formData.origen = cboOrigen.selectedItem.id;
 					formData.destino = cboDestino.selectedItem.id;
+					formData.otroDesRec = txtOtroDesRec.text;
 					
-					formData.propReal = codPropReal;
-					formData.provRec = codProvRec;
+					formData.arrProvRec = obtieneProvRec();
+					formData.arrPropReal = obtienePropReal();
 					
 					if(currentState == "")
 						formData.pep = chkPep.selected == true ? "S":"N";
@@ -176,6 +223,34 @@
 				giroObj = new ArrayCollection(item);
 			}
 			
+			private function formateaPropReal():void{
+				var cont:int = _xmlPropReal.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlPropReal.Table[i].CODIGO;
+					oItem.nombre = _xmlPropReal.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				propRealObj = new ArrayCollection(item);
+			}
+			
+			private function formateaProvRec():void{
+				var cont:int = _xmlProvRec.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlProvRec.Table[i].CODIGO;
+					oItem.nombre = _xmlProvRec.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				provRecObj = new ArrayCollection(item);
+			}
+			
 			public function init(info:DatosAcred, estatus:String):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
@@ -185,6 +260,9 @@
 				global = new Globales();
 				
 				currentState = estatus;
+				
+				lstPropReal.dataProvider = null;
+				lstProvRec.dataProvider = null;
 				
 				permisos();
 				
@@ -203,9 +281,9 @@
 							du.rCursor();
 							du.closeWs(wsCat);
 							
-							if(_xmlTipoPers.elements().length() > 0){
-								formateaGiro();
-								cboGiro.dataProvider = giroObj;
+							if (_xmlOrigen.elements().length() > 0){
+								formateaOrigen();
+								cboOrigen.dataProvider = origenObj;
 							}
 							
 							if (_xmlDestino.elements().length() > 0){
@@ -214,14 +292,14 @@
 							}
 							
 							if (info != null){
-								for(i = 0; i < giroObj.length; i++){
-									if (giroObj[i].id == info.giro){
-										cboGiro.selectedIndex = i;
+								txtGiro.text = info.giro;
+								
+								for(i = 0; i < origenObj.length; i++){
+									if (origenObj[i].id == info.origen){
+										cboOrigen.selectedIndex = i;
 										break;
 									}
 								}
-								
-								txtOrigen.text = info.origen;
 								
 								for(i = 0; i < destinoObj.length; i++){
 									if (destinoObj[i].id == info.destino){
@@ -229,13 +307,40 @@
 										break;
 									}
 								}
-								if(info.pep == "S")
-									chkPep.selected = true; 
+								txtOtroDesRec.text = info.otroDesRec;
 								
-								codPropReal = info.propReal;
-								txtPropReal.text = info.nomPropReal;
-								codProvRec = info.provRec;
-								txtProvRec.text = info.nomProvRec;
+								if(info.pep == "S")
+									chkPep.selected = true;
+									
+								du.initWsCat(wsCat);
+								du.sCursor();
+								
+								du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+									_xmlProvRec = new XML(evt.result.toString());
+									
+									//carga info de los representantes legales
+									formateaProvRec();
+									lstProvRec.dataProvider = provRecObj; 
+									
+									du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+										_xmlPropReal = new XML(evt.result.toString());
+										
+										du.rCursor();
+										du.closeWs(wsCat);
+										
+										//carga info de los propietarios reales
+										formateaPropReal();
+										lstPropReal.dataProvider = propRealObj;
+									});
+									//CONSULTA EL LISTADO DE PROPIETARIOS REALES
+									params[0] = info.codigo;
+									params[1] = "PR"
+									wsCat.getInfoAcred.send(23, params); 
+								});
+								//CONSULTA EL LISTADO DE PROVEEDORES DE RECURSOS
+								params[0] = info.codigo;
+								params[1] = "VR";
+								wsCat.getInfoAcred.send(23, params);	
 							}
 						});
 						//Obtiene informacion de Destino de los recursos de la actividad
@@ -248,14 +353,42 @@
 				wsCat.getCatalogoGral.send(35);
 			}
 			
-			private function mostrarFormPers(tipo:String):void{
+			private function mostrarFormPers(tipo:int):void{
 				var comBusqPers:MttoBusqPersona = new MttoBusqPersona;
 				comBusqPers = MttoBusqPersona(PopUpManager.createPopUp(this,MttoBusqPersona,true));
-				if(tipo == "P")
-					comBusqPers.addEventListener("enviar", agregarPropReal);
-				else if(tipo == "R")
-				 	comBusqPers.addEventListener("enviar", agregarProvRec);
+				if(tipo == 1)
+					comBusqPers.addEventListener("enviar", agregarProvRec);
+				else if(tipo == 2)
+				 	comBusqPers.addEventListener("enviar", agregarPropReal);
 				PopUpManager.centerPopUp(comBusqPers);
+			}
+			
+			private function obtienePropReal():Array{
+				var arrPropReal:Array = new Array;
+				var lista:ArrayCollection = lstPropReal.dataProvider as ArrayCollection;
+				var cont:int = lista.length;
+				
+				if(cont > 0)
+					for(var i:int = 0; i < cont; i++)
+						arrPropReal[i] = lista[i].codigo;
+				else
+					arrPropReal[0] = "";
+					
+				return arrPropReal;
+			}
+			
+			private function obtieneProvRec():Array{
+				var arrProvRec:Array = new Array;
+				var lista:ArrayCollection = lstProvRec.dataProvider as ArrayCollection;
+				var cont:int = lista.length;
+				
+				if(cont > 0)
+					for(var i:int = 0; i < cont; i++)
+						arrProvRec[i] = lista[i].codigo;
+				else
+					arrProvRec[0] = "";
+					
+				return arrProvRec;
 			}
 			
 			private function permisos():void{
@@ -264,7 +397,8 @@
 			}
 		
 			private function valida():Boolean{
-				var invalidArray:Array = Validator.validateAll([tipoPersV, origenV, destinoV]);
+				var invalidArray:Array = Validator.validateAll([giroV, origenV, destinoV]);
+				
 				if(invalidArray.length > 0)
 					return false;	
 				return true;
@@ -273,27 +407,32 @@
 	</mx:Script>
 	
 	<mx:FormItem label="Giro, actividad u objeto:" id="giro" visible="true" width="430">
-		<Data:CustomComboBox id="cboGiro" labelField="nombre" width="295"/>
+		<mx:TextInput id="txtGiro" width="295"/>
 	</mx:FormItem>
 	<mx:FormItem label="Origen de Recursos:" id="origen" visible="true" width="430">
-		<mx:TextInput id="txtOrigen" width="295"/>
+		<Data:CustomComboBox id="cboOrigen" labelField="nombre" width="295"/>
+	</mx:FormItem>
+	<mx:FormItem label="Proveedor Recursos:" id="provRec" visible="true" width="460" height="50">
+		<mx:Canvas>
+			<mx:List id="lstProvRec" width="220" height="50" labelField="nombre"/>	
+			<mx:Button id="btnAgregarProvRec" icon="@Embed(source='assets/add.png')" width="40" x="228" click="mostrarFormPers(1)" y="1"/>
+			<mx:Button id="btnEliminarProvRec" icon="@Embed(source='assets/delete-icon.png')" width="40" x="276" click="confirmarElimProvRec()" y="1"/>
+		</mx:Canvas>	
 	</mx:FormItem>
 	<mx:FormItem label="Destino de Recursos:" id="destino" visible="true" width="430">
 		<Data:CustomComboBox id="cboDestino" labelField="nombre" width="295"/>
 	</mx:FormItem>
+	<mx:FormItem label="Otro:" id="otroDesRec" visible="true" width="420">
+		<mx:TextInput id="txtOtroDesRec" width="232"/>
+	</mx:FormItem>
 	<mx:FormItem id="pep">
 		<mx:CheckBox id="chkPep" label="Persona Políticamente Expuesta (PEP)"/>
 	</mx:FormItem>
-	<mx:FormItem label="Propietario Real:" id="propReal" visible="true" width="420">
+	<mx:FormItem label="Propietario Real:" id="propReal" visible="true" width="460" height="50">
 		<mx:Canvas>
-			<mx:TextInput id="txtPropReal" width="232"/>
-			<mx:Button id="btnPropReal" icon="@Embed(source='assets/ico_lupa.png')" x="240" click="mostrarFormPers('P')"/>
-		</mx:Canvas>
-	</mx:FormItem>
-	<mx:FormItem label="Proveedor Recursos:" id="provRec" visible="true" width="420">
-		<mx:Canvas>
-			<mx:TextInput id="txtProvRec" width="232"/>
-			<mx:Button id="btnProvRec" icon="@Embed(source='assets/ico_lupa.png')" x="240" click="mostrarFormPers('R')"/>
-		</mx:Canvas>
+			<mx:List id="lstPropReal" width="220" height="50" labelField="nombre"/>	
+			<mx:Button id="btnAgregarPropReal" icon="@Embed(source='assets/add.png')" width="40" x="228" click="mostrarFormPers(2)" y="1"/>
+			<mx:Button id="btnEliminarPropReal" icon="@Embed(source='assets/delete-icon.png')" width="40" x="276" click="confirmarElimPropReal()" y="1"/>
+		</mx:Canvas>	
 	</mx:FormItem>
 </mx:Form>

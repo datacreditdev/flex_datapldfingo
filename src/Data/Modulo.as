@@ -125,6 +125,7 @@ package Data
 		public var frm_145:PolizadePagosMensual;
 		
 		public var frm_146:CargadeTabladeAmortizacion;
+		public var frm_147:Fideicomisos;
 		
 		public function Modulo()
 		{

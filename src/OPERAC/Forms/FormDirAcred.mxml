@@ -3,7 +3,6 @@
 	<mx:states>
 		<mx:State name="moral">
 			<mx:SetProperty target="{lblTitulo}" name="text" value="Domicilio de Oficinas"/>
-			<mx:SetProperty target="{lblEntre}" name="y" value="322"/>
 			<mx:AddChild relativeTo="{lblCodPostal}" position="before">
 				<mx:Label id="lblNumInt" text="Número Interior:" x="61.5" y="104"/>
 			</mx:AddChild>
@@ -11,11 +10,13 @@
 				<mx:Label id="lblNumExt" text="Número Exterior:" x="57.5" y="74"/>
 			</mx:AddChild>
 			<mx:AddChild position="lastChild">
-				<mx:TextInput id="txtNumExt" maxChars="20" x="150.5" y="321" width="170"/>
+				<mx:TextInput id="txtNumExt" maxChars="20" x="150.5" y="73" width="170"/>
 			</mx:AddChild>
 			<mx:AddChild position="lastChild">
 				<mx:TextInput id="txtNumInt" maxChars="20" x="150.5" y="103" width="170"/>
 			</mx:AddChild>
+			<mx:SetProperty target="{lblEntre}" name="y" value="322"/>
+			<mx:SetProperty target="{txtEntreCalles}" name="y" value="321"/>
 			<mx:RemoveChild target="{lblTelefono}"/>
 		</mx:State>
 	</mx:states>
@@ -129,6 +130,29 @@
 					obtieneLocalidad();
 					obtieneColonia();
 				}
+			}
+			
+			public function copiaDatos():Object{
+				var oItem:Object;
+				
+				oItem = new Object();
+				oItem.calle = StringUtil.trim(txtCalle.text);
+				oItem.noExt = StringUtil.trim(txtNumExt.text);
+				oItem.noInt = StringUtil.trim(txtNumInt.text);
+				oItem.entreCalles = StringUtil.trim(txtEntreCalles.text);
+				oItem.cdgPais = datos.cdgPais;
+				oItem.pais = comPaisGrid.obtieneDato();
+				oItem.codPostal = txtCodPostal.text;
+				oItem.cdgEntFed = datos.cdgEntFed;
+				oItem.entFed = comEntGrid.obtieneDato();
+				oItem.cdgMun = datos.cdgMun;
+				oItem.munic = comMunGrid.obtieneDato();
+				oItem.cdgLoc = datos.cdgLoc;
+				oItem.localidad = comLocGrid.obtieneDato();
+				oItem.cdgCol = datos.cdgCol;
+				oItem.colonia = comColGrid.obtieneDato();
+				
+				return oItem;
 			}
 			
 			public function enviarDatosAcred(formData:DatosAcred):void{
@@ -354,7 +378,6 @@
 			
 			private function selecPais(event:Event):void{
 				if(datos.cdgPaisNeg != event.currentTarget.codigo){
-					comPaisGrid.limpiar();
 					datos.cdgPaisNeg = event.currentTarget.codigo;
 				}
 				comPaisGrid.setFocus();
