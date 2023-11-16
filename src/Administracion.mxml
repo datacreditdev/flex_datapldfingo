@@ -358,12 +358,6 @@
 				    	PERFIL_ID[i] = usrInfo.Table[i].COD_PERFIL;
 				    	cadPerfil += (cadPerfil != ""? ",":"") + "'" + usrInfo.Table[i].COD_PERFIL + "'"; 
 				    }
-
-				    /*var t:Date = DateField.stringToDate(usrInfo.Table[0].FECHA, 'DD/MM/YYYY');
-				    var df:DateFormatter = new DateFormatter();
-				    df.formatString = "DD/MM/YYYY";	    					   
-				    lblFecha.text = df.format(t);
-				    _Current_Fecha = t;*/
 				    
 				    var mod:MainPrincipal = new MainPrincipal();
 					MainWindow.removeAllChildren();   
