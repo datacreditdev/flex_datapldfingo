@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="462" height="630"  xmlns:control="CONTROL.*">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="462" height="630" 
+	xmlns:control="CONTROL.*">
 	
 	<mx:Validator id="sucBancV" source="{txtCodSB}" property="text" 
 	invalid="{txtCodSB.setFocus()}" triggerEvent="" requiredFieldError="Código Requerido"/>
@@ -48,18 +49,21 @@
 		public function buscaCodPostal():void{ 
 			txtCodPostal.text = StringUtil.trim(txtCodPostal.text);
 			if (txtCodPostal.text != "" && txtCodPostal.length == 5){
-				initConexion();
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du.initWsCat(wsCat);
 				du.sCursor();
 				
 				_xmlDir = null;
 			
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlDir = new XML(evt.result.toString());
 				
 					limpiaDatosDir();
 					
 					du.rCursor();
-					du.closeWs(wsMS);
+					du.closeWs(wsCat);
 						
 					if(_xmlDir.elements().length() > 0){						
 						comEntGrid.asignaTexto(_xmlDir.Table[0].ENTFED);
@@ -82,7 +86,8 @@
 						obtieneColonia();
 					}
 				});
-				wsMS.getDirCodPostal.send(txtCodPostal.text);
+				params[0] = txtCodPostal.text;
+				wsCat.getCatalogoGral.send(6, params);
 			}
 			else{
 				txtCodPostal.text = "";
