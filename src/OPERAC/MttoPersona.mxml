@@ -6,6 +6,7 @@
 		<mx:State name="moral">
 			<mx:SetProperty target="{formDatosPer}" name="width" value="480"/>
 			<mx:SetProperty target="{formDatosPer}" name="x" value="9"/>
+			<mx:SetProperty name="height" value="630"/>
 		</mx:State>
 	</mx:states>
 	
@@ -238,6 +239,9 @@
 		</mx:Canvas>
 		<mx:Canvas label="Dirección" width="100%" height="100%">	
 			<Forms:FormDirPer id="formDirPer" x="39" height="370" width="420"/>
+		</mx:Canvas>
+		<mx:Canvas label="PLD" width="100%" height="100%">	
+			<Forms:FormPLDPers id="formPLDPers" x="39" height="370" width="420"/>
 		</mx:Canvas>
 	</mx:TabNavigator>
 	<mx:Button id="btnCancelar" x="471" y="478" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
