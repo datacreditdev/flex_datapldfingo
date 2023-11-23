@@ -233,7 +233,6 @@
 			<mx:RadioButton id="rdbUnion" label="Unión Libre" x="10" y="49"/>
 			<mx:RadioButton id="rdbSoltero" label="Soltero" x="10" y="0"/>
 		</mx:Canvas>
-		
 	</mx:FormItem>
 	<mx:FormItem label="Nivel Escolar:" id="nivelEscolar" visible="true">
 		<mx:ComboBox id="cboNivelEsc" labelField="nombre"/>

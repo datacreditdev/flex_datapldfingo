@@ -1,17 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" layout="absolute" width="525" 
-	height="550" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*" creationComplete="initApp()" 
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:forms="forms.*" layout="absolute" width="610" 
+	height="660" showCloseButton="true" close="cerrar()" xmlns:Forms="OPERAC.Forms.*" creationComplete="initApp()" 
 	creationPolicy="all">
 	<mx:states>
 		<mx:State name="moral">
-			<mx:SetProperty target="{formDatosPer}" name="width" value="480"/>
-			<mx:SetProperty target="{formDatosPer}" name="x" value="9"/>
-			<mx:SetProperty name="height" value="630"/>
+			<mx:SetProperty target="{formDatosPers}" name="width" value="510"/>
+			<mx:SetProperty target="{formDatosPers}" name="x" value="39.5"/>
+			<mx:SetProperty target="{btnAceptar}" name="y" value="518"/>
+			<mx:SetProperty target="{btnCancelar}" name="y" value="518"/>
+			<mx:SetProperty target="{btnConsBuro}" name="y" value="518"/>
+			<mx:SetProperty target="{btnDoc}" name="y" value="518"/>
+			<mx:SetProperty target="{formDatosPers}" name="height" value="420"/>
+			<mx:SetProperty target="{tabNav}" name="height" value="460"/>
+			<mx:SetProperty name="height" value="590"/>
 		</mx:State>
 	</mx:states>
+	<mx:transitions>
+		<mx:Transition fromState="*" toState="*">		
+			<mx:Parallel>
+				<mx:Fade duration="500" target="{this}"/>
+			</mx:Parallel>
+		</mx:Transition>
+	</mx:transitions>
 	
 	<mx:Script>
 		<![CDATA[
+			import mx.controls.CheckBox;
 			import Data.EventPersona;
 			import Data.DatosPersona;
 			import Data.Globales;
@@ -28,16 +42,16 @@
 			
 			[Bindable]
 			private var info:DatosPersona;
-			private var _xmlPers:XML =  new XML();
+			private var _xmlPers:XML = new XML();
 			private var tipoObj:ArrayCollection;
 			
+			private var du:Utils;
+			private var global:Globales;
 			public var wsMS:WebService;	
 			public var tipoAccion:int;
 			public var band:Boolean;
 			public var pers:String;
 			public var titulo:String;
-			public var du:Utils;
-			private var global:Globales;
 			
 			public function cargaInfoPersona(pers:String):void{
 				var wsCat:WebService = new WebService;
@@ -71,12 +85,28 @@
 				PopUpManager.removePopUp(this);
 			}
 			
-			public function enviar():void{
+			private function consultarBuro():void{
+				
+			}
+			
+			private function copiarDomicilio(evt:MouseEvent):void{
+				var chkMismoDom:CheckBox = evt.currentTarget as CheckBox;
+				if(chkMismoDom.selected)
+					formDirNegPers.recibeDatos(formDirPers.copiarDatos());
+			}
+			
+			private function enviar():void{
 				info = new DatosPersona();
-				info.tipoPers = cboTipoPers.selectedItem.id;
-				formDatosPer.enviarDatosPersona(info);
-				formDirPer.enviarDatosPersona(info);
-				validaFinal();
+				
+				if(validarInfo()){
+					info.tipoPers = cboTipoPers.selectedItem.id;
+					formDatosPers.enviarDatosPersona(info);
+					formDirPers.enviarDatosPersona(info);
+					formDirNegPers.enviarDatosPersona(info);
+					formKYCPers.enviarDatosPersona(info);
+					formPLDPers.enviarDatosPersona(info);
+					validaFinal();
+				}
 			}
 			
 			private function formateaTipoPers():void{
@@ -108,11 +138,16 @@
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionPersona);
 				wsMS.setAccionPersona.send(tipoAccion, global.obtenerUsuario(), 
 											 info.codigo, info.nombre, info.segNombre, info.aPaterno, 
-											 info.aMaterno, info.sexo, info.fecha, info.cdgNacPais, 
-											 info.cdgNacEntFed, info.cdgNac, info.rfc, info.curp, info.ife, 
-											 info.calle, info.entreCalles, info.telefono, info.codPostal,
-											 info.cdgEntFed, info.cdgMun, info.cdgLoc, info.cdgCol, 
-											 info.tipoPers, info.arrRepLegal);
+											 info.aMaterno, info.figura, info.nomCom, info.sexo, info.fecha, 
+											 info.cdgNacPais, info.cdgNacEntFed, info.cdgNac, info.rfc, info.curp, 
+											 info.ife, info.fiel, info.edoCivil, info.email1, info.email2, info.telefono,
+											 info.telefono2, info.calle, info.noExt, info.noInt, info.entreCalles, info.cdgPais, 
+											 info.codPostal, info.cdgEntFed, info.cdgMun, info.cdgLoc, info.cdgCol, info.calleNeg, 
+											 info.noExtNeg, info.noIntNeg, info.entreCallesNeg, info.cdgPaisNeg, info.cdgEntFedNeg, 
+											 info.cdgMunNeg, info.cdgLocNeg, info.cdgColNeg, info.tipoPers, info.arrRepLegal, 
+											 info.giro, info.origen, info.destino, info.otroDesRec, info.pep, info.arrPropReal, 
+										 	 info.arrProvRec, info.puesto, info.puestoDesc, info.periodo, info.puestoFam, info.nomFam,
+										 	 info.parentescoFam, info.puestoDescFam, info.periodoFam);
 			}
 			
 			public function initApp():void{
@@ -138,8 +173,6 @@
 				info.aPaterno = _xmlPers.Table[0].PRIMAPE;
 				info.aMaterno = _xmlPers.Table[0].SEGAPE;
 				info.tipoPers = _xmlPers.Table[0].TIPOPERS;
-				//info.repLegal = _xmlPers.Table[0].REPLEGAL;
-				info.nomRepLegal = _xmlPers.Table[0].NOMREPLEGAL;
 				info.sexo = _xmlPers.Table[0].SEXO;
 				info.fecha = _xmlPers.Table[0].FECNAC
 				info.cdgNacPais = _xmlPers.Table[0].NACIOPAI;
@@ -148,11 +181,23 @@
 				info.rfc = _xmlPers.Table[0].RFC;	
 				info.curp = _xmlPers.Table[0].CURP;
 				info.ife = _xmlPers.Table[0].IFE;
+				info.figura = _xmlPers.Table[0].FIGURA;
+				info.nomCom = _xmlPers.Table[0].NOMCOM;
+				info.fiel = _xmlPers.Table[0].FIEL;
+				info.edoCivil = _xmlPers.Table[0].EDOCIVIL;
+				info.telefono = _xmlPers.Table[0].TELEFONO;
+				info.telefono2 = _xmlPers.Table[0].TELEFONO2;
+				info.email1 = _xmlPers.Table[0].EMAIL1;
+				info.email2 = _xmlPers.Table[0].EMAIL2;
 				
 				//Direccion
 				info.calle = _xmlPers.Table[0].CALLE;
+				info.noExt = _xmlPers.Table[0].NOEXT;
+				info.noInt = _xmlPers.Table[0].NOINT;
 				info.entreCalles = _xmlPers.Table[0].ENTRECALLES;
 				info.telefono = _xmlPers.Table[0].TELEFONO;
+				info.cdgPais = _xmlPers.Table[0].CDGPAI;
+				info.pais = _xmlPers.Table[0].PAIS;
 				info.codPostal = _xmlPers.Table[0].CDGPOSTAL;
 				info.cdgEntFed = _xmlPers.Table[0].CDGEF;
 				info.entFed = _xmlPers.Table[0].ENTFED;
@@ -163,6 +208,38 @@
 				info.cdgCol = _xmlPers.Table[0].CDGCOL;
 				info.colonia = _xmlPers.Table[0].COL;
 				
+				//Direccion del Negocio
+				info.calleNeg = _xmlPers.Table[0].CALLENEG;
+				info.noIntNeg = _xmlPers.Table[0].NOINTNEG;
+				info.noExtNeg = _xmlPers.Table[0].NOEXTNEG;
+				info.entreCallesNeg = _xmlPers.Table[0].ENTRECALLESNEG;
+				info.codPostalNeg = _xmlPers.Table[0].CDGPOSTALNEG;
+				info.cdgPaisNeg = _xmlPers.Table[0].CDGPAINEG;
+				info.paisNeg = _xmlPers.Table[0].PAISNEG;
+				info.cdgEntFedNeg = _xmlPers.Table[0].CDGEFNEG;
+				info.entFedNeg = _xmlPers.Table[0].ENTFEDNEG;
+				info.cdgMunNeg = _xmlPers.Table[0].CDGMUNEG;
+				info.municipioNeg = _xmlPers.Table[0].MUNICNEG;
+ 				info.cdgLocNeg = _xmlPers.Table[0].CDGLONEG; 
+				info.localidadNeg = _xmlPers.Table[0].LOCNEG;
+				info.cdgColNeg = _xmlPers.Table[0].CDGCOLNEG;
+				info.coloniaNeg = _xmlPers.Table[0].COLNEG;
+				
+				info.giro = _xmlPers.Table[0].GIRO;
+				info.origen = _xmlPers.Table[0].CDGORIREC;
+				info.destino = _xmlPers.Table[0].CDGDESREC;
+				info.otroDesRec = _xmlPers.Table[0].OTRODESREC;
+				info.pep = _xmlPers.Table[0].PEP;
+				
+				info.puesto = _xmlPers.Table[0].PUESTO;
+				info.puestoDesc = _xmlPers.Table[0].PUESTODESC;
+				info.periodo = _xmlPers.Table[0].PERIODO;
+				info.puestoFam = _xmlPers.Table[0].PUESTOFAM;
+				info.nomFam = _xmlPers.Table[0].NOMFAM;
+				info.parentescoFam = _xmlPers.Table[0].PARENTESCOFAM;
+				info.puestoDescFam = _xmlPers.Table[0].PUESTODESCFAM;
+				info.periodoFam = _xmlPers.Table[0].PERIODOFAM;
+				
 				for(var i:int = 0; i < tipoObj.length; i++){
 					if(info.tipoPers == tipoObj[i].id.toString()){
 						cboTipoPers.selectedIndex = i;
@@ -172,17 +249,29 @@
 				
 				modificaEstatus();
 				
-				formDatosPer.init(info);
-				formDirPer.init(info);
+				formDatosPers.init(info, currentState);
+				formDirPers.init(info);
+				formDirNegPers.init(info);
+				formDirNegPers.chkMismoDom.addEventListener(MouseEvent.CLICK, copiarDomicilio);
+				formKYCPers.init(info, currentState);
+				formPLDPers.init(info);
 			}
 			
 			private function modificaEstatus():void{
 				tabNav.selectedIndex = 0;
-				formDatosPer.asignaEstatus(cboTipoPers.selectedItem.id);
-				if(cboTipoPers.selectedItem.id == "F")
+				formDatosPers.asignaEstatus(cboTipoPers.selectedItem.id);
+				formKYCPers.asignaEstatus(cboTipoPers.selectedItem.id);
+				if(cboTipoPers.selectedItem.id == "F"){
 					currentState = null;
+					formDatosPers.width = 430;
+					formDatosPers.height = 480;
+				}
 				else if(cboTipoPers.selectedItem.id == "M")
 					currentState = "moral";
+			}
+			
+			private function mostrarDocumentos():void{
+				
 			}
 			
 			private function permisos():void{
@@ -192,8 +281,12 @@
 			public function registraInfoPersona():void{
 				tipoAccion = 1;
 				info = null;
-				formDatosPer.init(info);
-				formDirPer.init(info);
+				formDatosPers.init(info, currentState);
+				formDirPers.init(info);
+				formDirNegPers.init(info);
+				formDirNegPers.chkMismoDom.addEventListener(MouseEvent.CLICK, copiarDomicilio);
+				formKYCPers.init(info, currentState);
+				formPLDPers.init(info);
 				this.title = "Nuevo";
 				cboTipoPers.enabled = true;
 			} 
@@ -223,8 +316,16 @@
 				info = event.customProp;
 			}
 			
+			private function validarInfo():Boolean{
+				if(cboTipoPers.selectedIndex == 0){
+					Alert.show("Debe seleccionar el Tipo de Persona.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+			
 			private function validaFinal():void{
-				if (info.guardaDatos == true && info.guardaDir == true){
+				if (info.guardaDatos == true && info.guardaDir == true && info.guardaKYC){
 					guardaPersona();
 				}
 				else
@@ -233,20 +334,27 @@
 
 		]]>
 	</mx:Script>
-	<mx:TabNavigator id="tabNav" width="500" height="419" x="10" y="52" creationPolicy="all">
+	<mx:TabNavigator id="tabNav" width="591" height="530" x="7.5" y="50" creationPolicy="all">
 		<mx:Canvas label="Datos Personales" width="100%" height="100%">
-			<Forms:FormDatosPer id="formDatosPer" x="36.5" height="382" width="425"/>
+			<Forms:FormDatosPerPers id="formDatosPers" x="79.5" height="480" width="430"/>
 		</mx:Canvas>
 		<mx:Canvas label="Dirección" width="100%" height="100%">	
-			<Forms:FormDirPer id="formDirPer" x="39" height="370" width="420"/>
+			<Forms:FormDirPers id="formDirPers" x="84.5" height="390" width="420"/>
+		</mx:Canvas>
+		<mx:Canvas label="Dirección Negocio" width="100%" height="100%">	
+			<Forms:FormDirNegPers id="formDirNegPers" x="84.5" height="390" width="420"/>
+		</mx:Canvas>
+		<mx:Canvas label="Inf. Adicional KYC" width="100%" height="100%">	
+			<Forms:FormKYCPers id="formKYCPers" x="47" height="305" width="495"/>
 		</mx:Canvas>
 		<mx:Canvas label="PLD" width="100%" height="100%">	
-			<Forms:FormPLDPers id="formPLDPers" x="39" height="370" width="420"/>
+			<Forms:FormPLDPers id="formPLDPers" x="49.5" height="370" width="490"/>
 		</mx:Canvas>
 	</mx:TabNavigator>
-	<mx:Button id="btnCancelar" x="471" y="478" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
-	<mx:Button id="btnAceptar" x="423" y="478" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
-	<mx:Image x="454" y="10" width="57" height="57" scaleContent="true" id="image1" source="assets/user.png"/>
-	<mx:Label x="127.5" y="18" text="Tipo Persona:" id="lblTipoPers"/>
-	<mx:ComboBox id="cboTipoPers" labelField="nombre" x="206.5" y="15" change="modificaEstatus()"/>
+	<mx:Button id="btnCancelar" x="556" y="588" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="508" y="588" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Label x="183.5" y="16" text="Tipo Persona:" id="lblTipoPers"/>
+	<mx:ComboBox id="cboTipoPers" labelField="nombre" x="262.5" y="13" change="modificaEstatus()"/>
+	<mx:Button id="btnConsBuro" x="10" y="588" click="consultarBuro()" label="Consulta Rep. Crédito" visible="true"/>
+	<mx:Button id="btnDoc" x="166" y="588" click="mostrarDocumentos()" label="Ver Documentación" visible="true"/>
 </mx:TitleWindow>

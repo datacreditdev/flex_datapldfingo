@@ -73,9 +73,9 @@
 			
 			public var datos:DatosAcred = new DatosAcred();
 			
-			public var texto:String;
 			private var du:Utils;
 			private var global:Globales;
+			public var texto:String;
 			
 			public function asignaEstatus(tipoPersona:String):void{
 				if(tipoPersona == "F")
@@ -377,8 +377,8 @@
 			}
 			
 			private function selecPais(event:Event):void{
-				if(datos.cdgPaisNeg != event.currentTarget.codigo){
-					datos.cdgPaisNeg = event.currentTarget.codigo;
+				if(datos.cdgPais != event.currentTarget.codigo){
+					datos.cdgPais = event.currentTarget.codigo;
 				}
 				comPaisGrid.setFocus();
 			}
@@ -411,7 +411,7 @@
 			}
 			
 			private function verifPais(event:Event):void{
-				datos.cdgPaisNeg = comPaisGrid.obtieneCodigo();
+				datos.cdgPais = comPaisGrid.obtieneCodigo();
 			}
 	]]>
 	</mx:Script>

@@ -228,6 +228,7 @@
 				info.figura = _xmlAcred.Table[0].FIGURA;
 				info.nomCom = _xmlAcred.Table[0].NOMCOM;
 				info.fiel = _xmlAcred.Table[0].FIEL;
+				info.telefono = _xmlAcred.Table[0].TELEFONO;
 				info.telefono2 = _xmlAcred.Table[0].TELEFONO2;
 				info.email1 = _xmlAcred.Table[0].EMAIL1;
 				info.email2 = _xmlAcred.Table[0].EMAIL2;
@@ -237,7 +238,6 @@
 				info.noInt = _xmlAcred.Table[0].NOINT;
 				info.noExt = _xmlAcred.Table[0].NOEXT;
 				info.entreCalles = _xmlAcred.Table[0].ENTRECALLES;
-				info.telefono = _xmlAcred.Table[0].TELEFONO;
 				info.codPostal = _xmlAcred.Table[0].CDGPOSTAL;
 				info.cdgPais = _xmlAcred.Table[0].CDGPAI;
 				info.pais = _xmlAcred.Table[0].PAIS;
@@ -447,7 +447,7 @@
 				info = event.customProp;
 			}
 			
-			public function validaInfo():Boolean{
+			private function validaInfo():Boolean{
 				if(cboTipoPers.selectedIndex == 0){
 					Alert.show("Debe seleccionar el Tipo de Persona.",titulo,4,null,null,global.iAlert);
 					return false;
@@ -457,7 +457,7 @@
 			
 			public function validaFinal():void{
 				if (info.guardaDatos == true && info.guardaDir == true && 
-					info.guardaOficial == true && info.guardaPLD){
+					info.guardaOficial == true && info.guardaKYC){
 					validaSituacionAcred();
 				}
 				else
