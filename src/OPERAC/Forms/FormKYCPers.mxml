@@ -7,7 +7,7 @@
 		</mx:State>
 	</mx:states>
 	<mx:Metadata>
-		[Event(name="enviarDatosAcred", type="Data.EventAcred")]
+		[Event(name="enviarDatosPersona", type="Data.EventPersona")]
 	</mx:Metadata>
 	
 	<mx:Validator id="giroV" source="{txtGiro}" property="text" 
@@ -21,10 +21,10 @@
 
 	<mx:Script>
 		<![CDATA[
-			import Data.EventAcred;
-			import Data.DatosAcred;
-			import Data.Utils;
+			import Data.DatosPersona;
+			import Data.EventPersona;
 			import Data.Globales;
+			import Data.Utils;
 			import mx.controls.Alert;
 			import mx.validators.Validator;
 			import mx.collections.ArrayCollection;
@@ -51,7 +51,7 @@
 			private var giroObj:ArrayCollection = new ArrayCollection();
 			public var provRecObj:ArrayCollection = new ArrayCollection();
 			public var propRealObj:ArrayCollection = new ArrayCollection();
-			public var datos:DatosAcred = new DatosAcred();
+			public var datos:DatosPersona = new DatosPersona();
 			
 			private var du:Utils;
 			private var global:Globales;
@@ -83,6 +83,13 @@
 				provRecObj.refresh();
 				
 				lstProvRec.dataProvider = provRecObj;
+			}
+			
+			public function asignaEstatus(tipoPersona:String):void{
+				if(tipoPersona == "F")
+					currentState = "";
+				else if(tipoPersona == "M")
+					currentState = "moral";
 			}
 			
 			private function confirmarElimPropReal():void{
@@ -119,8 +126,8 @@
 				}
 			}
 			
-			public function enviarDatosAcred(formData:DatosAcred):void{
-				if(valida()){
+			public function enviarDatosPersona(formData:DatosPersona):void{
+				if(validar()){
 					formData.giro = txtGiro.text;
 					formData.origen = cboOrigen.selectedItem.id;
 					formData.destino = cboDestino.selectedItem.id;
@@ -129,15 +136,15 @@
 					formData.arrProvRec = obtieneProvRec();
 					formData.arrPropReal = obtienePropReal();
 					
-					if(currentState == "")
-						formData.pep = chkPep.selected == true ? "S":"N";
+					if(currentState == null)
+						formData.pep = chkPep.selected ? "S":"N";
 					
 					formData.guardaKYC = true;
 				}
 				else
 					formData.guardaKYC = false;	
 				
-				var event:EventAcred = new EventAcred("enviarDatosAcred", formData);
+				var event:EventPersona = new EventPersona("enviarDatosPersona", formData);
 				dispatchEvent(event);
 			}
 			
@@ -153,7 +160,7 @@
 				
 				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
-					oItem.id = _xmlDestino.Table[i].CODIGO.toString();	
+					oItem.id = _xmlDestino.Table[i].CODIGO;	
 					oItem.nombre = _xmlDestino.Table[i].DESCRIPCION;
 					item.push(oItem);
 				}
@@ -172,7 +179,7 @@
 				
 				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
-					oItem.id = _xmlOrigen.Table[i].CODIGO.toString();	
+					oItem.id = _xmlOrigen.Table[i].CODIGO;	
 					oItem.nombre = _xmlOrigen.Table[i].DESCRIPCION;
 					item.push(oItem);
 				}
@@ -213,13 +220,6 @@
 				oItem.nombre = "Explotación de Recursos Naturales";
 				item.push(oItem);
 				
-				/*for (var i:int = 0; i < cont; i++){
-					oItem = new Object();
-					oItem.id = _xmlTipoPers.Table[i].CODIGO.toString();	
-					oItem.nombre = _xmlTipoPers.Table[i].DESCRIPCION;
-					item.push(oItem);
-				}*/
-				
 				giroObj = new ArrayCollection(item);
 			}
 			
@@ -251,7 +251,7 @@
 				provRecObj = new ArrayCollection(item);
 			}
 			
-			public function init(info:DatosAcred, estatus:String):void{
+			public function init(info:DatosPersona, estatus:String):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
 				var i:int;
@@ -260,9 +260,6 @@
 				global = new Globales();
 				
 				currentState = estatus;
-				
-				lstPropReal.dataProvider = null;
-				lstProvRec.dataProvider = null;
 				
 				permisos();
 				
@@ -291,6 +288,9 @@
 								cboDestino.dataProvider = destinoObj;
 							}
 							
+							lstPropReal.dataProvider = null;
+							lstProvRec.dataProvider = null;
+							
 							if (info != null){
 								txtGiro.text = info.giro;
 								
@@ -309,9 +309,11 @@
 								}
 								txtOtroDesRec.text = info.otroDesRec;
 								
-								if(info.pep == "S")
-									chkPep.selected = true;
-									
+								if(currentState == null){
+									if(info.pep == "S")
+										chkPep.selected = true;
+								}	
+								
 								du.initWsCat(wsCat);
 								du.sCursor();
 								
@@ -335,12 +337,12 @@
 									//CONSULTA EL LISTADO DE PROPIETARIOS REALES
 									params[0] = info.codigo;
 									params[1] = "PR"
-									wsCat.getInfoAcred.send(23, params); 
+									wsCat.getInfoRegistro.send(45, params); 
 								});
 								//CONSULTA EL LISTADO DE PROVEEDORES DE RECURSOS
 								params[0] = info.codigo;
 								params[1] = "VR";
-								wsCat.getInfoAcred.send(23, params);	
+								wsCat.getInfoRegistro.send(45, params);	
 							}
 						});
 						//Obtiene informacion de Destino de los recursos de la actividad
@@ -396,7 +398,7 @@
 				var cont:int;
 			}
 		
-			private function valida():Boolean{
+			private function validar():Boolean{
 				var invalidArray:Array = Validator.validateAll([giroV, origenV, destinoV]);
 				
 				if(invalidArray.length > 0)

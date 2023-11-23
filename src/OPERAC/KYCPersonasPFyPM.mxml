@@ -33,11 +33,11 @@
 			public var _xmlPers:XML = new XML();
 			public var dPermisos:XML = new XML();	
 			
-			public var wsMS:WebService;	
-			public var du:Utils;
-			public var titulo:String;
+			private var du:Utils;
 			private var global:Globales;
 			private var permiso:Permisos;
+			public var titulo:String;
+			public var wsMS:WebService;	
 			
 			//variables que especifican el indice del elemento 
 			//seleccionado al realizar la modificacion del registro

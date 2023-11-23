@@ -1,23 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="430" height="394" creationPolicy="all" 
+<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="430" height="480" creationPolicy="all" 
 	horizontalScrollPolicy="off" verticalScrollPolicy="off">
 	<mx:states>
 		<mx:State name="moral">
+			<mx:SetProperty name="width" value="510"/>
+			<mx:SetProperty name="height" value="420"/>
 			<mx:RemoveChild target="{txtSegNombre}"/>
 			<mx:RemoveChild target="{AP}"/>
 			<mx:RemoveChild target="{AM}"/>
-			<mx:RemoveChild target="{sexo}"/>
+			<mx:RemoveChild target="{genero}"/>
 			<mx:RemoveChild target="{entidad}"/>
 			<mx:RemoveChild target="{pais}"/>
 			<mx:RemoveChild target="{curp}"/>
 			<mx:RemoveChild target="{ife}"/>
 			<mx:SetProperty target="{txtCodigo}" name="width" value="100"/>
-			<mx:SetProperty name="width" value="510"/>
+			<mx:RemoveChild target="{rfc}"/>
+			<mx:AddChild relativeTo="{nombre}" position="before" target="{rfc}"/>
 			<mx:SetProperty target="{nombre}" name="label" value="Denominación o Razón Social:"/>
 			<mx:SetProperty target="{nombre}" name="width" value="464"/>
+			<mx:SetProperty target="{fecha}" name="width" value="370"/>
+			<mx:SetProperty target="{fecha}" name="label" value="Fecha Constitución:"/>
 			<mx:SetProperty target="{txtNombre}" name="width" value="290"/>
 			<mx:SetProperty target="{txtNombre}" name="restrict" value="A-Z;a-z;Ñ;ñ;0-9; "/>
 			<mx:SetProperty target="{txtRfc}" name="editable" value="true"/>
+			<mx:AddChild relativeTo="{nombre}" position="after">
+				<mx:FormItem label="Régimen Capital:" id="figura" visible="true" width="465">
+					<mx:Canvas>
+						<mx:ComboBox id="cboFigura" labelField="nombre" width="290"/>
+					</mx:Canvas>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{figura}" position="after">
+				<mx:FormItem label="Nombre Comercial:" id="nomCom" visible="true" width="465">
+					<mx:Canvas>
+						<mx:TextInput id="txtNomCom" width="290" restrict="A-Z;a-z;Ñ;ñ; "/>
+					</mx:Canvas>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Teléfono 1:" id="tel1" visible="true">
+					<mx:TextInput id="txtTel1"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Teléfono 2:" id="tel2" visible="true">
+					<mx:TextInput id="txtTel2"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Correo 1:" id="email1" visible="true" width="465">
+					<mx:TextInput id="txtEmail1" width="290"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Correo 2:" id="correo2" visible="true" width="465">
+					<mx:TextInput id="txtEmail2" width="290"/>
+				</mx:FormItem>
+			</mx:AddChild>
 			<mx:AddChild position="lastChild">
 				<mx:FormItem label="Representante Legal:" id="repLegal" visible="true" width="485" height="50">
 					<mx:Canvas>
@@ -27,57 +66,11 @@
 					</mx:Canvas>	
 				</mx:FormItem>
 			</mx:AddChild>
-			<mx:AddChild relativeTo="{fecha}" position="before">
-				<mx:FormItem label="Nombre Comercial:" id="nomCom" visible="true" width="465">
-					<mx:Canvas>
-						<mx:TextInput id="txtNomCom" width="290" restrict="A-Z;a-z;Ñ;ñ; "/>
-					</mx:Canvas>
-				</mx:FormItem>
-			</mx:AddChild>
-			<mx:AddChild relativeTo="{repLegal}" position="before">
-				<mx:FormItem label="Teléfono 1:" id="tel1" visible="true">
-					<mx:TextInput id="txtTel1"/>
-				</mx:FormItem>
-			</mx:AddChild>
-			<mx:AddChild relativeTo="{repLegal}" position="before">
-				<mx:FormItem label="Teléfono 2:" id="tel2" visible="true">
-					<mx:TextInput id="txtTel2"/>
-				</mx:FormItem>
-			</mx:AddChild>
-			<mx:AddChild relativeTo="{repLegal}" position="before">
-				<mx:FormItem label="Correo 1:" id="email1" visible="true" width="465">
-					<mx:TextInput id="txtEmail1" width="290"/>
-				</mx:FormItem>
-			</mx:AddChild>
-			<mx:AddChild relativeTo="{repLegal}" position="before">
-				<mx:FormItem label="Correo 2:" id="correo2" visible="true" width="465">
-					<mx:TextInput id="txtEmail2" width="290"/>
-				</mx:FormItem>
-			</mx:AddChild>
-			<mx:SetProperty target="{fecha}" name="width" value="370"/>
-			<mx:SetProperty target="{fecha}" name="label" value="Fecha Constitución:"/>
-			<mx:AddChild relativeTo="{nomCom}" position="before">
-				<mx:FormItem label="Régimen Capital:" id="figura" visible="true" width="465">
-					<mx:Canvas>
-						<mx:ComboBox id="cboFigura" labelField="nombre" width="290"/>
-					</mx:Canvas>
-				</mx:FormItem>
-			</mx:AddChild>
 			<mx:SetProperty target="{nacionalidad}" name="width" value="370"/>
-			<mx:AddChild relativeTo="{nacionalidad}" position="after">
-				<mx:FormItem label="Fiel:" id="fiel" visible="true" width="465">
-					<mx:Canvas>
-						<mx:CheckBox id="chkFiel"/>
-						<mx:TextInput id="txtCertFiel" x="25" width="190" restrict="A-Z;a-z;Ñ;ñ;0-9; "/>
-					</mx:Canvas>
-				</mx:FormItem>
-			</mx:AddChild>
-			<mx:SetProperty target="{coord}" name="width" value="370"/>
-			<mx:RemoveChild target="{rfc}"/>
-			<mx:AddChild relativeTo="{nombre}" position="before" target="{rfc}"/>
-			<mx:RemoveChild target="{coord}"/>
-			<mx:AddChild relativeTo="{tel1}" position="before" target="{coord}"/>
-			<mx:SetProperty name="height" value="450"/>
+			<mx:RemoveChild target="{edoCivil}"/>
+			<mx:RemoveChild target="{telefono}"/>
+			<mx:RemoveChild target="{email}"/>
+			<mx:SetProperty target="{fiel}" name="width" value="460"/>
 		</mx:State>
 	</mx:states>
 	<mx:transitions>
@@ -115,8 +108,8 @@
 
 	<mx:Script>
 		<![CDATA[
-			import Data.DatosAcred;
-			import Data.EventAcred;
+			import Data.DatosPersona;
+			import Data.EventPersona;
 			import Data.Globales;
 			import Data.Permisos;
 			import Data.Utils;
@@ -144,11 +137,12 @@
 			private var _xmlRepLegal:XML = new XML();
 			
 			public var figObj:ArrayCollection;
+			public var edoCivilObj:ArrayCollection;
 			public var coordObj:ArrayCollection;
 			public var paisObj:ArrayCollection;
 			public var entFedObj:ArrayCollection;
 			public var persObj:ArrayCollection = new ArrayCollection();
-			public var datos:DatosAcred = new DatosAcred();
+			public var datos:DatosPersona = new DatosPersona();
 			
 			private var du:Utils;
 			private var global:Globales;
@@ -164,12 +158,12 @@
 			public function asignaEstatus(tipoPersona:String):void{
 				if(tipoPersona == "F"){
 					currentState = "";
-					this.width = 430;
-					this.height = 394; 	
+					this.height = 480;	
 				}
 				else if(tipoPersona == "M"){
 					currentState = "moral";
 					cboFigura.dataProvider = figObj;
+					lstRepLegal.dataProvider = null;
 				}
 			}
 			
@@ -202,7 +196,7 @@
 				}
 			}
 			
-			public function enviarDatosAcred(formData:DatosAcred):void{
+			public function enviarDatosPersona(formData:DatosPersona):void{
 				var invalidArray:Array;
 				//Validacion de campos para Persona Fisica 
 				if(currentState == null)
@@ -214,38 +208,40 @@
 					else
 						invalidArray = Validator.validateAll([nombreV, fechaV, rfcV]);
 				}
-				if(invalidArray.length == 0){	
+				if(invalidArray.length == 0){
 					formData.codigo = txtCodigo.text;
 					formData.nombre = StringUtil.trim(txtNombre.text.toUpperCase());
-					formData.segNombre = StringUtil.trim(txtSegNombre.text.toUpperCase());
-					formData.aPaterno = StringUtil.trim(txtAP.text.toUpperCase());
-					formData.aMaterno = StringUtil.trim(txtAM.text.toUpperCase());
-					formData.arrRepLegal = obtieneRepLegal();
 					formData.fecha = txtFecha.text;
-					
-					if (rdbMasculino.selected == true)
-						formData.sexo = "M";
-					if (rdbFemenino.selected == true)
-						formData.sexo = "F";
-					//selecciona el codigo del pais	
-					if (cboPais.selectedIndex > 0)
-						formData.cdgNacPais = cboPais.selectedItem.CODIGO;
-					//selecciona el codigo de la entidad de nacimiento		
-					if (cboEntidad.selectedIndex > 0)
-						formData.cdgNacEntFed = cboEntidad.selectedItem.id;
+					formData.rfc = txtRfc.text;
 					//selecciona el codigo de la nacionalidad
 					if (cboNac.selectedIndex > 0)
 					 	formData.cdgNac = cboNac.selectedItem.CODIGO;
-					 						
-					formData.cdgco = cboCoord.selectedItem.id;					 						
-					formData.rfc = txtRfc.text;
-					formData.curp = txtCurp.text;
-					formData.ife = StringUtil.trim(txtIfe.text); 
+					formData.fiel = txtCertFiel.text;
+					formData.arrRepLegal = obtieneRepLegal();
 					
-					if(currentState == "moral"){
+					if(currentState == null){	
+						formData.segNombre = StringUtil.trim(txtSegNombre.text.toUpperCase());
+						formData.aPaterno = StringUtil.trim(txtAP.text.toUpperCase());
+						formData.aMaterno = StringUtil.trim(txtAM.text.toUpperCase());
+						
+						formData.sexo = sexo.selectedValue ? sexo.selectedValue.toString() : "";
+						
+						//selecciona el codigo del pais	
+						if (cboPais.selectedIndex > 0)
+							formData.cdgNacPais = cboPais.selectedItem.CODIGO;
+						//selecciona el codigo de la entidad de nacimiento		
+						if (cboEntidad.selectedIndex > 0)
+							formData.cdgNacEntFed = cboEntidad.selectedItem.id;
+					 						
+						formData.curp = txtCurp.text;
+						formData.ife = StringUtil.trim(txtIfe.text);
+						formData.edoCivil = cboEdoCivil.selectedItem.codigo;
+						formData.telefono = txtTel.text;
+						formData.email1 = txtEmail.text;
+					}
+					else if(currentState == "moral"){
 						formData.figura = cboFigura.selectedItem.codigo;
 						formData.nomCom = txtNomCom.text;
-						formData.fiel = txtCertFiel.text;
 						formData.telefono = txtTel1.text;
 						formData.telefono2 = txtTel2.text;
 						formData.email1 = txtEmail1.text;
@@ -256,11 +252,11 @@
 				}
 				else
 					formData.guardaDatos = false;
-				var event:EventAcred = new EventAcred("enviarDatosAcred", formData);
+				var event:EventPersona = new EventPersona("enviarDatosPersona", formData);
 				dispatchEvent(event);
 			}
 			
-			public function formateaCoord():void{
+			private function formateaCoord():void{
 				var cont:int = _xmlCoord.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -279,7 +275,44 @@
 				coordObj = new ArrayCollection(item);
 			}
 			
-			public function formateaEntFed():void{
+			private function formatearEdoCivil():void{
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.codigo = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "C";	
+				oItem.nombre = "Casado(a)";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "D";	
+				oItem.nombre = "Divorciado(a)";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "S";	
+				oItem.nombre = "Soltero(a)";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "U";	
+				oItem.nombre = "Unión Libre";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.codigo = "V";	
+				oItem.nombre = "Viudo(a)";
+				item.push(oItem);
+					
+				edoCivilObj = new ArrayCollection(item);
+			}
+			
+			private function formateaEntFed():void{
 				var cont:int = _xmlEntFed.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -300,7 +333,7 @@
 				entFedObj = new ArrayCollection(item);
 			}
 			
-			public function formateaFigura():void{
+			private function formateaFigura():void{
 				var oItem:Object;
 				var item:Array = new Array;
 				
@@ -332,7 +365,7 @@
 				figObj = new ArrayCollection(item);
 			}
 			
-			public function formateaPais(cadInfo:String):void{
+			private function formateaPais(cadInfo:String):void{
 				var oItem:Object;
 				var array:Array;
 				
@@ -377,7 +410,7 @@
 						var params:Array = new Array;
 						var curp:String;
 						var nombres:String;
-						var sexo:String;
+						var valSexo:String;
 						var clave:String;
 						
 						du.initWsCat(wsCat);					
@@ -385,10 +418,7 @@
 						
 						nombres = txtNombre.text + " " + txtSegNombre.text;
 						
-						if(rdbMasculino.selected == true) 
-							sexo = "H";
-						else if(rdbFemenino.selected == true)
-							sexo = "M";
+						valSexo = sexo.selectedValue ? sexo.selectedValue.toString() : "";
 						
 						for(var j:int = 0; j < entFedObj.length; j++){
 							if (entFedObj[j].nombre.toString() == cboEntidad.text){
@@ -411,7 +441,7 @@
 						params[1] = txtAM.text;
 						params[2] = nombres;
 						params[3] = txtFecha.text;
-						params[4] = sexo;
+						params[4] = valSexo;
 						params[5] = clave;
 						wsCat.getInfoAcred.send(2, params);
 					}
@@ -422,7 +452,7 @@
 				}
 			}
 			
-			public function init(info:DatosAcred, estatus:String):void{
+			public function init(info:DatosPersona, estatus:String):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
 				
@@ -431,9 +461,6 @@
 				permiso = new Permisos();
 				
 				currentState = estatus;
-				
-				if(currentState == "moral")
-					lstRepLegal.dataProvider = null;
 				
 				f = global.obtenerFechaSistema();
 				tipoAccion = 1;
@@ -444,13 +471,6 @@
 				txtFecha.selectableRange = {rangeStart: fecMax, rangeEnd: fecMin};*/
 				
 				permisos();
-				
-				_xmlCoord = Application.application._xmlSuc;
-				
-				if (_xmlCoord.elements().length() > 0){
-					formateaCoord();
-					cboCoord.dataProvider = coordObj;
-				} 	
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
@@ -475,9 +495,18 @@
 							cboEntidad.dataProvider = entFedObj;
 						}		
 						
-						//Formatea el listado de figuras
+						formatearEdoCivil();
 						formateaFigura();
-					
+						
+						if(currentState == null){
+							cboEdoCivil.dataProvider = edoCivilObj;
+						}
+						else if(currentState == "moral"){
+							//Asigna el objeto de figura
+							cboFigura.dataProvider = figObj;
+							lstRepLegal.dataProvider = null;
+						}
+						
 						if (info != null){
 							var j:int;
 							tipoAccion = 2;
@@ -486,8 +515,25 @@
 							txtSegNombre.text = info.segNombre;
 							txtAP.text = info.aPaterno;
 							txtAM.text = info.aMaterno;
+							
+							if(info.fiel != ""){
+								chkFiel.selected = true;
+								txtCertFiel.text = info.fiel;
+								modificarFiel();	
+							}
+							
+							if(currentState == null){
+								for(j = 0; j < edoCivilObj.length; j++){
+									if (edoCivilObj[j].codigo.toString() == info.edoCivil){
+										cboEdoCivil.selectedIndex = j;
+										break;
+									}
+								}	
+								txtTel.text = info.telefono;
+								txtEmail.text = info.email1;
+							}
 							//Informacion relacionada con el representante legal
-							if(currentState == "moral"){
+							else if(currentState == "moral"){
 								du.initWsCat(wsCat);
 								du.sCursor();
 								
@@ -504,10 +550,8 @@
 								//CONSULTA EL LISTADO DE REP LEGALES
 								params[0] = info.codigo;
 								params[1] = "RL"
-								wsCat.getInfoAcred.send(23, params);
+								wsCat.getInfoRegistro.send(45, params);
 									
-								//Asigna el objeto de figura
-								cboFigura.dataProvider = figObj;
 								for(j = 0; j < figObj.length; j++){
 									if (figObj[j].codigo.toString() == info.figura){
 										cboFigura.selectedIndex = j;
@@ -516,29 +560,15 @@
 								}
 								
 								txtNomCom.text = info.nomCom;
-								if(info.fiel != ""){
-									chkFiel.selected = true;
-									txtCertFiel.text = info.fiel;	
-								}
 								txtTel1.text = info.telefono;
 								txtTel2.text = info.telefono2;
 								txtEmail1.text = info.email1;
 								txtEmail2.text = info.email2;
 							}
 							if(info.sexo != null){
-								if (info.sexo.toUpperCase() == "F")
-									rdbFemenino.selected = true;
-								else if (info.sexo.toUpperCase() == "M")
-									rdbMasculino.selected = true;
+								sexo.selectedValue = info.sexo;
 							}
 							txtFecha.text = info.fecha;
-							//selecciona la sucursal del acreditado
-							for(j = 0; j < coordObj.length; j++){   
-								if (coordObj[j].id.toString() == info.cdgco){
-									cboCoord.selectedIndex = j;
-									break;
-								}
-							}
 							//selecciona el pais del acreditado
 							for(j = 0; j < paisObj.length; j++){   
 								if (paisObj[j].CODIGO.toString() == info.cdgNacPais){
@@ -586,10 +616,16 @@
 				wsCat.getCatalogoGral.send(1);
 			}
 			
-			public function limpiaCampos():void{
+			private function modificarFiel():void{
+				if(chkFiel.selected)
+					txtCertFiel.editable = true;
+				else{
+					txtCertFiel.text = "";
+					txtCertFiel.editable = false;
+				}
 			}
 			
-			private function modificaFecha():void{
+			private function modificarFecha():void{
 				vResult = valFec.validate(txtFecha.text);
                 if (vResult.type != ValidationResultEvent.VALID)
                     txtFecha.text = "";
@@ -606,13 +642,18 @@
 			
 			private function obtieneRepLegal():Array{
 				var arrRepLegal:Array = new Array;
-				var lista:ArrayCollection = lstRepLegal.dataProvider as ArrayCollection;
-				var cont:int = lista.length;
 				
-				if(cont > 0)
-					for(var i:int = 0; i < cont; i++)
-						arrRepLegal[i] = lista[i].codigo;
-				else
+				if(currentState == "moral"){
+					var lista:ArrayCollection = lstRepLegal.dataProvider as ArrayCollection;
+					var cont:int = lista.length;
+					
+					if(cont > 0)
+						for(var i:int = 0; i < cont; i++)
+							arrRepLegal[i] = lista[i].codigo;
+					else
+						arrRepLegal[0] = "";
+				}
+				else if(currentState == null)
 					arrRepLegal[0] = "";
 					
 				return arrRepLegal;
@@ -641,20 +682,16 @@
 	<mx:FormItem label="Apellido Materno:" id="AM" visible="true">
 		<mx:TextInput id="txtAM" restrict="A-Z;a-z;Ñ;ñ; " focusOut="generaCURP()"/>
 	</mx:FormItem>
-	<mx:FormItem label="Genero:" id="sexo" visible="true" width="330">
+	<mx:FormItem label="Genero:" id="genero" visible="true" width="330">
 		<mx:Canvas>
-			<mx:RadioButton id="rdbFemenino" label="Femenino" focusOut="generaCURP()"/>
-			<mx:RadioButton id="rdbMasculino" label="Masculino" x="80" focusOut="generaCURP()"/>	
-		</mx:Canvas>	
-	</mx:FormItem>
-	<mx:FormItem label="Oficina asignada:" id="coord" visible="true" width="290">
-		<mx:Canvas>
-			<mx:ComboBox id="cboCoord" labelField="nombre" width="170"/>
+			<mx:RadioButtonGroup id="sexo"/>
+			<mx:RadioButton id="rdbFemenino" label="Femenino" value="F" groupName="sexo" focusOut="generaCURP()"/>
+			<mx:RadioButton id="rdbMasculino" label="Masculino" value="M" groupName="sexo" x="80" focusOut="generaCURP()"/>	
 		</mx:Canvas>	
 	</mx:FormItem>
 	<mx:FormItem label="Fecha Nacimiento:" id="fecha" visible="true" width="350">
 		<mx:Canvas id="cnvFecha" width="250">
-			<mx:DateField id="txtFecha" width="109" yearNavigationEnabled="true" focusOut="modificaFecha()" editable="true"/>
+			<mx:DateField id="txtFecha" width="109" yearNavigationEnabled="true" focusOut="modificarFecha()" editable="true"/>
 			<mx:Label id="formatoFecha" text="(DD/MM/AAAA)" x="117" y="2"/>
 		</mx:Canvas>
 	</mx:FormItem>
@@ -675,5 +712,22 @@
 	</mx:FormItem>
 	<mx:FormItem label="IFE:" id="ife" visible="true">
 		<mx:TextInput id="txtIfe" restrict="0-9" maxChars="15"/>
+	</mx:FormItem>
+	<mx:FormItem label="Fiel:" id="fiel" visible="true" width="380">
+		<mx:Canvas>
+			<mx:CheckBox id="chkFiel" click="modificarFiel()"/>
+			<mx:TextInput id="txtCertFiel" x="25" width="190" restrict="A-Z;a-z;Ñ;ñ;0-9; " editable="false"/>
+		</mx:Canvas>
+	</mx:FormItem>
+	<mx:FormItem label="Estado Civil:" id="edoCivil" visible="true" width="290">
+		<mx:Canvas>
+			<mx:ComboBox id="cboEdoCivil" labelField="nombre" width="170"/>
+		</mx:Canvas>	
+	</mx:FormItem>
+	<mx:FormItem label="Teléfono:" id="telefono" visible="true">
+		<mx:TextInput id="txtTel" restrict="0-9" maxChars="15"/>
+	</mx:FormItem>
+	<mx:FormItem label="Email:" id="email" visible="true">
+		<mx:TextInput id="txtEmail" maxChars="100"/>
 	</mx:FormItem>
 </mx:Form>

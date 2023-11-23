@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="490" height="360" 
+	creationPolicy="all" xmlns:Data="Data.*">
+	<mx:Metadata>
+		[Event(name="enviarDatosPersona", type="Data.EventPersona")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import Data.DatosPersona;
+			import Data.EventPersona;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.controls.Alert;
+			import mx.validators.Validator;
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.containers.TitleWindow;			
+			import mx.managers.PopUpManager;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.validators.Validator;
+	
+			public var datos:DatosPersona = new DatosPersona();
+			
+			private var du:Utils;
+			private var global:Globales;
+			private var vResult:ValidationResultEvent;
+			
+			public function enviarDatosPersona(formData:DatosPersona):void{
+				if(validar()){
+					
+					formData.puesto = puestoPers.selectedValue ? puestoPers.selectedValue.toString(): "";
+					formData.puestoDesc = txtPuestoPers.text;
+					formData.periodo = txtPeriodoPers.text;
+					formData.puestoFam = puestoFam.selectedValue ? puestoFam.selectedValue.toString(): "";
+					formData.nomFam = txtNomFam.text;
+					formData.parentescoFam = txtParFam.text;
+					formData.puestoDescFam = txtPuestoFam.text;
+					formData.periodoFam = txtPeriodoFam.text;
+					
+					formData.guardaPLD = true;
+				}
+				else
+					formData.guardaPLD = false;	
+				
+				var event:EventPersona = new EventPersona("enviarDatosPersona", formData);
+				dispatchEvent(event);
+			}
+			
+			public function init(info:DatosPersona):void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				du = new Utils();
+				global = new Globales();
+				
+				permisos();
+				
+				if (info != null){
+					puestoPers.selectedValue = info.puesto;
+					txtPuestoPers.text = info.puestoDesc;
+					txtPeriodoPers.text = info.periodo;
+					puestoFam.selectedValue = info.puestoFam;
+					txtNomFam.text = info.nomFam;
+					txtParFam.text = info.parentescoFam;
+					txtPuestoFam.text = info.puestoDescFam;
+					txtPeriodoFam.text = info.periodoFam;
+					
+					modificarPuesto();
+				}
+			}
+			
+			private function modificarPuesto():void{
+				var editar:Boolean;
+				
+				if(puestoPers.selectedValue.toString() == "S"){
+					editar = true;
+				}
+				else if(puestoPers.selectedValue.toString() == "N"){
+					editar = false;
+					txtPuestoPers.text = "";
+					txtPeriodoPers.text = "";
+				}
+				txtPuestoPers.editable = editar;
+				txtPeriodoPers.editable = editar;
+			}
+			
+			private function modificarPuestoFam():void{
+				var editar:Boolean;
+				
+				if(puestoFam.selectedValue.toString() == "S"){
+					editar = true;
+				}
+				else if(puestoFam.selectedValue.toString() == "N"){
+					editar = false;
+					txtNomFam.text = "";
+					txtParFam.text = "";
+					txtPuestoFam.text = "";
+					txtPeriodoFam.text = "";
+				}
+				txtNomFam.editable = editar;
+				txtParFam.editable = editar;
+				txtPuestoFam.editable = editar;
+				txtPeriodoFam.editable = editar;
+			}
+			
+			private function permisos():void{
+				var perfil_id:String = Application.application.cadPerfil;
+				var cont:int;
+			}
+			
+			private function validar():Boolean{
+				return true;
+			}
+	]]>
+	</mx:Script>
+	<mx:Text id="lblPreg1" text="¿Desempeña o ha desempeñado funciones públicas destacadas en un país extranjero o en el territorio nacional?" x="10" y="10" width="470" height="38"/>
+	<mx:RadioButtonGroup id="puestoPers" itemClick="modificarPuesto()"/>
+	<mx:RadioButton id="rdbPuestoPersSi" x="189" y="56" label="Si" groupName="puestoPers" value="S"/>
+	<mx:RadioButton id="rdbPuestoPersNo" x="231" y="56" label="No" groupName="puestoPers" value="N"/>
+	<mx:Label id="lblPuestoPers" x="80" y="89" text="Puesto o Cargo:"/>
+	<mx:Label id="lblPeriodoPers" x="118" y="119" text="Periodo:"/>
+	<mx:TextInput id="txtPuestoPers" x="170" y="88" width="240"/>
+	<mx:TextInput id="txtPeriodoPers" x="170" y="118" width="125"/>
+	<mx:Text id="lblPreg2" text="¿Algún familiar de usted de hasta segundo grado de consanguinidad o afinidad se encuentra en el supuesto antes mencionado?" x="10" y="154" width="470" height="38"/>
+	<mx:RadioButtonGroup id="puestoFam" itemClick="modificarPuestoFam()"/>
+	<mx:RadioButton id="rdbPuestoFamSi" x="189" y="200" label="Si" groupName="puestoFam" value="S"/>
+	<mx:RadioButton id="rdbPuestoFamNo" x="231" y="200" label="No" groupName="puestoFam" value="N"/>
+	<mx:Label id="lblNomFam" x="70" y="233" text="Nombre Completo:"/>
+	<mx:TextInput id="txtNomFam" x="170" y="232" width="240"/>
+	<mx:Label id="lblParFam" x="99" y="263" text="Parentesco:"/>
+	<mx:TextInput id="txtParFam" x="170" y="262" width="180"/>
+	<mx:Label id="lblPuestoFam" x="80" y="292" text="Puesto o Cargo:"/>
+	<mx:TextInput id="txtPuestoFam" x="170" y="291" width="240"/>
+	<mx:Label id="lblPeriodoFam" x="118" y="321" text="Periodo:"/>
+	<mx:TextInput id="txtPeriodoFam"  x="170" y="320" width="125"/>
+</mx:Canvas>

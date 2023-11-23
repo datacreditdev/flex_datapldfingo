@@ -46,8 +46,31 @@ package Data
 		public var cdgCol:String;
 		public var colonia:String;
 		public var guardaDir:Boolean;
+		
+		/*Variables que hacen referencia a la dirección del Negocio*/
+		public var calleNeg:String;
+		public var noExtNeg:String;
+		public var noIntNeg:String;
+		public var entreCallesNeg:String;
+		public var telefonoNeg:String;
+		public var cdgPaisNeg:String;
+		public var paisNeg:String;
+		public var codPostalNeg:String;
+		public var cdgEntFedNeg:String;
+		public var entFedNeg:String;
+		public var cdgMunNeg:String;
+		public var municipioNeg:String;
+		public var cdgLocNeg:String;
+		public var localidadNeg:String;
+		public var cdgColNeg:String;
+		public var coloniaNeg:String;
+		public var guardaDirNeg:Boolean;
+		
+		/*Variables que hacen referencia a otros datos de la Persona*/
+		public var edoCivil:String;
+		public var nivelEsc:String;		
 				
-		/*Variables que hacen referencia a informacion de Prevención de Lavado de Dinero*/
+		/*Variables que hacen referencia a informacion de KYC*/
 		public var giro:String;
 		public var origen:String;
 		public var destino:String;
@@ -57,7 +80,18 @@ package Data
 		public var nomPropReal:String;
 		public var arrProvRec:Array;
 		public var nomProvRec:String;
-		public var guardaPLD:Boolean; 		
+		public var guardaKYC:Boolean; 	
+		
+		/*Variables que hacen referencia a informacion de PLD*/
+		public var puesto:String;
+		public var puestoDesc:String;
+		public var periodo:String;
+		public var puestoFam:String;
+		public var nomFam:String;
+		public var parentescoFam:String;
+		public var puestoDescFam:String;
+		public var periodoFam:String;
+		public var guardaPLD:Boolean; 	
 				
 		public function DatosPersona()
 		{
