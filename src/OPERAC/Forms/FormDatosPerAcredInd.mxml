@@ -6,7 +6,7 @@
 			<mx:RemoveChild target="{txtSegNombre}"/>
 			<mx:RemoveChild target="{AP}"/>
 			<mx:RemoveChild target="{AM}"/>
-			<mx:RemoveChild target="{sexo}"/>
+			<mx:RemoveChild target="{genero}"/>
 			<mx:RemoveChild target="{entidad}"/>
 			<mx:RemoveChild target="{pais}"/>
 			<mx:RemoveChild target="{curp}"/>
@@ -223,10 +223,8 @@
 					formData.arrRepLegal = obtieneRepLegal();
 					formData.fecha = txtFecha.text;
 					
-					if (rdbMasculino.selected == true)
-						formData.sexo = "M";
-					if (rdbFemenino.selected == true)
-						formData.sexo = "F";
+					formData.sexo = sexo.selectedValue ? sexo.selectedValue.toString() : "";
+					
 					//selecciona el codigo del pais	
 					if (cboPais.selectedIndex > 0)
 						formData.cdgNacPais = cboPais.selectedItem.CODIGO;
@@ -377,7 +375,7 @@
 						var params:Array = new Array;
 						var curp:String;
 						var nombres:String;
-						var sexo:String;
+						var valSexo:String;
 						var clave:String;
 						
 						du.initWsCat(wsCat);					
@@ -385,10 +383,7 @@
 						
 						nombres = txtNombre.text + " " + txtSegNombre.text;
 						
-						if(rdbMasculino.selected == true) 
-							sexo = "H";
-						else if(rdbFemenino.selected == true)
-							sexo = "M";
+						valSexo = sexo.selectedValue ? sexo.selectedValue.toString() : "";
 						
 						for(var j:int = 0; j < entFedObj.length; j++){
 							if (entFedObj[j].nombre.toString() == cboEntidad.text){
@@ -411,7 +406,7 @@
 						params[1] = txtAM.text;
 						params[2] = nombres;
 						params[3] = txtFecha.text;
-						params[4] = sexo;
+						params[4] = valSexo;
 						params[5] = clave;
 						wsCat.getInfoAcred.send(2, params);
 					}
@@ -526,10 +521,7 @@
 								txtEmail2.text = info.email2;
 							}
 							if(info.sexo != null){
-								if (info.sexo.toUpperCase() == "F")
-									rdbFemenino.selected = true;
-								else if (info.sexo.toUpperCase() == "M")
-									rdbMasculino.selected = true;
+								sexo.selectedValue = info.sexo;
 							}
 							txtFecha.text = info.fecha;
 							//selecciona la sucursal del acreditado
@@ -641,10 +633,11 @@
 	<mx:FormItem label="Apellido Materno:" id="AM" visible="true">
 		<mx:TextInput id="txtAM" restrict="A-Z;a-z;Ñ;ñ; " focusOut="generaCURP()"/>
 	</mx:FormItem>
-	<mx:FormItem label="Genero:" id="sexo" visible="true" width="330">
+	<mx:FormItem label="Genero:" id="genero" visible="true" width="330">
 		<mx:Canvas>
-			<mx:RadioButton id="rdbFemenino" label="Femenino" focusOut="generaCURP()"/>
-			<mx:RadioButton id="rdbMasculino" label="Masculino" x="80" focusOut="generaCURP()"/>	
+			<mx:RadioButtonGroup id="sexo"/>
+			<mx:RadioButton id="rdbFemenino" label="Femenino" focusOut="generaCURP()" value="F" groupName="sexo"/>
+			<mx:RadioButton id="rdbMasculino" label="Masculino" x="80" focusOut="generaCURP()" value="M" groupName="sexo"/>	
 		</mx:Canvas>	
 	</mx:FormItem>
 	<mx:FormItem label="Oficina asignada:" id="coord" visible="true" width="290">
