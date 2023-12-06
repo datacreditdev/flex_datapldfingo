@@ -4,10 +4,9 @@
 
 	<mx:Script>
 		<![CDATA[
-		
+		import Data.ExcelExportXls;
 		import Data.Globales;
 		import Data.Utils;
-		import Data.ExcelExportXls;
 		import mx.collections.ArrayCollection;
 		import mx.controls.Alert;
 		import mx.core.Application;
@@ -119,7 +118,7 @@
 				//oItem.FREG = _xmlInfo.Table[i].FREG;
 				oItem.ALTA = _xmlInfo.Table[i].FALTA;
 				oItem.DESCALERTA = _xmlInfo.Table[i].DESCALERTA;
-				oItem.SECUENCIA = _xmlInfo.Table[i].SECUENCIA;//eSTE SI
+				oItem.SECUENCIA = _xmlInfo.Table[i].SECUENCIA;
 				//oItem.DESCRIPCION = _xmlInfo.Table[i].DESCRIPCION;
 				oItem.DESCESTATUS = _xmlInfo.Table[i].DESCESTATUS;
 				oItem.CDGCL = _xmlInfo.Table[i].CDGCL;

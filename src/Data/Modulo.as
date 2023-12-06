@@ -126,6 +126,15 @@ package Data
 		public var frm_146:CargadeTabladeAmortizacion;
 		public var frm_147:Fideicomisos;
 		
+		public var frm_148:CriteriosdeRiesgo;
+		public var frm_149:HistoricodePrestamosdeAcreditado;
+		public var frm_150:ReportedeConsultasPEP;
+		public var frm_151:ReportedeOperacionesCNBV;
+		public var frm_152:ReportedeOperacionesFraccionadas;
+		public var frm_153:ReportedeOperacionesIndPorMonto;
+		//public var frm_154:ReporteOperacionesRelevantes;
+		public var frm_154:ReporteHistoricodeAlertas;
+		
 		public function Modulo()
 		{
 		}

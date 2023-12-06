@@ -80,7 +80,7 @@
 				
 			public function valida():Boolean{
 				if(txtAcred.text == ""){
-					Alert.show("Capture el código de Cliente.",titulo,4,null,null,global.iAlert);
+					Alert.show("Capture el código de Acreditado.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;
@@ -89,7 +89,7 @@
 	</mx:Script>
 	<mx:Label id="lblTitulo" x="16.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 	<mx:Canvas x="17.95" y="53.5" width="247.54999" height="74.5" styleName="canvasMod">
-		<mx:Label id="lblAcred" x="10" y="27.5" text="Codigo de Cliente:" width="98.5" height="20"/>
+		<mx:Label id="lblAcred" x="39.5" y="26.5" text="Acreditado:"/>
 		<mx:TextInput id="txtAcred" x="108.5" y="25.5" maxChars="6" restrict="0-9" enter="ejecuta()"/>
 	</mx:Canvas>
 	<mx:Label x="16.5" y="34" text="Criterios de Selección" width="124.25"/>

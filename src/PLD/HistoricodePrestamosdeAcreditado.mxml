@@ -20,10 +20,10 @@
 			
 			private var _xmlRep:XML =  new XML();
 			
-			public var wsMS:WebService;
-			public var titulo:String;
 			private var du:Utils;
 			private var global:Globales;
+			public var wsMS:WebService;
+			public var titulo:String;
 		
 			private function exportar():void{
 				var dgE:ExcelExportXls = new ExcelExportXls(); 
