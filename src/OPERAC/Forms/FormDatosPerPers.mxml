@@ -644,7 +644,7 @@
 				var arrRepLegal:Array = new Array;
 				
 				if(currentState == "moral"){
-					var lista:ArrayCollection = lstRepLegal.dataProvider as ArrayCollection;
+					var lista:ArrayCollection = persObj;
 					var cont:int = lista.length;
 					
 					if(cont > 0)

@@ -409,7 +409,7 @@
 		
 		private function obtenerDelFid(tipo:int):Array{
 			var arrDelFid:Array = new Array;
-			var lista:ArrayCollection = dgDelFid.dataProvider as ArrayCollection;
+			var lista:ArrayCollection = delFidObj;
 			var cont:int = lista.length;
 			
 			if(cont > 0){
@@ -438,9 +438,9 @@
 			var cont:int;
 			
 			if(tipo == 0 || tipo == 1)
-				lista = lstMiemCM.dataProvider as ArrayCollection;
+				lista = miemCMObj;
 			else if(tipo == 2 || tipo == 3)
-				lista = lstMiemCT.dataProvider as ArrayCollection;
+				lista = miemCTObj;
 			
 			cont = lista.length;
 			
@@ -460,7 +460,7 @@
 		
 		private function obtenerPartFid(tipo:int):Array{
 			var arrPartFid:Array = new Array;
-			var lista:ArrayCollection = dgPartes.dataProvider as ArrayCollection;
+			var lista:ArrayCollection = partFidObj;
 			var cont:int = lista.length;
 			
 			if(cont > 0){

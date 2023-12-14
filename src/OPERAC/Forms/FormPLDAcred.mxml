@@ -1,9 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="490" height="300" 
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="490" height="300" 
 	creationPolicy="all" xmlns:Data="Data.*">
 	<mx:states>
 		<mx:State name="moral">
-			<mx:RemoveChild target="{pep}"/>
+			<mx:RemoveChild target="{chkPep}"/>
+			<mx:SetProperty target="{cnvPropReal}" name="y" value="201"/>
+			<mx:SetProperty target="{lblPropReal}" name="y" value="200"/>
+		</mx:State>
+		<mx:State name="fideicomiso">
+			<mx:RemoveChild target="{lblOrigen}"/>
+			<mx:RemoveChild target="{cboOrigen}"/>
+			<mx:RemoveChild target="{lblDestino}"/>
+			<mx:RemoveChild target="{cboDestino}"/>
+			<mx:RemoveChild target="{lblOtroDesRec}"/>
+			<mx:RemoveChild target="{txtOtroDesRec}"/>
+			<mx:RemoveChild target="{chkPep}"/>
+			<mx:RemoveChild target="{lblProvRec}"/>
+			<mx:RemoveChild target="{lblPropReal}"/>
+			<mx:RemoveChild target="{cnvPropReal}"/>
+			<mx:RemoveChild target="{cnvProvRec}"/>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas id="cnvFideicomis" x="186" y="153" width="320">
+					<mx:List id="lstFideicomis" width="220" height="50" labelField="nombre"/>	
+					<mx:Button id="btnAgregarFideicomis" icon="@Embed(source='assets/add.png')" width="40" x="228" click="mostrarFormPers(4)" y="1"/>
+					<mx:Button id="btnEliminarFideicomis" icon="@Embed(source='assets/delete-icon.png')" width="40" x="276" click="confirmarElimFideicomis()" y="1"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas id="cnvDelegado" x="186" y="211" width="320">
+					<mx:List id="lstDelegado" width="220" height="50" labelField="nombre"/>	
+					<mx:Button id="btnAgregarDelegado" icon="@Embed(source='assets/add.png')" width="40" x="228" click="mostrarFormPers(5)" y="1"/>
+					<mx:Button id="btnEliminarDelegado" icon="@Embed(source='assets/delete-icon.png')" width="40" x="276" click="confirmarElimDelegado()" y="1"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas id="cnvFideicomit" x="186" y="95" width="320">
+					<mx:List id="lstFideicomit" width="220" height="50" labelField="nombre"/>	
+					<mx:Button id="btnAgregarFideicomit" icon="@Embed(source='assets/add.png')" width="40" x="228" click="mostrarFormPers(3)" y="1"/>
+					<mx:Button id="btnEliminarFideicomit" icon="@Embed(source='assets/delete-icon.png')" width="40" x="276" click="confirmarElimFideicomit()" y="1"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Label id="lblFideicomit" x="96" y="94" text="Fideicomitentes:"/>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Label id="lblFideicomis" x="96" y="153" text="Fideicomisarios:"/>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Label id="lblDelegado" x="64" y="211" text="Delegados Fiduciarios:"/>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Canvas id="cnvApodLegal" x="186" y="269" width="320">
+					<mx:List id="lstApodLegal" width="220" height="50" labelField="nombre"/>	
+					<mx:Button id="btnAgregarApodLegal" icon="@Embed(source='assets/add.png')" width="40" x="228" click="mostrarFormPers(6)" y="1"/>
+					<mx:Button id="btnEliminarApodLegal" icon="@Embed(source='assets/delete-icon.png')" width="40" x="276" click="confirmarElimApodLegal()" y="1"/>
+				</mx:Canvas>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Text id="lblApodLegal" x="64.5" y="269" text="Representantes o Apoderados Legales:" width="113.5" height="50"/>
+			</mx:AddChild>
+			<mx:SetProperty target="{lblGiro}" name="text" value="¿Cuáles?:"/>
+			<mx:SetProperty target="{lblGiro}" name="x" value="125"/>
+			<mx:SetProperty target="{lblGiro}" name="y" value="66"/>
+			<mx:SetProperty target="{txtGiro}" name="y" value="65"/>
+			<mx:SetProperty name="height" value="440"/>
+			<mx:AddChild position="lastChild">
+				<mx:Text x="64" y="10" text="¿Realiza actividades vulnerables de conformidad con el Art. 17 de la LFPIORPI?" width="441"/>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:RadioButtonGroup id="actividad" change="modificarActividad()"/>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:RadioButton id="rdbActivSi" x="230" y="33" label="Si" groupName="actividad" value="S"/>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:RadioButton id="rdbActivNo" x="272" y="33" label="No" groupName="actividad" value="N"/>
+			</mx:AddChild>
+			<mx:SetProperty target="{txtGiro}" name="x" value="186"/>
+			<mx:AddChild position="lastChild">
+				<mx:Label id="lblOrgGob" x="64.5" y="326" text="Organos de Gobierno:"/>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:DataGrid id="dgOrgGob" x="186.5" y="326" height="100" width="319.5" horizontalScrollPolicy="on">
+					<mx:columns>
+						<mx:DataGridColumn headerText="NOMBRE" editable="false" dataField="nombre" width="180"/>
+						<mx:DataGridColumn headerText="FECHA NAC" editable="false" dataField="fecNac" width="100"/>
+						<mx:DataGridColumn headerText="TIPO COMITE" editable="false" dataField="nomTipoCom" width="100"/>
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:AddChild>
+			<mx:SetProperty name="width" value="570"/>
+			<mx:AddChild position="lastChild">
+				<mx:Button id="btnAgregarOrgGob" icon="@Embed(source='assets/add.png')" width="40" x="520" click="mostrarFormOrgGob()" y="325"/>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:Button id="btnEliminarOrgGob" icon="@Embed(source='assets/delete-icon.png')" width="40" x="520" click="confirmarElimOrgGob()" y="357.3"/>
+			</mx:AddChild>
 		</mx:State>
 	</mx:states>
 	<mx:Metadata>
@@ -21,36 +113,48 @@
 
 	<mx:Script>
 		<![CDATA[
-			import Data.EventAcred;
+			import OPERAC.MttoOrgGob;
+			import CATALOGOS.Fideicomisos;
 			import Data.DatosAcred;
-			import Data.Utils;
+			import Data.EventAcred;
 			import Data.Globales;
-			import mx.controls.Alert;
-			import mx.validators.Validator;
+			import Data.Utils;
 			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
 			import mx.core.Application;
-			import mx.containers.TitleWindow;			
-			import mx.managers.PopUpManager;
 			import mx.effects.easing.Elastic;
 			import mx.events.CloseEvent;
 			import mx.events.ValidationResultEvent;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.validators.Validator;
 			import OPERAC.MttoBusqPersona;	
 			
-			private var _xmlDestino:XML =  new XML();
-			private var _xmlOrigen:XML =  new XML();
-			private var _xmlTipoPers:XML =  new XML();
-			private var _xmlPropReal:XML =  new XML();
-			private var _xmlProvRec:XML =  new XML();
+			private var _xmlDestino:XML = new XML();
+			private var _xmlOrigen:XML = new XML();
+			private var _xmlTipoPers:XML = new XML();
+			private var _xmlPropReal:XML = new XML();
+			private var _xmlProvRec:XML = new XML();
+			private var _xmlFideicomit:XML = new XML();
+			private var _xmlFideicomis:XML = new XML();
+			private var _xmlDelegado:XML = new XML();
+			private var _xmlApodLegal:XML = new XML();
+			private var _xmlOrgGob:XML = new XML();
 			
 			private var origenObj:ArrayCollection = new ArrayCollection();
 			private var destinoObj:ArrayCollection = new ArrayCollection();
 			private var giroObj:ArrayCollection = new ArrayCollection();
-			public var provRecObj:ArrayCollection = new ArrayCollection();
-			public var propRealObj:ArrayCollection = new ArrayCollection();
+			private var provRecObj:ArrayCollection = new ArrayCollection();
+			private var propRealObj:ArrayCollection = new ArrayCollection();
+			private var fideicomitObj:ArrayCollection = new ArrayCollection();
+			private var fideicomisObj:ArrayCollection = new ArrayCollection();
+			private var delegadoObj:ArrayCollection = new ArrayCollection();
+			private var apodLegalObj:ArrayCollection = new ArrayCollection();
+			private var orgGobObj:ArrayCollection = new ArrayCollection();
+			
 			public var datos:DatosAcred = new DatosAcred();
 			
 			private var du:Utils;
@@ -58,6 +162,78 @@
 			private var vResult:ValidationResultEvent;
 			private var codPropReal:String;
 			private var codProvRec:String;
+			private var codFideicomit:String;
+			private var codFideicomis:String;
+			private var codDelegado:String;
+			private var codApodLegal:String;
+			
+			private function agregarApodLegal(evt:Event):void{
+				var oItem:Object = new Object();
+				var comBusqPers:MttoBusqPersona = evt.currentTarget as MttoBusqPersona;
+				
+				oItem.codigo = comBusqPers.obtenerCodigo();	
+				oItem.nombre = comBusqPers.obtenerNombre();
+				
+				apodLegalObj.addItem(oItem);
+				apodLegalObj.refresh();
+				
+				lstApodLegal.dataProvider = apodLegalObj;
+			}
+			
+			private function agregarDelegado(evt:Event):void{
+				var oItem:Object = new Object();
+				var comBusqPers:MttoBusqPersona = evt.currentTarget as MttoBusqPersona;
+				
+				oItem.codigo = comBusqPers.obtenerCodigo();	
+				oItem.nombre = comBusqPers.obtenerNombre();
+				
+				delegadoObj.addItem(oItem);
+				delegadoObj.refresh();
+				
+				lstDelegado.dataProvider = delegadoObj;
+			}
+			
+			private function agregarFideicomis(evt:Event):void{
+				var oItem:Object = new Object();
+				var comBusqPers:MttoBusqPersona = evt.currentTarget as MttoBusqPersona;
+				
+				oItem.codigo = comBusqPers.obtenerCodigo();	
+				oItem.nombre = comBusqPers.obtenerNombre();
+				
+				fideicomisObj.addItem(oItem);
+				fideicomisObj.refresh();
+				
+				lstFideicomis.dataProvider = fideicomisObj;
+			}
+			
+			private function agregarFideicomit(evt:Event):void{
+				var oItem:Object = new Object();
+				var comBusqPers:MttoBusqPersona = evt.currentTarget as MttoBusqPersona;
+				
+				oItem.codigo = comBusqPers.obtenerCodigo();	
+				oItem.nombre = comBusqPers.obtenerNombre();
+				
+				fideicomitObj.addItem(oItem);
+				fideicomitObj.refresh();
+				
+				lstFideicomit.dataProvider = fideicomitObj;
+			}
+			
+			private function agregarOrgGob(evt:Event):void{
+				var oItem:Object = new Object();
+				var comOrgGob:MttoOrgGob = evt.currentTarget as MttoOrgGob;
+				
+				oItem.sec = "0";
+				oItem.nombre = comOrgGob.obtenerNombre();
+				oItem.fecNac = comOrgGob.obtenerFecNac();
+				oItem.codTipoCom = comOrgGob.obtenerCodTipoCom();
+				oItem.nomTipoCom = comOrgGob.obtenerNomTipoCom();
+					
+				orgGobObj.addItem(oItem);
+				orgGobObj.refresh();
+					
+				dgOrgGob.dataProvider = orgGobObj;
+			}
 			
 			private function agregarPropReal(evt:Event):void{
 				var oItem:Object = new Object();
@@ -85,6 +261,65 @@
 				lstProvRec.dataProvider = provRecObj;
 			}
 			
+			public function asignaEstatus(tipoPersona:String):void{
+				if(tipoPersona == "F"){
+					currentState = "";
+				}
+				else if(tipoPersona == "M"){
+					currentState = "moral";
+				}
+				else if(tipoPersona == "I"){
+					height = 400;
+					width = 570;
+					currentState = "fideicomiso";
+				}
+			}
+			
+			private function confirmarElimApodLegal():void{
+				var titulo:String = "Apoderado Legal";
+				if(lstApodLegal.selectedIndex < 0){
+					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					return;
+				}				
+				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarApodLegal,du.iQuest,4);
+			}
+			
+			private function confirmarElimDelegado():void{
+				var titulo:String = "Delegado";
+				if(lstDelegado.selectedIndex < 0){
+					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					return;
+				}				
+				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarDelegado,du.iQuest,4);
+			}
+			
+			private function confirmarElimFideicomis():void{
+				var titulo:String = "Fideicomisario";
+				if(lstFideicomis.selectedIndex < 0){
+					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					return;
+				}				
+				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarFideicomis,du.iQuest,4);
+			}
+			
+			private function confirmarElimFideicomit():void{
+				var titulo:String = "Fideicomitente";
+				if(lstFideicomit.selectedIndex < 0){
+					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					return;
+				}				
+				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarFideicomit,du.iQuest,4);
+			}
+			
+			private function confirmarElimOrgGob():void{
+				var titulo:String = "Organo de Gobierno";
+				if(dgOrgGob.selectedIndex < 0){
+					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					return;
+				}				
+				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarOrgGob,du.iQuest,4);
+			}
+			
 			private function confirmarElimPropReal():void{
 				var titulo:String = "Propietario Real";
 				if(lstPropReal.selectedIndex < 0){
@@ -101,6 +336,46 @@
 					return;
 				}				
 				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarProvRec,du.iQuest,4);
+			}
+			
+			private function eliminarApodLegal(evt:CloseEvent):void{
+				if(evt.detail == Alert.YES){
+					apodLegalObj.removeItemAt(lstApodLegal.selectedIndex);
+					apodLegalObj.refresh();
+					lstApodLegal.dataProvider = apodLegalObj;
+				}
+			}
+			
+			private function eliminarDelegado(evt:CloseEvent):void{
+				if(evt.detail == Alert.YES){
+					delegadoObj.removeItemAt(lstDelegado.selectedIndex);
+					delegadoObj.refresh();
+					lstDelegado.dataProvider = delegadoObj;
+				}
+			}
+			
+			private function eliminarFideicomis(evt:CloseEvent):void{
+				if(evt.detail == Alert.YES){
+					fideicomisObj.removeItemAt(lstFideicomis.selectedIndex);
+					fideicomisObj.refresh();
+					lstFideicomis.dataProvider = fideicomisObj;
+				}
+			}
+			
+			private function eliminarFideicomit(evt:CloseEvent):void{
+				if(evt.detail == Alert.YES){
+					fideicomitObj.removeItemAt(lstFideicomit.selectedIndex);
+					fideicomitObj.refresh();
+					lstFideicomit.dataProvider = fideicomitObj;
+				}
+			}
+			
+			private function eliminarOrgGob(evt:CloseEvent):void{
+				if(evt.detail == Alert.YES){
+					orgGobObj.removeItemAt(dgOrgGob.selectedIndex);
+					orgGobObj.refresh();
+					dgOrgGob.dataProvider = orgGobObj;
+				}
 			}
 			
 			private function eliminarPropReal(evt:CloseEvent):void{
@@ -122,15 +397,29 @@
 			public function enviarDatosAcred(formData:DatosAcred):void{
 				if(valida()){
 					formData.giro = txtGiro.text;
-					formData.origen = cboOrigen.selectedItem.id;
-					formData.destino = cboDestino.selectedItem.id;
-					formData.otroDesRec = txtOtroDesRec.text;
 					
 					formData.arrProvRec = obtieneProvRec();
 					formData.arrPropReal = obtienePropReal();
+					formData.arrFideicomit = obtieneFideicomit();
+					formData.arrFideicomis = obtieneFideicomis();
+					formData.arrDelegado = obtieneDelegado();
+					formData.arrApodLegal = obtieneApodLegal();
+					formData.arrSecOrgGob = obtieneOrgGob(0);
+					formData.arrNomOrgGob = obtieneOrgGob(1);
+					formData.arrFecNacOrgGob = obtieneOrgGob(2);
+					formData.arrTipoComOrgGob = obtieneOrgGob(3);
 					
-					if(currentState == "")
-						formData.pep = chkPep.selected == true ? "S":"N";
+					if(currentState == null || currentState == "moral"){
+						formData.origen = cboOrigen.selectedItem.id;
+						formData.destino = cboDestino.selectedItem.id;
+						formData.otroDesRec = txtOtroDesRec.text;
+						
+						if(currentState == null)
+							formData.pep = chkPep.selected == true ? "S":"N";
+					}
+					else if(currentState == "fideicomiso"){
+						formData.actVul = actividad.selectedValue ? actividad.selectedValue.toString() : "";
+					}
 					
 					formData.guardaKYC = true;
 				}
@@ -139,6 +428,34 @@
 				
 				var event:EventAcred = new EventAcred("enviarDatosAcred", formData);
 				dispatchEvent(event);
+			}
+			
+			private function formateaApodLegal():void{
+				var cont:int = _xmlApodLegal.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlApodLegal.Table[i].CODIGO;	
+					oItem.nombre = _xmlApodLegal.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				apodLegalObj = new ArrayCollection(item);
+			}
+			
+			private function formateaDelegado():void{
+				var cont:int = _xmlDelegado.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlDelegado.Table[i].CODIGO;	
+					oItem.nombre = _xmlDelegado.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				delegadoObj = new ArrayCollection(item);
 			}
 			
 			private function formateaDestino():void{
@@ -160,23 +477,32 @@
 				destinoObj = new ArrayCollection(item);
 			}
 			
-			private function formateaOrigen():void{
-				var cont:int = _xmlOrigen.elements().length();
+			private function formateaFideicomis():void{
+				var cont:int = _xmlFideicomis.elements().length();
 				var oItem:Object;
 				var item:Array = new Array();
 				
-				oItem = new Object();
-				oItem.id = "0";	
-				oItem.nombre = "--Seleccionar--";
-				item.push(oItem);
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlFideicomis.Table[i].CODIGO;	
+					oItem.nombre = _xmlFideicomis.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				fideicomisObj = new ArrayCollection(item);
+			}
+			
+			private function formateaFideicomit():void{
+				var cont:int = _xmlFideicomit.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
 				
 				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
-					oItem.id = _xmlOrigen.Table[i].CODIGO.toString();	
-					oItem.nombre = _xmlOrigen.Table[i].DESCRIPCION;
+					oItem.id = _xmlFideicomit.Table[i].CODIGO;	
+					oItem.nombre = _xmlFideicomit.Table[i].NOMBRE;
 					item.push(oItem);
 				}
-				origenObj = new ArrayCollection(item);
+				fideicomitObj = new ArrayCollection(item);
 			}
 			
 			private function formateaGiro():void{
@@ -223,6 +549,42 @@
 				giroObj = new ArrayCollection(item);
 			}
 			
+			private function formateaOrigen():void{
+				var cont:int = _xmlOrigen.elements().length();
+				var oItem:Object;
+				var item:Array = new Array();
+				
+				oItem = new Object();
+				oItem.id = "0";	
+				oItem.nombre = "--Seleccionar--";
+				item.push(oItem);
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.id = _xmlOrigen.Table[i].CODIGO.toString();	
+					oItem.nombre = _xmlOrigen.Table[i].DESCRIPCION;
+					item.push(oItem);
+				}
+				origenObj = new ArrayCollection(item);
+			}
+			
+			private function formateaOrgGob():void{
+				var cont:int = _xmlOrgGob.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.sec = _xmlOrgGob.Table[i].SECUENCIA;
+					oItem.nombre = _xmlOrgGob.Table[i].NOMBRE;
+					oItem.fecNac = _xmlOrgGob.Table[i].FECNAC;
+					oItem.codTipoCom = _xmlOrgGob.Table[i].TIPOCOM;
+					oItem.nomTipoCom = _xmlOrgGob.Table[i].NOMTIPOCOM;
+					item.push(oItem);
+				}
+				orgGobObj = new ArrayCollection(item);
+			}
+			
 			private function formateaPropReal():void{
 				var cont:int = _xmlPropReal.elements().length();
 				var oItem:Object;
@@ -261,9 +623,6 @@
 				
 				currentState = estatus;
 				
-				lstPropReal.dataProvider = null;
-				lstProvRec.dataProvider = null;
-				
 				permisos();
 				
 				du.initWsCat(wsCat);
@@ -272,85 +631,173 @@
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlTipoPers = new XML(evt.result.toString());
 						
-					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-						_xmlOrigen = new XML(evt.result.toString());
-						
+					if(currentState == null || currentState == "moral"){	
 						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-							_xmlDestino = new XML(evt.result.toString());
-					
-							du.rCursor();
-							du.closeWs(wsCat);
+							_xmlOrigen = new XML(evt.result.toString());
 							
-							if (_xmlOrigen.elements().length() > 0){
-								formateaOrigen();
-								cboOrigen.dataProvider = origenObj;
-							}
-							
-							if (_xmlDestino.elements().length() > 0){
-								formateaDestino();
-								cboDestino.dataProvider = destinoObj;
-							}
-							
-							if (info != null){
-								txtGiro.text = info.giro;
+							du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+								_xmlDestino = new XML(evt.result.toString());
+						
+								du.rCursor();
+								du.closeWs(wsCat);
 								
-								for(i = 0; i < origenObj.length; i++){
-									if (origenObj[i].id == info.origen){
-										cboOrigen.selectedIndex = i;
-										break;
-									}
+								if (_xmlOrigen.elements().length() > 0){
+									formateaOrigen();
+									cboOrigen.dataProvider = origenObj;
 								}
 								
-								for(i = 0; i < destinoObj.length; i++){
-									if (destinoObj[i].id == info.destino){
-										cboDestino.selectedIndex = i;
-										break;
-									}
+								if (_xmlDestino.elements().length() > 0){
+									formateaDestino();
+									cboDestino.dataProvider = destinoObj;
 								}
-								txtOtroDesRec.text = info.otroDesRec;
 								
-								if(info.pep == "S")
-									chkPep.selected = true;
+								if (info != null){
+									txtGiro.text = info.giro;
 									
-								du.initWsCat(wsCat);
-								du.sCursor();
-								
-								du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-									_xmlProvRec = new XML(evt.result.toString());
+									for(i = 0; i < origenObj.length; i++){
+										if (origenObj[i].id == info.origen){
+											cboOrigen.selectedIndex = i;
+											break;
+										}
+									}
 									
-									//carga info de los representantes legales
-									formateaProvRec();
-									lstProvRec.dataProvider = provRecObj; 
+									for(i = 0; i < destinoObj.length; i++){
+										if (destinoObj[i].id == info.destino){
+											cboDestino.selectedIndex = i;
+											break;
+										}
+									}
+									txtOtroDesRec.text = info.otroDesRec;
+									
+									if(info.pep == "S")
+										chkPep.selected = true;
+										
+									du.initWsCat(wsCat);
+									du.sCursor();
 									
 									du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-										_xmlPropReal = new XML(evt.result.toString());
+										_xmlProvRec = new XML(evt.result.toString());
 										
-										du.rCursor();
-										du.closeWs(wsCat);
+										//carga info de los representantes legales
+										formateaProvRec();
+										lstProvRec.dataProvider = provRecObj; 
 										
-										//carga info de los propietarios reales
-										formateaPropReal();
-										lstPropReal.dataProvider = propRealObj;
+										du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+											_xmlPropReal = new XML(evt.result.toString());
+											
+											du.rCursor();
+											du.closeWs(wsCat);
+											
+											//carga info de los propietarios reales
+											formateaPropReal();
+											lstPropReal.dataProvider = propRealObj;
+										});
+										//CONSULTA EL LISTADO DE PROPIETARIOS REALES
+										params[0] = info.codigo;
+										params[1] = "PR"
+										wsCat.getInfoAcred.send(23, params); 
 									});
-									//CONSULTA EL LISTADO DE PROPIETARIOS REALES
+									//CONSULTA EL LISTADO DE PROVEEDORES DE RECURSOS
 									params[0] = info.codigo;
-									params[1] = "PR"
+									params[1] = "VR";
+									wsCat.getInfoAcred.send(23, params);	
+								}
+							});
+							//Obtiene informacion de Destino de los recursos de la actividad
+							wsCat.getCatalogoGral.send(37);
+						});
+						//Obtiene informacion de Origen de los recursos de la actividad
+						wsCat.getCatalogoGral.send(36);
+					}
+					else if(currentState == "fideicomiso"){
+						if (info != null){
+							actividad.selectedValue = info.actVul;
+							modificarActividad();
+							txtGiro.text = info.giro;
+							
+							du.initWsCat(wsCat);
+							du.sCursor();
+							
+							du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+								_xmlFideicomit = new XML(evt.result.toString());
+								
+								//CARGA INFO DE LOS FIDEICOMITENTES
+								formateaFideicomit();
+								lstFideicomit.dataProvider = fideicomitObj; 
+								
+								du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+									_xmlFideicomis = new XML(evt.result.toString());
+									
+									//CARGA INFO DE LOS FIDEICOMISARIOS
+									formateaFideicomis();
+									lstFideicomis.dataProvider = fideicomisObj;
+									
+									du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+										_xmlDelegado = new XML(evt.result.toString());
+										
+										//CARGA INFO DE LOS DELEGADOS
+										formateaDelegado();
+										lstDelegado.dataProvider = delegadoObj;
+										
+										du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+											_xmlApodLegal = new XML(evt.result.toString());
+											
+											//CARGA INFO DE LOS APODERADOS LEGALES
+											formateaApodLegal();
+											lstApodLegal.dataProvider = apodLegalObj;
+											
+											du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+												_xmlOrgGob = new XML(evt.result.toString());
+												
+												du.rCursor();
+												du.closeWs(wsCat);
+												
+												//CARGA INFO DE LOS ORGANOS DE GOBIERNO
+												formateaOrgGob();
+												dgOrgGob.dataProvider = orgGobObj;
+											});
+											//CONSULTA EL LISTADO DE LOS ORGANOS DE GOBIERNO
+											params[0] = info.codigo;
+											wsCat.getListado.send(64, params);
+										});
+										//CONSULTA EL LISTADO DE APODERADOS LEGALES
+										params[0] = info.codigo;
+										params[1] = "AL"
+										wsCat.getInfoAcred.send(23, params); 
+									});
+									//CONSULTA EL LISTADO DE DELEGADOS
+									params[0] = info.codigo;
+									params[1] = "DL"
 									wsCat.getInfoAcred.send(23, params); 
 								});
-								//CONSULTA EL LISTADO DE PROVEEDORES DE RECURSOS
+								//CONSULTA EL LISTADO DE FIDEICOMISARIOS
 								params[0] = info.codigo;
-								params[1] = "VR";
-								wsCat.getInfoAcred.send(23, params);	
-							}
-						});
-						//Obtiene informacion de Destino de los recursos de la actividad
-						wsCat.getCatalogoGral.send(37);
-					});
-					//Obtiene informacion de Origen de los recursos de la actividad
-					wsCat.getCatalogoGral.send(36);
+								params[1] = "FS"
+								wsCat.getInfoAcred.send(23, params); 
+							});
+							//CONSULTA EL LISTADO DE FIDEICOMITENTES
+							params[0] = info.codigo;
+							params[1] = "FT";
+							wsCat.getInfoAcred.send(23, params);
+						}
+					}
 				});
 				//Obtiene informacion de los Tipos de Persona 
 				wsCat.getCatalogoGral.send(35);
+			}
+			
+			private function modificarActividad():void{
+				var editar:Boolean;
+				
+				if(actividad.selectedValue.toString() == "S"){
+					editar = true;
+					txtGiro.setFocus();
+				}
+				else if(actividad.selectedValue.toString() == "N"){
+					editar = false;
+					txtGiro.text = "";
+				}
+				txtGiro.editable = editar;
 			}
 			
 			private function mostrarFormPers(tipo:int):void{
@@ -360,12 +807,111 @@
 					comBusqPers.addEventListener("enviar", agregarProvRec);
 				else if(tipo == 2)
 				 	comBusqPers.addEventListener("enviar", agregarPropReal);
+				else if(tipo == 3)
+					comBusqPers.addEventListener("enviar", agregarFideicomit);
+				else if(tipo == 4)
+					comBusqPers.addEventListener("enviar", agregarFideicomis);
+				else if(tipo == 5)
+					comBusqPers.addEventListener("enviar", agregarDelegado);
+				else if(tipo == 6)
+					comBusqPers.addEventListener("enviar", agregarApodLegal);
 				PopUpManager.centerPopUp(comBusqPers);
+			}
+			
+			private function mostrarFormOrgGob():void{
+				var comOrgGob:MttoOrgGob = new MttoOrgGob;
+				comOrgGob = MttoOrgGob(PopUpManager.createPopUp(this,MttoOrgGob,true));
+				comOrgGob.addEventListener("enviar", agregarOrgGob);
+				comOrgGob.init();
+				PopUpManager.centerPopUp(comOrgGob);
+			}
+			
+			private function obtieneApodLegal():Array{
+				var arrApodLegal:Array = new Array;
+				//var lista:ArrayCollection = lstApodLegal.dataProvider as ArrayCollection;
+				var lista:ArrayCollection = apodLegalObj;
+				var cont:int = lista.length;
+				
+				if(cont > 0)
+					for(var i:int = 0; i < cont; i++)
+						arrApodLegal[i] = lista[i].codigo;
+				else
+					arrApodLegal[0] = "";
+					
+				return arrApodLegal;
+			}
+			
+			private function obtieneDelegado():Array{
+				var arrDelegado:Array = new Array;
+				//var lista:ArrayCollection = lstDelegado.dataProvider as ArrayCollection;
+				var lista:ArrayCollection = delegadoObj;
+				var cont:int = lista.length;
+				
+				if(cont > 0)
+					for(var i:int = 0; i < cont; i++)
+						arrDelegado[i] = lista[i].codigo;
+				else
+					arrDelegado[0] = "";
+					
+				return arrDelegado;
+			}
+			
+			private function obtieneFideicomis():Array{
+				var arrFideicomis:Array = new Array;
+				//var lista:ArrayCollection = lstFideicomis.dataProvider as ArrayCollection;
+				var lista:ArrayCollection = fideicomisObj;
+				var cont:int = lista.length;
+				
+				if(cont > 0)
+					for(var i:int = 0; i < cont; i++)
+						arrFideicomis[i] = lista[i].codigo;
+				else
+					arrFideicomis[0] = "";
+					
+				return arrFideicomis;
+			}
+			
+			private function obtieneFideicomit():Array{
+				var arrFideicomit:Array = new Array;
+				//var lista:ArrayCollection = lstFideicomit.dataProvider as ArrayCollection;
+				var lista:ArrayCollection = fideicomitObj;
+				var cont:int = lista.length;
+				
+				if(cont > 0)
+					for(var i:int = 0; i < cont; i++)
+						arrFideicomit[i] = lista[i].codigo;
+				else
+					arrFideicomit[0] = "";
+					
+				return arrFideicomit;
+			}
+			
+			private function obtieneOrgGob(tipo:int):Array{
+				var arrOrgGob:Array = new Array;
+				var lista:ArrayCollection = orgGobObj;
+				var cont:int = lista.length;
+				
+				if(cont > 0){
+					for(var i:int = 0; i < cont; i++){
+						if(tipo == 0)
+							arrOrgGob[i] = lista[i].sec;
+						else if(tipo == 1)
+							arrOrgGob[i] = lista[i].nombre;
+						else if(tipo == 2)
+							arrOrgGob[i] = lista[i].fecNac;
+						else if(tipo == 3)
+							arrOrgGob[i] = lista[i].codTipoCom;
+					}
+				}
+				else
+					arrOrgGob[0] = "";
+					
+				return arrOrgGob;
 			}
 			
 			private function obtienePropReal():Array{
 				var arrPropReal:Array = new Array;
-				var lista:ArrayCollection = lstPropReal.dataProvider as ArrayCollection;
+				var lista:ArrayCollection = propRealObj;
 				var cont:int = lista.length;
 				
 				if(cont > 0)
@@ -379,7 +925,8 @@
 			
 			private function obtieneProvRec():Array{
 				var arrProvRec:Array = new Array;
-				var lista:ArrayCollection = lstProvRec.dataProvider as ArrayCollection;
+				//var lista:ArrayCollection = lstProvRec.dataProvider as ArrayCollection;
+				var lista:ArrayCollection = provRecObj;
 				var cont:int = lista.length;
 				
 				if(cont > 0)
@@ -397,42 +944,39 @@
 			}
 		
 			private function valida():Boolean{
-				var invalidArray:Array = Validator.validateAll([giroV, origenV, destinoV]);
+				var cont:int = 0;
 				
-				if(invalidArray.length > 0)
+				if(currentState == null || currentState == "moral"){
+					var invalidArray:Array = Validator.validateAll([giroV, origenV, destinoV]);
+					cont = invalidArray.length;
+				}
+				
+				if(cont > 0)
 					return false;	
 				return true;
 			}
 	]]>
 	</mx:Script>
 	
-	<mx:FormItem label="Giro, actividad u objeto:" id="giro" visible="true" width="430">
-		<mx:TextInput id="txtGiro" width="295"/>
-	</mx:FormItem>
-	<mx:FormItem label="Origen de Recursos:" id="origen" visible="true" width="430">
-		<Data:CustomComboBox id="cboOrigen" labelField="nombre" width="295"/>
-	</mx:FormItem>
-	<mx:FormItem label="Proveedor Recursos:" id="provRec" visible="true" width="460" height="50">
-		<mx:Canvas>
-			<mx:List id="lstProvRec" width="220" height="50" labelField="nombre"/>	
-			<mx:Button id="btnAgregarProvRec" icon="@Embed(source='assets/add.png')" width="40" x="228" click="mostrarFormPers(1)" y="1"/>
-			<mx:Button id="btnEliminarProvRec" icon="@Embed(source='assets/delete-icon.png')" width="40" x="276" click="confirmarElimProvRec()" y="1"/>
-		</mx:Canvas>	
-	</mx:FormItem>
-	<mx:FormItem label="Destino de Recursos:" id="destino" visible="true" width="430">
-		<Data:CustomComboBox id="cboDestino" labelField="nombre" width="295"/>
-	</mx:FormItem>
-	<mx:FormItem label="Otro:" id="otroDesRec" visible="true" width="420">
-		<mx:TextInput id="txtOtroDesRec" width="232"/>
-	</mx:FormItem>
-	<mx:FormItem id="pep">
-		<mx:CheckBox id="chkPep" label="Persona Políticamente Expuesta (PEP)"/>
-	</mx:FormItem>
-	<mx:FormItem label="Propietario Real:" id="propReal" visible="true" width="460" height="50">
-		<mx:Canvas>
-			<mx:List id="lstPropReal" width="220" height="50" labelField="nombre"/>	
-			<mx:Button id="btnAgregarPropReal" icon="@Embed(source='assets/add.png')" width="40" x="228" click="mostrarFormPers(2)" y="1"/>
-			<mx:Button id="btnEliminarPropReal" icon="@Embed(source='assets/delete-icon.png')" width="40" x="276" click="confirmarElimPropReal()" y="1"/>
-		</mx:Canvas>	
-	</mx:FormItem>
-</mx:Form>
+	<mx:Label id="lblGiro" x="35" y="20" text="Giro, actividad u objeto:"/>
+	<mx:TextInput id="txtGiro" width="295" x="161" y="19"/>
+	<mx:Label id="lblOrigen" x="48" y="52" text="Origen de Recursos:"/>
+	<Data:CustomComboBox id="cboOrigen" labelField="nombre" width="295" x="161" y="49"/>
+	<mx:Label id="lblProvRec" x="45" y="80" text="Proveedor Recursos:"/>
+	<mx:Canvas width="320" x="161" y="81" id="cnvProvRec">
+		<mx:List id="lstProvRec" width="220" height="50" labelField="nombre"/>	
+		<mx:Button id="btnAgregarProvRec" icon="@Embed(source='assets/add.png')" width="40" x="228" click="mostrarFormPers(1)" y="1"/>
+		<mx:Button id="btnEliminarProvRec" icon="@Embed(source='assets/delete-icon.png')" width="40" x="276" click="confirmarElimProvRec()" y="1"/>
+	</mx:Canvas>
+	<mx:Label id="lblDestino" x="44" y="142" text="Destino de Recursos:"/>
+	<Data:CustomComboBox id="cboDestino" labelField="nombre" width="295" x="161" y="139"/>
+	<mx:Label id="lblOtroDesRec" x="124" y="172" text="Otro:"/>
+	<mx:TextInput id="txtOtroDesRec" width="232" x="161" y="171"/>
+	<mx:CheckBox id="chkPep" label="Persona Políticamente Expuesta (PEP)" x="161" y="201"/>
+	<mx:Label id="lblPropReal" x="70" y="233" text="Propietario Real:"/>
+	<mx:Canvas id="cnvPropReal" x="161" y="233" width="320">
+		<mx:List id="lstPropReal" width="220" height="50" labelField="nombre"/>	
+		<mx:Button id="btnAgregarPropReal" icon="@Embed(source='assets/add.png')" width="40" x="228" click="mostrarFormPers(2)" y="1"/>
+		<mx:Button id="btnEliminarPropReal" icon="@Embed(source='assets/delete-icon.png')" width="40" x="276" click="confirmarElimPropReal()" y="1"/>
+	</mx:Canvas>
+</mx:Canvas>

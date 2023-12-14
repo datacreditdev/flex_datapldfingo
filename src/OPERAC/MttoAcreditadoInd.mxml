@@ -31,6 +31,12 @@
 			<mx:SetProperty target="{tabNav}" name="x" value="7.5"/>
 			<mx:SetProperty target="{tabNav}" name="y" value="51"/>
 		</mx:State>
+		<mx:State name="fideicomiso" basedOn="moral">
+			<mx:SetProperty target="{cnvDir}" name="label" value="Lugar Constitución"/>
+			<mx:SetProperty target="{formPLDAcred}" name="width" value="570"/>
+			<mx:SetProperty target="{formPLDAcred}" name="x" value="10"/>
+			<mx:SetProperty target="{formPLDAcred}" name="height" value="430"/>
+		</mx:State>
 	</mx:states>
 	<mx:transitions>
 		<mx:Transition fromState="*" toState="*">		
@@ -164,6 +170,11 @@
 				oItem.id = "M";
 				item.push(oItem);
 				
+				oItem = new Object();
+				oItem.nombre = "Fideicomiso";
+				oItem.id = "I";
+				item.push(oItem);
+				
 				tipoObj = new ArrayCollection(item);
 			}
 			
@@ -183,7 +194,9 @@
 											 info.cdgLocNeg, info.cdgColNeg, info.tipoPers, info.arrRepLegal, info.giro, info.origen, 
 										 	 info.destino, info.otroDesRec, info.pep, info.arrPropReal, info.arrProvRec, info.figura, 
 										 	 info.nomCom, info.telefono2, info.email1, info.email2, info.contacto1, info.telCon1, info.emailCon1, 
-										 	 info.contacto2, info.telCon2, info.emailCon2);
+										 	 info.contacto2, info.telCon2, info.emailCon2, info.finalidad, info.instFiduc, info.patFid, info.aport, 
+										 	 info.actVul, info.arrFideicomit, info.arrFideicomis, info.arrDelegado, info.arrApodLegal, 
+										 	 info.arrSecOrgGob, info.arrNomOrgGob, info.arrFecNacOrgGob, info.arrTipoComOrgGob);
 			}
 			
 			public function initApp():void{
@@ -232,6 +245,10 @@
 				info.telefono2 = _xmlAcred.Table[0].TELEFONO2;
 				info.email1 = _xmlAcred.Table[0].EMAIL1;
 				info.email2 = _xmlAcred.Table[0].EMAIL2;
+				info.finalidad = _xmlAcred.Table[0].FINALIDAD;
+				info.instFiduc = _xmlAcred.Table[0].INSTFIDUC;
+				info.patFid = _xmlAcred.Table[0].PATFID;
+				info.aport = _xmlAcred.Table[0].APORT;
 				
 				//Direccion del Acreditado
 				info.calle = _xmlAcred.Table[0].CALLE;
@@ -294,6 +311,7 @@
 				info.destino = _xmlAcred.Table[0].CDGDESREC;
 				info.otroDesRec = _xmlAcred.Table[0].OTRODESREC;
 				info.pep = _xmlAcred.Table[0].PEP;
+				info.actVul = _xmlAcred.Table[0].ACTVUL;
 				
 				for(var i:int = 0; i < tipoObj.length; i++){
 					if(info.tipoPers == tipoObj[i].id.toString()){
@@ -305,8 +323,8 @@
 				modificaEstatus();
 				formDPAcred.init(info, currentState);
 				formDPAcred.cboCoord.addEventListener(ListEvent.CHANGE, selecCoord);
-				formDirAcred.init(info, currentState);
-				formDirNegocio.init(info, currentState);
+				formDirAcred.init(info);
+				formDirNegocio.init(info);
 				formDirNegocio.chkMismoDom.addEventListener(MouseEvent.CLICK, copiaDomicilio);
 				formOtroAcred.init(info);
 				formOficialAcred.init(info, currentState);
@@ -316,9 +334,8 @@
 			private function modificaEstatus():void{
 				tabNav.selectedIndex = 0;
 				formDPAcred.asignaEstatus(cboTipoPers.selectedItem.id);
-				formDirAcred.asignaEstatus(cboTipoPers.selectedItem.id);
-				formDirNegocio.asignaEstatus(cboTipoPers.selectedItem.id);
-				formOficialAcred.asignaEstatus(cboTipoPers.selectedItem.id)
+				formOficialAcred.asignaEstatus(cboTipoPers.selectedItem.id);
+				formPLDAcred.asignaEstatus(cboTipoPers.selectedItem.id);
 				if(cboTipoPers.selectedItem.id == "F"){
 					currentState = "";
 					formDPAcred.width = 440;
@@ -326,6 +343,8 @@
 				}
 				else if(cboTipoPers.selectedItem.id == "M")
 					currentState = "moral";
+				else if(cboTipoPers.selectedItem.id == "I")
+					currentState = "fideicomiso";
 			}
 			
 			private function muestraDocumentos():void{
@@ -405,8 +424,9 @@
 				cboTipoPers.enabled = true;
 				formDPAcred.init(info, currentState);
 				formDPAcred.cboCoord.addEventListener(ListEvent.CHANGE, selecCoord);
-				formDirAcred.init(info, currentState);
-				formDirNegocio.init(info, currentState);
+				formDirAcred.init(info);
+				formDirNegocio.init(info);
+				formDirNegocio.chkMismoDom.addEventListener(MouseEvent.CLICK, copiaDomicilio);
 				formOtroAcred.init(info);
 				formOficialAcred.init(info, currentState);
 				formPLDAcred.init(info, currentState);

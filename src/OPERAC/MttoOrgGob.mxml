@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="510" height="210">
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+	
+	<mx:DateValidator id="valFec" property="text" inputFormat="dd/mm/yyyy" allowedFormatChars="/" 
+	formatError="Formato de Fecha Incorrecto"/>
+	
+	<mx:Script>
+		<![CDATA[
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.core.Application;
+		import mx.effects.*;
+		import mx.events.EffectEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.managers.PopUpManager;	
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
+		import mx.validators.Validator;	
+		
+		private var _xmlTipoCom:XML = new XML();
+		private var tipoComObj:ArrayCollection = new ArrayCollection;
+		
+		private var du:Utils;
+		private var global:Globales;
+		private var openEffect:Effect = new WipeDown();
+		private var closeEffect:Effect = new WipeDown();
+		private var titulo:String;
+		private var opcion:int;
+		
+		private function cerrar():void{
+			var playReverse:Boolean = true;   
+            closeEffect.duration = 500;
+            closeEffect.play([this], playReverse);
+            closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+	
+		private function enviar():void{	
+			if(validar()){
+				dispatchEvent(new Event("enviar"));
+				cerrar();
+			}
+		}
+		
+		private function formatearTipoCom():void{
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			oItem = new Object();
+			oItem.codigo = "0";	
+			oItem.nombre = "--Seleccionar--";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "CT";	
+			oItem.nombre = "Comité Técnico";
+			item.push(oItem);
+			
+			oItem = new Object();
+			oItem.codigo = "CM";	
+			oItem.nombre = "Comité de Monitoreo";
+			item.push(oItem);
+	
+			tipoComObj = new ArrayCollection(item);
+		}
+		
+		public function init():void{
+			var wsCat:WebService = new WebService;
+			
+			global = new Globales();
+			du = new Utils(); 
+			titulo = "Organos de Gobierno";
+			this.title = titulo;
+			//Codigo que permite ejecutar el efecto de apertura
+			openEffect.duration = 1000;
+			openEffect.play([this]);
+			txtNombre.setFocus();
+			
+			formatearTipoCom();
+			cboTipoCom.dataProvider = tipoComObj;
+		}
+		
+		public function obtenerFecNac():String{
+			return dtfFecNac.text;
+		}
+		
+		public function obtenerNombre():String{
+			return txtNombre.text;
+		}
+		
+		public function obtenerNomTipoCom():String{
+			return cboTipoCom.selectedItem.nombre;
+		}
+		
+		public function obtenerCodTipoCom():String{
+			return cboTipoCom.selectedItem.codigo;
+		}
+		
+		private function terminarEfecto(event:EffectEvent):void{
+			closeEffect.removeEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function validar():Boolean{
+			if (txtNombre.text == ""){
+				Alert.show("Debe capturar el Nombre",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			if(dtfFecNac.text == ""){
+				Alert.show("Debe seleccionar la Fecha de Nacimiento",titulo,4,null,null,global.iAlert);
+				return false;
+			}	
+			if(cboTipoCom.selectedIndex == 0){
+				Alert.show("Debe seleccionar el Tipo de Comité",titulo,4,null,null,global.iAlert);
+				return false;
+			}
+			return true;
+		}
+		
+		private function validarFecha():void{
+			var vResult:ValidationResultEvent = valFec.validate(dtfFecNac.text);
+            if (vResult.type != ValidationResultEvent.VALID)
+                dtfFecNac.text = "";
+		}
+		
+		]]>
+	</mx:Script>
+	<mx:Canvas x="13" y="10" width="480" height="110" styleName="canvasMod">
+		<mx:Label id="lblNombre" x="57" y="11" text="Nombre:"/>
+		<mx:TextInput id="txtNombre" x="110" y="10" width="358"/>
+		<mx:DateField id="dtfFecNac" x="110" y="40" width="130" yearNavigationEnabled="true" editable="true"/>
+		<mx:Label id="lblFecNac" x="10" y="41" text="Fecha nacimiento:"/>
+		<mx:Label id="lblFormatoFecNac" x="248" y="41" text="(DD/MM/YYYY)"/>
+		<mx:Label id="lblTipoCom" x="39" y="73" text="Tipo Comité:"/>
+		<mx:ComboBox id="cboTipoCom" x="110" y="70" width="219" labelField="nombre"/>
+	</mx:Canvas>
+	<mx:Button id="btnAceptar" x="405" y="128" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:Button id="btnCancelar" x="453" y="128" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+</mx:TitleWindow>

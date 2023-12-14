@@ -79,6 +79,44 @@
 			<mx:AddChild relativeTo="{tel1}" position="before" target="{coord}"/>
 			<mx:SetProperty name="height" value="450"/>
 		</mx:State>
+		<mx:State name="fideicomiso" basedOn="moral">
+			<mx:RemoveChild target="{nombre}"/>
+			<mx:AddChild relativeTo="{rfc}" position="before" target="{nombre}"/>
+			<mx:SetProperty target="{nombre}" name="label" value="Número del Fideicomiso:"/>
+			<mx:RemoveChild target="{figura}"/>
+			<mx:RemoveChild target="{nomCom}"/>
+			<mx:RemoveChild target="{nacionalidad}"/>
+			<mx:RemoveChild target="{repLegal}"/>
+			<mx:AddChild relativeTo="{fecha}" position="before">
+				<mx:FormItem label="Finalidad del Fideicomiso:" id="lblFinalidad" visible="true" width="485">
+					<mx:TextInput id="txtFinalidad" width="285"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:RemoveChild target="{fiel}"/>
+			<mx:AddChild relativeTo="{fecha}" position="before" target="{fiel}"/>
+			<mx:RemoveChild target="{tel1}"/>
+			<mx:RemoveChild target="{tel2}"/>
+			<mx:RemoveChild target="{email1}"/>
+			<mx:RemoveChild target="{correo2}"/>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Institución Fiduciaria:" id="lblInstFiduc" visible="true" width="485">
+					<mx:TextInput id="txtInstFiduc" width="285"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Patrimonio del Fideicomiso:" id="lblPatFid" visible="true" width="485">
+					<mx:TextInput id="txtPatFid" width="285"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Aportaciones de los Fideicomitentes:" id="lblAport" visible="true" width="487">
+					<mx:TextInput id="txtAport" width="285"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:SetProperty target="{nombre}" name="width" value="485"/>
+			<mx:SetProperty target="{txtNombre}" name="width" value="285"/>
+			<mx:SetProperty target="{fecha}" name="width" value="400"/>
+		</mx:State>
 	</mx:states>
 	<mx:transitions>
 		<mx:Transition fromState="*" toState="*">		
@@ -94,6 +132,9 @@
 	
 	<mx:Validator id="nombreV" source="{txtNombre}" property="text" 
 	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Nombre de Acreditado Requerido"/>
+	
+	<mx:Validator id="numeroV" source="{txtNombre}" property="text" 
+	invalid="{txtNombre.setFocus()}" triggerEvent="" requiredFieldError="Número de Fideicomiso Requerido"/>
 	
 	<mx:Validator id="aPaternoV" source="{txtAP}" property="text" 
 	invalid="{txtAP.setFocus()}" triggerEvent="" requiredFieldError="Apellido Paterno Requerido"/> 
@@ -170,6 +211,10 @@
 				else if(tipoPersona == "M"){
 					currentState = "moral";
 					cboFigura.dataProvider = figObj;
+					lstRepLegal.dataProvider = null;
+				}
+				else if(tipoPersona == "I"){
+					currentState = "fideicomiso";
 				}
 			}
 			
@@ -214,40 +259,52 @@
 					else
 						invalidArray = Validator.validateAll([nombreV, fechaV, rfcV]);
 				}
+				else if(currentState == "fideicomiso"){
+					invalidArray = Validator.validateAll([numeroV, fechaV, rfcV, fielV]);
+				}
 				if(invalidArray.length == 0){	
 					formData.codigo = txtCodigo.text;
 					formData.nombre = StringUtil.trim(txtNombre.text.toUpperCase());
-					formData.segNombre = StringUtil.trim(txtSegNombre.text.toUpperCase());
-					formData.aPaterno = StringUtil.trim(txtAP.text.toUpperCase());
-					formData.aMaterno = StringUtil.trim(txtAM.text.toUpperCase());
-					formData.arrRepLegal = obtieneRepLegal();
 					formData.fecha = txtFecha.text;
 					
-					formData.sexo = sexo.selectedValue ? sexo.selectedValue.toString() : "";
-					
-					//selecciona el codigo del pais	
-					if (cboPais.selectedIndex > 0)
-						formData.cdgNacPais = cboPais.selectedItem.CODIGO;
-					//selecciona el codigo de la entidad de nacimiento		
-					if (cboEntidad.selectedIndex > 0)
-						formData.cdgNacEntFed = cboEntidad.selectedItem.id;
 					//selecciona el codigo de la nacionalidad
 					if (cboNac.selectedIndex > 0)
 					 	formData.cdgNac = cboNac.selectedItem.CODIGO;
 					 						
 					formData.cdgco = cboCoord.selectedItem.id;					 						
 					formData.rfc = txtRfc.text;
-					formData.curp = txtCurp.text;
-					formData.ife = StringUtil.trim(txtIfe.text); 
 					
-					if(currentState == "moral"){
+					formData.arrRepLegal = obtieneRepLegal();
+					
+					if(currentState == null){
+						formData.segNombre = StringUtil.trim(txtSegNombre.text.toUpperCase());
+						formData.aPaterno = StringUtil.trim(txtAP.text.toUpperCase());
+						formData.aMaterno = StringUtil.trim(txtAM.text.toUpperCase());
+						//selecciona el codigo del pais	
+						if (cboPais.selectedIndex > 0)
+							formData.cdgNacPais = cboPais.selectedItem.CODIGO;
+						//selecciona el codigo de la entidad de nacimiento		
+						if (cboEntidad.selectedIndex > 0)
+							formData.cdgNacEntFed = cboEntidad.selectedItem.id;
+						formData.sexo = sexo.selectedValue ? sexo.selectedValue.toString() : "";
+						formData.curp = txtCurp.text;
+						formData.ife = StringUtil.trim(txtIfe.text); 
+					}
+					else if(currentState == "moral"){
 						formData.figura = cboFigura.selectedItem.codigo;
-						formData.nomCom = txtNomCom.text;
 						formData.fiel = txtCertFiel.text;
+						formData.nomCom = txtNomCom.text;
 						formData.telefono = txtTel1.text;
 						formData.telefono2 = txtTel2.text;
 						formData.email1 = txtEmail1.text;
 						formData.email2 = txtEmail2.text;
+					}
+					else if(currentState == "fideicomiso"){
+						formData.fiel = txtCertFiel.text;
+						formData.finalidad = txtFinalidad.text;
+						formData.instFiduc = txtInstFiduc.text;
+						formData.patFid = txtPatFid.text;
+						formData.aport = txtAport.text;
 					}
 					
 					formData.guardaDatos = true;
@@ -427,9 +484,6 @@
 				
 				currentState = estatus;
 				
-				if(currentState == "moral")
-					lstRepLegal.dataProvider = null;
-				
 				f = global.obtenerFechaSistema();
 				tipoAccion = 1;
 				
@@ -478,11 +532,35 @@
 							tipoAccion = 2;
 							txtCodigo.text = info.codigo;
 							txtNombre.text = info.nombre;
-							txtSegNombre.text = info.segNombre;
-							txtAP.text = info.aPaterno;
-							txtAM.text = info.aMaterno;
-							//Informacion relacionada con el representante legal
-							if(currentState == "moral"){
+							txtRfc.text = info.rfc;
+							
+							if(currentState == null){
+								txtSegNombre.text = info.segNombre;
+								txtAP.text = info.aPaterno;
+								txtAM.text = info.aMaterno;
+								
+								if(info.sexo != null){
+									sexo.selectedValue = info.sexo;
+								}
+								
+								//selecciona el pais del acreditado
+								for(j = 0; j < paisObj.length; j++){   
+									if (paisObj[j].CODIGO.toString() == info.cdgNacPais){
+										cboPais.selectedIndex = j;
+										break;
+									}
+								}
+								//selecciona la entidad federativa del acreditado
+								for(j = 0; j < entFedObj.length; j++){   
+									if (entFedObj[j].id.toString() == info.cdgNacEntFed){
+										cboEntidad.selectedIndex = j;
+										break;
+									}
+								} 
+								txtCurp.text = info.curp;
+								txtIfe.text = info.ife;
+							}
+							else if(currentState == "moral"){
 								du.initWsCat(wsCat);
 								du.sCursor();
 								
@@ -520,8 +598,16 @@
 								txtEmail1.text = info.email1;
 								txtEmail2.text = info.email2;
 							}
-							if(info.sexo != null){
-								sexo.selectedValue = info.sexo;
+							if(currentState == "fideicomiso"){
+								if(info.fiel != ""){
+									chkFiel.selected = true;
+									txtCertFiel.text = info.fiel;	
+								}
+								
+								txtFinalidad.text = info.finalidad;
+								txtInstFiduc.text = info.instFiduc;
+								txtPatFid.text = info.patFid;
+								txtAport.text = info.aport;
 							}
 							txtFecha.text = info.fecha;
 							//selecciona la sucursal del acreditado
@@ -531,20 +617,6 @@
 									break;
 								}
 							}
-							//selecciona el pais del acreditado
-							for(j = 0; j < paisObj.length; j++){   
-								if (paisObj[j].CODIGO.toString() == info.cdgNacPais){
-									cboPais.selectedIndex = j;
-									break;
-								}
-							}
-							//selecciona la entidad federativa del acreditado
-							for(j = 0; j < entFedObj.length; j++){   
-								if (entFedObj[j].id.toString() == info.cdgNacEntFed){
-									cboEntidad.selectedIndex = j;
-									break;
-								}
-							} 
 							//selecciona la nacionalidad del acreditado
 							for(j = 0; j < paisObj.length; j++){   
 								if (paisObj[j].CODIGO.toString() == info.cdgNac){
@@ -552,24 +624,7 @@
 									break;
 								}
 							}
-							txtRfc.text = info.rfc;
-							txtCurp.text = info.curp;
-							txtIfe.text = info.ife;
-						}		
-						/*else{
-							for(j = 0; j < paisObj.length; j++){   
-								if (paisObj[j].NOMBRE.toString().toUpperCase() == "MEXICO"){
-									cboPais.selectedIndex = j;
-									break;
-								}
-							}
-							for(j = 0; j < paisObj.length; j++){   
-								if (paisObj[j].GENTILICIO.toString().toUpperCase() == "MEXICANO"){
-									cboNac.selectedIndex = j;
-									break;
-								}
-							}
-						}*/
+						}
 					});
 					//MUESTRA LAS ENTIDADES FEDERATIVAS DISPONIBLES
 					wsCat.getCatalogoGral.send(2);	
@@ -598,7 +653,7 @@
 			
 			private function obtieneRepLegal():Array{
 				var arrRepLegal:Array = new Array;
-				var lista:ArrayCollection = lstRepLegal.dataProvider as ArrayCollection;
+				var lista:ArrayCollection = persObj;
 				var cont:int = lista.length;
 				
 				if(cont > 0)

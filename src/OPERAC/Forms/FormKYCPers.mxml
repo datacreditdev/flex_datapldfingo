@@ -367,7 +367,7 @@
 			
 			private function obtienePropReal():Array{
 				var arrPropReal:Array = new Array;
-				var lista:ArrayCollection = lstPropReal.dataProvider as ArrayCollection;
+				var lista:ArrayCollection = propRealObj;
 				var cont:int = lista.length;
 				
 				if(cont > 0)
@@ -381,7 +381,7 @@
 			
 			private function obtieneProvRec():Array{
 				var arrProvRec:Array = new Array;
-				var lista:ArrayCollection = lstProvRec.dataProvider as ArrayCollection;
+				var lista:ArrayCollection = provRecObj;
 				var cont:int = lista.length;
 				
 				if(cont > 0)

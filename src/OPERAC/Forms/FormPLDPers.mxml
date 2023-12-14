@@ -33,7 +33,6 @@
 			
 			public function enviarDatosPersona(formData:DatosPersona):void{
 				if(validar()){
-					
 					formData.puesto = puestoPers.selectedValue ? puestoPers.selectedValue.toString(): "";
 					formData.puestoDesc = txtPuestoPers.text;
 					formData.periodo = txtPeriodoPers.text;

@@ -48,6 +48,7 @@
 			</mx:AddChild>
 			<mx:SetProperty target="{comPromGrid}" name="x" value="121"/>
 		</mx:State>
+		<mx:State name="fideicomiso" basedOn="moral"/>
 	</mx:states>
 	
 	<mx:Metadata>
@@ -87,7 +88,7 @@
 			public function asignaEstatus(tipoPersona:String):void{
 				if(tipoPersona == "F")
 					currentState = "";
-				else if(tipoPersona == "M")
+				else if(tipoPersona == "M" || tipoPersona == "I")
 					currentState = "moral";
 			}	
 					

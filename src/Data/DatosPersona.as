@@ -80,6 +80,15 @@ package Data
 		public var nomPropReal:String;
 		public var arrProvRec:Array;
 		public var nomProvRec:String;
+		public var actVul:String;
+		public var arrFideicomit:Array;
+		public var arrFideicomis:Array;
+		public var arrDelegado:Array;
+		public var arrApodLegal:Array;
+		public var arrSecOrgGob:Array;
+		public var arrNomOrgGob:Array;
+		public var arrFecNacOrgGob:Array;
+		public var arrTipoComOrgGob:Array;
 		public var guardaKYC:Boolean; 	
 		
 		/*Variables que hacen referencia a informacion de PLD*/
@@ -93,9 +102,14 @@ package Data
 		public var periodoFam:String;
 		public var guardaPLD:Boolean; 	
 				
+		public var finalidad:String;
+		public var instFiduc:String;
+		public var patFid:String;
+		public var aport:String;
+		public var guardaFid:Boolean;		
+				
 		public function DatosPersona()
 		{
 		}
-
 	}
 }

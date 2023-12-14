@@ -1,23 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="404" creationPolicy="all" xmlns:control="CONTROL.*">
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="370" creationPolicy="all" xmlns:control="CONTROL.*">
 	<mx:states>
 		<mx:State name="moral">
-			<mx:SetProperty target="{lblTitulo}" name="text" value="Domicilio Fiscal"/>
-			<mx:RemoveChild target="{lblTelefono}"/>
-			<mx:SetProperty target="{lblEntre}" name="y" value="356"/>
-			<mx:SetProperty target="{txtEntreCalles}" name="y" value="355"/>
-			<mx:AddChild position="lastChild">
-				<mx:Label id="lblNumInt" text="Número Interior:" x="61.5" y="136"/>
-			</mx:AddChild>
-			<mx:AddChild position="lastChild">
-				<mx:Label id="lblNumExt" text="Número Exterior:" x="57.5" y="106"/>
-			</mx:AddChild>
-			<mx:AddChild position="lastChild">
-				<mx:TextInput id="txtNumExt" maxChars="20" x="150.5" y="105" width="170"/>
-			</mx:AddChild>
-			<mx:AddChild position="lastChild">
-				<mx:TextInput id="txtNumInt" maxChars="20" x="150.5" y="135" width="170"/>
-			</mx:AddChild>
 		</mx:State>
 	</mx:states>
 	<mx:Metadata>
@@ -58,13 +42,6 @@
 			public var texto:String;
 			private var du:Utils;
 			private var global:Globales;
-			
-			public function asignaEstatus(tipoPersona:String):void{
-				if(tipoPersona == "F")
-					currentState = "";
-				else if(tipoPersona == "M")
-					currentState = "moral";
-			}
 			
 			//Realiza la busqueda de direccion del acreditado utilizando el codigo postal
 			public function buscaCodPostal():void{ 
@@ -119,7 +96,6 @@
 				formData.noExtNeg = StringUtil.trim(txtNumExt.text);
 				formData.noIntNeg = StringUtil.trim(txtNumInt.text);
 				formData.entreCallesNeg = StringUtil.trim(txtEntreCalles.text);
-				formData.telefonoNeg = StringUtil.trim(txtTelefono.text);
 				formData.cdgPaisNeg = datos.cdgPaisNeg;
 				formData.codPostalNeg = txtCodPostal.text;
 				formData.cdgEntFedNeg = datos.cdgEntFedNeg;
@@ -131,14 +107,12 @@
 				dispatchEvent(event);
 			}
 
-			public function init(info:DatosAcred, estatus:String):void{
+			public function init(info:DatosAcred):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
 				
 				global = new Globales();
 				du = new Utils();
-				
-				currentState = estatus;
 								
 				du.initWsCat(wsCat);
 				du.sCursor();
@@ -173,7 +147,6 @@
 							txtNumExt.text = info.noExtNeg;
 							txtNumInt.text = info.noIntNeg;
 							txtEntreCalles.text = info.entreCallesNeg;
-							txtTelefono.text = info.telefonoNeg;
 							txtCodPostal.text = info.codPostalNeg;
 							
 							comPaisGrid.asignaTexto(info.paisNeg);
@@ -378,24 +351,25 @@
 			}
 	]]>
 	</mx:Script>
-	<mx:Label text="Negocio" x="150.5" y="12" fontSize="16" fontWeight="bold" id="lblTitulo"/>
-	<mx:CheckBox id="chkMismoDom" label="Mismos Datos de Domicilio"  x="150.5" y="45"/>
-	<mx:Label id="lblCalle" text="Calle:" x="111.5" y="77"/>
-	<mx:Label id="lblEntre" text="Entre las calles:" x="61.5" y="106"/>
-	<mx:Label id="lblTelefono" text="Teléfono:" x="92.5" y="136"/>
-	<mx:Label id="lblPais" text="País:" x="114.5" y="167"/>
-	<mx:Label id="lblCodPostal" text="Código Postal:" x="69.5" y="198"/>
-	<mx:Label id="lblEntFed" text="Entidad Federativa:" x="45.5" y="229"/>
-	<mx:Label id="lblMunic" text="Municipio:" x="90.5" y="261"/>
-	<mx:Label id="lblLoc" text="Localidad:" x="88.5" y="293"/>
-	<mx:Label id="lblCol" text="Colonia:" x="99.5" y="325"/>
-	<mx:TextInput id="txtCalle" maxChars="80" restrict="A-Z;a-z;Ñ;ñ;0-9; " width="170" x="150.5" y="75"/>
-	<mx:TextInput id="txtEntreCalles" maxChars="50" restrict="A-Z;a-z;Ñ;ñ;0-9; " width="170" x="150.5" y="105"/>
-	<mx:TextInput id="txtTelefono" restrict="0-9" maxChars="20" x="150.5" y="135"/>
-	<control:TextGrid id="comPaisGrid" height="24" x="150.5" y="165"/>
-	<mx:TextInput id="txtCodPostal" enter="buscaCodPostal()" width="95" maxChars="5" restrict="0-9" x="150.5" y="197"/>
-	<control:TextGrid id="comEntGrid" x="150.5" height="24" y="227"/>
-	<control:TextGrid id="comMunGrid" x="150.5" height="24" y="259"/>
-	<control:TextGrid id="comLocGrid" x="150.5" height="24" y="291"/>
-	<control:TextGrid id="comColGrid" x="150.5" height="24" y="323"/>
+	<mx:CheckBox id="chkMismoDom" label="Mismos Datos de Domicilio" x="150.5" y="16"/>
+	<mx:Label id="lblCalle" text="Calle:" x="111.5" y="48"/>
+	<mx:Label id="lblNumExt" text="Número Exterior:" x="57.5" y="77"/>
+	<mx:Label id="lblNumInt" text="Número Interior:" x="61.5" y="107"/>
+	<mx:Label id="lblEntre" text="Entre las calles:" x="61.5" y="327"/>
+	<mx:Label id="lblPais" text="País:" x="114.5" y="138"/>
+	<mx:Label id="lblCodPostal" text="Código Postal:" x="69.5" y="169"/>
+	<mx:Label id="lblEntFed" text="Entidad Federativa:" x="45.5" y="200"/>
+	<mx:Label id="lblMunic" text="Municipio:" x="90.5" y="232"/>
+	<mx:Label id="lblLoc" text="Localidad:" x="88.5" y="264"/>
+	<mx:Label id="lblCol" text="Colonia:" x="99.5" y="296"/>
+	<mx:TextInput id="txtCalle" maxChars="80" restrict="A-Z;a-z;Ñ;ñ;0-9; " width="170" x="150.5" y="46"/>
+	<mx:TextInput id="txtNumExt" maxChars="20" x="150.5" y="76" width="170"/>
+	<mx:TextInput id="txtNumInt" maxChars="20" x="150.5" y="106" width="170"/>
+	<control:TextGrid id="comPaisGrid" height="24" x="150.5" y="136"/>
+	<mx:TextInput id="txtCodPostal" enter="buscaCodPostal()" width="95" maxChars="5" restrict="0-9" x="150.5" y="168"/>
+	<control:TextGrid id="comEntGrid" x="150.5" height="24" y="198"/>
+	<control:TextGrid id="comMunGrid" x="150.5" height="24" y="230"/>
+	<control:TextGrid id="comLocGrid" x="150.5" height="24" y="262"/>
+	<control:TextGrid id="comColGrid" x="150.5" height="24" y="294"/>
+	<mx:TextInput id="txtEntreCalles" maxChars="50" restrict="A-Z;a-z;Ñ;ñ;0-9; " width="170" x="150.5" y="326"/>
 </mx:Canvas>
