@@ -18,6 +18,8 @@ package Data
 		public var cdgMotivo:String;
 		public var cdgCuenta:String;
 		public var reportado:String;
+		public var cdgFid:String;
+		public var cdgSup:String;
 		public var guarda:Boolean;
 		
 		public function DatosDispersion()

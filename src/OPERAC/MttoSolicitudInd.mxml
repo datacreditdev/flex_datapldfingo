@@ -23,8 +23,8 @@
 	</mx:states>
 	<mx:Script>
 		<![CDATA[
-			import Data.PdfExport;
 			import CONTROL.CtrlTablaAmort;
+			import Data.PdfExport;
 			import Data.EventSolic;
 			import Data.DatosSolic;
 			import Data.Globales;
@@ -36,19 +36,19 @@
 			import mx.controls.RadioButtonGroup;
 			import mx.core.Application;
 			import mx.effects.*;
-			import mx.events.MoveEvent;
-			import mx.events.FlexEvent;
+			import mx.events.CalendarLayoutChangeEvent;
 			import mx.events.CollectionEvent;
-			import mx.events.ValidationResultEvent;
 			import mx.events.DataGridEvent;
+			import mx.events.FlexEvent;
+			import mx.events.IndexChangedEvent;
 			import mx.events.ItemClickEvent;
 			import mx.events.ListEvent;
-			import mx.events.CalendarLayoutChangeEvent;
-			import mx.events.IndexChangedEvent;
+			import mx.events.MoveEvent;
+			import mx.events.ValidationResultEvent;
 			import mx.managers.PopUpManager;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.utils.ObjectUtil;
 			
 			[Bindable]
@@ -426,7 +426,7 @@
 													 global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.cdgCb, info.tipoDes, 
 													 info.multPerio, info.diaEsp, coord, promotor, info.tasaFija, acred, montos, proyInv, emplGenH, emplGenM, 
 													 emplSostH, emplSostM, info.calle, info.cdgLugarEntFed, info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol,
-													 info.horario, info.reunion, info.autorCrr, info.secuencia, info.aval);
+													 info.horario, info.reunion, info.autorCrr, info.secuencia, info.aval, info.naturaleza);
 					}
 					//Servicio invocado en la etapa de evaluacion de la solicitud
 					else if(currentState == 'evaluacion'){
@@ -439,7 +439,7 @@
 											   		global.obtenerUsuario(), info.formaEntre, info.nombreCheq, info.multPerio, info.diaEsp, coord, promotor, 
 											   		info.tasaFija, acred, montos, proyInv, situacionAcred, rechazo, cantAutorAcred, info.calle, info.cdgLugarEntFed,
 											  	 	info.cdgLugarMun, info.cdgLugarLoc, info.cdgLugarCol, info.horario, info.reunion, info.autorCrr, info.secuencia,
-											  	 	info.aval);
+											  	 	info.aval, info.naturaleza);
 					}
 				}
 			}
@@ -484,6 +484,7 @@
 				info.solicitado = _xmlSolic.Table[0].CANTSOLIC;
 				info.autorizado = _xmlSolic.Table[0].CANTAUTOR;
 				info.moneda = _xmlSolic.Table[0].CDGMO;
+				info.naturaleza = _xmlSolic.Table[0].NATURALEZA;
 				
 				//Datos del calendario de la solicitud
 				info.periodicidad = _xmlSolic.Table[0].PERIODICIDAD;
@@ -689,7 +690,7 @@
 		]]>
 	</mx:Script>
 
-	 <mx:NumberValidator id="numVal" property="text" precision="2"
+	<mx:NumberValidator id="numVal" property="text" precision="2"
         allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator="," required="false"/>
 
 	<mx:TabNavigator id="tabNav" width="821" height="251" x="10" y="55" creationPolicy="all">
@@ -720,11 +721,11 @@
 	</mx:TabNavigator>
 	<mx:Button id="btnAceptar" x="742" y="313" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
 	<mx:Button id="btnCancelar" x="790" y="313" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
-	<mx:Canvas x="62" y="10" width="720" height="37" styleName="canvasMod" id="canvas3">
-		<mx:Label x="22" y="8" text="Acreditado:" id="label1"/>
+	<mx:Canvas x="62" y="10" width="720" height="36" styleName="canvasMod" id="canvas3">
+		<mx:Label x="20" y="6" text="Acreditado:" id="label1"/>
 		<mx:TextInput id="txtAcred" x="89" y="5" width="238" editable="false"/>
-		<mx:Label x="350" y="8" text="Ciclo:" id="label2"/>
-		<mx:Label x="461" y="8" text="Oficina:" id="label3"/>
+		<mx:Label x="345" y="6" text="Ciclo:" id="label2"/>
+		<mx:Label x="466" y="6" text="Oficina:" id="label3"/>
 		<mx:TextInput x="516" y="5" width="181" id="txtSucursal" editable="false"/>
 		<mx:TextInput x="384" y="5" width="45" id="txtCiclo" editable="false"/>
 	</mx:Canvas>

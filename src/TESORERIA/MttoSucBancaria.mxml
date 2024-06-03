@@ -36,14 +36,14 @@
 		
 		private var _xmlFiltro:XMLList;	
 		
-		public var global:Globales;
+		private var du:Utils;
+		private var global:Globales;
 		public var openEffect:Effect = new WipeDown();
 		public var closeEffect:Effect = new WipeDown();
 		public var wsMS:WebService;	
 		public var tipoAccion:int;
 		public var titulo:String;
 		public var texto:String;
-		public var du:Utils;
 		
 		//Realiza la busqueda de direccion utilizando el codigo postal
 		public function buscaCodPostal():void{ 
@@ -66,15 +66,15 @@
 					du.closeWs(wsCat);
 						
 					if(_xmlDir.elements().length() > 0){						
-						comEntGrid.asignaTexto(_xmlDir.Table[0].ENTFED);
-						comMunGrid.asignaTexto(_xmlDir.Table[0].MUNIC);
-						comLocGrid.asignaTexto(_xmlDir.Table[0].LOC);
-						comColGrid.asignaTexto(_xmlDir.Table[0].COL);	
+						comEntGrid.asignarTexto(_xmlDir.Table[0].ENTFED);
+						comMunGrid.asignarTexto(_xmlDir.Table[0].MUNIC);
+						comLocGrid.asignarTexto(_xmlDir.Table[0].LOC);
+						comColGrid.asignarTexto(_xmlDir.Table[0].COL);	
 						
-						comEntGrid.asignaCodigo(_xmlDir.Table[0].CDGEF);
-						comMunGrid.asignaCodigo(_xmlDir.Table[0].CDGMU);
-						comLocGrid.asignaCodigo(_xmlDir.Table[0].CDGLO);
-						comColGrid.asignaCodigo(_xmlDir.Table[0].CDGCOL);	
+						comEntGrid.asignarCodigo(_xmlDir.Table[0].CDGEF);
+						comMunGrid.asignarCodigo(_xmlDir.Table[0].CDGMU);
+						comLocGrid.asignarCodigo(_xmlDir.Table[0].CDGLO);
+						comColGrid.asignarCodigo(_xmlDir.Table[0].CDGCOL);	
 							
 						info.cdgEntFed = _xmlDir.Table[0].CDGEF;
 						info.cdgMun = _xmlDir.Table[0].CDGMU;
@@ -227,13 +227,13 @@
 			txtCalle.text = _xmlSB.Table[0].CALLE;
 			txtCodPostal.text = _xmlSB.Table[0].CODPOSTAL;
 			comEntGrid.codigo = _xmlSB.Table[0].CDGEF;
-			comEntGrid.asignaTexto(_xmlSB.Table[0].ENTFED);
+			comEntGrid.asignarTexto(_xmlSB.Table[0].ENTFED);
 			comMunGrid.codigo = _xmlSB.Table[0].CDGMU;
-			comMunGrid.asignaTexto(_xmlSB.Table[0].MUNIC);
+			comMunGrid.asignarTexto(_xmlSB.Table[0].MUNIC);
 			comLocGrid.codigo = _xmlSB.Table[0].CDGLO;
-			comLocGrid.asignaTexto(_xmlSB.Table[0].LOC);
+			comLocGrid.asignarTexto(_xmlSB.Table[0].LOC);
 			comColGrid.codigo = _xmlSB.Table[0].CDGCOL;
-			comColGrid.asignaTexto(_xmlSB.Table[0].COL);
+			comColGrid.asignarTexto(_xmlSB.Table[0].COL);
 			txtTelefono.text = _xmlSB.Table[0].TELEFONO;
 			txtGerente.text = _xmlSB.Table[0].GERENTE;
 			txtEjecutivo.text = _xmlSB.Table[0].EJECUTIVO;
@@ -361,7 +361,11 @@
 				comMunGrid.limpiar();
 				comLocGrid.limpiar();
 				comColGrid.limpiar();
+				txtCodPostal.text = "";
 				info.cdgEntFed = event.currentTarget.codigo;
+				info.cdgMun = "";
+				info.cdgLoc = "";
+				info.cdgCol = "";
 				obtieneMunicipio();
 			}
 			comEntGrid.setFocus();
@@ -371,7 +375,10 @@
 			if(info.cdgMun != event.currentTarget.codigo){
 				comLocGrid.limpiar();
 				comColGrid.limpiar();
+				txtCodPostal.text = "";
 				info.cdgMun = event.currentTarget.codigo;
+				info.cdgLoc = "";
+				info.cdgCol = "";
 				obtieneLocalidad();
 			}
 			comMunGrid.setFocus();
@@ -380,7 +387,9 @@
 		private function selecLocalidad(event:Event):void{
 			if(info.cdgLoc != event.currentTarget.codigo){
 				comColGrid.limpiar();
+				txtCodPostal.text = "";
 				info.cdgLoc = event.currentTarget.codigo;
+				info.cdgCol = "";
 				obtieneColonia();
 			}
 			comLocGrid.setFocus();

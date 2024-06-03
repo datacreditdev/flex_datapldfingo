@@ -295,7 +295,7 @@
 			}
 			
 			public function guardaPrn():void{
-				if(formateaRegAcred() == true){ //valida que todos los clientes se hayan registrado con montos validos
+				if(formateaRegAcred()){ //valida que todos los clientes se hayan registrado con montos validos
 					initConexion();
 					du.sCursor();
 					global.bloquear();
@@ -350,6 +350,7 @@
 				info.devolucion = _xmlPrn.Table[0].CANTDEVOL;
 				info.devoluciones = _xmlPrn.Table[0].SUMADEV;
 				info.moneda = _xmlPrn.Table[0].CDGMO;
+				info.naturaleza = _xmlPrn.Table[0].NATURALEZA;
 				
 				//Datos del calendario de la solicitud
 				info.periodicidad = _xmlPrn.Table[0].PERIODICIDAD;
@@ -476,7 +477,7 @@
 		<mx:Label x="20" y="6" text="Acreditado:"/>
 		<mx:TextInput id="txtAcred" x="89" y="5" width="238" editable="false"/>
 		<mx:Label x="345" y="6" text="Ciclo:"/>
-		<mx:Label x="455" y="6" text="Oficina:"/>
+		<mx:Label x="466" y="6" text="Oficina:"/>
 		<mx:TextInput x="516" y="5" width="181" id="txtSucursal" editable="false"/>
 		<mx:TextInput x="384" y="5" width="45" id="txtCiclo" editable="false"/>
 	</mx:Canvas>

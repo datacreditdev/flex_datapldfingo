@@ -6,35 +6,34 @@
 	<!--Componente de mantenimiento de Localidades-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Globales;
 			import Data.Permisos;
 			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
 			import mx.controls.DataGrid;
 			import mx.controls.dataGridClasses.DataGridItemRenderer;  
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
 			import mx.events.*;  
-			import Data.Globales;
-			import mx.controls.ComboBox;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
 			import mx.events.FlexEvent;
-			import mx.formatters.SwitchSymbolFormatter;
-			import mx.formatters.NumberFormatter;
+			import mx.events.ListEvent;	
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
 			import mx.rpc.Fault;
 			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
-			import mx.rpc.events.FaultEvent;
-			import mx.events.DataGridEvent;				
-			import mx.events.CloseEvent;	
-			import mx.events.ListEvent;	
-			import mx.core.Application;
-			import mx.containers.TitleWindow;				
-			import mx.managers.PopUpManager;
-			import mx.controls.Alert;
-			import mx.collections.ArrayCollection;
-			import mx.effects.easing.Elastic;
-			import mx.events.ValidationResultEvent;            
 
 			public var _xmlEntFed:XML = new XML();
 			public var _xmlMunic:XML = new XML();
 			public var _xmlLocalidad:XML = new XML();
 			public var _xmlColonia:XML = new XML();
+			
 			[Bindable]
 			public var dPermisos:XML = new XML();
 			[Bindable]
@@ -45,9 +44,8 @@
 			public var locObj:ArrayCollection = new ArrayCollection();
 			public var colObj:ArrayCollection = new ArrayCollection();
 			
-			public var wsMS:WebService = new WebService();	
-			public var ws:WebService = new WebService();
-			public var du:Utils;
+			public var wsMS:WebService = new WebService();
+			private var du:Utils;
 			private var global:Globales;
 			private var permiso:Permisos;
 			
@@ -125,8 +123,12 @@
 				dgColonia.dataProvider = null;
 				du.initWsCat(wsCat);
 				du.sCursor();
-			 	if (tipo == 1)
-					global.bloquear();
+				
+			 	if(tipo == 2){
+			 		global.bloquear();
+			 		iniVar();
+			 	}
+				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlColonia = new XML(evt.result.toString());
 					
@@ -159,10 +161,15 @@
 				var munic:String = dgMunic.selectedItem.codigo;
 				
 				dgLocalidad.dataProvider = null;
+				dgColonia.dataProvider = null;
 				du.initWsCat(wsCat);
 				du.sCursor();
-			 	if (tipo == 1)
-					global.bloquear();
+					
+			 	if(tipo == 2){
+			 		global.bloquear();
+			 		iniVar();
+			 	}
+					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlLocalidad = new XML(evt.result.toString());
 					
@@ -193,10 +200,15 @@
 				var entFed:String = dgEntFed.selectedItem.CODIGO;
 				
 				dgMunic.dataProvider = null;
+				dgLocalidad.dataProvider = null;
+				dgColonia.dataProvider = null;
+				
 				du.initWsCat(wsCat);
 				du.sCursor();
-			 	if (tipo == 1)
+				
+			 	if(tipo == 1)
 					global.bloquear();
+					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlMunic = new XML(evt.result.toString());
 					
@@ -320,7 +332,7 @@
 			
 			public function iniVar():void{
 				this.indice = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -342,7 +354,7 @@
 			}		
 			
 			public function manejadorEliminarCol(e:CloseEvent):void{
-				if(e.detail==Alert.YES){
+				if(e.detail == Alert.YES){
 					var cdgEntFed:String = dgEntFed.selectedItem.CODIGO;
 					var cdgMunic:String = dgMunic.selectedItem.codigo;
 					var cdgLoc:String = dgLocalidad.selectedItem.codigo;
@@ -450,12 +462,13 @@
 			}	
 			
 			public function permisos():void{
+				var ws:WebService = new WebService;
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
 				var Params:Array;
 				var cont:int;
 				
-				ws = du.initWs(ws);
+				du.initWs(ws);
 				du.sCursor();
 					
 				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
@@ -553,7 +566,7 @@
 	<mx:Canvas styleName="canvasComp" width="615" height="840">
 		<mx:Canvas id="cnvEntFed" x="10" y="84" width="592.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgEntFed" dataProvider="{dpEntFed}" x="10" y="10" width="570.5" height="124"
-				resizableColumns="false" verticalScrollPolicy="on" horizontalScrollPolicy="on" itemClick="seleccionaEntFed()" doubleClickEnabled="true" itemDoubleClick="buscarListaMunic(1)"> 
+				resizableColumns="false" verticalScrollPolicy="on" horizontalScrollPolicy="on" itemClick="seleccionaEntFed()" doubleClickEnabled="true" itemDoubleClick="buscarListaMunic(2)"> 
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
 					<mx:DataGridColumn headerText="ENTIDAD FEDERATIVA" dataField="NOMBRE" width="200"/>
@@ -570,7 +583,7 @@
 		</mx:Canvas>
 		<mx:Canvas id="cnvMunic" x="10" y="283" width="592.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
 			<Data:RowColorDataGrid id="dgMunic" x="10" y="10" width="570.5" height="124"
-				resizableColumns="false" verticalScrollPolicy="on" itemClick="seleccionaMunic()" doubleClickEnabled="true" itemDoubleClick="buscarListaLoc(1)"> 
+				resizableColumns="false" verticalScrollPolicy="on" itemClick="seleccionaMunic()" doubleClickEnabled="true" itemDoubleClick="buscarListaLoc(2)"> 
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="codigo" width="35"/>
 					<mx:DataGridColumn headerText="MUNICIPIO" dataField="nombre" width="100"/>
@@ -579,13 +592,13 @@
 		</mx:Canvas>
 		<mx:Canvas x="445.5" y="437" width="157" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
 			<mx:Button id="btnEditarLoc" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormLoc(2)" toolTip="Editar Localidad" width="40"/>
-			<mx:Button id="btnDatosLoc" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaLoc(1)" enabled="false" toolTip="Localidades" width="40"/>
+			<mx:Button id="btnDatosLoc" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaLoc(2)" enabled="false" toolTip="Localidades" width="40"/>
 			<mx:Button id="btnAgregarLoc" x="106" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormLoc(1)" toolTip="Agregar Localidad" width="40"/>
 		</mx:Canvas>
 		<mx:Label x="10" y="254" text="MUNICIPIO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Label x="10" y="453" text="LOCALIDAD" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas x="542.5" y="238" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Button id="btnDatosMunic" x="9" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaMunic(1)" enabled="false" toolTip="Acreditados del Grupo" width="40"/>
+			<mx:Button id="btnDatosMunic" x="9" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaMunic(2)" enabled="false" toolTip="Acreditados del Grupo" width="40"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvLocalidad" x="10" y="482" width="592.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
 			<Data:RowColorDataGrid id="dgLocalidad" x="10" y="10" width="570.5" height="124"
@@ -599,7 +612,7 @@
 		</mx:Canvas>
 		<mx:Canvas x="397.5" y="636" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas0">
 			<mx:Button id="btnEditarCol" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormCol(2)" toolTip="Editar Colonia" width="40"/>
-			<mx:Button id="btnDatosCol" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaCol(1)" enabled="false" toolTip="Colonias" width="40"/>
+			<mx:Button id="btnDatosCol" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaCol(2)" enabled="false" toolTip="Colonias" width="40"/>
 			<mx:Button id="btnAgregarCol" x="105" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormCol(1)" toolTip="Agregar Colonia" width="40"/>
 			<mx:Button id="btnEliminarCol" x="153" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarColonia()" enabled="false" toolTip="Eliminar Colonia" width="40"/>
 		</mx:Canvas>

@@ -130,11 +130,11 @@
 					var recuperadorV:Boolean = true;
 					
 					if(currentState == ""){
-						promotorV = comPromGrid.validaDato();
-						recuperadorV = comRecGrid.validaDato();	
+						promotorV = comPromGrid.validarDato();
+						recuperadorV = comRecGrid.validarDato();	
 					}
 					else if(currentState == "moral")
-						promotorV = comPromGrid.validaDato();
+						promotorV = comPromGrid.validarDato();
 						
 					if(promotorV && recuperadorV){	
 						formData.cdgPr = datos.cdgPr;
@@ -170,11 +170,11 @@
 				
 				if (info != null){
 					datos.cdgPr = info.cdgPr;
-					comPromGrid.asignaTexto(info.promotor);
+					comPromGrid.asignarTexto(info.promotor);
 					
 					if(currentState == ""){
 						datos.cdgRec = info.cdgRec;
-						comRecGrid.asignaTexto(info.recuperador);
+						comRecGrid.asignarTexto(info.recuperador);
 					}
 					else if(currentState == "moral"){
 						txtNomCon1.text = info.contacto1;
@@ -214,14 +214,14 @@
 			}
 			
 			private function verificaPromotor():void{
-				if(comPromGrid.obtieneCodigo() == ""){
+				if(comPromGrid.obtenerCodigo() == ""){
 					comPromGrid.limpiar();
 					datos.cdgPr = "";
 				} 
 			}
 			
 			private function verificaRecuperador():void{
-				if(comRecGrid.obtieneCodigo() == ""){
+				if(comRecGrid.obtenerCodigo() == ""){
 					comRecGrid.limpiar();
 					datos.cdgRec = "";
 				} 

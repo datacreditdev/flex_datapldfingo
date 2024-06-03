@@ -114,8 +114,11 @@
 				dgCB.dataProvider = null;
 				du.initWsCat(wsCat);
 				du.sCursor();
-			 	if (tipo == 1)
+			 	
+			 	if (tipo == 2){
 					global.bloquear();
+					iniVar();
+				}
 					
 				du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
 					_xmlCB = new XML(event.result);
@@ -149,9 +152,12 @@
 				dgSB.dataProvider = null;
 				du.initWsCat(wsCat);
 				du.sCursor();
-			 	if (tipo == 1)
+				
+			 	if (tipo == 2){
 					global.bloquear();
-					
+					iniVar();
+				}
+				
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
 					_xmlSB = new XML(event.result);
 					
@@ -185,8 +191,11 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					if(tipo == 1)
+					
+					if(tipo == 2){
 						global.bloquear();
+						iniVar();
+					}
 						
 					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
 						_xmlIB = new XML(event.result);
@@ -229,7 +238,7 @@
 				this.indIB = -1;
 				this.indSB = -1;
 				this.indCB = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -253,7 +262,7 @@
 			}
 			
 			public function manejadorEliminarCB(e:CloseEvent):void{
-				if(e.detail==Alert.YES){
+				if(e.detail == Alert.YES){
 					var codIB:String = dgIB.selectedItem.CODIGO;
 					var codSB:String = dgSB.selectedItem.CODIGO;  
 					var codCB:String = dgCB.selectedItem.CODIGO;
@@ -267,7 +276,7 @@
 			}
 			
 			public function manejadorEliminarSB(e:CloseEvent):void{
-				if(e.detail==Alert.YES){
+				if(e.detail == Alert.YES){
 					var codIB:String = dgIB.selectedItem.CODIGO;
 					var codSB:String = dgSB.selectedItem.CODIGO;  
 			    	initConexion();
@@ -280,7 +289,7 @@
 			}
 			
 			public function manejadorEliminarIB(e:CloseEvent):void{
-				if(e.detail==Alert.YES){
+				if(e.detail == Alert.YES){
 					var codIB:String = dgIB.selectedItem.CODIGO;
 			    	initConexion();
 			    	du.sCursor();
@@ -399,21 +408,20 @@
 			public function permisos():void{
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
+				var ws:WebService = new WebService;
 				var Params:Array;
 				var cont:int;
 				
-				wsMS = du.initWs(wsMS);
+				du.initWs(ws);
 				du.sCursor();
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
 					dPermisos = new XML(evt.result.toString());
 						
 					cont = dPermisos.elements().length();
 					
-					for(var i:int = 0; i < cont; i++)
-					{
-						switch(dPermisos.Table[i].OPCION.toString())
-						{
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
 								break;	
@@ -430,12 +438,12 @@
 					}
 					btnAgregar.enabled = alta;
 					du.rCursor();
-					du.closeWs(wsMS);					
+					du.closeWs(ws);					
 				});
 				Params = new Array();
 				Params[0] = perfil_id;
 				Params[1] = mod_id;
-				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+				ws.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
 			}
 			
 			public function seleccionarCB():void{
@@ -482,7 +490,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionCuentaBancaria);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
-					buscarListaCB(1);
+					buscarListaCB(2);
 				else
 					Alert.show(res.substr(2,res.length-1),tituloCB,4,null,null,global.iAlert);
 			}
@@ -494,7 +502,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionSucBancaria);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
-					buscarListaSB(1);
+					buscarListaSB(2);
 				else
 					Alert.show(res.substr(2,res.length-1), tituloSB,4,null,null,global.iAlert);
 			}
@@ -506,7 +514,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionInstBancaria);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")
-					buscarIB(1);
+					buscarIB(2);
 				else
 					Alert.show(res.substr(2,res.length-1), tituloIB,4,null,null,global.iAlert);
 			}
@@ -525,7 +533,7 @@
 		</mx:Canvas>
 		<mx:Label x="18" y="10" text="INSTITUCIÓN BANCARIA" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Button id="btnBuscar" x="10" y="3" width="40" icon="@Embed(source='assets/ico_lupa.png')" click="buscarIB(1)" toolTip="Buscar Institución Bancaria"/>
+			<mx:Button id="btnBuscar" x="10" y="3" width="40" icon="@Embed(source='assets/ico_lupa.png')" click="buscarIB(2)" toolTip="Buscar Institución Bancaria"/>
 			<mx:Button id="btnAgregar" x="106" y="3" width="40" icon="@Embed(source='assets/add.png')" click="mostrarFormIB(1)" toolTip="Registrar Institución Bancaria"/>
 			<mx:Button id="btnEliminar" x="154" y="3" width="40" icon="@Embed(source='assets/delete-icon.png')" click="eliminarIB()" enabled="false" toolTip="Eliminar Institución Bancaria"/>
 			<mx:Button id="btnEditar" x="58" y="3" width="40" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormIB(2)" toolTip="Editar Institución Bancaria"/>
@@ -533,8 +541,8 @@
 		<mx:Canvas x="18.5" y="39" width="513.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Label id="lblCodIB" x="10" y="7" text="Código:"/>
 			<mx:Label id="lblIB" x="127" y="7" text="Nombre:"/>
-			<mx:TextInput id="txtIB" x="185.5" y="5" width="316" enter="buscarIB(1)" maxChars="50"/>
-			<mx:TextInput id="txtCodIB" x="64" y="5" width="50" enter="buscarIB(1)" maxChars="4"/>
+			<mx:TextInput id="txtIB" x="185.5" y="5" width="316" enter="buscarIB(2)" maxChars="50"/>
+			<mx:TextInput id="txtCodIB" x="64" y="5" width="50" enter="buscarIB(2)" maxChars="4"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvProdCred" x="19.25" y="262" width="726.5" height="140" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgSB" x="10" y="10" width="704.5" height="118"
@@ -556,7 +564,7 @@
 			<mx:Button id="btnAgregarSB" x="106" y="3" width="40" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormSB(1)" toolTip="Agregar Suc. Bancaria"/>
 			<mx:Button id="btnEliminarSB" x="154" y="3" width="40" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarSB()" toolTip="Eliminar Suc. Bancaria"/>
 			<mx:Button id="btnEditarSB" x="58" y="3" width="40" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormSB(2)" toolTip="Editar Suc. Bancaria"/>
-			<mx:Button id="btnDatosSB" x="10" y="3" width="40" icon="@Embed(source='assets/folder.png')" click="buscarListaSB(1)" enabled="false" toolTip="Sucursales Bancarias"/>
+			<mx:Button id="btnDatosSB" x="10" y="3" width="40" icon="@Embed(source='assets/folder.png')" click="buscarListaSB(2)" enabled="false" toolTip="Sucursales Bancarias"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvDetalle1" x="19.25" y="455" width="726.5" height="165" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgCB" x="10" y="10" width="704.5" height="143"
@@ -577,7 +585,7 @@
 			<mx:Button id="btnAgregarCB" x="106" y="3" width="40" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormCB(1)" toolTip="Agregar Cuenta Bancaria"/>
 			<mx:Button id="btnEliminarCB" x="154" y="3" width="40" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarCB()" toolTip="Eliminar Cuenta Bancaria"/>
 			<mx:Button id="btnEditarCB" x="58" y="3" width="40" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormCB(2)" toolTip="Editar Cuenta Bancaria"/>
-			<mx:Button id="btnDatosCB" x="10" y="3" width="40" icon="@Embed(source='assets/folder.png')" click="buscarListaCB(1)" enabled="false" toolTip="Cuentas Bancarias"/>
+			<mx:Button id="btnDatosCB" x="10" y="3" width="40" icon="@Embed(source='assets/folder.png')" click="buscarListaCB(2)" enabled="false" toolTip="Cuentas Bancarias"/>
 		</mx:Canvas>
 	</mx:Canvas>
 </mx:Canvas>

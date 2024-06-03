@@ -40,7 +40,7 @@
 			public var dPermisos:XML = new XML();
 			
 			public var wsMS:WebService = new WebService();	
-			public var du:Utils;
+			private var du:Utils;
 			private var global:Globales;
 			private var permiso:Permisos;
 			
@@ -113,8 +113,11 @@
 				dgCiclo.dataProvider = null;
 				du.initWsCat(wsCat);
 				du.sCursor();
-			 	if (tipo == 1)
+			 	
+			 	if (tipo == 2){
 					global.bloquear();
+					iniVar();
+			 	}
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
 					_xmlCiclo = new XML(evt.result);
@@ -130,7 +133,7 @@
 							dgCiclo.validateNow();
 							dgCiclo.verticalScrollPosition = vScroll;
 							dgCiclo.selectedIndex = indCiclo;
-							this.accionCiclo = 0;
+							accionCiclo = 0;
 						}
 					}
 					seleccionaCiclo();
@@ -147,8 +150,11 @@
 				dgProducto.dataProvider = null;
 				du.initWsCat(wsCat);
 				du.sCursor();
-			 	if (tipo == 1)
+			 	
+			 	if(tipo == 2){
 					global.bloquear();
+					iniVar();
+				}
 					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
 					_xmlProd = new XML(evt.result);
@@ -164,7 +170,7 @@
 							dgProducto.validateNow();
 							dgProducto.verticalScrollPosition = vScroll;
 							dgProducto.selectedIndex = indProd;
-							this.accionProd = 0;
+							accionProd = 0;
 						}
 					}
 					seleccionaProd();
@@ -182,8 +188,11 @@
 					dgTipoProd.dataProvider = null;
 					du.initWsCat(wsCat);
 					du.sCursor();
-					if(tipo == 1)
+					
+					if(tipo == 2){
 						global.bloquear();
+						iniVar();
+					}
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
 						_xmlTipoProd = new XML(evt.result);
@@ -199,7 +208,7 @@
 								dgTipoProd.validateNow();
 								dgTipoProd.verticalScrollPosition = vScroll;
 								dgTipoProd.selectedIndex = indTipoProd;
-								this.accionTipoProd = 0;
+								accionTipoProd = 0;
 							}
 						}
 						seleccionaTipoProd();
@@ -226,7 +235,7 @@
 				this.indTipoProd = -1;
 				this.indProd = -1;
 				this.indCiclo = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -260,7 +269,7 @@
 			}
 			
 			public function manejadorEliminarProd(e:CloseEvent):void{
-				if(e.detail==Alert.YES){
+				if(e.detail == Alert.YES){
 					var codTipoProd:String = dgTipoProd.selectedItem.CODIGO;
 					var codProd:String = dgProducto.selectedItem.CODIGO;  
 			    	initConexion();
@@ -272,7 +281,7 @@
 			}
 			
 			public function manejadorEliminarTipoProd(e:CloseEvent):void{
-				if(e.detail==Alert.YES){
+				if(e.detail == Alert.YES){
 					var codTipoProd:String = dgTipoProd.selectedItem.CODIGO;
 			    	initConexion();
 			    	du.sCursor();
@@ -389,13 +398,14 @@
 			public function permisos():void{
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
+				var ws:WebService = new WebService;
 				var Params:Array;
 				var cont:int;
 				
-				wsMS = du.initWs(wsMS);
+				du.initWs(ws);
 				du.sCursor();
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
 					dPermisos = new XML(evt.result.toString());
 						
 					cont = dPermisos.elements().length();
@@ -423,12 +433,12 @@
 					}
 					btnAgregar.enabled = alta;
 					du.rCursor();
-					du.closeWs(wsMS);					
+					du.closeWs(ws);					
 				});
 				Params = new Array();
 				Params[0] = perfil_id;
 				Params[1] = mod_id;
-				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+				ws.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
 			}
 			
 			public function seleccionaCiclo():void{
@@ -475,7 +485,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionProd);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
-					buscarListaProd(1);
+					buscarListaProd(2);
 				else
 					Alert.show(res.substr(2,res.length-1), "Mantenimiento de Productos",4,null,null,global.iAlert);
 			}
@@ -487,7 +497,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionTipoProd);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")
-					buscarTipoProd(1);
+					buscarTipoProd(2);
 				else
 					Alert.show("Error en el proceso: " + res, "Mantenimiento de Productos",4,null,null,global.iAlert);
 			}
@@ -499,7 +509,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaCiclo);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
-					buscarListaCiclo(1);
+					buscarListaCiclo(2);
 				else
 					Alert.show(res.substr(2,res.length-1), "Mantenimiento de Productos",4,null,null,global.iAlert);
 			}
@@ -511,7 +521,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaProd);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
-					buscarListaProd(1);
+					buscarListaProd(2);
 				else
 					Alert.show(res.substr(2,res.length-1), "Mantenimiento de Productos",4,null,null,global.iAlert);
 			}
@@ -530,7 +540,7 @@
 		</mx:Canvas>
 		<mx:Label x="18" y="10" text="TIPOS DE PRODUCTOS DE CRÉDITO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarTipoProd(1)" toolTip="Buscar Tipo Producto" width="40"/>
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarTipoProd(2)" toolTip="Buscar Tipo Producto" width="40"/>
 			<mx:Button id="btnAgregar" x="105.95" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormTipoProd(1)" toolTip="Registrar Tipo Producto" width="40"/>
 			<mx:Button id="btnEliminar" x="153.95" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarTipoProd()" enabled="false" toolTip="Eliminar Tipo Producto" width="40"/>
 			<mx:Button id="btnEditar" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormTipoProd(2)" toolTip="Editar Tipo Producto" width="40"/>
@@ -538,8 +548,8 @@
 		<mx:Canvas x="18" y="39" width="514" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Label id="lblCodTipoProd" x="15" y="6" text="Código:"/>
 			<mx:Label id="lblTipoProd" x="132.5" y="6" text="Nombre:"/>
-			<mx:TextInput id="txtTipoProd" x="185.5" y="5" width="307.5" enter="buscarTipoProd(1)" maxChars="50"/>
-			<mx:TextInput id="txtCodTipoProd" x="64" y="5" width="50" enter="buscarTipoProd(1)" maxChars="2"/>
+			<mx:TextInput id="txtTipoProd" x="185.5" y="5" width="307.5" enter="buscarTipoProd(2)" maxChars="50"/>
+			<mx:TextInput id="txtCodTipoProd" x="64" y="5" width="50" enter="buscarTipoProd(2)" maxChars="2"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvProdCred" x="19.25" y="262" width="726.5" height="175" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgProducto" x="10" y="10" width="704.5" height="150" verticalScrollPolicy="on" 
@@ -560,7 +570,7 @@
 			<mx:Button id="btnAgregarProd" x="105.95" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormProd(1)" toolTip="Agregar Producto" width="40"/>
 			<mx:Button id="btnEliminarProd" x="153.95" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarProd()" toolTip="Eliminar Producto" width="40"/>
 			<mx:Button id="btnEditarProd" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormProd(2)" toolTip="Editar Producto" width="40"/>
-			<mx:Button id="btnDatosProd" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaProd(1)" enabled="false" toolTip="Productos" width="40"/>
+			<mx:Button id="btnDatosProd" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaProd(2)" enabled="false" toolTip="Productos" width="40"/>
 		</mx:Canvas>
 		<mx:Label x="18.5" y="233" text="PRODUCTOS DE CRÉDITO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas id="cnvDetalle1" x="19.25" y="490" width="726.5" height="124" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
@@ -578,7 +588,7 @@
 			<mx:Button id="btnAgregarCiclo" x="105.95" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormCiclo(1)" toolTip="Agregar Ciclo" width="40"/>
 			<mx:Button id="btnEliminarCiclo" x="153.95" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarCiclo()" toolTip="Eliminar Ciclo" width="40"/>
 			<mx:Button id="btnEditarCiclo" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormCiclo(2)" toolTip="Editar Ciclo" width="40"/>
-			<mx:Button id="btnDatosCiclo" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaCiclo(1)" enabled="false" toolTip="Ciclo" width="40"/>
+			<mx:Button id="btnDatosCiclo" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaCiclo(2)" enabled="false" toolTip="Ciclo" width="40"/>
 		</mx:Canvas>
 		<mx:Label x="19.25" y="461" text="CICLO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 	</mx:Canvas>

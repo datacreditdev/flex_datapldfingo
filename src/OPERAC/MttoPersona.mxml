@@ -25,20 +25,20 @@
 	
 	<mx:Script>
 		<![CDATA[
-			import mx.controls.CheckBox;
-			import Data.EventPersona;
 			import Data.DatosPersona;
+			import Data.EventPersona;
 			import Data.Globales;
 			import Data.Utils;
 			import mx.collections.ArrayCollection;
-			import mx.containers.TitleWindow;	
+			import mx.containers.TitleWindow;
 			import mx.controls.Alert;
+			import mx.controls.CheckBox;
 			import mx.core.Application;		
-			import mx.managers.PopUpManager;
 			import mx.effects.easing.Elastic;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
 			
 			[Bindable]
 			private var info:DatosPersona;
@@ -86,7 +86,6 @@
 			}
 			
 			private function consultarBuro():void{
-				
 			}
 			
 			private function copiarDomicilio(evt:MouseEvent):void{
@@ -271,7 +270,6 @@
 			}
 			
 			private function mostrarDocumentos():void{
-				
 			}
 			
 			private function permisos():void{

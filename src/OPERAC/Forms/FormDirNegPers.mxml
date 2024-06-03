@@ -59,10 +59,10 @@
 						wsCat = null;
 						
 						if(_xmlDir.elements().length() > 0){
-							comEntGrid.asignaTexto(_xmlDir.Table[0].ENTFED);
-							comMunGrid.asignaTexto(_xmlDir.Table[0].MUNIC);
-							comLocGrid.asignaTexto(_xmlDir.Table[0].LOC);
-							comColGrid.asignaTexto(_xmlDir.Table[0].COL);
+							comEntGrid.asignarTexto(_xmlDir.Table[0].ENTFED);
+							comMunGrid.asignarTexto(_xmlDir.Table[0].MUNIC);
+							comLocGrid.asignarTexto(_xmlDir.Table[0].LOC);
+							comColGrid.asignarTexto(_xmlDir.Table[0].COL);
 							
 							datos.cdgEntFedNeg = _xmlDir.Table[0].CDGEF;		
 							datos.cdgMunNeg = _xmlDir.Table[0].CDGMU;
@@ -143,11 +143,11 @@
 							txtEntreCalles.text = info.entreCallesNeg;
 							txtCodPostal.text = info.codPostalNeg;
 							
-							comPaisGrid.asignaTexto(info.paisNeg);
-							comEntGrid.asignaTexto(info.entFedNeg);
-							comMunGrid.asignaTexto(info.municipioNeg);
-							comLocGrid.asignaTexto(info.localidadNeg);
-							comColGrid.asignaTexto(info.coloniaNeg);
+							comPaisGrid.asignarTexto(info.paisNeg);
+							comEntGrid.asignarTexto(info.entFedNeg);
+							comMunGrid.asignarTexto(info.municipioNeg);
+							comLocGrid.asignarTexto(info.localidadNeg);
+							comColGrid.asignarTexto(info.coloniaNeg);
 							
 							datos.cdgPaisNeg = info.cdgPaisNeg;
 							datos.cdgEntFedNeg = info.cdgEntFedNeg;		
@@ -257,16 +257,16 @@
 				txtNoInt.text = item.noInt;
 				txtEntreCalles.text = item.entreCalles;
 				datos.cdgPaisNeg = item.cdgPais;
-				comPaisGrid.asignaTexto(item.pais);
+				comPaisGrid.asignarTexto(item.pais);
 				txtCodPostal.text = item.codPostal;
 				datos.cdgEntFedNeg = item.cdgEntFed;
-				comEntGrid.asignaTexto(item.entFed);
+				comEntGrid.asignarTexto(item.entFed);
 				datos.cdgMunNeg = item.cdgMun; 
-				comMunGrid.asignaTexto(item.munic);
+				comMunGrid.asignarTexto(item.munic);
 				datos.cdgLocNeg = item.cdgLoc;
-				comLocGrid.asignaTexto(item.localidad);
+				comLocGrid.asignarTexto(item.localidad);
 				datos.cdgColNeg = item.cdgCol;
-				comColGrid.asignaTexto(item.colonia);
+				comColGrid.asignarTexto(item.colonia);
 			}
 			
 			private function selecColonia(event:Event):void{
@@ -282,7 +282,11 @@
 					comMunGrid.limpiar();
 					comLocGrid.limpiar();
 					comColGrid.limpiar();
+					txtCodPostal.text = "";
 					datos.cdgEntFedNeg = event.currentTarget.codigo;
+					datos.cdgMunNeg = "";
+					datos.cdgLocNeg = "";
+					datos.cdgColNeg = "";
 					obtieneMunicipio();
 				}
 				comEntGrid.setFocus();
@@ -292,7 +296,10 @@
 				if(datos.cdgMunNeg != event.currentTarget.codigo){	
 					comLocGrid.limpiar();
 					comColGrid.limpiar();
+					txtCodPostal.text = "";
 					datos.cdgMunNeg = event.currentTarget.codigo;
+					datos.cdgLocNeg = "";
+					datos.cdgColNeg = "";
 					obtieneLocalidad();
 				}
 				comMunGrid.setFocus();
@@ -301,7 +308,9 @@
 			private function selecLocalidad(event:Event):void{
 				if(datos.cdgLocNeg != event.currentTarget.codigo){
 					comColGrid.limpiar();
+					txtCodPostal.text = "";
 					datos.cdgLocNeg = event.currentTarget.codigo;
+					datos.cdgColNeg = "";
 					obtieneColonia();
 				}
 				comLocGrid.setFocus();
@@ -315,7 +324,7 @@
 			}
 			
 			private function verifEntFed(event:Event):void{
-				if(comEntGrid.obtieneCodigo() == ""){	
+				if(comEntGrid.obtenerCodigo() == ""){	
 					comMunGrid.limpiar();
 					comLocGrid.limpiar();
 					comColGrid.limpiar();
@@ -326,13 +335,13 @@
 			}
 			
 			private function verifLocalidad(event:Event):void{
-				if(comColGrid.obtieneCodigo() == "")
+				if(comColGrid.obtenerCodigo() == "")
 					comColGrid.limpiar();
 					datos.cdgColNeg = ""; 
 			}
 			
 			private function verifMunic(event:Event):void{
-				if(comMunGrid.obtieneCodigo() == ""){
+				if(comMunGrid.obtenerCodigo() == ""){
 					comLocGrid.limpiar();
 					comColGrid.limpiar();
 					datos.cdgLocNeg = "";
@@ -341,7 +350,7 @@
 			}
 			
 			private function verifPais(event:Event):void{
-				datos.cdgPaisNeg = comPaisGrid.obtieneCodigo();
+				datos.cdgPaisNeg = comPaisGrid.obtenerCodigo();
 			}
 	]]>
 	</mx:Script>
@@ -359,7 +368,7 @@
 	<mx:TextInput id="txtEntreCalles" maxChars="50" restrict="A-Z;a-z;Ñ;ñ;0-9; " width="170" x="150.5" y="326"/>
 	<mx:TextInput id="txtNoInt" restrict="0-9" maxChars="20" x="150.5" y="106" width="170"/>
 	<control:TextGrid id="comPaisGrid" height="24" x="150.5" y="136"/>
-	<mx:TextInput id="txtCodPostal" enter="buscaCodPostal()" width="95" maxChars="5" restrict="0-9" x="150.5" y="168"/>
+	<mx:TextInput id="txtCodPostal" focusOut="buscaCodPostal()" enter="buscaCodPostal()" width="95" maxChars="5" restrict="0-9" x="150.5" y="168"/>
 	<control:TextGrid id="comEntGrid" x="150.5" height="24" y="198"/>
 	<control:TextGrid id="comMunGrid" x="150.5" height="24" y="230"/>
 	<control:TextGrid id="comLocGrid" x="150.5" height="24" y="262"/>

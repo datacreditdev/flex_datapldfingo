@@ -10,18 +10,18 @@
 
 	<mx:Script>
 	<![CDATA[
-		import mx.collections.ArrayCollection;
-		import mx.managers.PopUpManager;
-		import Data.EventDir;
 		import Data.DatosDir;
+		import Data.EventDir;
+		import Data.Globales;
+		import Data.Utils;
+		import mx.collections.ArrayCollection;
 		import mx.controls.Alert;
+		import mx.core.Application;
 		import mx.effects.*;
 		import mx.events.EffectEvent;
-		import Data.Utils;
-		import Data.Globales;
-		import mx.rpc.soap.WebService;
+		import mx.managers.PopUpManager;
 		import mx.rpc.events.ResultEvent;
-		import mx.core.Application;
+		import mx.rpc.soap.WebService;
 		
 		[Bindable]
 		private var info:DatosDir;
@@ -30,14 +30,14 @@
 		
 		public var gteObj:ArrayCollection = new ArrayCollection();
 		
+		private var du:Utils;
+		private var global:Globales;
 		public var openEffect:Effect = new WipeDown();
 		public var closeEffect:Effect = new WipeDown();
 		public var wsMS:WebService;	
 		public var tipoAccion:int;
 		public var codPers:String; 
 		public var titulo:String;
-		public var du:Utils;
-		public var global:Globales;
 		
 		public function cargaInfoReg(codReg:String, regional:String, codPers:String):void{
 			var wsCat:WebService = new WebService;
@@ -79,7 +79,6 @@
 		public function efectoInicial(event:EffectEvent):void{
 			
 		}
-		
 		
 		public function formateaGte():void{
 			var cont:int = _xmlGte.elements().length();

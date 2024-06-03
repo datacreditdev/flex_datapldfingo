@@ -59,9 +59,9 @@
 					cnvTasa.enabled = true;
 			}
 			
-			private function actualizarMetodo():void{
+			public function cambiaMetodo():void{
 				var ind:int = cboMetodoCobro.selectedIndex;
-				cboMetodoCobro.toolTip = metCobObj[ind].texto.toString();
+				cboMetodoCobro.toolTip = _xmlMetCob.Table[ind].TEXTO;
 			}
 			
 			public function cargaParamsProd(_xmlParam:XML):void{
@@ -70,9 +70,9 @@
 				for(j = 0; j < metCobObj.length; j++){
 					if(metCobObj[j].id.toString() == _xmlParam.Table[0].CDGMCI){
 						cboMetodoCobro.selectedIndex = j;
-						actualizarMetodo();
 						break;
 					}
+					cambiaMetodo();
 				}
 				for(j = 0; j < distIntObj.length; j++){
 					if(distIntObj[j].id.toString() == _xmlParam.Table[0].CDGFDI){
@@ -104,7 +104,7 @@
 				dispatchEvent(event);
 			}
 			
-			private function formateaDistInt():void{
+			public function formateaDistInt():void{
 				var cont:int = _xmlDistInt.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -112,7 +112,7 @@
 				oItem = new Object();
 				oItem.id = "0";	
 				oItem.nombre = "--Seleccionar--";
-				item.push(oItem);
+				metCobObj.addItem(oItem);
 				
 				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
@@ -123,7 +123,7 @@
 				distIntObj = new ArrayCollection(item);
 			}
 			
-			private function formateaMetCob():void{
+			public function formateaMetCob():void{
 				var cont:int = _xmlMetCob.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -131,14 +131,12 @@
 				oItem = new Object();
 				oItem.id = "0";	
 				oItem.nombre = "--Seleccionar--";
-				oItem.texto = "";
-				item.push(oItem);
+				metCobObj.addItem(oItem);
 				
 				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.id = _xmlMetCob.Table[i].CODIGO;	
 					oItem.nombre = _xmlMetCob.Table[i].CODIGO + " " + _xmlMetCob.Table[i].NOMBRE;
-					oItem.texto = _xmlMetCob.Table[i].TEXTO;
 					item.push(oItem);
 				}
 				metCobObj = new ArrayCollection(item);
@@ -162,6 +160,7 @@
 					if (_xmlMetCob.elements().length() > 0){
 						formateaMetCob();
 						cboMetodoCobro.dataProvider = metCobObj;
+						//cboMetodoCobro.toolTip = _xmlMetCob.Table[0].TEXTO
 					} 	
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
@@ -186,7 +185,7 @@
 							for(j = 0; j < metCobObj.length; j++){
 								if(metCobObj[j].id.toString() == info.metodoCobro){
 									cboMetodoCobro.selectedIndex = j;
-									actualizarMetodo();
+									cambiaMetodo();
 									break;
 								}
 							}
@@ -207,7 +206,7 @@
 				wsCat.getCatalogoGral.send(17);
 			}
 			
-			private function validaMonto(event:Event):void{
+			public function validaMonto(event:Event):void{
 				numVal.source = TextInput(event.currentTarget);
 				vResult = numVal.validate();
 
@@ -222,7 +221,7 @@
 	
 	<mx:Canvas id="cnvMetodoCobro" x="105" y="7" width="500" height="75" styleName="canvasMod">
 		<mx:FormItem id="metodoCobro" label="Método de cobro de intereses:" x="32.5" y="7" width="455.5">
-			<mx:ComboBox id="cboMetodoCobro" width="285" labelField="nombre" change="actualizarMetodo()"/>
+			<mx:ComboBox id="cboMetodoCobro" width="285" labelField="nombre" change="cambiaMetodo()"/>
 		</mx:FormItem>
 		<mx:FormItem id="distInteres" label="Forma de distribución de intereses:" x="10" y="39" width="478">
 			<mx:ComboBox id="cboDistInteres" width="285" labelField="nombre"/>

@@ -83,10 +83,10 @@
 						wsCat = null;
 						
 						if(_xmlDir.elements().length() > 0){
-							comEntGrid.asignaTexto(_xmlDir.Table[0].ENTFED);
-							comMunGrid.asignaTexto(_xmlDir.Table[0].MUNIC);
-							comLocGrid.asignaTexto(_xmlDir.Table[0].LOC);
-							comColGrid.asignaTexto(_xmlDir.Table[0].COL);
+							comEntGrid.asignarTexto(_xmlDir.Table[0].ENTFED);
+							comMunGrid.asignarTexto(_xmlDir.Table[0].MUNIC);
+							comLocGrid.asignarTexto(_xmlDir.Table[0].LOC);
+							comColGrid.asignarTexto(_xmlDir.Table[0].COL);
 							
 							datos.cdgEntFed = _xmlDir.Table[0].CDGEF;		
 							datos.cdgMun = _xmlDir.Table[0].CDGMU;
@@ -118,16 +118,16 @@
 				oItem.noInt = StringUtil.trim(txtNumInt.text);
 				oItem.entreCalles = StringUtil.trim(txtEntreCalles.text);
 				oItem.cdgPais = datos.cdgPais;
-				oItem.pais = comPaisGrid.obtieneDato();
+				oItem.pais = comPaisGrid.obtenerDato();
 				oItem.codPostal = txtCodPostal.text;
 				oItem.cdgEntFed = datos.cdgEntFed;
-				oItem.entFed = comEntGrid.obtieneDato();
+				oItem.entFed = comEntGrid.obtenerDato();
 				oItem.cdgMun = datos.cdgMun;
-				oItem.munic = comMunGrid.obtieneDato();
+				oItem.munic = comMunGrid.obtenerDato();
 				oItem.cdgLoc = datos.cdgLoc;
-				oItem.localidad = comLocGrid.obtieneDato();
+				oItem.localidad = comLocGrid.obtenerDato();
 				oItem.cdgCol = datos.cdgCol;
-				oItem.colonia = comColGrid.obtieneDato();
+				oItem.colonia = comColGrid.obtenerDato();
 				
 				return oItem;
 			}
@@ -198,11 +198,11 @@
 							txtEntreCalles.text = info.entreCalles;
 							txtCodPostal.text = info.codPostal;
 							
-							comPaisGrid.asignaTexto(info.pais);
-							comEntGrid.asignaTexto(info.entFed);
-							comMunGrid.asignaTexto(info.municipio);
-							comLocGrid.asignaTexto(info.localidad);
-							comColGrid.asignaTexto(info.colonia);
+							comPaisGrid.asignarTexto(info.pais);
+							comEntGrid.asignarTexto(info.entFed);
+							comMunGrid.asignarTexto(info.municipio);
+							comLocGrid.asignarTexto(info.localidad);
+							comColGrid.asignarTexto(info.colonia);
 							
 							datos.cdgPais = info.cdgPais;
 							datos.cdgEntFed = info.cdgEntFed;		
@@ -319,7 +319,11 @@
 					comMunGrid.limpiar();
 					comLocGrid.limpiar();
 					comColGrid.limpiar();
+					txtCodPostal.text = "";
 					datos.cdgEntFed = event.currentTarget.codigo;
+					datos.cdgMun = "";
+					datos.cdgLoc = "";
+					datos.cdgCol = "";
 					obtieneMunicipio();
 				}
 				comEntGrid.setFocus();
@@ -328,7 +332,9 @@
 			private function selecLocalidad(event:Event):void{
 				if(datos.cdgLoc != event.currentTarget.codigo){
 					comColGrid.limpiar();
+					txtCodPostal.text = "";
 					datos.cdgLoc = event.currentTarget.codigo;
+					datos.cdgCol = "";
 					obtieneColonia();
 				}
 				comLocGrid.setFocus();
@@ -338,7 +344,10 @@
 				if(datos.cdgMun != event.currentTarget.codigo){	
 					comLocGrid.limpiar();
 					comColGrid.limpiar();
+					txtCodPostal.text = "";
 					datos.cdgMun = event.currentTarget.codigo;
+					datos.cdgLoc = "";
+					datos.cdgCol = "";
 					obtieneLocalidad();
 				}
 				comMunGrid.setFocus();
@@ -379,7 +388,7 @@
 			}
 			
 			private function verifPais(event:Event):void{
-				datos.cdgPais = comPaisGrid.obtieneCodigo();
+				datos.cdgPais = comPaisGrid.obtenerCodigo();
 			}
 	]]>
 	</mx:Script>
@@ -397,7 +406,7 @@
 	<mx:TextInput id="txtNumExt" maxChars="20" x="150.5" y="65" width="170"/>
 	<mx:TextInput id="txtNumInt" maxChars="20" x="150.5" y="95" width="170"/>
 	<control:TextGrid id="comPaisGrid" height="24" x="150.5" y="125"/>
-	<mx:TextInput id="txtCodPostal" enter="buscaCodPostal()" width="95" maxChars="5" restrict="0-9" x="150.5" y="155"/>
+	<mx:TextInput id="txtCodPostal" focusOut="buscaCodPostal()" enter="buscaCodPostal()" width="95" maxChars="5" restrict="0-9" x="150.5" y="155"/>
 	<control:TextGrid id="comEntGrid" x="150.5" height="24" y="185"/>
 	<control:TextGrid id="comMunGrid" x="150.5" height="24" y="217"/>
 	<control:TextGrid id="comLocGrid" x="150.5" height="24" y="249"/>

@@ -12,31 +12,31 @@
 	<!--Componente de mantenimiento de solicitudes Individuales-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Globales;
 			import Data.Permisos;
 			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
 			import mx.controls.DataGrid;
 			import mx.controls.dataGridClasses.DataGridItemRenderer;  
-			import mx.events.*;  
-			import Data.Globales;
-			import mx.controls.ComboBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.*;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;
 			import mx.events.FlexEvent;
-			import mx.formatters.SwitchSymbolFormatter;
+			import mx.events.ListEvent;
+			import mx.events.ValidationResultEvent;
 			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
 			import mx.rpc.Fault;
 			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
-			import mx.rpc.events.FaultEvent;
-			import mx.events.DataGridEvent;				
-			import mx.events.CloseEvent;	
-			import mx.events.ListEvent;	
-			import mx.core.Application;
-			import mx.containers.TitleWindow;
-			import mx.managers.PopUpManager;
-			import mx.controls.Alert;
-			import mx.collections.ArrayCollection;
-			import mx.effects.easing.Elastic;
-			import mx.events.ValidationResultEvent;            
-
+			
 			[Bindable]
 			public var _xmlGrupos:XML = new XML();
 			[Bindable]
@@ -49,7 +49,7 @@
 			public var objMtto:Sprite = new Sprite();
 			
 			public var wsMS:WebService = new WebService();	
-			public var du:Utils;
+			private var du:Utils;
 			private var global:Globales;
 			private var permiso:Permisos;
 			
@@ -128,8 +128,10 @@
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
-			 	if(tipo == 1)
-			 		global.bloquear();
+				global.bloquear();
+				
+			 	if(tipo == 2)
+			 		iniVar();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlSolic = new XML(evt.result);
@@ -156,7 +158,7 @@
 			
 			public function iniVar():void{
 				this.indSolic = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -218,15 +220,16 @@
 			}
 			
 			public function permisos():void{
+				var ws:WebService = new WebService;
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
 				var Params:Array;
 				var cont:int;
 				
-				wsMS = du.initWs(wsMS);
+				du.initWs(ws);
 				du.sCursor();
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
 					dPermisos = new XML(evt.result.toString());
 						
 					cont = dPermisos.elements().length();
@@ -253,12 +256,12 @@
 						}
 					}
 					du.rCursor();
-					du.closeWs(wsMS);					
+					du.closeWs(ws);					
 				});
 				Params = new Array();
 				Params[0] = perfil_id;
 				Params[1] = mod_id;
-				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+				ws.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
 			}		
 			
 			public function seleccionaAcred():void{
@@ -298,7 +301,7 @@
 		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="763.5" height="194" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="741.5" height="172" sortableColumns="false"
 				resizableColumns="false" verticalScrollPolicy="auto" horizontalScrollPolicy="auto" itemClick="seleccionaAcred()" 
-				doubleClickEnabled="true" itemDoubleClick="buscarListaSolic(1)"> 
+				doubleClickEnabled="true" itemDoubleClick="buscarListaSolic(2)"> 
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
 					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="250"/>
@@ -330,7 +333,7 @@
 		</mx:Canvas>
 		<mx:Canvas x="621" y="292" width="110" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
 			<mx:Button id="btnEditarSolic" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormSolic(2)" toolTip="Editar Solicitud" width="40"/>
-			<mx:Button id="btnDatosSolic" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaSolic(1)" enabled="false" toolTip="Solicitudes del Acreditado" width="40"/>
+			<mx:Button id="btnDatosSolic" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaSolic(2)" enabled="false" toolTip="Solicitudes del Acreditado" width="40"/>
 		</mx:Canvas>
 		<mx:Label x="18.5" y="308" text="SOLICITUD PARA EL CICLO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Image x="739" y="286" width="43" height="43" source="assets/notepad.png"/>

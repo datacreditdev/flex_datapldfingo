@@ -16,11 +16,12 @@
 		import mx.rpc.mxml.Concurrency;
 		import mx.rpc.soap.WebService;
 		
-		private var info:DatosPerfil;
-		private var du:Utils;
-		private var global:Globales;	
 		public var tipoAccion:int;
 		public var titulo:String;
+		
+		private var du:Utils;
+		private var global:Globales;
+		private var info:DatosPerfil;
 		
 		public function cargaInfoPerfil(codigo:String, nombre:String):void{
 			tipoAccion = 2;

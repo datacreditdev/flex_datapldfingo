@@ -182,6 +182,7 @@
 			private var _xmlDatos:XML = new XML();
 			private var _xmlEntFed:XML = new XML();
 			private var _xmlPais:XML = new XML();
+			private var _xmlFig:XML = new XML();
 			private var _xmlRepLegal:XML = new XML();
 			
 			public var figObj:ArrayCollection;
@@ -356,6 +357,7 @@
 			}
 			
 			public function formateaFigura():void{
+				var cont:int = _xmlFig.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
 				
@@ -364,26 +366,12 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				oItem = new Object();
-				oItem.codigo = "1";	
-				oItem.nombre = "SOFOM ENR";
-				item.push(oItem);
-				
-				oItem = new Object();
-				oItem.codigo = "2";	
-				oItem.nombre = "SOFOM ER";
-				item.push(oItem);
-				
-				oItem = new Object();
-				oItem.codigo = "3";	
-				oItem.nombre = "SA de CV";
-				item.push(oItem);
-				
-				oItem = new Object();
-				oItem.codigo = "4";	
-				oItem.nombre = "SAPI de CV";
-				item.push(oItem);
-					
+				for (var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlEntFed.Table[i].CODIGO;
+					oItem.nombre = _xmlEntFed.Table[i].NOMBRE;
+					item.push(oItem);
+				}
 				figObj = new ArrayCollection(item);
 			}
 			
@@ -516,115 +504,123 @@
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlEntFed = new XML(evt.result.toString());
 						
-						du.rCursor();
-						du.closeWs(wsCat);
-						
 						if (_xmlEntFed.elements().length() > 0){
 							formateaEntFed();
 							cboEntidad.dataProvider = entFedObj;
 						}		
 						
-						//Formatea el listado de figuras
-						formateaFigura();
-					
-						if (info != null){
-							var j:int;
-							tipoAccion = 2;
-							txtCodigo.text = info.codigo;
-							txtNombre.text = info.nombre;
-							txtRfc.text = info.rfc;
+						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
+							_xmlFig = new XML(evt.result.toString());
 							
-							if(currentState == null){
-								txtSegNombre.text = info.segNombre;
-								txtAP.text = info.aPaterno;
-								txtAM.text = info.aMaterno;
+							du.rCursor();
+							du.closeWs(wsCat);
+						
+							if(_xmlFig.elements().length() > 0){
+								//Formatea el listado de figuras
+								formateaFigura();
+							}
+					
+							if (info != null){
+								var j:int;
+								tipoAccion = 2;
+								txtCodigo.text = info.codigo;
+								txtNombre.text = info.nombre;
+								txtRfc.text = info.rfc;
 								
-								if(info.sexo != null){
-									sexo.selectedValue = info.sexo;
+								if(currentState == null){
+									txtSegNombre.text = info.segNombre;
+									txtAP.text = info.aPaterno;
+									txtAM.text = info.aMaterno;
+									
+									if(info.sexo != null){
+										sexo.selectedValue = info.sexo;
+									}
+									
+									//selecciona el pais del acreditado
+									for(j = 0; j < paisObj.length; j++){   
+										if (paisObj[j].CODIGO.toString() == info.cdgNacPais){
+											cboPais.selectedIndex = j;
+											break;
+										}
+									}
+									//selecciona la entidad federativa del acreditado
+									for(j = 0; j < entFedObj.length; j++){   
+										if (entFedObj[j].id.toString() == info.cdgNacEntFed){
+											cboEntidad.selectedIndex = j;
+											break;
+										}
+									} 
+									txtCurp.text = info.curp;
+									txtIfe.text = info.ife;
 								}
-								
-								//selecciona el pais del acreditado
+								else if(currentState == "moral"){
+									du.initWsCat(wsCat);
+									du.sCursor();
+									
+									du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+										_xmlRepLegal = new XML(evt.result.toString());
+										
+										du.rCursor();
+										du.closeWs(wsCat);
+									
+										//carga info de los representantes legales
+										formateaRepLegal();
+										lstRepLegal.dataProvider = persObj; 
+									});
+									//CONSULTA EL LISTADO DE REP LEGALES
+									params[0] = info.codigo;
+									params[1] = "RL"
+									wsCat.getInfoAcred.send(23, params);
+										
+									//Asigna el objeto de figura
+									cboFigura.dataProvider = figObj;
+									for(j = 0; j < figObj.length; j++){
+										if (figObj[j].codigo.toString() == info.figura){
+											cboFigura.selectedIndex = j;
+											break;
+										}
+									}
+									
+									txtNomCom.text = info.nomCom;
+									if(info.fiel != ""){
+										chkFiel.selected = true;
+										txtCertFiel.text = info.fiel;	
+									}
+									txtTel1.text = info.telefono;
+									txtTel2.text = info.telefono2;
+									txtEmail1.text = info.email1;
+									txtEmail2.text = info.email2;
+								}
+								if(currentState == "fideicomiso"){
+									if(info.fiel != ""){
+										chkFiel.selected = true;
+										txtCertFiel.text = info.fiel;	
+									}
+									
+									txtFinalidad.text = info.finalidad;
+									txtInstFiduc.text = info.instFiduc;
+									txtPatFid.text = info.patFid;
+									txtAport.text = info.aport;
+								}
+								txtFecha.text = info.fecha;
+								//selecciona la sucursal del acreditado
+								for(j = 0; j < coordObj.length; j++){   
+									if (coordObj[j].id.toString() == info.cdgco){
+										cboCoord.selectedIndex = j;
+										break;
+									}
+								}
+								//selecciona la nacionalidad del acreditado
 								for(j = 0; j < paisObj.length; j++){   
-									if (paisObj[j].CODIGO.toString() == info.cdgNacPais){
-										cboPais.selectedIndex = j;
+									if (paisObj[j].CODIGO.toString() == info.cdgNac){
+										cboNac.selectedIndex = j;
 										break;
 									}
 								}
-								//selecciona la entidad federativa del acreditado
-								for(j = 0; j < entFedObj.length; j++){   
-									if (entFedObj[j].id.toString() == info.cdgNacEntFed){
-										cboEntidad.selectedIndex = j;
-										break;
-									}
-								} 
-								txtCurp.text = info.curp;
-								txtIfe.text = info.ife;
 							}
-							else if(currentState == "moral"){
-								du.initWsCat(wsCat);
-								du.sCursor();
-								
-								du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-									_xmlRepLegal = new XML(evt.result.toString());
-									
-									du.rCursor();
-									du.closeWs(wsCat);
-								
-									//carga info de los representantes legales
-									formateaRepLegal();
-									lstRepLegal.dataProvider = persObj; 
-								});
-								//CONSULTA EL LISTADO DE REP LEGALES
-								params[0] = info.codigo;
-								params[1] = "RL"
-								wsCat.getInfoAcred.send(23, params);
-									
-								//Asigna el objeto de figura
-								cboFigura.dataProvider = figObj;
-								for(j = 0; j < figObj.length; j++){
-									if (figObj[j].codigo.toString() == info.figura){
-										cboFigura.selectedIndex = j;
-										break;
-									}
-								}
-								
-								txtNomCom.text = info.nomCom;
-								if(info.fiel != ""){
-									chkFiel.selected = true;
-									txtCertFiel.text = info.fiel;	
-								}
-								txtTel1.text = info.telefono;
-								txtTel2.text = info.telefono2;
-								txtEmail1.text = info.email1;
-								txtEmail2.text = info.email2;
-							}
-							if(currentState == "fideicomiso"){
-								if(info.fiel != ""){
-									chkFiel.selected = true;
-									txtCertFiel.text = info.fiel;	
-								}
-								
-								txtFinalidad.text = info.finalidad;
-								txtInstFiduc.text = info.instFiduc;
-								txtPatFid.text = info.patFid;
-								txtAport.text = info.aport;
-							}
-							txtFecha.text = info.fecha;
-							//selecciona la sucursal del acreditado
-							for(j = 0; j < coordObj.length; j++){   
-								if (coordObj[j].id.toString() == info.cdgco){
-									cboCoord.selectedIndex = j;
-									break;
-								}
-							}
-							//selecciona la nacionalidad del acreditado
-							for(j = 0; j < paisObj.length; j++){   
-								if (paisObj[j].CODIGO.toString() == info.cdgNac){
-									cboNac.selectedIndex = j;
-									break;
-								}
-							}
-						}
+						});
+						//CONSULTA LOS REGIMENES DE CAPITAL
+						wsCat.getCatalogoGral.send(42);
 					});
 					//MUESTRA LAS ENTIDADES FEDERATIVAS DISPONIBLES
 					wsCat.getCatalogoGral.send(2);	
@@ -678,7 +674,7 @@
 	</mx:FormItem>
 	<mx:FormItem label="Nombres:" id="nombre" visible="true" width="384">
 		<mx:Canvas>
-			<mx:TextInput id="txtNombre" width="129" restrict="A-Z;a-z;Ñ;ñ; " focusOut="generaCURP()"/>
+			<mx:TextInput id="txtNombre" width="129" focusOut="generaCURP()"/>
 			<mx:TextInput id="txtSegNombre" x="127" width="137" restrict="A-Z;a-z;Ñ;ñ; " focusOut="generaCURP()"/>	
 		</mx:Canvas>
 	</mx:FormItem>

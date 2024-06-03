@@ -6,31 +6,30 @@
 	<!--Componente que permite observar el listado de regionales y coordinaciones que pertenecen a la empresa-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Globales;
 			import Data.Permisos;
 			import Data.Utils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
+			import mx.controls.ComboBox;
 			import mx.controls.DataGrid;
 			import mx.controls.dataGridClasses.DataGridItemRenderer;  
-			import mx.events.*;  
-			import Data.Globales;
-			import mx.controls.ComboBox;
+			import mx.core.Application;
+			import mx.effects.easing.Elastic;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;				
 			import mx.events.FlexEvent;
+			import mx.events.ListEvent;	
+			import mx.events.ValidationResultEvent;
 			import mx.formatters.SwitchSymbolFormatter;
 			import mx.formatters.NumberFormatter;
-			import mx.rpc.Fault;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
-			import mx.rpc.events.FaultEvent;
-			import mx.events.DataGridEvent;				
-			import mx.events.CloseEvent;	
-			import mx.events.ListEvent;	
-			import mx.core.Application;
-			import mx.containers.TitleWindow;				
 			import mx.managers.PopUpManager;
-			import mx.controls.Alert;
-			import mx.collections.ArrayCollection;
-			import mx.effects.easing.Elastic;
-			import mx.events.ValidationResultEvent;            
-
+			import mx.rpc.Fault;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			
 			public var _xmlReg:XML = new XML();
 			public var _xmlCoord:XML = new XML();
 			[Bindable]
@@ -39,7 +38,7 @@
 			public var dpCoord:XMLList = new XMLList();		
 			
 			public var wsMS:WebService = new WebService();	
-			public var du:Utils;
+			private var du:Utils;
 			private var global:Globales;
 			private var permiso:Permisos;
 			
@@ -112,8 +111,11 @@
 					dgRegional.dataProvider = null;
 					du.initWsCat(wsCat);
 					du.sCursor();
-					if(tipo == 1)
+					
+					if(tipo == 2){
 						global.bloquear();
+						iniVar();
+					}
 						
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
 						_xmlReg = new XML(evt.result);
@@ -147,8 +149,11 @@
 				dgCoord.dataProvider = null;
 				du.initWsCat(wsCat);
 				du.sCursor();
-			 	if (tipo == 1)
+				
+			 	if (tipo == 2){
 					global.bloquear();
+					iniVar();
+			 	}
 					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
 					_xmlCoord = new XML(evt.result);
@@ -185,7 +190,7 @@
 			public function iniVar():void{
 				this.indReg = -1;
 				this.indCoord = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -378,7 +383,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionCoord);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
-					buscarListaCoord(1);
+					buscarListaCoord(2);
 				else
 					Alert.show(res.substr(2,res.length-1), "Mantenimiento de Coordinaciones",4,null,null,global.iAlert);
 			}
@@ -390,7 +395,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionReg);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")
-					buscarReg(1);
+					buscarReg(2);
 				else
 					Alert.show("Error en el proceso: " + res, "Mantenimiento de Gerencias Regionales",4,null,null,global.iAlert);
 			}
@@ -413,7 +418,7 @@
 	</mx:Canvas>
 	<mx:Label x="18" y="10" text="REGIONES" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 	<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-		<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarReg(1)" toolTip="Buscar Regional" width="40"/>
+		<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarReg(2)" toolTip="Buscar Regional" width="40"/>
 		<mx:Button id="btnAgregar" x="105" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormReg(1)" toolTip="Registrar Regional" width="40"/>
 		<mx:Button id="btnEliminar" x="153" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarReg()" enabled="false" toolTip="Eliminar Regional" width="40"/>
 		<mx:Button id="btnEditar" x="57" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormReg(2)" toolTip="Editar Regional" width="40"/>
@@ -421,8 +426,8 @@
 	<mx:Canvas x="18.5" y="39" width="513.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 		<mx:Label id="lblCodReg" x="15" y="6" text="Código:"/>
 		<mx:Label id="lblRegional" x="147.5" y="6" text="Nombre:"/>
-		<mx:TextInput id="txtRegional" x="200.5" y="5" width="300" enter="buscarReg(1)" maxChars="50"/>
-		<mx:TextInput id="txtCodReg" x="64" y="5" width="68" enter="buscarReg(1)" maxChars="3"/>
+		<mx:TextInput id="txtRegional" x="200.5" y="5" width="300" enter="buscarReg(2)" maxChars="50"/>
+		<mx:TextInput id="txtCodReg" x="64" y="5" width="68" enter="buscarReg(2)" maxChars="3"/>
 	</mx:Canvas>
 	<mx:Canvas id="cnvDetalle0" x="18.5" y="327" width="726.5" height="234" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 		<Data:RowColorDataGrid id="dgCoord" dataProvider="{dpCoord}" x="10" y="10" width="704.5" height="212"
@@ -440,7 +445,7 @@
 		<mx:Button id="btnAgregarCoord" x="105" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormCoord(1)" toolTip="Agregar Sucursal" width="40"/>
 		<mx:Button id="btnEliminarCoord" x="153" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarCoord()" toolTip="Eliminar Sucursal" width="40"/>
 		<mx:Button id="btnEditarCoord" x="60" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormCoord(2)" toolTip="Editar Sucursal" width="40"/>
-		<mx:Button id="btnDatosCoord" x="12" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaCoord(1)" enabled="false" toolTip="Sucursales" width="40"/>
+		<mx:Button id="btnDatosCoord" x="12" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaCoord(2)" enabled="false" toolTip="Sucursales" width="40"/>
 	</mx:Canvas>
 	<mx:Canvas x="18.5" y="282" width="513.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 		<mx:Label id="lblCodCoord" x="15" y="6" text="Código:"/>

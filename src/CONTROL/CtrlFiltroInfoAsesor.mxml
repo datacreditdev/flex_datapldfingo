@@ -61,7 +61,7 @@
 					
 			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 				_xmlAsesor = new XML(evt.result.toString());
-					
+				
 				du.rCursor();
 				du.closeWs(wsCat);	
 					
@@ -139,7 +139,7 @@
 			for(var i:int = 0; i < cont; i++){
 				oItem = new Object();
 				oItem.codigo = _xmlAsesor.Table[i].CODIGO;
-				oItem.nombre = _xmlAsesor.Table[i].NOMBREC;
+				oItem.nombre = _xmlAsesor.Table[i].NOMBRE;
 				item.push(oItem);
 			}
 			asesorObj.source = asesorObj.source.concat(item);

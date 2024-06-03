@@ -115,8 +115,11 @@
 				dgDisp.dataProvider = null;
 				du.initWsCat(wsCat);
 				du.sCursor();
-			 	if (tipo == 1)
+			 	
+			 	if(tipo == 2){
 					global.bloquear();
+					iniVar();
+			 	}
 					
 				du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
 					_xmlDisp = new XML(event.result);
@@ -132,7 +135,7 @@
 							dgDisp.validateNow();
 							dgDisp.verticalScrollPosition = vScroll;
 							dgDisp.selectedIndex = indDisp;
-							this.accionDisp = 0;
+							accionDisp = 0;
 						}
 					}
 					seleccionarDisp();
@@ -150,8 +153,11 @@
 				dgLC.dataProvider = null;
 				du.initWsCat(wsCat);
 				du.sCursor();
-			 	if (tipo == 1)
+			 	
+			 	if(tipo == 2){
 					global.bloquear();
+					iniVar();
+			 	}
 				
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
 					_xmlLC = new XML(event.result);
@@ -167,7 +173,7 @@
 							dgLC.validateNow();
 							dgLC.verticalScrollPosition = vScroll;
 							dgLC.selectedIndex = indLC;
-							this.accionLC = 0;
+							accionLC = 0;
 						}
 					}
 					seleccionarLC();
@@ -185,8 +191,11 @@
 					dgOF.dataProvider = null;
 					du.initWsCat(wsCat);
 					du.sCursor();
-					if(tipo == 1)
+					
+					if(tipo == 2){
 						global.bloquear();
+						iniVar();
+					}	
 						
 					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
 						_xmlOF = new XML(event.result);
@@ -229,7 +238,7 @@
 				this.indOF = -1;
 				this.indLC = -1;
 				this.indDisp = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -481,7 +490,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionDisposicion);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
-					buscarListaDisp(1);
+					buscarListaDisp(2);
 				else
 					Alert.show(res.substr(2,res.length-1),tituloDisp,4,null,null,global.iAlert);
 			}
@@ -493,7 +502,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionLineaCred);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
-					buscarListaLC(1);
+					buscarListaLC(2);
 				else
 					Alert.show(res.substr(2,res.length-1), tituloLC,4,null,null,global.iAlert);
 			}
@@ -505,7 +514,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionOrgFond);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")
-					buscarOF(1);
+					buscarOF(2);
 				else
 					Alert.show(res.substr(2,res.length-1), tituloOF,4,null,null,global.iAlert);
 			}
@@ -525,7 +534,7 @@
 		</mx:Canvas>
 		<mx:Label x="18" y="10" text="FONDOS" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarOF(1)" toolTip="Buscar Org. Fondeadora" width="40"/>
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarOF(2)" toolTip="Buscar Org. Fondeadora" width="40"/>
 			<mx:Button id="btnAgregar" x="106" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormOF(1)" toolTip="Registrar Org. Fondeadora" width="40"/>
 			<mx:Button id="btnEliminar" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarOF()" enabled="false" toolTip="Eliminar Org. Fondeadora" width="40"/>
 			<mx:Button id="btnEditar" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormOF(2)" toolTip="Editar Org. Fondeadora" width="40"/>
@@ -533,8 +542,8 @@
 		<mx:Canvas x="18.5" y="39" width="513.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Label id="lblCodOF" x="15" y="6" text="Código:"/>
 			<mx:Label id="lblOF" x="132.5" y="6" text="Nombre:"/>
-			<mx:TextInput id="txtOF" x="185.5" y="5" width="316" enter="buscarOF(1)" maxChars="50"/>
-			<mx:TextInput id="txtCodOF" x="64" y="5" width="50" enter="buscarOF(1)" maxChars="4"/>
+			<mx:TextInput id="txtOF" x="185.5" y="5" width="316" enter="buscarOF(2)" maxChars="50"/>
+			<mx:TextInput id="txtCodOF" x="64" y="5" width="50" enter="buscarOF(2)" maxChars="4"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvProdCred" x="19.25" y="262" width="726.5" height="175" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgLC" x="10" y="10" width="704.5" height="150"
@@ -555,7 +564,7 @@
 			<mx:Button id="btnAgregarLC" x="106" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormLC(1)" toolTip="Agregar Linea Crédito" width="40"/>
 			<mx:Button id="btnEliminarLC" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarLC()" toolTip="Eliminar Línea Crédito" width="40"/>
 			<mx:Button id="btnEditarLC" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormLC(2)" toolTip="Editar Línea Crédito" width="40"/>
-			<mx:Button id="btnDatosLC" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaLC(1)" enabled="false" toolTip="Líneas de Crédito" width="40"/>
+			<mx:Button id="btnDatosLC" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaLC(2)" enabled="false" toolTip="Líneas de Crédito" width="40"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvDetalle1" x="19.25" y="490" width="726.5" height="124" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgDisp" x="10" y="10" width="704.5" height="100"
@@ -575,7 +584,7 @@
 			<mx:Button id="btnAgregarDisp" x="106" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormDisp(1)" toolTip="Agregar Disposición" width="40"/>
 			<mx:Button id="btnEliminarDisp" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarDisp()" toolTip="Eliminar Disposición" width="40"/>
 			<mx:Button id="btnEditarDisp" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormDisp(2)" toolTip="Editar Disposición" width="40"/>
-			<mx:Button id="btnDatosDisp" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaDisp(1)" enabled="false" toolTip="Disposiciones" width="40"/>
+			<mx:Button id="btnDatosDisp" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaDisp(2)" enabled="false" toolTip="Disposiciones" width="40"/>
 		</mx:Canvas>
 	</mx:Canvas>
 </mx:Canvas>

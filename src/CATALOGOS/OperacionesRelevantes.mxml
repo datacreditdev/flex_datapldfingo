@@ -19,9 +19,8 @@
 		import mx.events.ValidationResultEvent;	
 		
 		[Bindable]
-		private var _xmlLD:XML =  new XML();
+		private var _xmlLD:XML = new XML();
 	
-		public var global:Globales;
 		public var openEffect:Effect = new WipeDown();
 		public var closeEffect:Effect = new WipeDown();
 		public var wsMS:WebService;	
@@ -31,7 +30,8 @@
 		public var prod:String; 
 		public var titulo:String;
 		public var tituloCorto:String;
-		public var du:Utils;
+		private var du:Utils;
+		private var global:Globales;
 		private var vResult:ValidationResultEvent;
 		
 		public function calculaMonto():void{

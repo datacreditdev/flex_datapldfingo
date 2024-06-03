@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" showCloseButton="true" close="cerrar()" 
+	layout="absolute" width="500" height="345" creationPolicy="all" creationComplete="initApp()">
+	
+	<mx:Metadata>
+		[Event(name="enviar", type="enviar")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import Data.Globales;
+			import Data.Utils;
+			import mx.rpc.Fault;
+			import mx.rpc.soap.WebService;
+			import mx.core.Application;
+			import mx.collections.ArrayCollection;
+			import mx.core.DragSource;
+        	import mx.events.*;
+            import mx.managers.DragManager;
+            import mx.collections.IList;
+			
+			public var _xmlSup:XML =  new XML();
+			
+			public var supObj:ArrayCollection = new ArrayCollection();
+			
+			private var du:Utils;
+			private var global:Globales; 
+			public var titulo:String;
+			public var tipo:int;			
+			
+			private function buscarSup():void{
+				var wsCat:WebService = new WebService;
+				var params:Array = new Array;
+				
+				if (txtFid.text != "" || txtSup.text != ""){
+					du.initWsCat(wsCat);
+					du.sCursor();
+					global.bloquear();
+					
+					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+						_xmlSup = new XML(event.result);
+						
+						du.closeWs(wsCat);
+						du.rCursor();
+						global.desbloquear();
+						
+						if (_xmlSup.elements().length() > 0){
+							formatearSup();
+							dgSup.dataProvider = supObj;
+						}
+					});
+					params[0] = txtFid.text;
+					params[1] = txtSup.text;
+					wsCat.getListado.send(65, params);
+				}
+			}
+			
+			public function cerrar():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function enviar():void{
+				if(validar()){
+					dispatchEvent(new Event("enviar"));
+					PopUpManager.removePopUp(this);
+				}
+			}
+			
+			private function formatearSup():void{
+				var cont:int = _xmlSup.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.CODIGO = _xmlSup.Table[i].CODIGO;
+					oItem.CLAVE = _xmlSup.Table[i].CLAVE;
+					oItem.CDGFID = _xmlSup.Table[i].CDGFID;
+					oItem.NUMFID = _xmlSup.Table[i].NUMFID;
+					item.push(oItem);
+				}
+				supObj = new ArrayCollection(item);
+			}
+			
+			public function init(tipo:int):void{
+				this.tipo = tipo;
+			}
+			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Catálogo de Suplementos";
+				this.title = titulo;
+			}
+			
+			public function manejadorCerrar(e:CloseEvent):void{
+				if(e.detail == Alert.OK)
+					PopUpManager.removePopUp(this);
+			}
+			
+			public function obtenerClaveSup():String{
+				return dgSup.selectedItem.CLAVE;
+			}
+			
+			public function obtenerFid():String{
+				return dgSup.selectedItem.CDGFID;
+			}
+			
+			public function obtenerSup():String{
+				return dgSup.selectedItem.CODIGO;
+			}
+			
+			public function validar():Boolean{
+				if(dgSup.selectedIndex < 0){
+					Alert.show("No se ha seleccionado el Suplemento.",titulo,4,null,null,global.iAlert);
+					return false;
+				}
+				return true;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="lblSup" x="226.5" y="12" text="Suplemento:"/>
+	<mx:Label id="lblFid" x="16" y="12" text="Fideicomiso:"/>
+	<mx:TextInput id="txtSup" x="298.5" y="11" width="130" enter="buscarSup()"/>
+	<mx:TextInput id="txtFid" x="88" y="11" width="130.5" enter="buscarSup()"/>
+	<mx:Button id="btnCerrar" x="436.5" y="268" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	<mx:Button id="btnAceptar" x="388.5" y="268" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
+	<mx:DataGrid id="dgSup" x="16" y="51" width="465" height="209" sortableColumns="false"
+	 	doubleClickEnabled="true" itemDoubleClick="enviar()">
+		<mx:columns>
+			<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="70"/>
+			<mx:DataGridColumn headerText="CLAVE" dataField="CLAVE"/>
+			<mx:DataGridColumn headerText="FIDEICOMISO" dataField="NUMFID"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:Button id="btnBusqSup" x="436.5" y="10" icon="@Embed(source='assets/ico_lupa.png')" click="buscarSup()" toolTip="Buscar Suplemento" width="40"/>
+</mx:TitleWindow>

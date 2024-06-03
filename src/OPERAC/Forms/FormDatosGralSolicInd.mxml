@@ -15,25 +15,24 @@
 	 
 	<mx:Script>
 		<![CDATA[
-			import mx.states.State;
-			import mx.events.IndexChangedEvent;
-			import mx.events.ValidationResultEvent;
-			import Data.Utils;
-			import Data.Globales;
-			import mx.controls.Alert;
-			import mx.validators.Validator;
 			import Data.DatosSolic;
 			import Data.EventSolic;
+			import Data.Globales;
+			import Data.Utils;
 			import mx.collections.ArrayCollection;
-			import mx.core.Application;
 			import mx.containers.TitleWindow;			
-			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+			import mx.core.Application;
 			import mx.effects.easing.Elastic;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.validators.Validator;
 			
-			private var _xmlMoneda:XML =  new XML();
+			private var _xmlMoneda:XML = new XML();
 			
 			private var vResult:ValidationResultEvent;
 			
@@ -41,20 +40,16 @@
 			
 			public var datos:DatosSolic = new DatosSolic();
 			
-			public var wsMS:WebService;	
-			public var du:Utils;
 			public var tipoAccion:int;
 			public var estatus:String;
+			private var du:Utils;
 			private var global:Globales;
 			
 			public function activaControles(_xmlControl:XML):void{
-				
 			}
 			
 			public function cargaParamsProd(_xmlParam:XML):void{
-				var j:int;
-				
-				for(j = 0; j < monedaObj.length; j++){
+				for(var j:int = 0; j < monedaObj.length; j++){
 					if(monedaObj[j].id.toString() == _xmlParam.Table[0].CDGMO){
 						cboMoneda.selectedIndex = j;
 						break;	
@@ -65,11 +60,11 @@
 			public function desactivaControles():void{
 				cnvFecSolic.enabled = false;
 				cnvMoneda.enabled = false;
+				cnvNat.enabled = false;
 			}
 			
 			public function enviarDatosSolic(formData:DatosSolic):void{
 				var invalidArray:Array = Validator.validateAll([fecSolicV, fecEntV, monedaV]);
-				var j:int;
 				
 				if(invalidArray.length == 0 && situacion.selection != null){	
 					formData.fecSolic = dtfSolicitud.text;
@@ -78,6 +73,7 @@
 					formData.moneda = cboMoneda.selectedItem.id;
 					formData.solicitado = Number(txtSolicitado.text);
 					formData.autorizado = Number(txtAutorizado.text);
+					formData.naturaleza = naturaleza.selectedValue.toString();
 					formData.guardaDatos = true;
 				}
 				else
@@ -87,7 +83,6 @@
 			}
 			
 			public function formateaMoneda():void{
-				var i:int;
 				var cont:int = _xmlMoneda.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -97,7 +92,7 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				for (i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.id = _xmlMoneda.Table[i].CODIGO;	
 					oItem.nombre = _xmlMoneda.Table[i].NOMBRE;
@@ -138,7 +133,6 @@
 						//ESTABLECE SITUACION AL REALIZAR EL REGISTRO INICIAL
 						validaSituacion();
 						if (info != null){
-							var j:int;
 							datos = info;
 							
 							if (info.situacion == 'S' && tipoAccion == 2 && estatus == null){
@@ -165,16 +159,16 @@
 							txtSolicitado.text = info.solicitado.toString();
 							txtAutorizado.text = info.autorizado.toString();
 							situacion.selectedValue = info.situacion;
+							naturaleza.selectedValue = info.naturaleza;
 													
-							for(j = 0; j < monedaObj.length; j++){
+							for(var j:int = 0; j < monedaObj.length; j++){
 								if(monedaObj[j].id.toString() == info.moneda){
 									cboMoneda.selectedIndex = j;
 									break;	
 								}
 							}
 						}	
-						else
-						{
+						else{
 							fec = global.obtenerFechaSistema();
 							fecEnt = global.seleccionaDiaHabilPost(new Date(fec.getFullYear(),fec.getMonth(),fec.getDate() + diasFecEnt));
 									
@@ -187,12 +181,6 @@
 				});
 				//Obtiene informacion de los dias de entrega
 				wsCat.getCatalogoGral.send(13);
-			}
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
 			}
 			
 			public function modificaAutorizado(event:Event):void{
@@ -278,5 +266,11 @@
 	</mx:Canvas>
 	<mx:Label x="320" y="10" text="Situación"/>
 	<mx:Label x="508" y="10" text="Moneda"/>
-	<mx:Label x="44" y="108" text="Montos"/>
+	<mx:Label x="44" y="106" text="Montos"/>
+	<mx:Canvas id="cnvNat" x="414" y="125" width="294" height="40" styleName="canvasMod" enabled="true">
+		<mx:RadioButtonGroup id="naturaleza"/> 
+		<mx:RadioButton id="rdbActivo" label="Activo" value="A" groupName="naturaleza" x="75" y="7"/>
+		<mx:RadioButton id="rdbPasivo" label="Pasivo" value="P" groupName="naturaleza" x="160" y="7"/>
+	</mx:Canvas>
+	<mx:Label x="414" y="106" text="Naturaleza"/>
 </mx:Canvas>

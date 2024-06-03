@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="490" height="220" creationComplete="initApp()">
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="490" height="220" creationComplete="initApp()">
 	
 	<mx:Metadata>
 		[Event(name="enviaDispersion", type="Data.EventDispersion")]
 	</mx:Metadata>
 	
-	<mx:NumberValidator id="montoV" source="{txtMonto}" property="text" 
-	triggerEvent="" invalid="{txtMonto.setFocus()}" decimalPointCountError="Capture correctamente la cantidad" 
-	precision="2" precisionError="Capture correctamente la cantidad" required="false"/>
+	<mx:NumberValidator id="montoV" source="{txtMonto}" property="text" decimalSeparator="."
+	thousandsSeparator="," triggerEvent="" invalid="{txtMonto.setFocus()}" 
+	decimalPointCountError="Capture correctamente la cantidad" precision="2" 
+	precisionError="Capture correctamente la cantidad" required="false"/>
 	
 	<mx:Validator id="referenciaV" source="{txtReferencia}" property="text" 
 	 invalid="{txtReferencia.setFocus()}" triggerEvent="" requiredFieldError="Dato Requerido"/>
@@ -15,63 +16,33 @@
 	<mx:Validator id="conceptoV" source="{txtConcepto}" property="text" 
 	invalid="{txtConcepto.setFocus()}" triggerEvent="" requiredFieldError="Dato Requerido"/>
 	
-	<mx:Validator id="nomCuentaV" source="{txtNomCuenta}" property="text" 
-	invalid="{txtNomCuenta.setFocus()}" triggerEvent="" requiredFieldError="Dato Requerido"/>
+	<mx:Validator id="supV" source="{txtSup}" property="text" 
+	invalid="{txtSup.setFocus()}" triggerEvent="" requiredFieldError="Dato Requerido"/>
 
 	<mx:Script>
 		<![CDATA[
-			import Data.Utils;
 			import Data.DatosDispersion;
 			import Data.EventDispersion;
 			import Data.Globales;
+			import Data.Utils;
+			import OPERAC.MttoBusqSup;
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.core.Application;
-			import mx.validators.Validator;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.soap.WebService;
+			import mx.validators.Validator;
 			
 			private var global:Globales;
 			private var du:Utils;
 			private var titulo:String;
+			private var codFid:String;
+			private var codSup:String;
 			
-			public var _xmlCta:XML = new XML();
 			public var _xmlBanco:XML = new XML();
 			
 			public var bancoObj:ArrayCollection = new ArrayCollection();
-			
-			private function buscaCuenta():void{
-				if (txtCodCuenta.text != ""){
-					var wsCat:WebService = new WebService;
-					var params:Array = new Array;
-					
-					du.initWsCat(wsCat);
-					du.sCursor();
-					global.bloquear();
-					
-					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-						_xmlCta = new XML(evt.result);
-						
-						du.rCursor();
-						du.closeWs(wsCat);	
-						global.desbloquear();	
-						
-						if (_xmlCta.elements().length() > 0){
-							txtNomCuenta.text = _xmlCta.Table[0].BANCO;
-						}
-						else{
-							txtNomCuenta.text = "";
-							Alert.show("No se ha encontrado información de la cuenta. Verifique los datos capturados.",titulo,4,null,null,global.iAlert);
-						}		
-					});
-					params[0] = "4";
-					params[1] = txtCodCuenta.text;
-					params[2] = "";
-					params[3] = global.obtenerUsuario();
-					params[4] = "";
-					wsCat.getInfoRegistro.send(3, params);
-				}	
-			}
 			
 			private function initApp():void{
 				var wsCat:WebService = new WebService;
@@ -99,7 +70,7 @@
 			}
 			
 			public function enviaTransferencia(formData:DatosDispersion):void{
-				var invalidArray:Array = Validator.validateAll([conceptoV, montoV, nomCuentaV]);
+				var invalidArray:Array = Validator.validateAll([conceptoV, montoV, supV]);
 				
 				if(invalidArray.length == 0){	
 					formData.cdgMetodo = "T";
@@ -109,7 +80,8 @@
 					formData.monto = Number(txtMonto.text);
 					formData.fecha = dtfFecha.text;
 					formData.cdgMotivo = "DE";
-					formData.cdgCuenta = txtCodCuenta.text;
+					formData.cdgFid = codFid;
+					formData.cdgSup = codSup;
 					formData.reportado = "N";
 					formData.guarda = true;	
 				}
@@ -135,26 +107,33 @@
 				}
 				bancoObj = new ArrayCollection(item);
 			}
+			
+			private function mostrarFormSup():void{
+				var comBusqSup:MttoBusqSup = new MttoBusqSup;
+				comBusqSup = MttoBusqSup(PopUpManager.createPopUp(this,MttoBusqSup,true));
+				comBusqSup.addEventListener("enviar", seleccionarSup); 
+				PopUpManager.centerPopUp(comBusqSup);
+			}
+			
+			private function seleccionarSup(evt:Event):void{
+				var comBusqSup:MttoBusqSup = evt.currentTarget as MttoBusqSup;
+				codFid = comBusqSup.obtenerFid();
+				codSup = comBusqSup.obtenerSup();
+				txtSup.text = comBusqSup.obtenerClaveSup();
+			}
 	]]>
 	</mx:Script>
-	<mx:FormItem label="Banco:" width="314">
-		<mx:ComboBox id="cboBanco" labelField="nombre" width="189"/>
-	</mx:FormItem>
-	<mx:FormItem label="Clabe:">
-		<mx:TextInput id="txtReferencia" maxChars="18" restrict="0-9" width="150"/>
-	</mx:FormItem>
-	<mx:FormItem label="Concepto:">
-		<mx:TextArea id="txtConcepto" maxChars="30" width="300"/>
-	</mx:FormItem>
-	<mx:FormItem label="Monto:">
-		<mx:TextInput id="txtMonto" maxChars="12" width="82" restrict="0-9\."/>
-	</mx:FormItem>
-	<mx:FormItem label="Fecha:">
-		<mx:DateField id="dtfFecha" width="100"/>
-	</mx:FormItem>
-	<mx:FormItem label="Cuenta Desembolso:" direction="horizontal">
-		<mx:TextInput id="txtCodCuenta" width="45" maxChars="3" restrict="0-9" enter="buscaCuenta()"/>
-		<mx:TextInput id="txtNomCuenta" width="231.5" editable="false"/>
-		<mx:Button id="btnCuenta" label="Buscar"/>
-	</mx:FormItem>
-</mx:Form>
+	<mx:Label id="lblBanco" x="78" y="13" text="Banco:"/>
+	<mx:ComboBox id="cboBanco" labelField="nombre" width="189" x="125" y="10"/>
+	<mx:Label id="lblReferencia" x="82" y="43" text="Clabe:"/>
+	<mx:TextInput id="txtReferencia" maxChars="18" width="150" x="125" y="42"/>
+	<mx:Label id="lblConcepto" x="63" y="73" text="Concepto:"/>
+	<mx:TextArea id="txtConcepto" maxChars="30" width="300" x="125" y="72"/>
+	<mx:Label id="lblMonto" x="80" y="125" text="Monto:"/>
+	<mx:TextInput id="txtMonto" maxChars="12" width="82" restrict="0-9\." x="125" y="124"/>
+	<mx:Label id="lblFecha" x="79" y="155" text="Fecha:"/>
+	<mx:DateField id="dtfFecha" width="100" x="125" y="154"/>
+	<mx:Label id="lblSup" x="53" y="185" text="Suplemento:"/>
+	<mx:TextInput id="txtSup" editable="false" width="300" x="125" y="184"/>
+	<mx:Button id="btnSup" x="433" y="183" width="40" icon="@Embed(source='assets/ico_lupa.png')" click="mostrarFormSup()"/>
+</mx:Canvas>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="752" height="180" creationPolicy="all">
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="752" height="200" creationPolicy="all">
 	<mx:Metadata>
 		[Event(name="enviarDatosSolic", type="Data.EventSolic")]
 	</mx:Metadata>
@@ -12,22 +12,21 @@
 	
 	<mx:Script>
 		<![CDATA[
-			import mx.states.State;
-			import mx.events.IndexChangedEvent;
-			import Data.Utils;
-			import Data.Globales;
-			import mx.controls.Alert;
-			import mx.validators.Validator;
 			import Data.DatosSolic;
 			import Data.EventSolic;
+			import Data.Globales;
+			import Data.Utils;
 			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;		
+			import mx.controls.Alert;
 			import mx.core.Application;
-			import mx.containers.TitleWindow;			
-			import mx.managers.PopUpManager;
 			import mx.effects.easing.Elastic;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.validators.Validator;
 			
 			[Bindable]
 			private var _xmlMoneda:XML =  new XML();
@@ -36,20 +35,16 @@
 			
 			public var datos:DatosSolic = new DatosSolic();
 			
-			public var wsMS:WebService;	
-			public var du:Utils;
 			public var tipoAccion:int;
 			public var estatus:String;
+			private var du:Utils;
 			private var global:Globales;
 			
 			public function activaControles(_xmlControl:XML):void{
-				
 			}
 			
 			public function cargaParamsProd(_xmlParam:XML):void{
-				var j:int;
-				
-				for(j = 0; j < monedaObj.length; j++){
+				for(var j:int = 0; j < monedaObj.length; j++){
 					if(monedaObj[j].id.toString() == _xmlParam.Table[0].CDGMO){
 						cboMoneda.selectedIndex = j;
 						break;	
@@ -60,11 +55,11 @@
 			public function desactivaControles():void{
 				cnvFecSolic.enabled = false;
 				cnvMoneda.enabled = false;
+				cnvNat.enabled = false;
 			}
 			
 			public function enviarDatosSolic(formData:DatosSolic):void{
 				var invalidArray:Array = Validator.validateAll([fecSolicV, fecEntV]);
-				var j:int;
 				
 				if(invalidArray.length == 0 && situacion.selection != null){	
 					formData.fecSolic = dtfSolicitud.text;
@@ -73,6 +68,7 @@
 					formData.moneda = cboMoneda.selectedItem.id;
 					formData.entregado = Number(txtEntregado.text);
 					formData.devolucion = 0;
+					formData.naturaleza = naturaleza.selectedValue.toString();
 					formData.guardaDatos = true;
 				}
 				else{
@@ -83,7 +79,6 @@
 			}
 			
 			public function formateaMoneda():void{
-				var i:int;
 				var cont:int = _xmlMoneda.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -93,7 +88,7 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				for (i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.id = _xmlMoneda.Table[i].CODIGO;	
 					oItem.nombre = _xmlMoneda.Table[i].NOMBRE;
@@ -128,7 +123,6 @@
 						cboMoneda.dataProvider = monedaObj;
 					} 	
 					if (info != null){
-						var j:int;
 						datos = info;
 						
 						if(estatus == "entrega")
@@ -140,8 +134,9 @@
 						txtEntregado.text = info.entregado.toString();
 						
 						selSituacion(info.situacion);
+						naturaleza.selectedValue = info.naturaleza;
 						
-						for(j = 0; j < monedaObj.length; j++){
+						for(var j:int = 0; j < monedaObj.length; j++){
 							if(monedaObj[j].id.toString() == info.moneda){
 								cboMoneda.selectedIndex = j;
 								break;	
@@ -151,12 +146,6 @@
 				});
 				wsCat.getCatalogoGral.send(14);
 			}
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
 			
 			public function modificaEntregado(event:Event):void{
 				var situacion:String = RadioButton(event.currentTarget).value.toString();
@@ -218,7 +207,6 @@
 		<mx:FormItem id="fechaInicio" label="Inicio del Préstamo" x="20.5" y="38" width="222">
 			<mx:DateField id="dtfInicio" x="86.5" y="10" width="109" change="validaEntrega()" disabledDays="{[0,6]}"/>
 		</mx:FormItem>
-		
 	</mx:Canvas>
 	<mx:Canvas id="cnvSituacion" x="320" y="29" width="180" height="88" styleName="canvasMod">
 		<mx:RadioButtonGroup id="situacion"/>
@@ -230,7 +218,7 @@
 	<mx:Canvas id="cnvMoneda" x="508" y="29" width="200" height="71" styleName="canvasMod">
 		<mx:ComboBox id="cboMoneda" x="19" y="24" labelField="nombre"></mx:ComboBox>
 	</mx:Canvas>
-	<mx:Canvas id="cnvMonto" x="44" y="125" width="340" height="40" styleName="canvasMod">
+	<mx:Canvas id="cnvMonto" x="44" y="138" width="340" height="40" styleName="canvasMod">
 		<mx:FormItem id="entregado" label="Entregado:" x="173" y="6" width="156">
 			<mx:TextInput id="txtEntregado" width="80"/>
 		</mx:FormItem>
@@ -240,5 +228,11 @@
 	</mx:Canvas>
 	<mx:Label x="320" y="10" text="Situación"/>
 	<mx:Label x="508" y="10" text="Moneda"/>
-	<mx:Label x="44" y="108" text="Montos"/>
+	<mx:Label x="44" y="119" text="Montos"/>
+	<mx:Canvas id="cnvNat" x="414" y="138" width="294" height="40" styleName="canvasMod" enabled="true">
+		<mx:RadioButtonGroup id="naturaleza"/> 
+		<mx:RadioButton id="rdbActivo" label="Activo" value="A" groupName="naturaleza" x="75" y="7"/>
+		<mx:RadioButton id="rdbPasivo" label="Pasivo" value="P" groupName="naturaleza" x="160" y="7"/>
+	</mx:Canvas>
+	<mx:Label x="414" y="119" text="Naturaleza"/>
 </mx:Canvas>

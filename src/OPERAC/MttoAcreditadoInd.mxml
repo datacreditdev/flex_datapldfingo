@@ -347,7 +347,7 @@
 					currentState = "fideicomiso";
 			}
 			
-			private function muestraDocumentos():void{
+			private function mostrarDocumentos():void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
 				var obj:DisplayObject = this.parent;
@@ -533,7 +533,7 @@
 	<mx:Button id="btnCancelar" x="560" y="508" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
 	<mx:Button id="btnAceptar" x="512" y="508" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
 	<mx:Button id="btnConsBuro" x="10" y="508" click="consultaBuro()" label="Consulta Rep. Crédito" visible="true"/>
-	<mx:Button id="btnDoc" x="166" y="508" click="muestraDocumentos()" label="Ver Documentación" visible="true"/>
+	<mx:Button id="btnDoc" x="166" y="508" click="mostrarDocumentos()" label="Ver Documentación" visible="true"/>
 	<mx:Label x="144" y="18" text="Tipo Persona:"/>
 	<mx:ComboBox id="cboTipoPers" labelField="nombre" x="235" y="16" change="modificaEstatus()"/>
 </mx:TitleWindow>

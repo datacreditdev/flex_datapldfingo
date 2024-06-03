@@ -117,8 +117,10 @@
 				du.initWsCat(wsCat);
 				du.sCursor();
 			 	
-			 	if (tipo == 1)
+			 	if (tipo == 2){
 					global.bloquear();
+					iniVar();
+			 	}
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {	
 					_xmlAct = new XML(evt.result);
@@ -152,8 +154,11 @@
 				dgGiro.dataProvider = null;
 				du.initWsCat(wsCat);
 				du.sCursor();
-			 	if (tipo == 1)
+				
+			 	if(tipo == 2){
 					global.bloquear();
+					iniVar();
+			 	}
 					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {
 					_xmlGiro = new XML(evt.result);
@@ -189,8 +194,10 @@
 					du.initWsCat(wsCat);
 					du.sCursor();
 					
-					if(tipo == 1)
+					if(tipo == 2){
 						global.bloquear();
+						iniVar();
+					}
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {		
 						_xmlSec = new XML(evt.result);
@@ -233,7 +240,7 @@
 				this.indSec = -1;
 				this.indGiro = -1;
 				this.indAct = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -398,23 +405,21 @@
 			public function permisos():void{
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
+				var ws:WebService = new WebService;
 				var Params:Array;
-				var i:int;
 				var cont:int;
 				
-				wsMS = du.initWs(wsMS);
+				du.initWs(ws);
 				du.sCursor();
 				//bloquear();
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
 					dPermisos = new XML(evt.result.toString());
 						
 					cont = dPermisos.elements().length();
 					
-					for(i = 0; i < cont; i++)
-					{
-						switch(dPermisos.Table[i].OPCION.toString())
-						{
+					for(var i:int = 0; i < cont; i++){
+						switch(dPermisos.Table[i].OPCION.toString()){
 							case "C":
 								consulta = true;
 								break;	
@@ -432,12 +437,12 @@
 					btnAgregar.enabled = alta;
 					//desbloquear();
 					du.rCursor();
-					du.closeWs(wsMS);					
+					du.closeWs(ws);					
 				});
 				Params = new Array();
 				Params[0] = perfil_id;
 				Params[1] = mod_id;
-				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+				ws.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
 			}
 			
 			public function seleccionarActividad():void{
@@ -484,7 +489,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionActividad);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
-					buscarListaActividad(1);
+					buscarListaActividad(2);
 				else
 					Alert.show(res.substr(2,res.length-1),tituloAct,4,null,null,global.iAlert);
 			}
@@ -496,7 +501,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionGiro);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
-					buscarListaGiro(1);
+					buscarListaGiro(2);
 				else
 					Alert.show(res.substr(2,res.length-1), tituloGiro,4,null,null,global.iAlert);
 			}
@@ -509,7 +514,7 @@
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")
 					//Alert.show("Grupo Eliminado","Mantenimiento de Grupo",4,null,null,global.iInfo);
-					buscarSector(1);
+					buscarSector(2);
 				else
 					Alert.show(res.substr(2,res.length-1), tituloSec,4,null,null,global.iAlert);
 			}
@@ -528,7 +533,7 @@
 		</mx:Canvas>
 		<mx:Label x="18" y="10" text="SECTORES" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarSector(1)" toolTip="Buscar Sector" width="40"/>
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarSector(2)" toolTip="Buscar Sector" width="40"/>
 			<mx:Button id="btnAgregar" x="106" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormSector(1)" toolTip="Registrar Sector" width="40"/>
 			<mx:Button id="btnEliminar" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarSector()" enabled="false" toolTip="Eliminar Sector" width="40"/>
 			<mx:Button id="btnEditar" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormSector(2)" toolTip="Editar Sector" width="40"/>
@@ -536,8 +541,8 @@
 		<mx:Canvas x="18.5" y="39" width="513.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Label id="lblCodOF" x="15" y="6" text="Código:"/>
 			<mx:Label id="lblOF" x="132.5" y="6" text="Nombre:"/>
-			<mx:TextInput id="txtSector" x="185.5" y="5" width="316" enter="buscarSector(1)" maxChars="50"/>
-			<mx:TextInput id="txtCodSector" x="64" y="5" width="50" enter="buscarSector(1)" maxChars="4"/>
+			<mx:TextInput id="txtSector" x="185.5" y="5" width="316" enter="buscarSector(2)" maxChars="50"/>
+			<mx:TextInput id="txtCodSector" x="64" y="5" width="50" enter="buscarSector(2)" maxChars="4"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvProdCred" x="19.25" y="262" width="726.5" height="175" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgGiro" x="10" y="10" width="704.5" height="153" draggableColumns="false" verticalScrollPolicy="on" 
@@ -553,7 +558,7 @@
 			<mx:Button id="btnAgregarGiro" x="106" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormGiro(1)" toolTip="Agregar Giro" width="40"/>
 			<mx:Button id="btnEliminarGiro" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarGiro()" toolTip="Eliminar Giro" width="40"/>
 			<mx:Button id="btnEditarGiro" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormGiro(2)" toolTip="Editar Giro" width="40"/>
-			<mx:Button id="btnDatosGiro" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaGiro(1)" enabled="false" toolTip="Giros" width="40"/>
+			<mx:Button id="btnDatosGiro" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaGiro(2)" enabled="false" toolTip="Giros" width="40"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvDetalle1" x="19.25" y="490" width="726.5" height="175" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgActividad" x="10" y="10" width="704.5" height="153" sortableColumns="true" resizableColumns="true" verticalScrollPolicy="on" 
@@ -569,7 +574,7 @@
 			<mx:Button id="btnAgregarAct" x="106" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormActividad(1)" toolTip="Agregar Actividad" width="40"/>
 			<mx:Button id="btnEliminarAct" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarActividad()" toolTip="Eliminar Actividad" width="40"/>
 			<mx:Button id="btnEditarAct" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormActividad(2)" toolTip="Editar Actividad" width="40"/>
-			<mx:Button id="btnDatosAct" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaActividad(1)" enabled="false" toolTip="Actividades Enonómicas" width="40"/>
+			<mx:Button id="btnDatosAct" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaActividad(2)" enabled="false" toolTip="Actividades Enonómicas" width="40"/>
 		</mx:Canvas>
 	</mx:Canvas>
 </mx:Canvas>

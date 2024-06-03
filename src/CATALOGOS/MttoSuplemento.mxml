@@ -24,11 +24,11 @@
 		import mx.effects.*;
 		import mx.events.CloseEvent;
 		import mx.events.EffectEvent;
+		import mx.events.ValidationResultEvent;
 		import mx.managers.PopUpManager;
 		import mx.rpc.events.ResultEvent;
 		import mx.rpc.soap.WebService;
-		import mx.validators.Validator;	
-		import mx.events.ValidationResultEvent;
+		import mx.validators.Validator;
 		
 		[Bindable]
 		private var info:DatosSuplemento;
@@ -187,7 +187,7 @@
 			openEffect.play([this]);
 			
 			if(tipo == 1)
-				registrar(tipo, codFid, fideicomiso); 
+				registrar(tipo, codFid, fideicomiso);
 			 else if(tipo == 2)
 			 	cargaInfoSup(tipo, codFid, fideicomiso, codSup);	
 		}

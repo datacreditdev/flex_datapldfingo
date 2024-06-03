@@ -8,19 +8,19 @@
 		<![CDATA[
 			import Data.Utils;
 			import Data.Globales;
-			import mx.controls.Alert;
-			import mx.validators.Validator;
 			import Data.DatosSolic;
 			import Data.EventSolic;
 			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
+			import mx.controls.Alert;
 			import mx.core.Application;
-			import mx.containers.TitleWindow;			
-			import mx.managers.PopUpManager;
 			import mx.effects.easing.Elastic;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
-			import mx.events.ValidationResultEvent;  
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
+			import mx.validators.Validator;  
 			
 			public var datos:DatosSolic = new DatosSolic();
 			

@@ -42,7 +42,7 @@
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionDispersion);
 			wsMS.setAccionDispersion.send(tipoAccion, cdgAcred, ciclo, cdgAcred, "I", info.cdgMetodo, info.cdgBanco, 
 										  info.cuenta, info.concepto, info.monto, info.fecha, info.cdgMotivo, 
-										  info.cdgCuenta, info.reportado, global.obtenerUsuario()); 			
+										  info.cdgFid, info.cdgSup, info.reportado, global.obtenerUsuario()); 			
 		}
 	
 		public function init(cdgAcred:String, acred:String, ciclo:String, monto:Number, fecha:String):void{
@@ -89,7 +89,7 @@
 	]]>
 	</mx:Script>
 	<mx:Canvas x="13" y="10" width="534" height="50" styleName="canvasMod" id="canvas1">
-		<mx:Label id="lblCliente" x="51" y="11" text="Acreditado:"/>
+		<mx:Label id="lblAcred" x="51" y="11" text="Acreditado:"/>
 		<mx:TextInput id="txtCdgAcred" editable="false" x="120" y="10" width="58"/>
 		<mx:TextInput id="txtAcreditado" editable="false" x="186" y="10" width="300"/>
 	</mx:Canvas>

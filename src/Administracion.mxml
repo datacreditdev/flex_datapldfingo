@@ -58,26 +58,26 @@
 				</mx:LinkButton>
 			</mx:AddChild>
 			<mx:AddChild relativeTo="{canvas2}" position="lastChild">
-				<mx:Image x="10" y="2" source="assets/logoMini.png" scaleContent="true" width="52" height="43" id="imgSup"/>	
+				<mx:Image id="imgSup" x="10" y="3" source="assets/logoMini.png" scaleContent="true" width="50" height="42"/>	
 			</mx:AddChild>
 			<mx:SetProperty target="{imgSup}" name="alpha" value="1.0"/>
 		</mx:State>
 		<mx:State name="Actualiza">
 			<mx:SetProperty target="{lblUsuario}" name="text" value="Escriba su contraseña anterior:"/>
 			<mx:SetProperty target="{lblPass}" name="text" value="Escriba su nueva contraseña:"/>
-			<mx:SetProperty target="{lblUsuario}" name="y" value="317"/>
-			<mx:SetProperty target="{lblPass}" name="y" value="374"/>
+			<mx:SetProperty target="{lblUsuario}" name="y" value="326"/>
+			<mx:SetProperty target="{lblPass}" name="y" value="383"/>
 			<mx:AddChild relativeTo="{cnvLogin}" position="lastChild">
-				<mx:TextInput id="txtPwdAnt" x="400.75" y="317" displayAsPassword="true" keyDown="keyListener(event)" />
+				<mx:TextInput id="txtPwdAnt" x="400.75" y="326" displayAsPassword="true" keyDown="keyListener(event)" />
 			</mx:AddChild>
 			<mx:AddChild relativeTo="{cnvLogin}" position="lastChild">
-				<mx:TextInput id="txtPwdNuevo" x="399.25" y="374" displayAsPassword="true" keyDown="keyListener(event)" restrict="A-Z;a-z;0-9;" width="160"/>
+				<mx:TextInput id="txtPwdNuevo" x="399.25" y="383" displayAsPassword="true" keyDown="keyListener(event)" restrict="A-Z;a-z;0-9;" width="160"/>
 			</mx:AddChild>
 			<mx:AddChild relativeTo="{cnvLogin}" position="lastChild">
-				<mx:TextInput id="txtConfPwd" x="399.25" y="404" width="160" displayAsPassword="true" keyDown="keyListener(event)" restrict="A-Z;a-z;0-9;"/>
+				<mx:TextInput id="txtConfPwd" x="399.25" y="413" width="160" displayAsPassword="true" keyDown="keyListener(event)" restrict="A-Z;a-z;0-9;"/>
 			</mx:AddChild>
 			<mx:AddChild relativeTo="{cnvLogin}" position="lastChild">
-				<mx:Button x="328.25" y="446" label="Modificar" id="btnModifica" width="120" click="actualizaPwd()"/>
+				<mx:Button x="328.25" y="455" label="Modificar" id="btnModifica" width="120" click="actualizaPwd()"/>
 			</mx:AddChild>
 			<mx:SetProperty target="{lblPass}" name="x" value="223.25"/>
 			<mx:SetProperty target="{lblUsuario}" name="x" value="215.75"/>
@@ -85,7 +85,7 @@
 			<mx:RemoveChild target="{txtPwd}"/>
 			<mx:RemoveChild target="{btnLogin}"/>
 			<mx:AddChild relativeTo="{txtConfPwd}" position="before">
-				<mx:Label id="lblPass0" x="214.25" y="404" text="Confirme su nueva contraseña:" fontFamily="Arial" fontSize="12" textAlign="center"/>
+				<mx:Label id="lblPass0" x="214.25" y="413" text="Confirme su nueva contraseña:" fontFamily="Arial" fontSize="12" textAlign="center"/>
 			</mx:AddChild>
 			<mx:SetProperty target="{cnvLogin}" name="height" value="490"/>
 			<mx:SetStyle target="{cnvLogin}" name="verticalCenter" value="-21"/>
@@ -104,12 +104,12 @@
 		<mx:VDividedBox width="100%" verticalGap="5" horizontalAlign="center" height="100%" id="vdividedbox1">
 			<mx:Canvas id="cnvMain" width="100%" height="100%">
 				<mx:Canvas id="cnvLogin"   width="775" height="462" horizontalCenter="0" verticalCenter="-35">
-					<mx:Button id="btnLogin" x="327.5" y="410" label="Entrar" width="120" click="loginUsuario()"/>
-					<mx:Label id="lblUsuario" x="293" y="320" text="Usuario:" fontFamily="Arial" fontSize="12" textAlign="center"/>
-					<mx:TextInput id="txtUsr" x="353" y="320" width="150" color="#000000" keyDown="keyListener(event)" fontSize="12"/>
-					<mx:Label id="lblPass" x="272" y="363" text="Contraseña:" fontFamily="Arial" fontSize="12"/>
-					<mx:TextInput id="txtPwd" x="353" y="363" width="150" color="#000000" displayAsPassword="true" keyDown="keyListener(event)" maxChars="12" fontSize="12"/>
-					<mx:Image id="imgLogin" source="assets/logoLogin.png" x="101" y="13" visible="true" height="302" width="573" scaleContent="true"/>
+					<mx:Button id="btnLogin" x="327.5" y="420" label="Entrar" width="120" click="loginUsuario()"/>
+					<mx:Label id="lblUsuario" x="293" y="330" text="Usuario:" fontFamily="Arial" fontSize="12" textAlign="center"/>
+					<mx:TextInput id="txtUsr" x="353" y="330" width="150" color="#000000" keyDown="keyListener(event)" fontSize="12"/>
+					<mx:Label id="lblPass" x="272" y="373" text="Contraseña:" fontFamily="Arial" fontSize="12"/>
+					<mx:TextInput id="txtPwd" x="353" y="373" width="150" color="#000000" displayAsPassword="true" keyDown="keyListener(event)" maxChars="12" fontSize="12"/>
+					<mx:Image id="imgLogin" source="assets/logoLogin.png" x="101" y="7" visible="true" height="298" width="590" scaleContent="true"/>
 				</mx:Canvas>
 			</mx:Canvas>
 		</mx:VDividedBox>

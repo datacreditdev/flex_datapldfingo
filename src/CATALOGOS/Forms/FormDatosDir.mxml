@@ -22,21 +22,21 @@
 
 	<mx:Script>
 		<![CDATA[
-			import Data.EventDir;
 			import Data.DatosDir;
-			import Data.Utils;
+			import Data.EventDir;
 			import Data.Globales;
-			import mx.validators.Validator;
+			import Data.Utils;
 			import mx.collections.ArrayCollection;
-			import mx.core.Application;
 			import mx.containers.TitleWindow;			
-			import mx.managers.PopUpManager;
 			import mx.controls.Alert;
+			import mx.core.Application;
 			import mx.effects.easing.Elastic;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.utils.StringUtil;
+			import mx.validators.Validator;
 			
 			private var _xmlDir:XML =  new XML();
 			private var _xmlColonia:XML =  new XML();
@@ -51,9 +51,8 @@
 			public var datos:DatosDir = new DatosDir();
 			
 			public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS	
-			public var ws:WebService = new WebService();     //variable utilizada en las llamadas sincronas de WS
-			public var du:Utils;
 			public var texto:String;
+			private var du:Utils;
 			private var global:Globales;
 			
 			public function enviarDatosDir(formData:DatosDir):void{
@@ -100,10 +99,10 @@
 					if (info != null){
 						txtCalle.text = info.calle;
 						txtTelefono.text = info.telefono;
-						comEntGrid.asignaTexto(info.entFed);
-						comMunGrid.asignaTexto(info.municipio);
-						comLocGrid.asignaTexto(info.localidad);
-						comColGrid.asignaTexto(info.colonia);	
+						comEntGrid.asignarTexto(info.entFed);
+						comMunGrid.asignarTexto(info.municipio);
+						comLocGrid.asignarTexto(info.localidad);
+						comColGrid.asignarTexto(info.colonia);	
 						
 						datos.cdgEntFed = info.cdgEntFed;		
 						datos.cdgMun = info.cdgMun;
@@ -218,6 +217,9 @@
 					comLocGrid.limpiar();
 					comColGrid.limpiar();
 					datos.cdgEntFed = event.currentTarget.codigo;
+					datos.cdgMun = "";
+					datos.cdgLoc = "";
+					datos.cdgCol = "";
 					obtieneMunicipio();
 				}
 				comEntGrid.setFocus();
@@ -228,6 +230,8 @@
 					comLocGrid.limpiar();
 					comColGrid.limpiar();
 					datos.cdgMun = event.currentTarget.codigo;
+					datos.cdgLoc = "";
+					datos.cdgCol = "";
 					obtieneLocalidad();
 				}
 				comMunGrid.setFocus();
@@ -237,6 +241,7 @@
 				if(datos.cdgLoc != event.currentTarget.codigo){
 					comColGrid.limpiar();
 					datos.cdgLoc = event.currentTarget.codigo;
+					datos.cdgCol = "";
 					obtieneColonia();
 				}
 				comLocGrid.setFocus();

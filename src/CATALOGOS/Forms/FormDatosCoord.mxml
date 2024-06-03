@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="250" creationPolicy="all" xmlns:Data="Data.*" xmlns:control="CONTROL.*">
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="400" height="250" creationPolicy="all" 
+	xmlns:Data="Data.*" xmlns:control="CONTROL.*">
 
 	<mx:Metadata>
 		[Event(name="enviarDatosDir", type="Data.EventDir")]
@@ -27,26 +28,26 @@
 		<![CDATA[
 			import Data.EventDir;
 			import Data.DatosDir;
-			import Data.Utils;
 			import Data.Globales;
-			import mx.validators.Validator;
+			import Data.Utils;
 			import mx.collections.ArrayCollection;
-			import mx.core.Application;
 			import mx.containers.TitleWindow;			
-			import mx.managers.PopUpManager;
 			import mx.controls.Alert;
+			import mx.core.Application;
 			import mx.effects.easing.Elastic;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.utils.StringUtil;
+			import mx.validators.Validator;
 			
-			private var _xmlDir:XML =  new XML();
-			private var _xmlColonia:XML =  new XML();
-			private var _xmlEntidad:XML =  new XML();
-			private var _xmlIVA:XML =  new XML();
-			private var _xmlMunicipio:XML =  new XML();
-			private var _xmlLocalidad:XML =  new XML();
+			private var _xmlDir:XML = new XML();
+			private var _xmlColonia:XML = new XML();
+			private var _xmlEntidad:XML = new XML();
+			private var _xmlIVA:XML = new XML();
+			private var _xmlMunicipio:XML = new XML();
+			private var _xmlLocalidad:XML = new XML();
 		
 			public var coordObj:ArrayCollection = new ArrayCollection();
 			public var ivaObj:ArrayCollection = new ArrayCollection();
@@ -56,16 +57,9 @@
 			public var datos:DatosDir = new DatosDir();
 			
 			public var wsMS:WebService;   					 //variable utilizada para las llamadas asincronas de WS	
-			public var ws:WebService = new WebService();     //variable utilizada en las llamadas sincronas de WS
-			public var du:Utils;
 			public var texto:String;
+			private var du:Utils;
 			private var global:Globales;
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
 			
 			public function enviarDatosDir(formData:DatosDir):void{
 				var invalidArray:Array = Validator.validateAll([calleV, entFedV, municipioV, localidadV, coloniaV, ivaV]);
@@ -86,7 +80,6 @@
 			}
 			
 			public function formateaIVA():void{
-				var i:int;
 				var cont:int = _xmlIVA.elements().length();
 				var oItem:Object;
 				var item:Array = new Array;
@@ -96,7 +89,7 @@
 				oItem.nombre = "--Seleccionar--";
 				item.push(oItem);
 				
-				for (i = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.codigo = _xmlIVA.Table[i].CODIGO;
 					oItem.nombre = _xmlIVA.Table[i].NOMBRE;
@@ -108,7 +101,6 @@
 			public function init(info:DatosDir):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
-				var i:int;
 				
 				global = new Globales();
 				du = new Utils();
@@ -140,12 +132,12 @@
 						
 						if (info != null){
 							txtCalle.text = info.calle;
-							comEntGrid.asignaTexto(info.entFed);
-							comMunGrid.asignaTexto(info.municipio);
-							comLocGrid.asignaTexto(info.localidad);
-							comColGrid.asignaTexto(info.colonia);	
+							comEntGrid.asignarTexto(info.entFed);
+							comMunGrid.asignarTexto(info.municipio);
+							comLocGrid.asignarTexto(info.localidad);
+							comColGrid.asignarTexto(info.colonia);	
 							
-							for(i = 0; i < ivaObj.length; i++){
+							for(var i:int = 0; i < ivaObj.length; i++){
 								if(ivaObj[i].codigo == info.iva){
 									cboIVA.selectedIndex = i;
 									break;	
@@ -263,6 +255,9 @@
 					comLocGrid.limpiar();
 					comColGrid.limpiar();
 					datos.cdgEntFed = event.currentTarget.codigo;
+					datos.cdgMun = "";
+					datos.cdgLoc = "";
+					datos.cdgCol = "";
 					obtieneMunicipio();
 				}
 				comEntGrid.setFocus();
@@ -273,6 +268,8 @@
 					comLocGrid.limpiar();
 					comColGrid.limpiar();
 					datos.cdgMun = event.currentTarget.codigo;
+					datos.cdgLoc = "";
+					datos.cdgCol = "";
 					obtieneLocalidad();
 				}
 				comMunGrid.setFocus();
@@ -282,6 +279,7 @@
 				if(datos.cdgLoc != event.currentTarget.codigo){
 					comColGrid.limpiar();
 					datos.cdgLoc = event.currentTarget.codigo;
+					datos.cdgCol = "";
 					obtieneColonia();
 				}
 				comLocGrid.setFocus();

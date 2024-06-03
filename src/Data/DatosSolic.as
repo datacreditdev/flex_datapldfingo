@@ -24,6 +24,7 @@ package Data
 		public var solicitado:Number;
 		public var autorizado:Number;
 		public var proyecto:String;
+		public var naturaleza:String;
 		public var guardaDatos:Boolean;	
 		
 		//varibles utilizadas para el mantenimiento de prestamos 

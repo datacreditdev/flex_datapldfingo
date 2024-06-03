@@ -143,6 +143,7 @@
 				var carpeta:String = Image(event.currentTarget).id;
 				var archivo:String = Image(event.currentTarget).name;
 				var urlPdf:String = global.urlDocs + carpeta + "/" + archivo + ".pdf"
+				//Alert.show(urlPdf);
 				imagen.visible = false;
 				comFormPdf.visible = true;
 				comFormPdf.muestraPdf(urlPdf);

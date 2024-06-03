@@ -131,7 +131,6 @@
 			public var perObj:ArrayCollection = new ArrayCollection();
 			public var anioObj:ArrayCollection = new ArrayCollection();
 			
-			private var global:Globales;
 			public var wsMS:WebService;
 			public var rep:String;
 			public var cdgEntFed:String;
@@ -140,6 +139,7 @@
 			public var cdgCol:String;
 			public var titulo:String;
 			private var du:Utils;
+			private var global:Globales;
 			private var vResult:ValidationResultEvent;
 			
 			//Realiza la busqueda de direccion utilizando el codigo postal

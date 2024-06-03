@@ -6,39 +6,37 @@
 	<!--Componente que permite observar el listado de clientes individuales-->
 	<mx:Script>
 		<![CDATA[
+			import Data.Globales;
 			import Data.Permisos;
-			import flash.events.*;
-			import mx.containers.TitleWindow;
-        	import mx.controls.Button;
-        	import mx.managers.PopUpManager;
-        			
-        	import Data.Globales;
 			import Data.Utils;
+			import flash.events.*;
 			import mx.collections.ArrayCollection;				
+			import mx.containers.TitleWindow;
 			import mx.controls.Alert;
+			import mx.controls.Button;
 			import mx.controls.ComboBox;
 			import mx.controls.DataGrid;
 			import mx.core.Application;
 			import mx.effects.easing.Elastic;
 			import mx.events.CloseEvent;
-			import mx.events.DataGridEvent;				
+			import mx.events.DataGridEvent;	
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;	
 			import mx.events.ValidationResultEvent;
-			import mx.formatters.SwitchSymbolFormatter;
 			import mx.formatters.NumberFormatter;
+			import mx.formatters.SwitchSymbolFormatter;
 			import mx.managers.PopUpManager;
-			import mx.rpc.Fault;
-			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.Fault;
 			import mx.rpc.soap.WebService;
 			            
 			public var _xmlAcred:XML = new XML();
 			public var dPermisos:XML = new XML();	
 			
 			public var wsMS:WebService;	
-			private var du:Utils;
 			public var titulo:String;
+			private var du:Utils;
 			private var global:Globales;
 			private var permiso:Permisos;
 			
@@ -141,7 +139,7 @@
 			
 			public function iniVar():void{
 				this.indAcred = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -242,15 +240,16 @@
 			}
 			
 			public function permisos():void{
+				var ws:WebService = new WebService;
 				var mod_id:String = Application.application._Current_Mod_Id;
 				var perfil_id:String = Application.application.cadPerfil;
 				var Params:Array;
 				var cont:int;
 
-				wsMS = du.initWs(wsMS);
+				du.initWs(ws);
 				du.sCursor();
 					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
 					dPermisos = new XML(evt.result.toString());
 						
 					cont = dPermisos.elements().length();
@@ -278,12 +277,12 @@
 					}
 //					btnAgregar.enabled = alta;
 					du.rCursor();
-					du.closeWs(wsMS);					
+					du.closeWs(ws);					
 				});
 				Params = new Array();
 				Params[0] = perfil_id;
 				Params[1] = mod_id;
-				wsMS.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
+				ws.ESLoginMethods.send(14,Params);	//Método que indica las opciones disponibles para el usuario	
 			}
 			
 			public function seleccionaAcred():void{

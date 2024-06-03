@@ -90,8 +90,11 @@
 				dgSup.dataProvider = null;
 				du.initWsCat(wsCat);
 				du.sCursor();
-			 	if (tipo == 1)
+				
+			 	if (tipo == 2){
 					global.bloquear();
+					iniVar();
+			 	}
 				
 				du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
 					_xmlSup = new XML(event.result);
@@ -107,7 +110,7 @@
 							dgSup.validateNow();
 							dgSup.verticalScrollPosition = vScroll;
 							dgSup.selectedIndex = indSup;
-							this.accionSup = 0;
+							accionSup = 0;
 						}
 					}
 					seleccionarSup();
@@ -125,8 +128,11 @@
 					dgFid.dataProvider = null;
 					du.initWsCat(wsCat);
 					du.sCursor();
-					if(tipo == 1)
+					
+					if(tipo == 2){
 						global.bloquear();
+						iniVar();
+					}
 						
 					du.ejecutaWsMethod(wsCat,function(event:ResultEvent):void{
 						_xmlFid = new XML(event.result);
@@ -142,7 +148,7 @@
 								dgFid.validateNow();
 								dgFid.verticalScrollPosition = vScroll;
 								dgFid.selectedIndex = indFid;
-								this.accionFid = 0;
+								accionFid = 0;
 							}
 						}
 						seleccionarFid();	
@@ -164,7 +170,7 @@
 			public function iniVar():void{
 				this.indFid = -1;
 				this.indSup = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -187,7 +193,7 @@
 			}
 			
 			private function manejadorEliminarSup(e:CloseEvent):void{
-				if(e.detail==Alert.YES){
+				if(e.detail == Alert.YES){
 					var codFid:String = dgFid.selectedItem.CODIGO;
 					var codSup:String = dgSup.selectedItem.CODIGO;  
 			    	initConexion();
@@ -199,7 +205,7 @@
 			}
 			
 			private function manejadorEliminarFid(e:CloseEvent):void{
-				if(e.detail==Alert.YES){
+				if(e.detail == Alert.YES){
 					var codFid:String = dgFid.selectedItem.CODIGO;
 			    	initConexion();
 			    	du.sCursor();
@@ -217,6 +223,7 @@
 					var codFid:String = dgFid.selectedItem.CODIGO;
 					var fideicomiso:String = dgFid.selectedItem.NUMERO;
 					var comMttoSup:MttoSuplemento = new MttoSuplemento();
+					
 					switch(tipo){
 						case 1: 
 							comMttoSup = MttoSuplemento(PopUpManager.createPopUp(this,MttoSuplemento,true)); 
@@ -349,7 +356,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionSup);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
-					buscarListaSup(1);
+					buscarListaSup(2);
 				else
 					Alert.show(res.substr(2,res.length-1), tituloSuplemento,4,null,null,global.iAlert);
 			}
@@ -381,7 +388,7 @@
 		</mx:Canvas>
 		<mx:Label x="18" y="10" text="FIDEICOMISOS" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarFid(1)" toolTip="Buscar Fideicomiso" width="40"/>
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarFid(2)" toolTip="Buscar Fideicomiso" width="40"/>
 			<mx:Button id="btnAgregar" x="106" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormFid(1)" toolTip="Registrar Fideicomiso" width="40"/>
 			<mx:Button id="btnEliminar" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarFid()" enabled="false" toolTip="Eliminar Fideicomiso" width="40"/>
 			<mx:Button id="btnEditar" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormFid(2)" toolTip="Editar Fideicomiso" width="40"/>
@@ -389,8 +396,8 @@
 		<mx:Canvas x="18.5" y="39" width="513.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Label id="lblCodFid" x="15" y="6" text="Código:"/>
 			<mx:Label id="lblFid" x="132.5" y="6" text="Número:"/>
-			<mx:TextInput id="txtFid" x="185.5" y="5" width="316" enter="buscarFid(1)" maxChars="50"/>
-			<mx:TextInput id="txtCodFid" x="64" y="5" width="50" enter="buscarFid(1)" maxChars="4"/>
+			<mx:TextInput id="txtFid" x="185.5" y="5" width="316" enter="buscarFid(2)" maxChars="50"/>
+			<mx:TextInput id="txtCodFid" x="64" y="5" width="50" enter="buscarFid(2)" maxChars="4"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvProdCred" x="19.25" y="262" width="726.5" height="175" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgSup" x="10" y="10" width="704.5" height="150"
@@ -410,7 +417,7 @@
 			<mx:Button id="btnAgregarSup" x="106" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormSup(1)" toolTip="Agregar Suplemento" width="40"/>
 			<mx:Button id="btnEliminarSup" x="154" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarSup()" toolTip="Eliminar Suplemento" width="40"/>
 			<mx:Button id="btnEditarSup" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormSup(2)" toolTip="Editar Suplemento" width="40"/>
-			<mx:Button id="btnDatosSup" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaSup(1)" enabled="false" toolTip="Suplemento" width="40"/>
+			<mx:Button id="btnDatosSup" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaSup(2)" enabled="false" toolTip="Suplemento" width="40"/>
 		</mx:Canvas>
 	</mx:Canvas>
 </mx:Canvas>

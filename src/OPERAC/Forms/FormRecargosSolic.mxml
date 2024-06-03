@@ -8,18 +8,18 @@
 		<![CDATA[
 			import Data.DatosSolic;
 			import Data.EventSolic;
-			import Data.Utils;
 			import Data.Globales;
+			import Data.Utils;
 			import mx.controls.Alert;
 			import mx.collections.ArrayCollection;
-			import mx.core.Application;
 			import mx.containers.TitleWindow;			
-			import mx.managers.PopUpManager;
+			import mx.core.Application;
 			import mx.effects.easing.Elastic;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
-			import mx.rpc.events.FaultEvent;
 			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.validators.Validator;
 			
 			[Bindable]

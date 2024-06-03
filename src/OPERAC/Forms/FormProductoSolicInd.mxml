@@ -42,9 +42,9 @@
 			import mx.effects.easing.Elastic;
 			import mx.events.ItemClickEvent;
 			import mx.managers.PopUpManager;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.validators.Validator;
 			
 			private var _xmlTipoProd:XML =  new XML();

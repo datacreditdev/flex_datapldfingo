@@ -25,8 +25,8 @@
 		import mx.core.IFlexDisplayObject;
 		import mx.events.CloseEvent;
 		import mx.managers.PopUpManager;
-		import mx.rpc.soap.WebService;
 		import mx.rpc.events.ResultEvent;
+		import mx.rpc.soap.WebService;
 	
 		[Bindable]
 		private var dpPerfiles:XML = new XML();				
@@ -38,13 +38,6 @@
 		private var ws:WebService;
 		private var vScroll:Number;
 		private var accionPerfil:int;
-		
-		private function init():void{
-			du = new Utils();
-			ws = new WebService();
-			CargarPerfiles();
-			//ActivarAcciones();
-		}
 		
 		private function ActivarAcciones():void{
 			var Params:Array = new Array();
@@ -136,6 +129,13 @@
 			}											
 			usrAdd.addEventListener('CloseEvent',Recargar);						
 			PopUpManager.centerPopUp(usrAdd);										
+		}
+		
+		private function init():void{
+			du = new Utils();
+			ws = new WebService();
+			CargarPerfiles();
+			//ActivarAcciones();
 		}
 						
 		private function Recargar(evt:CloseEvent):void{				

@@ -94,8 +94,11 @@
 					dgInstrumento.dataProvider = null;
 					du.initWsCat(wsCat);
 					du.sCursor();
-					if(tipo == 1)
+					
+					if(tipo == 2){
 						global.bloquear();
+						iniVar();
+					}	
 						
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{	
 						_xmlInst = new XML(evt.result);
@@ -128,8 +131,11 @@
 				dgTasa.dataProvider = null;
 				du.initWsCat(wsCat);
 				du.sCursor();
-			 	if (tipo == 1)
+				
+			 	if(tipo == 2){
 					global.bloquear();
+					iniVar();
+			 	}
 					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
 					_xmlTasa = new XML(evt.result);
@@ -165,7 +171,7 @@
 			public function iniVar():void{
 				this.indInst = -1;
 				this.indTasa = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -355,7 +361,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionTasa);
 				var res:String = new String(event.result.toString());
 				if (res.substr(0,1) == "1")
-					buscarListaTasa(1);
+					buscarListaTasa(2);
 				else
 					Alert.show(res.substr(2,res.length-1), "Mantenimiento de Tasa",4,null,null,global.iAlert);
 			}
@@ -367,7 +373,7 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionInst);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")
-					buscarInst(1);
+					buscarInst(2);
 				else
 					Alert.show("Error en el proceso: " + res, "Mantenimiento de Instrumentos de Crédito",4,null,null,global.iAlert);
 			}
@@ -380,11 +386,11 @@
 		<mx:Canvas x="31.5" y="39" width="500.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Label id="lblCodInst" x="15" y="6" text="Código:"/>
 			<mx:Label id="lblInstrumento" x="137.5" y="6" text="Descripción:"/>
-			<mx:TextInput id="txtCodInst" x="64" y="5" width="50" enter="buscarInst(1)" maxChars="3"/>
-			<mx:TextInput id="txtInstrumento" x="210.5" y="5" width="276" enter="buscarInst(1)" maxChars="50"/>
+			<mx:TextInput id="txtCodInst" x="64" y="5" width="50" enter="buscarInst(2)" maxChars="3"/>
+			<mx:TextInput id="txtInstrumento" x="210.5" y="5" width="276" enter="buscarInst(2)" maxChars="50"/>
 		</mx:Canvas>
 		<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarInst(1)" toolTip="Buscar Instrumento" width="40" />
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarInst(2)" toolTip="Buscar Instrumento" width="40" />
 			<mx:Button id="btnEditar" x="57" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormInst(2)" toolTip="Editar Instrumento" width="40"/>
 			<mx:Button id="btnAgregar" x="105" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormInst(1)" toolTip="Registrar Instrumento" width="40"/>
 			<mx:Button id="btnEliminar" x="153" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarInst()" enabled="false" toolTip="Eliminar Instrumento" width="40"/>
@@ -401,7 +407,7 @@
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
 		<mx:Canvas x="540" y="238" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Button id="btnDatosTasa" x="12" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaTasa(1)" enabled="false" toolTip="Tasas" width="40"/>
+			<mx:Button id="btnDatosTasa" x="12" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaTasa(2)" enabled="false" toolTip="Tasas" width="40"/>
 			<mx:Button id="btnEditarTasa" x="60" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormTasa(2)" toolTip="Editar Tasa" width="40"/>
 			<mx:Button id="btnAgregarTasa" x="105" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormTasa(1)" toolTip="Agregar Tasa" width="40"/>
 			<mx:Button id="btnEliminarTasa" x="153" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarTasa()" toolTip="Eliminar Tasa" width="40"/>

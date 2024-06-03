@@ -41,24 +41,24 @@
 		private var du:Utils;
 		private var global:Globales;
 			
-		public function asignaIndice():void{
+		public function asignarIndice():void{
 			this.parent.setChildIndex(this, indice);
 			txtDato.setFocus();
 		}
 		
-		public function asignaTexto(texto:String):void{
+		public function asignarTexto(texto:String):void{
 			txtDato.text = texto;
 		}
 		
-		public function asignaCodigo(codigo:String):void{
+		public function asignarCodigo(codigo:String):void{
 			this.codigo = codigo;
 		}
 		
-		public function buscaInfo():void{
+		public function buscarInfo():void{
 			if(txtDato.text != ""){
 				dgInfo.selectedIndex = -1;
 				texto = txtDato.text;					
-				infoObj.filterFunction = filtraRegistro;
+				infoObj.filterFunction = filtrarRegistro;
 				infoObj.refresh();
 				if(infoObj.length > 0){
 					dgInfo.validateNow();
@@ -82,21 +82,21 @@
 			}
 		}
 		
-		private function filtraCaptura(item:Object):Boolean{
+		private function filtrarCaptura(item:Object):Boolean{
 			var isMatch:Boolean = false
 			if(texto.toLowerCase().search(item.nombre.toLowerCase()) != -1)
 				isMatch = true 
 			return isMatch; 
 		}
 	
-		public function filtraRegistro(item:Object):Boolean{
+		public function filtrarRegistro(item:Object):Boolean{
 			var isMatch:Boolean = false
 			if(item.nombre.toString().substr(0, texto.length).toLowerCase() == texto.toLowerCase())
 				isMatch = true 
 			return isMatch; 
 		}
 		
-		public function formateaInfo():void{
+		public function formatearInfo():void{
 			var cont:int = _xmlInfo.elements().length();
 			var oItem:Object;
 			var item:Array = new Array;
@@ -121,7 +121,7 @@
 			indice = -1;
 			dgInfo.height = alto - 25;
 			dgInfo.dataProvider = null;
-			formateaInfo();
+			formatearInfo();
 			dgInfo.dataProvider = infoObj;
 			txtDato.addEventListener(KeyboardEvent.KEY_DOWN, presRegistro);
 		}
@@ -131,11 +131,11 @@
 			codigo = "";
 		}
 		
-		public function obtieneCodigo():String{
+		public function obtenerCodigo():String{
 			return this.codigo;
 		}
 		
-		public function obtieneDato():String{
+		public function obtenerDato():String{
 			return txtDato.text;
 		}
 			
@@ -166,10 +166,10 @@
 				}
 				dgInfo.visible = false;
 			}
-			asignaIndice();
+			asignarIndice();
 		}
 		
-		public function validaDato():Boolean{
+		public function validarDato():Boolean{
 			var invalidArray:Array;
 					
 			invalidArray = Validator.validateAll([datoV]);
@@ -178,11 +178,11 @@
 			return false;
 		}
 		
-		public function verificaInfo():void{
+		public function verificarInfo():void{
 			if (dgInfo.selectedIndex < 0 || txtDato.text == ""){
 				dgInfo.visible = false;
 				texto = txtDato.text;
-				infoObj.filterFunction = filtraCaptura;
+				infoObj.filterFunction = filtrarCaptura;
 				infoObj.refresh();
 				if (infoObj.length == 0){
 					txtDato.text = "";
@@ -196,6 +196,6 @@
 			
 		]]>
 	</mx:Script>
-		<mx:TextInput id="txtDato" width="170" x="1" y="1" change="buscaInfo()" enter="selecRegistro()" focusOut="verificaInfo()" 
+		<mx:TextInput id="txtDato" width="170" x="1" y="1" change="buscarInfo()" enter="selecRegistro()" focusOut="verificarInfo()" 
 			restrict="A-Z;a-z;Ñ;ñ;0-9; " keyDown="presRegistro(event)" visible="true"/>
 </mx:Canvas>
