@@ -28,7 +28,6 @@
 			import mx.rpc.soap.WebService;
 			import mx.validators.Validator;
 			
-			[Bindable]
 			private var _xmlMoneda:XML =  new XML();
 			
 			public var monedaObj:ArrayCollection = new ArrayCollection();
@@ -66,8 +65,8 @@
 					formData.fecEntre = dtfInicio.text;	
 					formData.situacion = situacion.selectedValue.toString();				
 					formData.moneda = cboMoneda.selectedItem.id;
-					formData.entregado = Number(txtEntregado.text);
-					formData.devolucion = 0;
+					formData.entregado = Number(global.formatearNumerico(txtEntregado.text));
+					formData.devolucion = Number(global.formatearNumerico("0"));
 					formData.naturaleza = naturaleza.selectedValue.toString();
 					formData.guardaDatos = true;
 				}
@@ -130,8 +129,8 @@
 						
 						dtfSolicitud.text = info.fecSolic;
 						dtfInicio.text = info.fecEntre;
-						txtAutorizado.text = info.autorizado.toString();
-						txtEntregado.text = info.entregado.toString();
+						txtAutorizado.text = global.formatearDecimal(info.autorizado.toString());
+						txtEntregado.text = global.formatearDecimal(info.entregado.toString());
 						
 						selSituacion(info.situacion);
 						naturaleza.selectedValue = info.naturaleza;
@@ -181,9 +180,9 @@
 			}
 			
 			public function validaEntrega():void{
-				var fecAct:String = global.formatoFechaYYYYMMDD(global.obtenerFechaSistema());
-				var fecIni:String = global.formatoFechaYYYYMMDD(dtfInicio.selectedDate);
-				var fecSol:String = global.formatoFechaYYYYMMDD(dtfSolicitud.selectedDate);
+				var fecAct:String = global.formatearFechaYYYYMMDD(global.obtenerFechaSistema());
+				var fecIni:String = global.formatearFechaYYYYMMDD(dtfInicio.selectedDate);
+				var fecSol:String = global.formatearFechaYYYYMMDD(dtfSolicitud.selectedDate);
 				if (fecIni < fecAct){
 					Alert.show("La fecha de entrega debe ser igual o posterior a la fecha actual","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 					if(fecAct > fecSol)
@@ -202,7 +201,7 @@
 	</mx:Script>
 	<mx:Canvas id="cnvFecSolic" x="45" y="29" width="267" height="71" styleName="canvasMod">
 		<mx:FormItem id="fechaSolic" label="Fecha de Solicitud" x="21.5" y="7" width="222">
-			<mx:DateField id="dtfSolicitud" x="86.5" y="10" width="109" />
+			<mx:DateField id="dtfSolicitud" x="86.5" y="10" width="109"/>
 		</mx:FormItem>
 		<mx:FormItem id="fechaInicio" label="Inicio del Préstamo" x="20.5" y="38" width="222">
 			<mx:DateField id="dtfInicio" x="86.5" y="10" width="109" change="validaEntrega()" disabledDays="{[0,6]}"/>
@@ -216,14 +215,14 @@
 		<mx:RadioButton id="rdbDevuelto" x="49" label="Devuelto" groupName="situacion" y="40" value="D" change="modificaEntregado(event)"/>
 	</mx:Canvas>
 	<mx:Canvas id="cnvMoneda" x="508" y="29" width="200" height="71" styleName="canvasMod">
-		<mx:ComboBox id="cboMoneda" x="19" y="24" labelField="nombre"></mx:ComboBox>
+		<mx:ComboBox id="cboMoneda" x="19" y="24" labelField="nombre"/>
 	</mx:Canvas>
 	<mx:Canvas id="cnvMonto" x="44" y="138" width="340" height="40" styleName="canvasMod">
 		<mx:FormItem id="entregado" label="Entregado:" x="173" y="6" width="156">
-			<mx:TextInput id="txtEntregado" width="80"/>
+			<mx:TextInput id="txtEntregado" width="80" restrict="0-9;,;." maxChars="18" focusOut="{global.formatearMonto(event)}"/>
 		</mx:FormItem>
 		<mx:FormItem id="autorizado" label="Autorizado:" x="10" y="6" width="157">
-			<mx:TextInput id="txtAutorizado" width="80" editable="false"/>
+			<mx:TextInput id="txtAutorizado" width="80" restrict="0-9;,;." maxChars="18" focusOut="{global.formatearMonto(event)}" editable="false"/>
 		</mx:FormItem>
 	</mx:Canvas>
 	<mx:Label x="320" y="10" text="Situación"/>

@@ -10,8 +10,8 @@
 			import mx.collections.ArrayCollection;
 			import mx.containers.TitleWindow;
 			import mx.controls.Alert;
-			import mx.controls.DataGrid;
 			import mx.controls.ComboBox;
+			import mx.controls.DataGrid;
 			import mx.core.Application;
 			import mx.effects.easing.Elastic;
 			import mx.events.CloseEvent;
@@ -20,18 +20,18 @@
 			import mx.events.ListEvent;
 			import mx.events.ValidationResultEvent;
 			import mx.managers.PopUpManager;
-			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
 			import mx.rpc.Fault;
 			import mx.rpc.soap.WebService;
 			
 			public var _xmlAcred:XML = new XML();            
 			
+			public var titulo:String;
 			private var du:Utils;
 			private var global:Globales;
 			private var fecha:String;
-			public var titulo:String;		
-			
+					
 			public var acredObj:ArrayCollection = new ArrayCollection();
 			
 			private function actualizaListaAcred(ev:Event):void{
@@ -42,35 +42,31 @@
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
 				
-				if (txtCodAcred.text != "" || txtPaterno.text != "" || txtNombre.text != ""){
-					btnBuscar.setFocus();
-					dgAcred.dataProvider = null;
+				btnBuscar.setFocus();
+				dgAcred.dataProvider = null;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				global.bloquear();
+				
+				du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
+					_xmlAcred = new XML(event.result);
 					
-					fecha = dtfFecha.text;
+					du.closeWs(wsCat);
+					du.rCursor();
+					global.desbloquear();
 					
-					du.initWsCat(wsCat);
-					du.sCursor();
-					global.bloquear();
-					
-					du.ejecutaWsMethod(wsCat, function(event:ResultEvent):void{
-						_xmlAcred = new XML(event.result);
-						
-						du.closeWs(wsCat);
-						du.rCursor();
-						global.desbloquear();
-						
-						if(_xmlAcred.elements().length() > 0){
-							formateaListaAcred();
-							dgAcred.dataProvider = acredObj;
-						}
-					});
-					params[0] = txtCodAcred.text;
-					params[1] = txtNombre.text;
-					params[2] = txtPaterno.text;
-					params[3] = dtfFecha.text;
-					params[4] = global.obtenerUsuario();
-					wsCat.getInfoAcred.send(21, params);
-				}	
+					if(_xmlAcred.elements().length() > 0){
+						formateaListaAcred();
+						dgAcred.dataProvider = acredObj;
+					}
+				});
+				params[0] = txtCodAcred.text;
+				params[1] = txtNombre.text;
+				params[2] = txtPaterno.text;
+				params[3] = "";
+				params[4] = global.obtenerUsuario();
+				wsCat.getInfoAcred.send(21, params);
 			}
 			
 			public function desabilitaEdicion(event:DataGridEvent):void{
@@ -81,6 +77,12 @@
 				return item.REGISTRO;
 			}
 			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
+			}
+			
 			public function formateaListaAcred():void{
 				var cont:int = _xmlAcred.elements().length();
 				var oItem:Object;
@@ -89,7 +91,7 @@
 				acredObj.removeAll();
 				acredObj.refresh();
 				
-				for (var i:int = 0; i < cont; i++){
+				for(var i:int = 0; i < cont; i++){
 					oItem = new Object();
 					oItem.REGISTRO = false;
 					oItem.CDGCL = _xmlAcred.Table[i].CDGCL;
@@ -97,6 +99,7 @@
 					oItem.CICLO = _xmlAcred.Table[i].CICLO;
 					oItem.CANTAUTOR = _xmlAcred.Table[i].CANTAUTOR;
 					oItem.CDGCO = _xmlAcred.Table[i].CDGCO;
+					oItem.INICIO = _xmlAcred.Table[i].INICIO;
 					item.push(oItem);
 				}
 				acredObj = new ArrayCollection(item);
@@ -109,14 +112,15 @@
 				titulo = "Registro de Transferencia";
 				lblTitulo.text = titulo.toUpperCase();
 				var fec:Date = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 	
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 	
 			}
 			
 			public function muestraFormTrans():void{
 				var codigo:String = dgAcred.selectedItem.CDGCL;
 				var acred:String = dgAcred.selectedItem.NOMBREC;
 				var ciclo:String = dgAcred.selectedItem.CICLO;
-				var monto:Number = dgAcred.selectedItem.CANTAUTOR;
+				var monto:Number = Number(global.formatearNumerico(dgAcred.selectedItem.CANTAUTOR));
+				var fecha:String = dgAcred.selectedItem.INICIO;
 				var comMttoTrans:MttoTransferencia = new MttoTransferencia();
 				comMttoTrans = MttoTransferencia(PopUpManager.createPopUp(this,MttoTransferencia,true));
 				comMttoTrans.init(codigo, acred, ciclo, monto, fecha);
@@ -132,10 +136,10 @@
 		]]>
 	</mx:Script>
 	<mx:Canvas backgroundAlpha="1.0" backgroundColor="#FFFFFF" width="630" height="315">
-		<mx:Canvas x="559" y="87" width="61" height="37" styleName="canvasMod" visible="true">
+		<mx:Canvas x="559" y="39" width="61" height="37" styleName="canvasMod" visible="true">
 			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarAcred()" toolTip="Buscar Acreditado" width="40"/>
 		</mx:Canvas>
-		<mx:Canvas x="12.75" y="87" width="538.25" height="37" styleName="canvasMod" visible="true">
+		<mx:Canvas x="12.75" y="39" width="538.25" height="37" styleName="canvasMod" visible="true">
 			<mx:Label id="lblCodAcred" x="6" y="7" text="Código:"/>
 			<mx:Label id="lblAcred" x="366.75" y="7" text="Paterno:"/>
 			<mx:TextInput id="txtPaterno" x="416.75" y="6" width="110" enter="buscarAcred()" maxChars="50"/>
@@ -143,20 +147,20 @@
 			<mx:TextInput id="txtNombre" x="245.75" y="6" width="110" enter="buscarAcred()" maxChars="50"/>
 			<mx:Label id="lblNombre" x="130.75" y="7" text="Nombre/Razón Social:"/>
 		</mx:Canvas>
-		<mx:Label x="12.75" y="67" text="ACREDITADO" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-		<mx:Canvas id="cnvAcred" x="12.75" y="132" width="607.25" height="140" styleName="canvasMod" visible="true" verticalScrollPolicy="off">
-			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="585.25" height="120"
+		<mx:Label x="12.75" y="39" text="ACREDITADO" fontSize="12" fontWeight="bold" fontStyle="italic" visible="false"/>
+		<mx:Canvas id="cnvAcred" x="12.75" y="84" width="607.25" height="188" styleName="canvasMod" visible="true" verticalScrollPolicy="off">
+			<mx:DataGrid id="dgAcred" x="10" y="10" width="585.25" height="166"
 				sortableColumns="false" resizableColumns="false" doubleClickEnabled="true" itemDoubleClick="muestraFormTrans()"> 
-				<Data:columns>
-					<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="50" editable="false"/>
-					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBREC" width="180" editable="false"/>
-					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50" editable="false"/>
-					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="100" editable="false"/>
-				</Data:columns>
-			</Data:RowColorDataGrid>
+				<mx:columns>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CDGCL" width="50"/>
+					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBREC" width="180"/>
+					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="100" labelFunction="formatearMontoGrid"/>
+				</mx:columns>
+			</mx:DataGrid>
 		</mx:Canvas>
 		<mx:Label id="lblTitulo" x="12.75" y="10" width="338.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-		<mx:Canvas x="103.75" y="31" width="430.5" height="37" styleName="canvasMod" visible="true">
+		<mx:Canvas x="103.75" y="31" width="430.5" height="37" styleName="canvasMod" visible="false">
 			<mx:Label id="lblFecha" x="113.75" y="7" text="Fecha de Entrega:" textAlign="right"/>
 			<mx:DateField id="dtfFecha" x="214.75" y="6" width="100"/>
 		</mx:Canvas>

@@ -1,12 +1,16 @@
 package Data
 {
+	import flash.events.Event;
 	import mx.collections.ArrayCollection;
 	import mx.controls.Alert;
 	import mx.controls.DateField;
+	import mx.controls.TextInput;
 	import mx.core.Application;
+	import mx.events.ValidationResultEvent;
 	import mx.formatters.CurrencyFormatter;
 	import mx.formatters.DateFormatter;
 	import mx.formatters.NumberFormatter;
+	import mx.validators.NumberValidator;
 	
 	public class Globales
 	{
@@ -20,9 +24,7 @@ package Data
 		public var iQuest:Class; 
 		
 		public var idEmpresa:String;
-		[Bindable]
-		public var meses:Array = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'] ;
-		[Bindable]
+		public var meses:Array = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 		public var dias:Array = ['D','L','M','M','J','V','S']; 
 		
 		public var urlServ:String;
@@ -79,7 +81,7 @@ package Data
         	Application.application.desbloquear();
         }
 		
-		public function formateaAnio(anios:ArrayCollection=null):ArrayCollection{
+		public function formatearAnio(anios:ArrayCollection=null):ArrayCollection{
 			var anio:int = 2021;
 			var oItem:Object;
 			var item:Array = new Array();
@@ -105,7 +107,7 @@ package Data
 			}
 		}
 		
-		public function formateaMes(meses:ArrayCollection=null):ArrayCollection{
+		public function formatearMes(meses:ArrayCollection=null):ArrayCollection{
 			var oItem:Object;
 			var item:Array = new Array();
 			var mesObj:ArrayCollection;
@@ -185,18 +187,18 @@ package Data
 			}
 		}
 		
-		public function formatoFecha(fecha:Date, formato:String = "DD/MM/YYYY"):String {
+		public function formatearFecha(fecha:Date, formato:String = "DD/MM/YYYY"):String {
         	 var d:DateFormatter = new DateFormatter();
 			 d.formatString = formato;
 			 return d.format(fecha);	 
      	}
      	
-     	public function formatoFechaExcel(dias:Number):String{
+     	public function formatearFechaExcel(dias:Number):String{
 			var fec:Date = new Date(1900, 0, dias - 1);
-			return formatoFecha(fec);
+			return formatearFecha(fec);
 		}
 		
-		public function formatoFechaSep(aDate:Date, sep:String = null):String{
+		public function formatearFechaSep(aDate:Date, sep:String = null):String{
         	var SEPARATOR:String;
         	
         	if(sep == null) 
@@ -214,7 +216,7 @@ package Data
          	return dd + SEPARATOR + mm + SEPARATOR + yyyy;
      	}
      		
-     	public function formatoFechaYYYYMMDD(aDate:Date):String{
+     	public function formatearFechaYYYYMMDD(aDate:Date):String{
         	var SEPARATOR:String = "/";
     
         	var dd:String = aDate.date.toString();
@@ -227,16 +229,7 @@ package Data
          	return yyyy + SEPARATOR + mm + SEPARATOR + dd;
      	}
      	
-     	public function formatoDecimalSinSep(numero:String):String{
-     		var formato:NumberFormatter = new NumberFormatter();
-			formato.decimalSeparatorFrom = ".";
-			formato.decimalSeparatorTo = ".";
-			formato.precision = "2";
-			formato.useThousandsSeparator = false;
-			return formato.format(Number(numero));	
-     	}
-     	
-     	public function formatoDecimal(numero:String):String{
+     	public function formatearDecimal(numero:String):String{
 			var formato:NumberFormatter = new NumberFormatter();
 			formato.decimalSeparatorFrom = ".";
 			formato.decimalSeparatorTo = ".";
@@ -246,14 +239,23 @@ package Data
 			return formato.format(Number(numero));
 		}
 		
-		public function formatoEntero(numero:String):String{
+		public function formatearDecimalSinSep(numero:String):String{
+     		var formato:NumberFormatter = new NumberFormatter();
+			formato.decimalSeparatorFrom = ".";
+			formato.decimalSeparatorTo = ".";
+			formato.precision = "2";
+			formato.useThousandsSeparator = false;
+			return formato.format(Number(numero));	
+     	}
+		
+		public function formatearEntero(numero:String):String{
 			var formato:NumberFormatter = new NumberFormatter();
 			formato.useThousandsSeparator = "true";
 			formato.useNegativeSign = "true";
 			return formato.format(Number(numero));
 		}
 		
-		public function formatoMoneda(numero:String):String{
+		public function formatearMoneda(numero:String):String{
 			var formato:CurrencyFormatter = new CurrencyFormatter();
 			formato.currencySymbol = "$";
 			formato.alignSymbol = "left";
@@ -265,8 +267,18 @@ package Data
 			formato.useNegativeSign = "true";
 			return formato.format(Number(numero));
 		}
-	
-		public function formatoNumerico(numero:String):String{
+		
+		public function formatearMonto(event:Event):void{
+			if(validarMonto(event)){
+				var monto:String = TextInput(event.currentTarget).text;
+				monto = formatearNumerico(monto);
+				TextInput(event.currentTarget).text = formatearDecimal(monto);
+			}
+			else
+				TextInput(event.currentTarget).text = "";	
+		}
+		
+		public function formatearNumerico(numero:String):String{
 			var formato:CurrencyFormatter = new CurrencyFormatter();
 			formato.currencySymbol = "";
 			formato.useThousandsSeparator = false;
@@ -278,7 +290,7 @@ package Data
 			return numero;			
 		}
     	
-		public function insertaCaracter(cadena:String, caracter:String, cant:int, dir:int):String{
+		public function insertarCaracter(cadena:String, caracter:String, cant:int, dir:int):String{
         	//dir = 1 inserta caracter a la izquierda de la cadena
         	//dir = 2 inserta caracter a la derecha de la cadena
         	var res:String = "";
@@ -296,7 +308,7 @@ package Data
     	
     	//Funcion encargada de modificar el texto si se trata de una fecha expresada como nombre  
     	//(utilizada para respetar el dato de nombres de grupos, colonias, localidades, etc)
-		public function modificaTextoFecha(texto:String):String{
+		public function modificarTextoFecha(texto:String):String{
 			for(var i:int = 0; i < meses.length; i++){
 				if(texto.indexOf(meses[i],0) >= 0)
 					return "'" + texto;
@@ -309,7 +321,7 @@ package Data
 		}
     	
     	//funcion que permite obtener el indice del valor que se esta buscando en la coleccion
-		public function obtieneIndice(array:ArrayCollection, prop:String, valor:String):Number{
+		public function obtenerIndice(array:ArrayCollection, prop:String, valor:String):Number{
             for (var i:Number = 0; i < array.length; i++){
                 var obj:Object = Object(array[i])
                 if (obj[prop] == valor)
@@ -326,7 +338,7 @@ package Data
  	 		return Application.application.U_ID;
  	 	}
 
-		public function reemplazaCaracteres(cadena:String):String{
+		public function reemplazarCaracteres(cadena:String):String{
 			var myPattern:RegExp = /á/g;
 			cadena = cadena.replace(myPattern, "a");
 			myPattern = /é/g;
@@ -352,7 +364,7 @@ package Data
 			return cadena;
 		}
 		
-		public function seleccionaDiaHabil(aDate:Date):Date{
+		public function seleccionarDiaHabil(aDate:Date):Date{
 			var periodo:Number = 0; 
 			//Condicion que indica que el dia anterior al actual corresponde a Sabado 
 			if(aDate.getDay() == 6)
@@ -364,7 +376,7 @@ package Data
 		}		
 		
 		//Funcion que permite seleccionar el dia habil posterior a la fecha de parametro
-		public function seleccionaDiaHabilPost(aDate:Date):Date{
+		public function seleccionarDiaHabilPost(aDate:Date):Date{
 			var periodo:Number = 0; 
 			//Condicion que indica que el dia corresponde a Sabado 
 			if(aDate.getDay() == 6)
@@ -375,12 +387,31 @@ package Data
 			return new Date(aDate.getFullYear(),aDate.getMonth(),(aDate.getDate() + periodo)); 
 		}			 	
 		
-		public function validaFecha(inicial:Date, fin:Date, titulo:String):Date{
+		public function validarFecha(inicial:Date, fin:Date, titulo:String):Date{
 			if(inicial > fin){
 				Alert.show("La fecha inicial debe ser menor o igual a la fecha final.",titulo,4,null,null,iAlert);
 				return fin;
 			}
 			return inicial;
+		}
+		
+		private function validarMonto(event:Event):Boolean{
+			var numVal:NumberValidator = new NumberValidator;
+			var vResult:ValidationResultEvent;
+			
+			numVal.property = "text";
+			numVal.precision = "2";
+			numVal.allowNegative = true;
+			numVal.domain = "real";
+			numVal.decimalSeparator = ".";
+			numVal.thousandsSeparator = ",";
+			numVal.required = false;
+			numVal.source = TextInput(event.currentTarget);
+			vResult = numVal.validate();
+
+			if (vResult.type != ValidationResultEvent.VALID)
+               	return false;
+            return true;
 		}
 	}
 }

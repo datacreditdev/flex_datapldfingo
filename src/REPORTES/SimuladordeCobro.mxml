@@ -63,7 +63,7 @@
 							
 						currentState = "resultado";							
 						if(_xmlRep.elements().length() > 0)
-							lblTotal.text = global.formatoMoneda(_xmlRep.Table[0].TOTAL_A_PAGAR);	
+							lblTotal.text = global.formatearMoneda(_xmlRep.Table[0].TOTAL_A_PAGAR);	
 						else
 							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 					});

@@ -125,7 +125,7 @@
 				txtAcred.setFocus();
 				fec = global.obtenerFechaSistema();
 				if(currentState == "fecha")
-					dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 
+					dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 
 				dispatchEvent(new Event("limpiar"));
 			}
 				

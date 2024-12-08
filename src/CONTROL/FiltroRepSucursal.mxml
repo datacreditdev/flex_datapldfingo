@@ -105,7 +105,7 @@
 					var coord:String = "&coord=" + cboSucursal.selectedItem.codigo;
 					var asesor:String = "&asesor=000000";  
 					var fec:Date = global.obtenerFechaSistema();
-					fecha = "&fecha=" + global.formatoFechaSep(fec, "-");
+					fecha = "&fecha=" + global.formatearFechaSep(fec, "-");
 					
 					//if(currentState == null)
 						consulta = global.urlPdf + id + fecha + usuario + nomUsuario + coord + asesor;

@@ -15,9 +15,12 @@ package Data
 		public var strWsdl:String;
 		public var strWsAdmin:String;
 		public var strWsCat:String;
+		public var strWsCatPLD:String;
 		public var strWsMS:String;
+		public var strWsMSPLD:String
 		public var strWsMail:String;
 		public var strWsRep:String;
+		public var strWsRepPLD:String;
 		public var xmlResult:XML = new XML();
 		public var loading:pLoading;
 		
@@ -38,23 +41,31 @@ package Data
 		public function Utils(){
 			var xmlAdmin:XMLList = new XMLList();
 			var xmlCat:XMLList = new XMLList();
+			var xmlCatPLD:XMLList = new XMLList();
 			var xmlMail:XMLList = new XMLList();
 			var xmlMS:XMLList = new XMLList();
+			var xmlMSPLD:XMLList = new XMLList();
 			var xmlRep:XMLList = new XMLList();
+			var xmlRepPLD:XMLList = new XMLList();
 			var xmlWs:XMLList = new XMLList();
 			
 			xmlResult = Application.application.wsStr;
 			xmlAdmin = xmlResult.child("wsdlAdmin");
 			xmlCat = xmlResult.child("wsdlCat");
+			xmlCatPLD = xmlResult.child("wsdlCatPLD");
 			xmlMail = xmlResult.child("wsdlMail");
 			xmlMS = xmlResult.child("wsdlServ");
+			xmlMSPLD = xmlResult.child("wsdlServPLD");
 			xmlRep = xmlResult.child("wsdlRep");
+			xmlRepPLD = xmlResult.child("wsdlRepPLD");
 			xmlWs = xmlResult.child("wsdl");
 			strWsAdmin = xmlAdmin.toString();
 			strWsCat = xmlCat.toString();
+			strWsCatPLD = xmlCatPLD.toString();
 			strWsMail = xmlMail.toString();
 			strWsMS = xmlMS.toString();
 			strWsRep = xmlRep.toString();
+			strWsRepPLD	= xmlRepPLD.toString();
 			strWsdl = xmlWs.toString();
 		}
 		
@@ -79,6 +90,13 @@ package Data
 			return ws;	
 		}
 		
+		public function initWsCatPLD(ws:WebService):WebService{			
+			ws.wsdl = this.strWsCatPLD;
+			ws.loadWSDL();	
+			ws.addEventListener(FaultEvent.FAULT, wsFault);						
+			return ws;	
+		}
+		
 		public function initWsMail(ws:WebService):WebService{
 			ws.wsdl = this.strWsMail;
 			ws.loadWSDL();	
@@ -93,8 +111,22 @@ package Data
 			return ws;
 		}
 		
+		public function initWsMSPLD(ws:WebService):WebService{			
+			ws.wsdl = this.strWsMSPLD;
+			ws.loadWSDL();	
+			ws.addEventListener(FaultEvent.FAULT, wsFault);							
+			return ws;
+		}
+		
 		public function initWsRep(ws:WebService):WebService{			
 			ws.wsdl = this.strWsRep;
+			ws.loadWSDL();	
+			ws.addEventListener(FaultEvent.FAULT, wsFault);						
+			return ws;		
+		}
+		
+		public function initWsRepPLD(ws:WebService):WebService{			
+			ws.wsdl = this.strWsRepPLD;
 			ws.loadWSDL();	
 			ws.addEventListener(FaultEvent.FAULT, wsFault);						
 			return ws;		

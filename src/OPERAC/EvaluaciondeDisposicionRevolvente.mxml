@@ -144,7 +144,7 @@
 							dgSolic.validateNow();
 							dgSolic.verticalScrollPosition = vScroll;
 							dgSolic.selectedIndex = indSolic;
-							this.accionSolic = 0;
+							accionSolic = 0;
 						}
 					}
 					seleccionaSolic();
@@ -153,9 +153,15 @@
 				wsCat.getInfoAcred.send(14, params);	
 			}
 			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
+			}
+			
 			public function iniVar():void{
 				this.indSolic = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{

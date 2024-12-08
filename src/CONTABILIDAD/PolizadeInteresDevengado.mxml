@@ -37,7 +37,7 @@
 				var dgE:ExcelExportXls = new ExcelExportXls(); 
 				dgE.setIsXls(true);
 				dgE.hideHeader(true);
-				dgE.loadDGInExcel(dgReporte, null, "PolizaInteresDevengado" + global.formatoFecha(dtfFecha.selectedDate,"DDMMMYYYY"));		
+				dgE.loadDGInExcel(dgReporte, null, "PolizaInteresDevengado" + global.formatearFecha(dtfFecha.selectedDate,"DDMMMYYYY"));		
 			}
 			
 			private function formatearInfo():void{
@@ -111,7 +111,7 @@
 			private function limpiar():void{
 				var fec:Date;
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 				
 			private function validar():Boolean{

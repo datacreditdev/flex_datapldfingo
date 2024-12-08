@@ -206,7 +206,7 @@
 					var ciclo:String = dgAcred.selectedItem.CICLO;
 					var coord:String = dgAcred.selectedItem.CDGCO;
 					var cuenta:String = txtCodCuenta.text;
-					var fecha:String = global.formatoFecha(global.obtenerFechaSistema());
+					var fecha:String = global.formatearFecha(global.obtenerFechaSistema());
 					var chqIni:String = txtChqIni.text;
 					var chqFin:String = txtChqFin.text;
 					formateaRegAcred();
@@ -332,7 +332,7 @@
 				titulo = "Impresión de Cheques";
 				lblTitulo.text = titulo.toUpperCase();
 				var fec:Date = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 	
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 	
 			}
 			
 			public function initConexion():void{				

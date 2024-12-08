@@ -157,7 +157,7 @@
 	            if(fileData != null && fileData.length > 0){
 	            	excelFile.loadFromByteArray(fileData);
 	                var sheet:Sheet = excelFile.sheets[0];
-	                if(sheet!=null){
+	                if(sheet != null){
 	            	    numFilas = sheet.rows;
 	                    numCol = sheet.cols;
 	                    for(var row:int = 1; row < numFilas; row++){
@@ -193,13 +193,13 @@
             if(index == 0)
                 cellObject.NOPAGO = cellValue;
             else if(index == 1)
-                cellObject.FECHA = global.formatoFechaExcel(Number(cellValue));
+                cellObject.FECHA = global.formatearFechaExcel(Number(cellValue));
             else if(index == 2)
-                cellObject.IMPORTE = global.formatoDecimalSinSep(cellValue);
+                cellObject.IMPORTE = global.formatearDecimalSinSep(cellValue);
             else if(index == 3)
-                cellObject.CAPITAL = global.formatoDecimalSinSep(cellValue);
+                cellObject.CAPITAL = global.formatearDecimalSinSep(cellValue);
             else if(index == 4)
-                cellObject.INTERES = global.formatoDecimalSinSep(cellValue);               
+                cellObject.INTERES = global.formatearDecimalSinSep(cellValue);               
         }
         
         private function complete(event:Event):void {

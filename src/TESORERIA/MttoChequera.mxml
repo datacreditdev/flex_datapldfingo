@@ -156,7 +156,7 @@
 			public function registraInfoChq():void{
 				tipoAccion = 1;
 				this.title = "Nuevo";
-				txtFecha.text = global.formatoFechaSep(global.obtenerFechaSistema(),"/");
+				txtFecha.text = global.formatearFechaSep(global.obtenerFechaSistema(),"/");
 				chkEstatus.selected = true;
 				chkEstatus.enabled = false;
 			} 

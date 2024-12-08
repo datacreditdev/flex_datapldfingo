@@ -58,7 +58,7 @@
 					
 					saldo = total - pagado
 					
-					lblSaldo.text = "SALDO: " + global.formatoMoneda(saldo.toString());
+					lblSaldo.text = "SALDO: " + global.formatearMoneda(saldo.toString());
 				});
 				params[0] = this.grupo;
 				params[1] = this.ciclo;
@@ -75,7 +75,7 @@
 				n = ArrPagos.length;
 				
 				for(var i:int = 0; i < n; i++){
-					ArrPagos[i].MONTO = global.formatoDecimal(ArrPagos[i].MONTO);
+					ArrPagos[i].MONTO = global.formatearDecimal(ArrPagos[i].MONTO);
 				} 
 				
 				du.initWsCat(wsCat);
@@ -110,7 +110,7 @@
 				for(var i:int = 0; i < cont; i++){
 					var oItem:Object = new Object();
 					oItem.FECHA = _xmlCuenta.Table[i].FECHA;
-					oItem.MONTO = global.formatoDecimal(_xmlCuenta.Table[i].CANTIDAD);
+					oItem.MONTO = global.formatearDecimal(_xmlCuenta.Table[i].CANTIDAD);
 					oItem.IND = false;
 					ArrPagos.addItem(oItem);
 				}

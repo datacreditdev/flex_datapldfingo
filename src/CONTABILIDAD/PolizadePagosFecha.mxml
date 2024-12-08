@@ -39,7 +39,7 @@
 				dgE.setIsXls(true);
 				dgE.hideHeader(true);
 				//dgE.loadDGInExcel(dgReporte, null, "PolizaPagos" + global.formatoFecha(dtfFecFin.selectedDate,"DDMMMYYYY"));
-				dgE.loadDGInExcel(dgReporte, null, "PolizaPagos" + global.formatoFecha(dtfFecFin.selectedDate,"DDMMMYYYY"));		
+				dgE.loadDGInExcel(dgReporte, null, "PolizaPagos" + global.formatearFecha(dtfFecFin.selectedDate,"DDMMMYYYY"));		
 			}
 			
 			private function formatearInfo():void{
@@ -114,8 +114,8 @@
 			private function limpiar():void{
 				var fec:Date;
 				fec = global.obtenerFechaSistema();
-				dtfFecIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-				dtfFecFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecIni.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecFin.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 				
 			private function validar():Boolean{

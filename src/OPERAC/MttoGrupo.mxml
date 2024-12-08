@@ -139,7 +139,7 @@
 				formDGGrupo.cboCoordinacion.addEventListener(ListEvent.CHANGE, selecCoord);
 				info = new DatosGrupo();
 		
-				info.fecha = global.formatoFecha(fecha);
+				info.fecha = global.formatearFecha(fecha);
 					
 				formDGGrupo.init(info, tipoAccion);	
 				//formLugarGrupo.init(info, tipoAccion);

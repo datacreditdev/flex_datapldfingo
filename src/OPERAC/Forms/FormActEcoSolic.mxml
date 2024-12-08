@@ -172,7 +172,7 @@
 				comMttoProy.currentState = "individual";
 				comMttoProy.addEventListener(Event.REMOVED_FROM_STAGE, actualizaProy);
 				PopUpManager.centerPopUp(comMttoProy);
-				fecha = global.formatoFecha(global.obtenerFechaSistema());
+				fecha = global.formatearFecha(global.obtenerFechaSistema());
 				comMttoProy.init("", "", cdgAcred, acred, fecha, proyObj);		
 			}
 	]]>

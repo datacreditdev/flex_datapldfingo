@@ -11,6 +11,8 @@ package Data
 		public var fecha:String;
 		public var alias:String;
 		public var arrCuentas:Array;
+		public var arrSecAcred:Array;
+		public var arrAcred:Array;
 		public var guarda:Boolean;
 		
 		public function DatosSuplemento()

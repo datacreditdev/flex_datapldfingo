@@ -99,8 +99,8 @@
 				du = new Utils();
 				titulo = "Póliza de Desembolso";
 				lblTitulo.text = titulo.toUpperCase();
-				cboAnio.dataProvider = global.formateaAnio();
-				cboMes.dataProvider = global.formateaMes();
+				cboAnio.dataProvider = global.formatearAnio();
+				cboMes.dataProvider = global.formatearMes();
 				limpiar();
 			}		
 			

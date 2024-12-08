@@ -38,7 +38,7 @@
 			var conv:Number;
 			if(txtMonto.text != "" && txtCambio.text != ""){
 				conv = Number(txtMonto.text) * Number(txtCambio.text);
-				lblMontoConv.text = global.formatoMoneda(conv.toString());
+				lblMontoConv.text = global.formatearMoneda(conv.toString());
 			}
 			else
 				lblMontoConv.text = "";

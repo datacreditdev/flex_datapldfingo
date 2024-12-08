@@ -136,15 +136,15 @@
 	            var noOfRows:int;
 	            var noOfColumns:int;
 	            
-	            if(fileData!=null && fileData.length > 0){
+	            if(fileData != null && fileData.length > 0){
 	            	excelFile.loadFromByteArray(fileData);
 	                var sheet:Sheet = excelFile.sheets[0];
-	                if(sheet!=null){
+	                if(sheet != null){
 	            	    noOfRows = sheet.rows;
 	                    noOfColumns = sheet.cols;
-	                    for(var row:int = 1; row<noOfRows;row++){
+	                    for(var row:int = 1; row < noOfRows; row++){
 	                	    var cellObject:Object ={};
-	                        for(var col:int=0; col<noOfColumns; col++){
+	                        for(var col:int = 0; col < noOfColumns; col++){
 	                    	    var cell:Cell = new Cell();
 	                            var cellValue:String = new String();
 	                            cell = sheet.getCell(row,col);
@@ -180,7 +180,7 @@
             else if(index == 2)
                 cellObject.CICLO = cellValue;
             else if(index == 3)
-                cellObject.INICIO = global.formatoFechaExcel(Number(cellValue));
+                cellObject.INICIO = global.formatearFechaExcel(Number(cellValue));
             else if(index == 4)
                 cellObject.TIPOMOV = cellValue;               
         }
@@ -272,7 +272,7 @@
 		private function limpiar():void{
 			var fec:Date;
 			fec = global.obtenerFechaSistema();
-			dtFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 
+			dtFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 
 			dgInfo.dataProvider = null;	
 			infoObj = new ArrayCollection();
 			txtArchivo.text = "";	

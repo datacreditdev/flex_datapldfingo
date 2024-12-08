@@ -129,6 +129,7 @@
 				
 				du.initWsCat(wsCat);
 				du.sCursor();
+			 	
 			 	if(tipo == 1)
 			 		global.bloquear();
 			 		
@@ -146,7 +147,7 @@
 							dgSolic.validateNow();
 							dgSolic.verticalScrollPosition = vScroll;
 							dgSolic.selectedIndex = indSolic;
-							this.accionSolic = 0;
+							accionSolic = 0;
 						}
 						activarContGarantia(true);
 					}
@@ -168,9 +169,15 @@
 					Alert.show("No es posible eliminar la solicitud.\n\nVerifique la situación que presenta la misma", "Mantenimiento de Solicitud", 4,null,null,global.iInfo);
 			}
 			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
+			}
+			
 			public function iniVar():void{
 				this.indSolic = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -393,8 +400,8 @@
 					<mx:DataGridColumn headerText="FECHA DE ENTREGA" dataField="FECENTRE" width="140"/>
 					<mx:DataGridColumn headerText="AUTORIZADO" dataField="FAUTORCRR" width="100"/>
 					<mx:DataGridColumn headerText="DURACION" dataField="DURACION" width="80"/>
-					<mx:DataGridColumn headerText="MONTO SOLICITADO" dataField="CANTSOLIC" width="140"/>
-					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="140"/>
+					<mx:DataGridColumn headerText="MONTO SOLICITADO" dataField="CANTSOLIC" width="140" labelFunction="formatearMontoGrid"/>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="140" labelFunction="formatearMontoGrid"/>
 					<mx:DataGridColumn headerText="SITUACION" dataField="NSOLICITUD" width="100"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>
@@ -418,8 +425,8 @@
 					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="180"/>
 					<mx:DataGridColumn headerText="PROYECTO DE INVERSION" dataField="NOMBRE" width="120"/>
 					<mx:DataGridColumn headerText="FECHA SOL." dataField="FECSOL" width="65"/>
-					<mx:DataGridColumn headerText="MONTO SOL." dataField="CANTSOLIC" width="65"/>
-					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="100"/>
+					<mx:DataGridColumn headerText="MONTO SOL." dataField="CANTSOLIC" width="65" labelFunction="formatearMontoGrid"/>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="100" labelFunction="formatearMontoGrid"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>

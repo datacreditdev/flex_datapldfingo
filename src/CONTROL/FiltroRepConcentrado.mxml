@@ -180,8 +180,8 @@
 						fecFin = new Date(fecAux.getFullYear(),fecAux.getMonth(),fecAux.getDate() + periodo);
 					}
 					fecIni = new Date(fecFin.getFullYear(),fecFin.getMonth(),fecFin.getDate() - 6);
-					fecha = "&fecha=" + global.formatoFechaSep(fecIni, "-");
-					fechaFin = "&fechaFin=" + global.formatoFechaSep(fecFin, "-");
+					fecha = "&fecha=" + global.formatearFechaSep(fecIni, "-");
+					fechaFin = "&fechaFin=" + global.formatearFechaSep(fecFin, "-");
 					
 					if(currentState == null)
 						consulta = global.urlPdf + id + fecha + fechaFin + usuario + nomUsuario + coord + asesor;

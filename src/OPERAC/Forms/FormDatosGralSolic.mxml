@@ -165,7 +165,7 @@
 						}	
 						else{
 							fec = global.obtenerFechaSistema();
-							fecEnt = global.seleccionaDiaHabilPost(new Date(fec.getFullYear(),fec.getMonth(),fec.getDate() + diasFecEnt));
+							fecEnt = global.seleccionarDiaHabilPost(new Date(fec.getFullYear(),fec.getMonth(),fec.getDate() + diasFecEnt));
 									
 							dtfSolicitud.selectedDate = fec;
 							dtfEntrega.selectedDate = fecEnt;
@@ -186,9 +186,9 @@
 			}	
 			
 			public function validaEntrega():void{
-				var fecAct:String = global.formatoFechaYYYYMMDD(global.obtenerFechaSistema());
-				var fecEnt:String = global.formatoFechaYYYYMMDD(dtfEntrega.selectedDate);
-				var fecSol:String = global.formatoFechaYYYYMMDD(dtfSolicitud.selectedDate);
+				var fecAct:String = global.formatearFechaYYYYMMDD(global.obtenerFechaSistema());
+				var fecEnt:String = global.formatearFechaYYYYMMDD(dtfEntrega.selectedDate);
+				var fecSol:String = global.formatearFechaYYYYMMDD(dtfSolicitud.selectedDate);
 				if (fecEnt < fecAct){
 					Alert.show("La fecha de entrega debe ser igual o posterior a la fecha actual","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 					if(fecAct > fecSol)
@@ -213,7 +213,7 @@
 			}
 			
 			public function validaSolicitud():void{
-				if(global.formatoFechaYYYYMMDD(dtfEntrega.selectedDate) < global.formatoFechaYYYYMMDD(dtfSolicitud.selectedDate)){	
+				if(global.formatearFechaYYYYMMDD(dtfEntrega.selectedDate) < global.formatearFechaYYYYMMDD(dtfSolicitud.selectedDate)){	
 					Alert.show("La fecha de solicitud debe ser inferior o igual a la fecha de entrega","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 					dtfSolicitud.selectedDate = dtfEntrega.selectedDate;
 				}

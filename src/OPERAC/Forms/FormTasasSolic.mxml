@@ -24,8 +24,8 @@
 			import mx.utils.ArrayUtil;
 			import mx.validators.Validator;
 			
-			private var _xmlMetCob:XML =  new XML();
-			private var _xmlDistInt:XML =  new XML();
+			private var _xmlMetCob:XML = new XML();
+			private var _xmlDistInt:XML = new XML();
 		
 			public var metCobObj:ArrayCollection = new ArrayCollection();
 			public var distIntObj:ArrayCollection = new ArrayCollection();
@@ -216,8 +216,7 @@
 			}	
 	]]>
 	</mx:Script>
-	
-	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
+	<mx:NumberValidator id="numVal" property="text" precision="6" required="false"
         allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
 	
 	<mx:Canvas id="cnvMetodoCobro" x="105" y="7" width="500" height="75" styleName="canvasMod">

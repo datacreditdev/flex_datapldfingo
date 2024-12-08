@@ -95,9 +95,9 @@ package Data
 		public var frm_117:OperacionesRelevantes;
 		public var frm_118:RegistrodeGarantias;
 		public var frm_119:CreditoRevolvente;
-		public var frm_120:EvaluaciondeDisposicionesIndividuales;
-		public var frm_121:EntregadeDisposicionesIndividuales;
-		public var frm_122:SolicituddePrestamosRevolventes;
+		public var frm_120:EvaluaciondeDisposicionRevolvente;
+		public var frm_121:EntregadeDisposicionRevolvente;
+		public var frm_122:SolicituddeDisposicionRevolvente;
 		public var frm_123:ImpresiondeChequesdeDisposicion;
 		public var frm_124:KYCPersonasPFyPM;
 		public var frm_125:AjustesdeComisionySeguro;
@@ -134,6 +134,8 @@ package Data
 		public var frm_153:ReportedeOperacionesIndPorMonto;
 		//public var frm_154:ReporteOperacionesRelevantes;
 		public var frm_154:ReporteHistoricodeAlertas;
+		public var frm_155:AjustesdeDevengodeInteres;
+		public var frm_156:ModificaciondeTasadeInteres;
 		
 		public function Modulo()
 		{

@@ -38,11 +38,11 @@
 				
 				if(chkFecha.selected == true){
 					tipo = 2;
-					fecha = global.formatoFechaSep(dtfFecha.selectedDate,"/");	
+					fecha = global.formatearFechaSep(dtfFecha.selectedDate,"/");	
 				}
 				else{
 					tipo = 1;
-					fecha = global.formatoFechaSep(global.obtenerFechaSistema(),"/");
+					fecha = global.formatearFechaSep(global.obtenerFechaSistema(),"/");
 				}
 				
 				initConexion();
@@ -65,7 +65,7 @@
 						dgReporte.dataProvider = _xmlRep.Table;
 						for(i = 0; i < cont; i++)
 							cantidad += Number(_xmlRep.Table[i].FALTANTE);
-						lblTotal.text = cont + " Registros. Total Faltante $" + global.formatoEntero(cantidad.toString());   
+						lblTotal.text = cont + " Registros. Total Faltante $" + global.formatearEntero(cantidad.toString());   
 					}
 					else{
 						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
@@ -95,7 +95,7 @@
 				btnExportar.enabled = false;
 				lblTotal.text = "";
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 			}
 				
 			public function valida():Boolean{

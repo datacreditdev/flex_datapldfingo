@@ -28,10 +28,10 @@
 			private var repObj:ArrayCollection;
 			
 			public var wsRep:WebService;
-			public var du:Utils;
 			public var titulo:String;
 			public var fecha:String;
 			public var fechaFin:String;
+			private var du:Utils;
 			private var global:Globales;	
 			
 			public function exportar():void{
@@ -49,7 +49,7 @@
 					
 			public function generar(event:Event):void{
 				var obj:FiltroRepPrestamos = event.target as FiltroRepPrestamos;
-				if(obj.valida() == true){				
+				if(obj.valida()){				
 			
 					initConexion();
 					du.sCursor();
@@ -94,7 +94,7 @@
 				<mx:DataGridColumn headerText="PERIODICIDAD" dataField="PERIODICIDAD"/>
 				<mx:DataGridColumn headerText="FIN CICLO" dataField="FIN"/>
 				<mx:DataGridColumn headerText="TASA" dataField="TASA"/>
-				<mx:DataGridColumn headerText="PARCIALIDAD" dataField="PARCIALIDAD"/>
+				<mx:DataGridColumn headerText="MONEDA" dataField="MONEDA"/>
 				<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION"/>
 				<mx:DataGridColumn headerText="CANT AUTORIZADA" dataField="CANT_AUTOR"/>
 				<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANT_ENTRE"/>

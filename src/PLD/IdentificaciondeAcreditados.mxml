@@ -17,11 +17,9 @@
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;	
 			import mx.events.ValidationResultEvent;
-			import mx.formatters.NumberFormatter;
-			import mx.formatters.SwitchSymbolFormatter;
 			import mx.managers.PopUpManager;
-			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
 			import mx.rpc.Fault;
 			import mx.rpc.soap.WebService;
 
@@ -40,8 +38,8 @@
 			
 			public function activarContAcred(band:Boolean):void{
 				txtCodAcred.editable = band;
-				txtPaterno.editable = band;
-				txtMaterno.editable = band
+				txtNombre.editable = band;
+				txtPaterno.editable = band
 				btnBuscar.enabled = band;
 			}
 			
@@ -52,20 +50,20 @@
 			//FUNCION QUE SE ENCARGA DE BUSCAR LOS REGISTROS QUE COINCIDEN CON LOS CRITERIOS 
 			//DE BUSQUEDA SELECCIONADOS
 			public function buscarAcred():void{
-				var wsCat:WebService = new WebService;
+				var wsCatPLD:WebService = new WebService;
 				var params:Array = new Array;
-				if (txtCodAcred.text != "" || txtPaterno.text != "" || txtMaterno.text != ""){
+				if (txtCodAcred.text != "" || txtNombre.text != "" || txtPaterno.text != ""){
 					btnBuscar.setFocus();
 					dgAcred.dataProvider = null;
 					
-					du.initWsCat(wsCat);
+					du.initWsCatPLD(wsCatPLD);
 					du.sCursor();
 					global.bloquear();
 					
-					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					du.ejecutaWsMethod(wsCatPLD,function(evt:ResultEvent):void {											
 						_xmlAcred = new XML(evt.result);
 						
-						du.closeWs(wsCat);
+						du.closeWs(wsCatPLD);
 						du.rCursor();
 						global.desbloquear();
 						
@@ -75,15 +73,15 @@
 					});
 					params[0] = global.obtenerUsuario();
 					params[1] = txtCodAcred.text; 
-					params[2] = txtPaterno.text;
-					params[3] = txtMaterno.text;
-					wsCat.getInfoAcred.send(7, params);
+					params[2] = txtNombre.text;
+					params[3] = txtPaterno.text;
+					wsCatPLD.getInfoAcredPLD.send(1, params);
 				}
 			}
 
 			public function iniVar():void{
 				this.indAcred = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -93,16 +91,10 @@
 				lblTitulo.text = titulo.toUpperCase();
 			}
 			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}			
-			
 			public function limpiarContAcred():void{
 				txtCodAcred.text = "";
+				txtNombre.text = "";
 				txtPaterno.text = "";
-				txtMaterno.text = "";
 			}
 			
 			public function mostrarFormAcred(tipo:int):void{
@@ -123,7 +115,7 @@
 					comMttoAcredInd.cargaInfoAcred(acred);
 				}
 				else
-					Alert.show("Debe seleccionar el registro de Acreditado","Mantenimiento de Acreditado",4,null,null,global.iAlert);	
+					Alert.show("Debe seleccionar el registro de Acreditado",titulo,4,null,null,global.iAlert);	
 			}
 		]]>
 	</mx:Script>
@@ -134,12 +126,10 @@
 				doubleClickEnabled="true" doubleClick="mostrarFormAcred(2)" horizontalScrollPolicy="auto"> 
 				<Data:columns>
 					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60"/>
-					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="250"/>
-					<mx:DataGridColumn headerText="SUCURSAL" dataField="COORD" width="100"/>
-					<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="200"/>
-					<mx:DataGridColumn headerText="TIPO" dataField="TIPOPREST" width="50"/>
-					<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="60"/>
-					<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="170"/>
+					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="300"/>
+					<mx:DataGridColumn headerText="OFICINA" dataField="COORD" width="90"/>
+					<mx:DataGridColumn headerText="NOMBRE OFICINA" dataField="NOMCO" width="200"/>
+					<mx:DataGridColumn headerText="TIPO" dataField="TIPOPREST" width="90"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
@@ -148,12 +138,12 @@
 			<mx:Button id="btnBuscar" x="12" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarAcred()" toolTip="Buscar Acreditado" width="40"/>
 		</mx:Canvas>
 		<mx:Canvas x="82.75" y="39" width="607.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Label id="lblCodAcred" x="8" y="8" text="CODIGO:" width="53"/>
-			<mx:Label id="lblPaterno" x="128" y="8" text="APELLIDO PATERNO:" width="116" height="18"/>
-			<mx:TextInput id="txtPaterno" x="245" y="5" width="110" enter="buscarAcred()" maxChars="50"/>
-			<mx:TextInput id="txtMaterno" x="482" y="5" width="110" enter="buscarAcred()" maxChars="50"/>
+			<mx:Label id="lblCodAcred" x="8" y="8" text="Código:"/>
+			<mx:Label id="lblNombre" x="128" y="8" text="Nombre/Razón Social:"/>
+			<mx:TextInput id="txtNombre" x="245" y="5" width="135" enter="buscarAcred()" maxChars="50"/>
+			<mx:TextInput id="txtPaterno" x="482" y="5" width="110" enter="buscarAcred()" maxChars="50"/>
 			<mx:TextInput id="txtCodAcred" x="62" y="5" width="56" enter="buscarAcred()" maxChars="6" restrict="0-9"/>
-			<mx:Label id="lblMaterno" x="364" y="8" text="APELLIDO MATERNO:" width="116" height="18"/>
+			<mx:Label id="lblMaterno" x="390" y="8" text="Apellido Paterno:"/>
 		</mx:Canvas>
 	</mx:Canvas>
 </mx:Canvas>

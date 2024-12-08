@@ -42,7 +42,6 @@
 			public var dpAcred:XMLList = new XMLList();
 			private var _xmlAcred:XML =  new XML();
 			
-			public var wsMS:WebService;
 			public var rep:String;
 			public var titulo:String;
 			private var du:Utils;
@@ -111,13 +110,7 @@
 				global = new Globales();
 				du = new Utils();
 			}		
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}	
-		
+	
 			public function limpiar():void{
 				var fec:Date;
 				txtAcred.text = "";
@@ -125,7 +118,7 @@
 				txtAcred.setFocus();
 				fec = global.obtenerFechaSistema();
 				if(currentState == "fecha")
-					dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 
+					dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 
 				dispatchEvent(new Event("limpiar"));
 			}
 				
@@ -139,6 +132,14 @@
 					return false;
 				}
 				return true;
+			}
+			
+			public function obtenerAcred():String{
+				return txtAcred.text;
+			}
+			
+			public function obtenerCiclo():String{
+				return txtCiclo.text;
 			}
 		]]>
 	</mx:Script>

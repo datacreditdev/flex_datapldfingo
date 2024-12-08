@@ -14,21 +14,20 @@
 	
 	<mx:Script>
 		<![CDATA[
-			import mx.messaging.channels.StreamingAMFChannel;
 			import Data.ExcelExportXls;
-			import mx.collections.ArrayCollection;
 			import Data.Globales;
 			import Data.Utils;
-			import mx.core.Application;
-			import mx.containers.TitleWindow;	
-			import mx.validators.Validator;		
-			import mx.managers.PopUpManager;
+			import mx.collections.ArrayCollection;
+			import mx.containers.TitleWindow;
 			import mx.controls.Alert;
+			import mx.core.Application;
 			import mx.effects.easing.Elastic;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;
 			
 			[Bindable]
 			private var _xmlReg:XML =  new XML();
@@ -201,11 +200,11 @@
 				cboAsesor.dataProvider = asesorObj;
 				cargaRegion();		
 				fec = global.obtenerFechaSistema();
-				dtfIniDesde.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-				dtfIniHasta.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfIniDesde.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfIniHasta.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				dtfFinDesde.selectedDate = null;
 				dtfFinHasta.selectedDate = null;
-				dtfPagos.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfPagos.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				chkSitSaldo.selected = true;
 				chkSitCart.selected = false;
 				chkSitTes.selected = false;

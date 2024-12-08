@@ -93,8 +93,8 @@
 				btnExportar.enabled = false;
 				lblTotal.text = "";
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-				dtfFechaFinal.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFechaFinal.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 			
 			private function valida():Boolean{
@@ -110,7 +110,7 @@
 			}
 			
 			private function validaFecha():void{
-				dtfFecha.selectedDate = global.validaFecha(dtfFecha.selectedDate, dtfFechaFinal.selectedDate,titulo);
+				dtfFecha.selectedDate = global.validarFecha(dtfFecha.selectedDate, dtfFechaFinal.selectedDate,titulo);
 			}
 		]]>
 	</mx:Script>

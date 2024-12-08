@@ -194,7 +194,7 @@
 							secPago = _xmlGrupo.Table[0].SECPAGO;
 							estatus = _xmlGrupo.Table[0].ESTATUS;
 					
-							lblInfoGL.text = global.formatoMoneda(_xmlGrupo.Table[0].SALDOGL);
+							lblInfoGL.text = global.formatearMoneda(_xmlGrupo.Table[0].SALDOGL);
 							
 							txtCodCuenta.editable = true;
 							btnBusqCta.visible = true;
@@ -376,7 +376,7 @@
 				titulo = "Devolución de Garantía";
 				lblTitulo.text = titulo.toUpperCase();
 				var fec:Date = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
 				
 				/*du.initWsCat(wsCat);
 				du.sCursor();

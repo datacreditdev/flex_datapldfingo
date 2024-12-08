@@ -5,6 +5,7 @@
 	
 	<mx:Metadata>
 		[Event(name="enviar", type="enviar")]
+		[Event(name="limpiar", type="limpiar")]
 	</mx:Metadata>
 	
 	<mx:Script>
@@ -72,6 +73,7 @@
 			public function limpiar():void{
 				txtAcred.text = "";
 				txtAcred.setFocus();
+				dispatchEvent(new Event("limpiar"));
 			}
 			
 			public function obtenerCodigo():String{

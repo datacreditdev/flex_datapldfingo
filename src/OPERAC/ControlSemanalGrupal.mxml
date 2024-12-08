@@ -187,6 +187,8 @@
 			
 			private var vResult:ValidationResultEvent;
 			
+			private var du:Utils;
+			private var global:Globales;
 			public var wsMS:WebService;
 			public var bandMod:Boolean;	
 			public var tipoAccion:int;
@@ -195,8 +197,6 @@
 			public var coord:String;
 			public var grupo:String;
 			public var titulo:String;
-			public var du:Utils;
-			private var global:Globales;
 			public var openEffect:Effect = new Fade();
 			
 			public function actualizaPagoReal(event:Event):void{
@@ -278,7 +278,7 @@
 					pagoTeo = Number(acred[i].pagoTeo);
 					pagoReal = Number(acred[i].pagoReal);
 					dif = pagoTeo - pagoReal;
-					acredObj[i].diferencia = global.formatoDecimalSinSep(dif.toString());
+					acredObj[i].diferencia = global.formatearDecimalSinSep(dif.toString());
 				}
 				dgAcred.validateNow();
 				dgAcred.selectedItem = indAcred;
@@ -298,7 +298,7 @@
 			public function calculaMora():void{
 				var mora:Number = 0;
 				mora = Number(txtPagoTeo.text) - Number(txtPagoReal.text) - Number(txtAport.text);
-				txtMora.text = global.formatoDecimalSinSep(mora.toString());	
+				txtMora.text = global.formatearDecimalSinSep(mora.toString());	
 			}
 			
 			public function calculaPagoReal():void{
@@ -319,7 +319,7 @@
 				for(var i:int = 0; i < acred.length; i++){
 					pagoTeo += Number(acred[i].pagoTeo);
 				}
-				txtPagoTeo.text = global.formatoDecimalSinSep(pagoTeo.toString());
+				txtPagoTeo.text = global.formatearDecimalSinSep(pagoTeo.toString());
 			}
 			
 			public function calculaAhorro():void{
@@ -330,23 +330,6 @@
 					ahorro += Number(acred[i].ahorro);
 				}
 				txtAhorro.text = ahorro.toString();	
-			}
-			
-			public function cargaCiclo():void{
-				var wsMS:WebService = new WebService();
-				wsMS = du.initWsMS(wsMS);
-				du.sCursor();
-					
-				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
-					var ciclo:String = evt.result.toString();
-					
-					du.rCursor();
-					du.closeWs(wsMS);
-					
-					txtCiclo.text = ciclo;
-					wsMS = null; 	
-				});
-				wsMS.getNvoCicloSolicESIA.send(grupo);		
 			}
 			
 			public function cerrar():void{

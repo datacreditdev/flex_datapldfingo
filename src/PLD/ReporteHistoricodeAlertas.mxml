@@ -5,51 +5,48 @@
 	<mx:Script>
 		<![CDATA[
 		
+		import Data.ExcelExportXls;
 		import Data.Globales;
 		import Data.Utils;
-		import Data.ExcelExportXls;
 		import mx.collections.ArrayCollection;
 		import mx.controls.Alert;
 		import mx.core.Application;
 		import mx.effects.*;
 		import mx.events.CloseEvent;
 		import mx.events.EffectEvent;
-		import mx.events.ValidationResultEvent;
 		import mx.managers.PopUpManager;
 		import mx.rpc.events.ResultEvent;
 		import mx.rpc.soap.WebService;
-		import mx.rpc.xml.SimpleXMLDecoder;
 		import mx.utils.ArrayUtil;  
-		import mx.validators.Validator;	
 		
 		private var _xmlInfo:XML = new XML();
 		
 		public var infoObj:ArrayCollection = new ArrayCollection();
 		
-		private var global:Globales;
-		private var du:Utils;
 		public var wsMS:WebService;	
 		public var tipoAccion:int;
 		public var titulo:String;
 		public var texto:String;
 		public var control:Number;
-		private var vResult:ValidationResultEvent;
-	
+		private var du:Utils;
+		private var global:Globales;
+		
 		private function consultar():void{		
 			var cont:int;	 
 			var fecIni:String = dtfFecIni.text;
 			var fecFin:String = dtfFecFin.text;
+			var wsRepPLD:WebService = new WebService;
 			
-			initConexionRep();
+			du.initWsRepPLD(wsRepPLD);
 			du.sCursor();
 			global.bloquear();
 			
 			dgReg.dataProvider = null;
 			
-			du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+			du.ejecutaWsMethod(wsRepPLD,function(evt:ResultEvent):void {											
 				_xmlInfo = new XML(evt.result.toString());
 					
-				du.closeWs(wsMS);
+				du.closeWs(wsRepPLD);
 				du.rCursor();
 				global.desbloquear();
 					
@@ -65,7 +62,12 @@
 					lblTotal.text = "";
 				}
 			});			
-			wsMS.getRepAnalisisAlertas.send(fecIni, fecFin);
+			wsRepPLD.getRepAnalisisAlertas.send(fecIni, fecFin);
+		}
+		
+		private function exportar():void{
+			var dgE:ExcelExportXls = new ExcelExportXls(); 
+			dgE.loadDGInExcel(dgReg,null, titulo);		
 		}
 	
 		private function formateaInfo():void{
@@ -104,31 +106,19 @@
 			limpiar();
 		}		
 				
-		private function initConexionRep():void{				
-			wsMS = new WebService();			
-			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
-			wsMS.loadWSDL();
-		}
-		
 		private function limpiar():void{
 			var fec:Date;
 			fec = global.obtenerFechaSistema();
-			dtfFecIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-			dtfFecFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			dtfFecIni.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+			dtfFecFin.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			dgReg.dataProvider = null;
 			lblTotal.text = "";
 		}
 			
-		private function exportar():void{
-			var dgE:ExcelExportXls = new ExcelExportXls(); 
-			dgE.loadDGInExcel(dgReg,null, titulo);		
-		}
+		
 		
 		]]>
 	</mx:Script>
-	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
-        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
-	
 	<mx:Canvas width="800" height="460" backgroundColor="#ffffff" backgroundAlpha="1.0" id="canvas1">
 		<mx:Canvas id="cnvFondeo" x="21" y="55" width="375" height="48" styleName="canvasMod">
 			<mx:Label id="lblFecIni" x="14" y="12" text="Fecha Inicial:"/>

@@ -170,7 +170,7 @@
 		
 		private function validaFechaAut():void{
 			if(dtfDesde.text != "")
-				dtfAutorizado.selectedDate = global.validaFecha(dtfAutorizado.selectedDate, dtfDesde.selectedDate, titulo);
+				dtfAutorizado.selectedDate = global.validarFecha(dtfAutorizado.selectedDate, dtfDesde.selectedDate, titulo);
 		}
 		
 		private function validaFechaIni():void{
@@ -179,7 +179,7 @@
 				dtfDesde.selectedDate = dtfAutorizado.selectedDate;
 			}	
 			if(dtfHasta.text != "")
-				dtfDesde.selectedDate = global.validaFecha(dtfDesde.selectedDate, dtfHasta.selectedDate, titulo);
+				dtfDesde.selectedDate = global.validarFecha(dtfDesde.selectedDate, dtfHasta.selectedDate, titulo);
 		}
 		
 		private function validaFechaFin():void{
@@ -188,7 +188,7 @@
 				dtfHasta.selectedDate = dtfDesde.selectedDate;
 			}	
 			if(dtfFecLim.text != "")
-				dtfHasta.selectedDate = global.validaFecha(dtfHasta.selectedDate, dtfFecLim.selectedDate, titulo);
+				dtfHasta.selectedDate = global.validarFecha(dtfHasta.selectedDate, dtfFecLim.selectedDate, titulo);
 		}
 		
 		private function validaFechaFinCred():void{

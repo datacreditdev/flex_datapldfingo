@@ -12,12 +12,10 @@
 		import mx.effects.*;
 		import mx.events.CloseEvent;
 		import mx.events.EffectEvent;
-		import mx.events.ValidationResultEvent;
 		import mx.managers.PopUpManager;
 		import mx.rpc.events.ResultEvent;
 		import mx.rpc.soap.WebService;
-		import mx.utils.ArrayUtil;  
-		import mx.validators.Validator;	
+		import mx.utils.ArrayUtil;
 		
 		private var _xmlInfo:XML = new XML();
 		private var _xmlMoneda:XML =  new XML();
@@ -27,44 +25,69 @@
 		public var monedaObj:ArrayCollection = new ArrayCollection();
 		public var monedaExtObj:ArrayCollection = new ArrayCollection();
 
-		private var global:Globales;
-		private var du:Utils;
 		public var wsMS:WebService;	
-		public var wsCat:WebService;
 		public var tipoAccion:int;
 		public var titulo:String;
 		public var texto:String;
 		public var control:Number;
 		public var tipoTransac:int;
-		private var vResult:ValidationResultEvent;
+		private var du:Utils;
+		private var global:Globales;
+		
+		public function consultaParametros():void{
+	 	    var wsCatPLD:WebService = new WebService;
+	 	    
+	 	    du.initWsCatPLD(wsCatPLD);
+			du.sCursor();
+					
+			du.ejecutaWsMethod(wsCatPLD,function(evt:ResultEvent):void {											
+				_xmlInfo = new XML(evt.result.toString());
+				
+				du.rCursor();
+				du.closeWs(wsCatPLD);
+				
+				if(_xmlInfo.elements().length() > 0){
+					tipoTransac = 2;
+					txtNumParcial.text = _xmlInfo.Table[0].NUM_PARC;
+					txtMontoDivi.text =	global.formatearDecimal(_xmlInfo.Table[0].MONTO_REF);
+					txtNumTransac.text = _xmlInfo.Table[0].NUM_TRANS;
+					txtEmailCump.text =	_xmlInfo.Table[0].CORREO_OFICIAL;
+					var i:int;
+					var codigo:String;
+					var moneda:String;					
+					
+					for(i = 0; i < (cboMoneda.dataProvider as ArrayCollection).length; i++){
+						codigo = (cboMoneda.dataProvider as ArrayCollection)[i].id ;
+						moneda = _xmlInfo.Table[0].MONEDA; 
+						if(codigo == moneda){
+							 cboMoneda.selectedIndex = i;
+						}						 
+					}
+					for(i = 0; i < (cboMonedaExt.dataProvider as ArrayCollection).length; i++){
+						codigo = (cboMonedaExt.dataProvider as ArrayCollection)[i].id ;
+						moneda = _xmlInfo.Table[0].MONEDA_EXT; 
+						if(codigo == moneda){
+							 cboMonedaExt.selectedIndex = i;
+						}						 
+					}
+				} 	
+				else
+					tipoTransac = 1;			
+			});
+			wsCatPLD.getInfoRegistroPLD.send(3);
+	 	}
 		
 		private function guardarParametros():void{
 			if (validaForm()){
-		     	initConexion();// falta iniciar conexion
+		     	initConexion();
 				du.sCursor();
 				var moneda:String = cboMoneda.selectedItem.id;
 				var moneda_ext:String = cboMonedaExt.selectedItem.id;
 				global.bloquear();
 				wsMS.addEventListener(ResultEvent.RESULT, setAccionParametrosPLD);
-				//setAccionParametrosPLD(string usuario, int tipo,  numParcial, montoRef,  numTrans,  moneda, correo_of,  moneda_ext )
-			    wsMS.setAccionParametrosPLD.send(global.obtenerUsuario(), tipoTransac, txtNumParcial.text, txtMontoDivi.text, txtNumTransac.text,
-			    								 moneda, txtEmailCump.text, moneda_ext);			    								
+				wsMS.setAccionParametrosPLD.send(global.obtenerUsuario(), tipoTransac, txtNumParcial.text, global.formatearNumerico(txtMontoDivi.text), 
+										         txtNumTransac.text, moneda, txtEmailCump.text, moneda_ext);			    								
 			}		    									
-		}
-		
-		 private function setAccionParametrosPLD(event:ResultEvent):void{
-			wsMS.disconnect();
-			du.rCursor();
-			global.desbloquear();
-			wsMS.removeEventListener(ResultEvent.RESULT, setAccionParametrosPLD);
-			wsMS = null;
-			var res:String = event.result.toString();
-			if (res.substr(0,1) == "1"){				 
-				Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);				 		  
-			}	
-			else{
- 				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iError);	
-			 }	
 		}
 		
 		private function formateaMoneda():void {
@@ -72,6 +95,7 @@
 			var oItem:Object;
 			var item:Array = new Array();
 			var itemExt:Array = new Array;
+			
 			oItem = new Object();
 			oItem.id = "";	
 			oItem.nombre = "--Seleccionar--";
@@ -97,16 +121,16 @@
 		}
 		
 		public function initApp():void{
-			wsCat = new WebService();
-			var params:Array = new Array();
-			global = new Globales();
 			du = new Utils();
+			global = new Globales();
 			titulo = "Parámetros PLD";
 			lblTitulo.text = titulo.toUpperCase();
 			llenaCombosMoneda();
 		}
 		
 	 	public function llenaCombosMoneda():void{
+	 	    var wsCat:WebService = new WebService;
+	 	    
 	 	    du.initWsCat(wsCat);
 			du.sCursor();
 					
@@ -128,52 +152,9 @@
 			wsCat.getCatalogoGral.send(14);
 	 	}
 	 	
-	 	public function consultaParametros():void{
-	 	    du.initWsCat(wsCat);
-			du.sCursor();
-					
-			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-				_xmlInfo = new XML(evt.result.toString());
-				
-				du.rCursor();
-				du.closeWs(wsCat);
-				
-				if (_xmlInfo.elements().length() > 0){
-					ExternalInterface.call("console.log", "2 - Sera una Actualizacion "  );
-					tipoTransac = 2;
-					txtNumParcial.text = _xmlInfo.Table[0].NUM_PARC;
-					txtMontoDivi.text =	_xmlInfo.Table[0].MONTO_REF;
-					txtNumTransac.text = _xmlInfo.Table[0].NUM_TRANS;
-					txtEmailCump.text =	_xmlInfo.Table[0].CORREO_OFICIAL;
-					var i:int;
-					var codigo:String;
-					var moneda:String;					
-					
-					for (i = 0; i < (cboMoneda.dataProvider as ArrayCollection).length; i++){
-						codigo = (cboMoneda.dataProvider as ArrayCollection)[i].id ;
-						moneda = _xmlInfo.Table[0].MONEDA; 
-						if(codigo == moneda){
-							 cboMoneda.selectedIndex = i;
-						}						 
-					}
-					for (i = 0; i < (cboMonedaExt.dataProvider as ArrayCollection).length; i++){
-						codigo = (cboMonedaExt.dataProvider as ArrayCollection)[i].id ;
-						moneda = _xmlInfo.Table[0].MONEDA_EXT; 
-						if(codigo == moneda){
-							 cboMonedaExt.selectedIndex = i;
-						}						 
-					}
-				} 	else {
-					ExternalInterface.call("console.log", "1 - Sera una insercion "  );
-					tipoTransac = 1;
-				}				
-			});
-			wsCat.getInfoGeneral.send(14, null);
-	 	}
-		
 		public function initConexion():void{				
 			wsMS = new WebService();			
-			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+			wsMS.wsdl = Application.application.wsStr.wsdlServPLD.toString();
 			wsMS.loadWSDL();
 		}	
 		
@@ -186,28 +167,43 @@
 		 	txtEmailCump.text="";
 		}
 		
+		private function setAccionParametrosPLD(event:ResultEvent):void{
+			wsMS.disconnect();
+			du.rCursor();
+			global.desbloquear();
+			wsMS.removeEventListener(ResultEvent.RESULT, setAccionParametrosPLD);
+			wsMS = null;
+			var res:String = event.result.toString();
+			if (res.substr(0,1) == "1"){				 
+				Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);				 		  
+			}	
+			else{
+ 				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iError);	
+			 }	
+		}
+		
 		private function validaForm():Boolean{
-			if( txtNumParcial.text == ""){
+			if(txtNumParcial.text == ""){
 				Alert.show("El Número de Parcialidades no debe estar vacio.",titulo,4,null,null,global.iAlert);	
 				return false;
 			}
-			else if( txtMontoDivi.text == ""){
+			else if(txtMontoDivi.text == ""){
 				Alert.show("El Monto Divisa no debe estar vacio.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
-			else if( cboMoneda.selectedIndex == 0 ){
+			else if(cboMoneda.selectedIndex == 0 ){
 				Alert.show("Seleccione un tipo de Moneda.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
-			else if( cboMonedaExt.selectedIndex == 0){
+			else if(cboMonedaExt.selectedIndex == 0){
 				Alert.show("Seleccione un tipo de Moneda Extranjera.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
-			else if( txtNumTransac.text == ""){
+			else if(txtNumTransac.text == ""){
 				Alert.show("El Número de Transacciones no debe estar vacio.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
-		 	else if( txtEmailCump.text == ""){
+		 	else if(txtEmailCump.text == ""){
 				Alert.show("El Correo Oficial de Cumplimiento no debe estar vacio.",titulo,4,null,null,global.iAlert);
 				return false;
 			} 	
@@ -216,23 +212,20 @@
 				
 		]]>
 	</mx:Script>
-	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
-        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
-	
 	<mx:Canvas width="420" height="285" backgroundColor="#ffffff" backgroundAlpha="1.0" id="canvas1">
 		<mx:Label id="lblTitulo" x="21" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas x="21" y="39" width="380.5" height="205" styleName="canvasMod">
-			<mx:Label id="lblCodigo" x="18"  y="12" text="Número Parcialidades:"/>
+			<mx:Label id="lblCodigo" x="18" y="12" text="Número Parcialidades:"/>
 			<mx:TextInput id="txtNumParcial" tabIndex="1" x="138" y="10" width="35"/>
-			<mx:Label id="lblNombre" x="61" y="139" text="Monto Divisa:"/>
-			<mx:TextInput id="txtMontoDivi" tabIndex="5"  x="138" y="137" width="96"/>
+			<mx:Label id="lblMontoDivi" x="61" y="139" text="Monto Divisa:"/>
+			<mx:TextInput id="txtMontoDivi" tabIndex="5" x="138" y="137" width="96" restrict="0-9;.;," maxChars="18" focusOut="{global.formatearMonto(event)}"/>
 			<mx:Label id="lblMoneda" x="84" y="77" text="Moneda:"/>
-			<mx:ComboBox id="cboMoneda"  tabIndex="3" x="138" y="74" width="153" labelField="nombre"/>
-			<mx:Label id="lblMonedaExt"  x="31" y="108" text="Moneda Extranjera:" width="101"/>
-			<mx:ComboBox id="cboMonedaExt"  tabIndex="4" x="138" y="105" width="153" labelField="nombre"/>
-			<mx:Label id="lblNumTransac"   x="10" y="44" text="Número Transacciones:"/>
+			<mx:ComboBox id="cboMoneda" tabIndex="3" x="138" y="74" width="153" labelField="nombre"/>
+			<mx:Label id="lblMonedaExt" x="31" y="108" text="Moneda Extranjera:" width="101"/>
+			<mx:ComboBox id="cboMonedaExt" tabIndex="4" x="138" y="105" width="153" labelField="nombre"/>
+			<mx:Label id="lblNumTransac" x="10" y="44" text="Número Transacciones:"/>
 			<mx:TextInput id="txtNumTransac" tabIndex="2" x="138" y="42" width="35"/>
-			<mx:Label id="lblEmailCump"   x="15" y="171" text="Email Of. Cumplimiento:"/>
+			<mx:Label id="lblEmailCump" x="15" y="171" text="Email Of. Cumplimiento:"/>
 			<mx:TextInput id="txtEmailCump" tabIndex="6" x="138" y="169" width="230.5"/>
 		</mx:Canvas>
 		<mx:Button id="btnGuardar"  tabIndex="7" x="331.5" y="252" click="guardarParametros()" label="Guardar"/>

@@ -45,7 +45,7 @@
 				for(var i:int = 0; i < cont; i++){
 					total += Number(pagos[i].cantidad);
 				}
-				lblTotal.text = global.formatoMoneda(total.toString());
+				lblTotal.text = global.formatearMoneda(total.toString());
 			}
 			
 			private function cargaTablaAmort():void{
@@ -85,6 +85,12 @@
 				cerrar();
 			}
 			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
+			}
+			
 			private function formateaTablaAmort():void{
 				var cont:int = _xmlTabla.elements().length();
 				var oItem:Object;
@@ -101,7 +107,7 @@
 					item.push(oItem);
 				}
 				pagos = new ArrayCollection(item);
-				pagos.addEventListener(CollectionEvent.COLLECTION_CHANGE,actualizaTotal);
+				pagos.addEventListener(CollectionEvent.COLLECTION_CHANGE, actualizaTotal);
 			}
 			
 			public function init(codigo:String, nombre:String, ciclo:String, tipoCred:String, editable:Boolean = false):void{
@@ -139,9 +145,9 @@
 			<mx:DataGridColumn headerText="NO." dataField="numero" width="35"/>
 			<mx:DataGridColumn headerText="FECHA PAGO" dataField="fecha" width="110"/>
 			<mx:DataGridColumn headerText="MONEDA" dataField="moneda" width="80"/>
-			<mx:DataGridColumn headerText="CAPITAL" dataField="capital" width="100"/>
-			<mx:DataGridColumn headerText="INTERES" dataField="interes" width="100"/>
-			<mx:DataGridColumn headerText="AMORTIZACION" dataField="cantidad" width="110"/>
+			<mx:DataGridColumn headerText="CAPITAL" dataField="capital" width="100" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="INTERES" dataField="interes" width="100" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="AMORTIZACION" dataField="cantidad" width="110" labelFunction="formatearMontoGrid"/>
 		</mx:columns>
 	</mx:DataGrid>
 	<mx:Canvas styleName="canvasMod" x="466" y="356" width="120" height="37.65">

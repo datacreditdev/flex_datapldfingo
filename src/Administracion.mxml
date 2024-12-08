@@ -329,7 +329,7 @@
 						desbloquear();
 						Application.application.currentState = "Actualiza";
 						txtPwdAnt.setFocus();
-						var ingreso:String = _Ult_Acceso_Fecha != null? "\n\nÚltimo acceso al sistema " + global.formatoFecha(_Ult_Acceso_Fecha)+ "." : "";
+						var ingreso:String = _Ult_Acceso_Fecha != null? "\n\nÚltimo acceso al sistema " + global.formatearFecha(_Ult_Acceso_Fecha)+ "." : "";
 						var est:String = "\n\nIntroduzca una contraseña de 8 a 12 caracteres, que como mínimo tenga una letra y un número. Dicha contraseña no debe iniciar con un valor numérico";
 						Alert.show("Es necesario modificar la contraseña debido a que ha superado el periodo de vigencia." + ingreso + est,"Mantenimiento de Usuario",4,null,null,global.iAlert);								
 						return;	
@@ -340,7 +340,7 @@
 			
 				    lblUser.text = usrInfo.Table[0].NOMBREC;
 				    lblSucursal.text = usrInfo.Table[0].S_D;
-				    lblFecha.text = global.formatoFecha(t);
+				    lblFecha.text = global.formatearFecha(t);
 				    //ASIGNACION DE VARIABLES GLOBALES
 				    S_ID = usrInfo.Table[0].S_ID;
 				    PUESTO = usrInfo.Table[0].PUESTO;
@@ -476,7 +476,7 @@
        		_Current_Mod_Id = a.ITEM.toString();
        		var frm:String = a.FORM.toString();
        		frm = frm.replace("/","");
-       		frm = global.reemplazaCaracteres(frm);
+       		frm = global.reemplazarCaracteres(frm);
        		
        		ocultaPdf();       			       			       		
 			var myClass:Class = flash.utils.getDefinitionByName(frm) as Class;	

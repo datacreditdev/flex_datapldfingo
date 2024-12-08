@@ -124,17 +124,17 @@
 					var cadInfo:String = "";
 					var tituloRep:String = "";
 					var tipo:String = cboOperac.selectedItem.tipo;
-					var fecOp:String = global.formatoFechaYYYYMMDD(global.obtenerFechaSistema());
-			    	var fecNac:String = global.formatoFechaYYYYMMDD(global.obtenerFechaSistema());
+					var fecOp:String = global.formatearFechaYYYYMMDD(global.obtenerFechaSistema());
+			    	var fecNac:String = global.formatearFechaYYYYMMDD(global.obtenerFechaSistema());
 			    	var fecRep:Date = global.obtenerFechaSistema();
 					var rfc:String = "";
 					var diaRep:String = (fecRep.date).toString();
 					var mesRep:String = (fecRep.month).toString();
-					var cadFec:String = fecRep.fullYear.toString().substring(2,4) + global.insertaCaracter(mesRep,'0',2 - mesRep.length,1) + ".002";
+					var cadFec:String = fecRep.fullYear.toString().substring(2,4) + global.insertarCaracter(mesRep,'0',2 - mesRep.length,1) + ".002";
 				
 					cadInfo = tipo; 
 					cadInfo += ";" + fecOp;
-					cadInfo += ";" + global.insertaCaracter("1","0",4,1);
+					cadInfo += ";" + global.insertarCaracter("1","0",4,1);
 					cadInfo += ";";
 					cadInfo += ";0692819";
 					cadInfo += ";";
@@ -175,7 +175,7 @@
 				titulo = "Layout PLD";
 				lblTitulo.text = titulo.toUpperCase();
 				formateaActividad();
-				anioObj = global.formateaAnio();
+				anioObj = global.formatearAnio();
 				formateaPeriodo();
 				cboOperac.dataProvider = operObj;
 				limpiar();
@@ -192,8 +192,8 @@
 				cboOperac.selectedIndex = 0;
 				fec = global.obtenerFechaSistema();
 				currentState = "";
-				dtfFecIni.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
-				dtfFecFin.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 
+				dtfFecIni.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date));
+				dtfFecFin.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date)); 
 			}
 				
 			public function modificaEstado():void{
@@ -238,7 +238,7 @@
 			}
 			
 			public function validaFecha():void{
-				dtfFecIni.selectedDate = global.validaFecha(dtfFecIni.selectedDate, dtfFecFin.selectedDate,titulo);
+				dtfFecIni.selectedDate = global.validarFecha(dtfFecIni.selectedDate, dtfFecFin.selectedDate,titulo);
 			}
 			
 		]]>

@@ -49,6 +49,8 @@
 			public var indReg:int;
 			public var indCoord:int;
 			public var vScroll:Number;
+			public var tituloReg:String;
+			public var tituloCoord:String;
 			
 			//variables que indican los permisos disponibles para el usuario
 			public var alta:Boolean = new Boolean();
@@ -112,9 +114,8 @@
 					du.initWsCat(wsCat);
 					du.sCursor();
 					
-					if(tipo == 2){
+					if(tipo == 1){
 						global.bloquear();
-						iniVar();
 					}
 						
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
@@ -131,7 +132,7 @@
 								dgRegional.validateNow();
 								dgRegional.verticalScrollPosition = vScroll;
 								dgRegional.selectedIndex = indReg;
-								this.accionReg = 0;
+								accionReg = 0;
 							}
 						}
 						seleccionaReg();
@@ -150,9 +151,8 @@
 				du.initWsCat(wsCat);
 				du.sCursor();
 				
-			 	if (tipo == 2){
+			 	if (tipo == 1){
 					global.bloquear();
-					iniVar();
 			 	}
 					
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void{
@@ -170,7 +170,7 @@
 							dgCoord.validateNow();
 							dgCoord.verticalScrollPosition = vScroll;
 							dgCoord.selectedIndex = indCoord;
-							this.accionCoord = 0;
+							accionCoord = 0;
 						}
 					}
 					seleccionaCoord();
@@ -180,11 +180,11 @@
 			}
 
 			public function eliminarCoord():void{
-				Alert.show("¿Desea eliminar la Coordinación seleccionada?", "Mantenimiento de Coordinaciones", Alert.YES|Alert.NO,null, manejadorEliminarCoord,global.iQuest);
+				Alert.show("¿Desea eliminar la Coordinación seleccionada?", tituloCoord, Alert.YES|Alert.NO,null, manejadorEliminarCoord,global.iQuest);
 			}
 			
 			public function eliminarReg():void{
-				Alert.show("¿Desea eliminar la Gerencia Regional seleccionada?", "Mantenimiento de Gerencias Regionales", Alert.YES|Alert.NO,null, manejadorEliminarReg,global.iQuest);
+				Alert.show("¿Desea eliminar la Gerencia Regional seleccionada?", tituloReg, Alert.YES|Alert.NO,null, manejadorEliminarReg,global.iQuest);
 			}
 			
 			public function iniVar():void{
@@ -197,6 +197,10 @@
 				du = new Utils();
 				global = new Globales();
 				permiso = new Permisos();
+				
+				tituloReg = "Mantenimiento de Gerencia Regional";
+				tituloCoord = "Mantenimiento de Oficina";
+				
 				alta = false;
 				borrado = false;
 				consulta = false;
@@ -269,7 +273,7 @@
 								comMttoCoord.init(tipo, codReg, regional, codCoord, coord, codPers);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de Acreditado","Mantenimiento de Acreditado",4,null,null,global.iAlert);
+								Alert.show("Debe seleccionar el registro de Acreditado",tituloCoord,4,null,null,global.iAlert);
 						break;
 					}
 				}
@@ -302,7 +306,7 @@
 								PopUpManager.centerPopUp(comMttoReg);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de la Gerencia Regional","Mantenimiento de Gerencias Regionales",4,null,null,global.iAlert); 
+								Alert.show("Debe seleccionar el registro de la Gerencia Regional",tituloReg,4,null,null,global.iAlert); 
 							break;
 					}
 				}
@@ -385,7 +389,7 @@
 				if (res.substr(0,1) == "1")
 					buscarListaCoord(2);
 				else
-					Alert.show(res.substr(2,res.length-1), "Mantenimiento de Coordinaciones",4,null,null,global.iAlert);
+					Alert.show(res.substr(2,res.length-1), tituloCoord, 4, null, null, global.iAlert);
 			}
 
 			private function setAccionReg(event:ResultEvent):void{
@@ -397,7 +401,7 @@
 				if (res.substr(0,1) == "1")
 					buscarReg(2);
 				else
-					Alert.show("Error en el proceso: " + res, "Mantenimiento de Gerencias Regionales",4,null,null,global.iAlert);
+					Alert.show("Error en el proceso: " + res, tituloReg, 4, null, null, global.iAlert);
 			}
 			
 		]]>
@@ -418,7 +422,7 @@
 	</mx:Canvas>
 	<mx:Label x="18" y="10" text="REGIONES" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 	<mx:Canvas x="540" y="39" width="205" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-		<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarReg(2)" toolTip="Buscar Regional" width="40"/>
+		<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarReg(1)" toolTip="Buscar Regional" width="40"/>
 		<mx:Button id="btnAgregar" x="105" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormReg(1)" toolTip="Registrar Regional" width="40"/>
 		<mx:Button id="btnEliminar" x="153" y="3" icon="@Embed(source='assets/delete-icon.png')" click="eliminarReg()" enabled="false" toolTip="Eliminar Regional" width="40"/>
 		<mx:Button id="btnEditar" x="57" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormReg(2)" toolTip="Editar Regional" width="40"/>
@@ -445,7 +449,7 @@
 		<mx:Button id="btnAgregarCoord" x="105" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormCoord(1)" toolTip="Agregar Sucursal" width="40"/>
 		<mx:Button id="btnEliminarCoord" x="153" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarCoord()" toolTip="Eliminar Sucursal" width="40"/>
 		<mx:Button id="btnEditarCoord" x="60" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormCoord(2)" toolTip="Editar Sucursal" width="40"/>
-		<mx:Button id="btnDatosCoord" x="12" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaCoord(2)" enabled="false" toolTip="Sucursales" width="40"/>
+		<mx:Button id="btnDatosCoord" x="12" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaCoord(1)" enabled="false" toolTip="Sucursales" width="40"/>
 	</mx:Canvas>
 	<mx:Canvas x="18.5" y="282" width="513.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 		<mx:Label id="lblCodCoord" x="15" y="6" text="Código:"/>

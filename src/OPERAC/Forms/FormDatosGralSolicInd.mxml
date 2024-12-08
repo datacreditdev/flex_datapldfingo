@@ -71,8 +71,8 @@
 					formData.fecEntre = dtfEntrega.text;	
 					formData.situacion = situacion.selectedValue.toString();				
 					formData.moneda = cboMoneda.selectedItem.id;
-					formData.solicitado = Number(txtSolicitado.text);
-					formData.autorizado = Number(txtAutorizado.text);
+					formData.solicitado = Number(global.formatearNumerico(txtSolicitado.text));
+					formData.autorizado = Number(global.formatearNumerico(txtAutorizado.text));
 					formData.naturaleza = naturaleza.selectedValue.toString();
 					formData.guardaDatos = true;
 				}
@@ -156,8 +156,8 @@
 							fecEnt = DateField.stringToDate(info.fecEntre,"DD/MM/YYYY");
 							dtfEntrega.selectedDate = fecEnt;
 							//dtfEntrega.selectableRange = {rangeStart: new Date(fec.getFullYear(), fec.getMonth(), fec.getDate() + diasFecEnt)};
-							txtSolicitado.text = info.solicitado.toString();
-							txtAutorizado.text = info.autorizado.toString();
+							txtSolicitado.text = global.formatearDecimal(info.solicitado.toString());
+							txtAutorizado.text = global.formatearDecimal(info.autorizado.toString());
 							situacion.selectedValue = info.situacion;
 							naturaleza.selectedValue = info.naturaleza;
 													
@@ -170,7 +170,7 @@
 						}	
 						else{
 							fec = global.obtenerFechaSistema();
-							fecEnt = global.seleccionaDiaHabilPost(new Date(fec.getFullYear(),fec.getMonth(),fec.getDate() + diasFecEnt));
+							fecEnt = global.seleccionarDiaHabilPost(new Date(fec.getFullYear(),fec.getMonth(),fec.getDate() + diasFecEnt));
 									
 							dtfSolicitud.selectedDate = fec;
 							dtfEntrega.selectedDate = fecEnt;
@@ -192,9 +192,9 @@
 			}	
 			
 			public function validaEntrega():void{
-				var fecAct:String = global.formatoFechaYYYYMMDD(global.obtenerFechaSistema());
-				var fecEnt:String = global.formatoFechaYYYYMMDD(dtfEntrega.selectedDate);
-				var fecSol:String = global.formatoFechaYYYYMMDD(dtfSolicitud.selectedDate);
+				var fecAct:String = global.formatearFechaYYYYMMDD(global.obtenerFechaSistema());
+				var fecEnt:String = global.formatearFechaYYYYMMDD(dtfEntrega.selectedDate);
+				var fecSol:String = global.formatearFechaYYYYMMDD(dtfSolicitud.selectedDate);
 				/*if (fecEnt < fecAct){
 					Alert.show("La fecha de entrega debe ser igual o posterior a la fecha actual","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 					if(fecAct > fecSol)
@@ -227,7 +227,7 @@
 			}
 			
 			public function validaSolicitud():void{
-				if(global.formatoFechaYYYYMMDD(dtfEntrega.selectedDate) < global.formatoFechaYYYYMMDD(dtfSolicitud.selectedDate)){	
+				if(global.formatearFechaYYYYMMDD(dtfEntrega.selectedDate) < global.formatearFechaYYYYMMDD(dtfSolicitud.selectedDate)){	
 					Alert.show("La fecha de solicitud debe ser inferior o igual a la fecha de entrega","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 					dtfSolicitud.selectedDate = dtfEntrega.selectedDate;
 				}
@@ -250,18 +250,18 @@
 	<mx:Canvas id="cnvSituacion" x="320" y="29" width="180" height="71" styleName="canvasMod">
 		<mx:RadioButtonGroup id="situacion" itemClick="validaSituacion()"/>
 		<mx:RadioButton id="rdbRechazado" x="49" label="Rechazado" groupName="situacion" value="R" y="21" change="modificaAutorizado(event)"/>
-		<mx:RadioButton id="rdbSolicitado" x="49" y="0" label="Solicitado" groupName="situacion" value="S" width="78"  change="modificaAutorizado(event)"/>
+		<mx:RadioButton id="rdbSolicitado" x="49" y="0" label="Solicitado" groupName="situacion" value="S" width="78" change="modificaAutorizado(event)"/>
 		<mx:RadioButton id="rdbAutorizado" x="49" y="44" label="Autorizado" groupName="situacion" value="A" change="modificaAutorizado(event)"/>	
 	</mx:Canvas>
 	<mx:Canvas id="cnvMoneda" x="508" y="29" width="200" height="71" styleName="canvasMod">
-		<mx:ComboBox id="cboMoneda" x="19" y="24" labelField="nombre"></mx:ComboBox>
+		<mx:ComboBox id="cboMoneda" x="19" y="24" labelField="nombre"/>
 	</mx:Canvas>
 	<mx:Canvas id="cnvMonto" x="44" y="125" width="362" height="40" styleName="canvasMod" enabled="true">
 		<mx:FormItem id="solicitado" label="Solicitado:" x="10" y="8" width="160">
-			<mx:TextInput id="txtSolicitado" width="90" change="validaMonto(event)"/>
+			<mx:TextInput id="txtSolicitado" width="90" restrict="0-9;,;." maxChars="18" focusOut="{global.formatearMonto(event)}"/>
 		</mx:FormItem>
 		<mx:FormItem id="autorizado" label="Autorizado:" x="183" y="8" width="167">
-			<mx:TextInput id="txtAutorizado" width="90" change="validaMonto(event)" editable="false"/>
+			<mx:TextInput id="txtAutorizado" width="90" restrict="0-9;,;." maxChars="18" focusOut="{global.formatearMonto(event)}" editable="false"/>
 		</mx:FormItem>
 	</mx:Canvas>
 	<mx:Label x="320" y="10" text="Situación"/>

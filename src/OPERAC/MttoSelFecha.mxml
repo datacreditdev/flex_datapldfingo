@@ -37,7 +37,7 @@
 				else{
 					dtfFecha.visible = false;
 					txtFecha.visible = true;
-					txtFecha.text = global.formatoFecha(fechaMax);
+					txtFecha.text = global.formatearFecha(fechaMax);
 				}
 				
 			}

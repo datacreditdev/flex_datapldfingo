@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="620" height="574" layout="absolute" showCloseButton="true" close="cerrar()" xmlns:Data="Data.*">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="620" height="574" 
+	layout="absolute" showCloseButton="true" close="cerrar()" xmlns:Data="Data.*">
 	<mx:states>
 		<mx:State name="datos">
 			<mx:SetProperty target="{lblEtAcred}" name="text" value="Funcionario:"/>
@@ -25,21 +26,18 @@
 			import mx.events.DataGridEvent;				
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;	
-			import mx.events.ValidationResultEvent;
 			import mx.managers.PopUpManager;
-			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
 			import mx.rpc.Fault;
 			import mx.rpc.soap.WebService;
-			import mx.rpc.xml.SimpleXMLDecoder;
 			import mx.utils.ArrayUtil;  
 			            
-			public var wsMS:WebService;	
-			public var du:Utils;
+			public var wsMS:WebService;
 			public var titulo:String;
 			public var tipo:String;
+			private var du:Utils;
 			private var global:Globales;
-			private var vResult:ValidationResultEvent;
 
 			private var tipoObj:ArrayCollection = new ArrayCollection();
 
@@ -53,7 +51,7 @@
 			}
 								
 			public function enviar():void{
-				if(valida() == true){
+				if(valida()){
 					var tipo:String;
 					var codFunc:String;
 					var reportado:String;
@@ -108,7 +106,7 @@
 			}
 			
 			public function init(alta:String, sec:String):void{
-				var wsCat:WebService = new WebService;
+				var wsCatPLD:WebService = new WebService;
 				var params:Array = new Array;
 				global = new Globales();
 				du = new Utils();
@@ -118,27 +116,21 @@
 				this.alta = alta;
 				this.sec = sec;
 				
-				du.initWsCat(wsCat);
+				du.initWsCatPLD(wsCatPLD);
 				du.sCursor();
 				
-				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCatPLD,function(evt:ResultEvent):void {											
 					_xmlTipo = new XML(evt.result.toString());
 				
-					du.rCursor();
-					du.closeWs(wsCat);
-							
 					if(_xmlTipo.elements().length() > 0){
 						formateaTipo();
 						cboTipo.dataProvider = tipoObj;
 						
-						du.initWsCat(wsCat);
-						du.sCursor();
-						
-						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+						du.ejecutaWsMethod(wsCatPLD,function(evt:ResultEvent):void {											
 							_xmlInfo = new XML(evt.result.toString());
 						
 							du.rCursor();
-							du.closeWs(wsCat);
+							du.closeWs(wsCatPLD);
 								
 							if(_xmlInfo.elements().length() > 0)
 								llenaRegistros();
@@ -147,19 +139,19 @@
 						});
 						params[0] = alta;
 						params[1] = sec;
-						wsCat.getInfoRegistro.send(29, params);
+						wsCatPLD.getInfoRegistroPLD.send(2, params);
 					}
 					else{
 						Alert.show("Error de Carga de Datos.",titulo,4,null,null,global.iAlert);
 					}
 				});
 				//Obtiene informacion de los tipos de Alertas de PLD
-				wsCat.getCatalogoGral.send(36);	
+				wsCatPLD.getCatalogoGralPLD.send(4);	
 			}
 			
 			public function initConexion():void{				
 				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
+				wsMS.wsdl = Application.application.wsStr.wsdlServPLD.toString();
 				wsMS.loadWSDL();
 			}	
 			
@@ -199,8 +191,6 @@
 			}
 		]]>
 	</mx:Script>
-	<mx:NumberValidator id="numVal" property="text" precision="2"
-        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator="," required="false"/>
 	<mx:Button id="btnAceptar" x="453" y="496" icon="@Embed(source='assets/button_ok.png')" enabled="true" toolTip="Aceptar" width="80" click="enviar()"/>
 	<mx:Button id="btnCancelar" x="541" y="496" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
 	<mx:Canvas x="15" y="10" width="590" height="110" styleName="canvasMod" id="canvas2">

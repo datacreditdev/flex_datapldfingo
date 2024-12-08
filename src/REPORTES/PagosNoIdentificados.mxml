@@ -57,7 +57,7 @@
 							btnExportar.enabled = true;
 							dgReporte.dataProvider = _xmlRep.Table;
 							cantidad = Number(_xmlRep.Table[cont].CANTIDAD);
-							lblTotal.text = cont + " Pagos No Identificados $" + global.formatoDecimal(cantidad.toString());   
+							lblTotal.text = cont + " Pagos No Identificados $" + global.formatearDecimal(cantidad.toString());   
 							fecIni = dtfFecha.text;
 							fecFin = dtfFechaFinal.text;
 						}
@@ -90,8 +90,8 @@
 				btnExportar.enabled = false;
 				lblTotal.text = "";
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-				dtfFechaFinal.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFechaFinal.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				chkNoIden.selected = true;
 			}
 				
@@ -113,7 +113,7 @@
 			
 			private function validaFecha():void{
 				if(currentState == null)
-					dtfFecha.selectedDate = global.validaFecha(dtfFecha.selectedDate, dtfFechaFinal.selectedDate,titulo);
+					dtfFecha.selectedDate = global.validarFecha(dtfFecha.selectedDate, dtfFechaFinal.selectedDate,titulo);
 			}
 		]]>
 	</mx:Script>

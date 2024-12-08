@@ -103,9 +103,9 @@
 									ivaInt += Number(_xmlRep.Table[i].IVA_INT_MES.toString()); 
 								}
 								dgReporte.dataProvider = _xmlRep.Table;
-								info = " Devengo del Periodo: " + global.formatoMoneda(devPer.toString());
-								info += " Devengo del Periodo Sin IVA: " + global.formatoMoneda(devSinIva.toString());
-								info += " IVA Interes " + global.formatoMoneda(ivaInt.toString());	
+								info = " Devengo del Periodo: " + global.formatearMoneda(devPer.toString());
+								info += " Devengo del Periodo Sin IVA: " + global.formatearMoneda(devSinIva.toString());
+								info += " IVA Interes " + global.formatearMoneda(ivaInt.toString());	
 							}
 							else if(currentState == "liquidacion"){
 								var intDev:Number = 0;
@@ -115,7 +115,7 @@
 									intDev += Number(_xmlRep.Table[i].INT_NO_DEV_PAG_ANT);
 								}
 								dgRepLiq.dataProvider = _xmlRep.Table;
-								info = " Interes no Devengado Pagado: " + global.formatoMoneda(intDev.toString());
+								info = " Interes no Devengado Pagado: " + global.formatearMoneda(intDev.toString());
 							}
 							lblTotal.text = cont + " Registro(s) " + info;   
 							fecIni = dtfFecha.text;
@@ -155,8 +155,8 @@
 				btnExportar.enabled = false;
 				lblTotal.text = "";
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-				dtfFechaFinal.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFechaFinal.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				tipoReg.selectedValue = "1";
 			}
 			
@@ -185,7 +185,7 @@
 			}
 			
 			private function validaFecha():void{
-				dtfFecha.selectedDate = global.validaFecha(dtfFecha.selectedDate, dtfFechaFinal.selectedDate,titulo);
+				dtfFecha.selectedDate = global.validarFecha(dtfFecha.selectedDate, dtfFechaFinal.selectedDate,titulo);
 			}
 		]]>
 	</mx:Script>

@@ -13,35 +13,41 @@
 			import mx.core.Application;
 			import mx.effects.easing.Elastic;	
 			import mx.managers.PopUpManager;
-			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
 			import mx.rpc.soap.WebService;
 			import mx.utils.ObjectUtil;
 			
 			private var _xmlRep:XML =  new XML();
 			
+			public var titulo:String;
 			private var du:Utils;
 			private var global:Globales;
-			public var wsMS:WebService;
-			public var titulo:String;
 		
 			private function exportar():void{
 				var dgE:ExcelExportXls = new ExcelExportXls(); 
 				dgE.loadDGInExcel(dgReporte,null,titulo);		
 			}
 		
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
+			}
+		
 			private function generar(event:Event):void{	
 				if(comFiltroAcreditado.valida()){
 					var acred:String = comFiltroAcreditado.obtenerCodigo();
+					var wsRepPLD:WebService = new WebService;
 					
-					initConexion();
+					du.initWsRepPLD(wsRepPLD);
 					du.sCursor();
 							
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					du.ejecutaWsMethod(wsRepPLD,function(evt:ResultEvent):void {											
 						_xmlRep = new XML(evt.result.toString());
 						
 						du.rCursor();
-						du.closeWs(wsMS);
+						du.closeWs(wsRepPLD);
 						
 						dgReporte.dataProvider = null;
 						btnExportar.enabled = false;
@@ -59,7 +65,7 @@
 							lblTotal.text = "";
 						}
 					});
-					wsMS.getRepHistPrcAcred.send(acred);	
+					wsRepPLD.getRepHistPrcAcred.send(acred);	
 				}
 			}			
 						
@@ -68,16 +74,10 @@
 				du = new Utils();
 				titulo = "Histórico de Préstamos de Acreditado";
 				comFiltroAcreditado.init("0",titulo);
-				comFiltroAcreditado.addEventListener("enviar",generar);
-				comFiltroAcreditado.addEventListener("limpiar",limpiar);
+				comFiltroAcreditado.addEventListener("enviar", generar);
+				comFiltroAcreditado.addEventListener("limpiar", limpiar);
 			}		
 			
-			private function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
-				wsMS.loadWSDL();
-			}	
-		
 			private function limpiar(event:Event):void{
 				lblTotal.text = "";
 				dgReporte.dataProvider = null;
@@ -93,7 +93,6 @@
 				var usuario:String = global.obtenerUsuario();
 				
 				id = "&id=59";
-				grupo = "&grupo=" + dgReporte.selectedItem.CDGNS;
 				acred = "&acred=" + dgReporte.selectedItem.CDGCL;
 				ciclo = "&ciclo=" + dgReporte.selectedItem.CICLO; 
 				usuario = "&usuario=" + usuario; 
@@ -107,11 +106,9 @@
 		<mx:columns>
 			<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
 			<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMBRE_CL" width="200"/>
-			<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="100"/>
-			<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="150"/>
 			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
-			<mx:DataGridColumn headerText="INICIO" dataField="FINICIO" width="80"/>
-			<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANTENTRE" width="125"/>
+			<mx:DataGridColumn headerText="INICIO" dataField="INICIO" width="80"/>
+			<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANTENTRE" width="125" labelFunction="formatearMontoGrid"/>
 			<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION" width="150"/>
 			<mx:DataGridColumn headerText="% INCREMENTO" dataField="PORC_INC" width="125"/>	
 			<mx:DataGridColumn headerText="ASESOR" dataField="NOM_ASESOR" width="150"/>

@@ -59,7 +59,7 @@
 						cantSolic = Number(_xmlRep.dtPrefondeo[cont-1].CANTSOLIC);
 						cantAutor = Number(_xmlRep.dtPrefondeo[cont-1].CANTAUTOR);
 						registro = Number(_xmlRep.dtPrefondeo[cont-1].NOMCLNS);   
-						etiqueta = " Movimiento(s) Cantidad Solicitada: " + global.formatoDecimal(cantSolic.toString()) + " Cantidad Autorizada: " + global.formatoDecimal(cantAutor.toString());					
+						etiqueta = " Movimiento(s) Cantidad Solicitada: " + global.formatearDecimal(cantSolic.toString()) + " Cantidad Autorizada: " + global.formatearDecimal(cantAutor.toString());					
 						lblTotal.text = registro + etiqueta;
 						//delete _xmlRep.dtPrefondeo[cont-1];   
 						dgReporte.dataProvider = _xmlRep.dtPrefondeo;
@@ -93,7 +93,7 @@
 				btnExportar.enabled = false;
 				lblTotal.text = "";
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 				
 			private function valida():Boolean{

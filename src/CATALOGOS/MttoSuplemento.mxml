@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="560" 
-	height="420" xmlns:Data="Data.*">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="600" 
+	height="576" xmlns:Data="Data.*">
 	
 	<mx:Validator id="claveV" source="{txtClave}" property="text" 
 	invalid="{txtClave.setFocus()}" triggerEvent="" requiredFieldError="Clave Requerida"/>
@@ -35,8 +35,10 @@
 		
 		private var _xmlSup:XML = new XML();
 		private var _xmlCta:XML = new XML();
+		private var _xmlAcred:XML = new XML();
 		
 		private var ctaObj:ArrayCollection = new ArrayCollection;
+		private var acredObj:ArrayCollection = new ArrayCollection;
 		
 		private var du:Utils;
 		private var global:Globales;
@@ -46,6 +48,19 @@
 		public var tipoAccion:int;
 		public var titulo:String;
 		private var vResult:ValidationResultEvent;
+		
+		private function agregarAcredSup(evt:Event):void{
+			var oItem:Object = new Object();
+			var comAcredSup:MttoAcreditanteSup = evt.currentTarget as MttoAcreditanteSup;
+			
+			oItem.sec = "0";
+			oItem.nombre = comAcredSup.obtenerNombre();
+				
+			acredObj.addItem(oItem);
+			acredObj.refresh();
+				
+			dgAcred.dataProvider = acredObj;
+		}
 		
 		private function agregarCuentaSup(evt:Event):void{
 			var oItem:Object = new Object();
@@ -84,15 +99,29 @@
 				du.ejecutaWsMethod(wsCat,function(ev:ResultEvent):void{
 					_xmlCta = new XML(ev.result.toString());
 					
-					du.closeWs(wsCat);
-					du.rCursor();	
-					
 					if (_xmlCta.elements().length() > 0){
 						formatearCuenta();
 						dgCuentas.dataProvider = ctaObj;	
 					}
 					else
-						dgCuentas.dataProvider = null
+						dgCuentas.dataProvider = null;
+						
+					du.ejecutaWsMethod(wsCat,function(ev:ResultEvent):void{
+						_xmlAcred = new XML(ev.result.toString());
+						
+						du.closeWs(wsCat);
+						du.rCursor();	
+						
+						if (_xmlAcred.elements().length() > 0){
+							formatearAcred();
+							dgAcred.dataProvider = acredObj;	
+						}
+						else
+							dgAcred.dataProvider = null;
+					});
+					params[0] = codFid;
+					params[1] = codSup;
+					wsCat.getListado.send(67, params);	
 				});
 				params[0] = codFid;
 				params[1] = codSup;
@@ -109,6 +138,23 @@
             closeEffect.duration = 500;
             closeEffect.play([this], playReverse);
             closeEffect.addEventListener(EffectEvent.EFFECT_END, terminarEfecto);
+		}
+		
+		private function confirmarElimAcred():void{
+			var titulo:String = "Acreditantes del Suplemento";
+			var ind:int = dgAcred.selectedIndex;
+				
+			if(ind < 0){
+				Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+				return;
+			}				
+			Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,function(ev:CloseEvent):void{
+																					if(ev.detail == Alert.YES){
+																						acredObj.removeItemAt(ind);
+																						acredObj.refresh();
+																						dgAcred.dataProvider = acredObj;
+																					}
+			},du.iQuest,4);
 		}
 		
 		private function confirmarElimCuenta():void{
@@ -138,6 +184,8 @@
 				info.fecha = dtfFecha.text;
 				
 				info.arrCuentas = obtenerCuentas();
+				info.arrSecAcred = obtenerAcreditantes(0);
+				info.arrAcred = obtenerAcreditantes(1);
 				
 				info.guarda = true;
 			}
@@ -145,6 +193,20 @@
 				info.guarda = false;
 
 			validar();
+		}
+		
+		private function formatearAcred():void{
+			var cont:int = _xmlAcred.elements().length();
+			var oItem:Object;
+			var item:Array = new Array;
+			
+			for (var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.sec = _xmlAcred.Table[i].SECUENCIA;
+				oItem.nombre = _xmlAcred.Table[i].NOMBRE;
+				item.push(oItem);
+			}
+			acredObj = new ArrayCollection(item);
 		}
 		
 		private function formatearCuenta():void{
@@ -168,7 +230,8 @@
 			global.bloquear();
 			wsMS.addEventListener(ResultEvent.RESULT, setAccionSuplemento);
 			wsMS.setAccionSuplemento.send(tipoAccion, info.cdgFid, info.cdgSup, info.clave, info.fecha,
-										  info.alias, info.arrCuentas, global.obtenerUsuario());	
+										  info.alias, info.arrCuentas, info.arrSecAcred, info.arrAcred, 
+										  global.obtenerUsuario());	
 		}
 	
 		public function init(tipo:int, codFid:String, fideicomiso:String, codSup:String = null):void{
@@ -207,12 +270,38 @@
 			txtAlias.text = _xmlSup.Table[0].ALIAS;
 		}
 		
+		private function mostrarFormAcred():void{
+			var comAcredSup:MttoAcreditanteSup = new MttoAcreditanteSup;
+			comAcredSup = MttoAcreditanteSup(PopUpManager.createPopUp(this,MttoAcreditanteSup,true));
+			comAcredSup.init(3);
+			comAcredSup.addEventListener("enviar", agregarAcredSup);
+			PopUpManager.centerPopUp(comAcredSup);
+		}
+		
 		private function mostrarFormCuenta():void{
 			var comCuentaSup:MttoBusqCuenta = new MttoBusqCuenta;
 			comCuentaSup = MttoBusqCuenta(PopUpManager.createPopUp(this,MttoBusqCuenta,true));
 			comCuentaSup.init(3);
 			comCuentaSup.addEventListener("enviar", agregarCuentaSup);
 			PopUpManager.centerPopUp(comCuentaSup);
+		}
+		
+		private function obtenerAcreditantes(tipo:int):Array{
+			var arrAcred:Array = new Array;
+			var lista:ArrayCollection = dgAcred.dataProvider as ArrayCollection;
+			var cont:int = lista.length;
+			
+			if(cont > 0)
+				for(var i:int = 0; i < cont; i++){
+					if(tipo == 0)
+						arrAcred[i] = lista[i].sec;
+					else if(tipo == 1)
+						arrAcred[i] = lista[i].nombre;
+				}
+			else
+				arrAcred[0] = "";
+				
+			return arrAcred;
 		}
 		
 		private function obtenerCuentas():Array{
@@ -293,26 +382,34 @@
 		<mx:TextInput id="txtCodFid" x="85.5" y="7" width="50" editable="false"/>
 		<mx:TextInput id="txtFideicomiso" x="143.5" y="7" width="221" editable="false"/>
 	</mx:Canvas>
-	<mx:Canvas x="22.6" y="58" width="510.75" height="280" styleName="canvasMod">
-		<mx:Label id="lblFecha" x="33" y="71" text="Fecha:"/>
-		<mx:Label id="lblCodigo" x="30" y="11" text="Código:"/>
-		<mx:Label id="lblAlias" x="39" y="101" text="Alias:"/>
-		<mx:Label id="lblClave" x="36" y="41" text="Clave:"/>
-		<mx:Label id="lblCuentas" x="23" y="133" text="Cuentas:"/>
-		<mx:TextInput id="txtCodigo" x="79" y="10" width="50" maxChars="3" editable="false"/>
-		<mx:TextInput id="txtClave" x="79" y="40" width="109" maxChars="10"/>
-		<mx:DateField id="dtfFecha" width="109" x="79" y="70"/>
-		<mx:TextInput id="txtAlias" x="79" y="100" width="190"/>
-		<mx:DataGrid id="dgCuentas" x="79" y="130" height="138" width="371.75">
+	<mx:Canvas x="22.6" y="58" width="550.75" height="430" styleName="canvasMod">
+		<mx:Label id="lblFecha" x="51" y="71" text="Fecha:"/>
+		<mx:Label id="lblCodigo" x="48" y="11" text="Código:"/>
+		<mx:Label id="lblAlias" x="57" y="101" text="Alias:"/>
+		<mx:Label id="lblClave" x="54" y="41" text="Clave:"/>
+		<mx:Label id="lblCuentas" x="41" y="132" text="Cuentas:"/>
+		<mx:TextInput id="txtCodigo" x="97" y="10" width="50" maxChars="3" editable="false"/>
+		<mx:TextInput id="txtClave" x="97" y="40" width="109" maxChars="10"/>
+		<mx:DateField id="dtfFecha" width="109" x="97" y="70"/>
+		<mx:TextInput id="txtAlias" x="97" y="100" width="190"/>
+		<mx:DataGrid id="dgCuentas" x="97" y="129" height="138" width="380.75">
 			<mx:columns>
-				<mx:DataGridColumn headerText="CODIGO" editable="false" dataField="codigo" width="60"/>
+				<mx:DataGridColumn headerText="CODIGO" editable="false" dataField="codigo" width="40"/>
 				<mx:DataGridColumn headerText="BANCO" editable="false" dataField="banco" width="100"/>
 				<mx:DataGridColumn headerText="NOMBRE" editable="false" dataField="nombre" width="100"/>
 			</mx:columns>
 		</mx:DataGrid>
-		<mx:Button id="btnAgregarCtas" icon="@Embed(source='assets/add.png')" width="40" x="458.75" y="130" click="mostrarFormCuenta()"/>
-		<mx:Button id="btnEliminarCtas" icon="@Embed(source='assets/delete-icon.png')" width="40" x="458.75" y="162" click="confirmarElimCuenta()" />
+		<mx:Button id="btnAgregarCtas" icon="@Embed(source='assets/add.png')" width="40" x="485.75" y="130" click="mostrarFormCuenta()"/>
+		<mx:Button id="btnEliminarCtas" icon="@Embed(source='assets/delete-icon.png')" width="40" x="485.75" y="162" click="confirmarElimCuenta()" />
+		<mx:Button id="btnAgregarAcred" icon="@Embed(source='assets/add.png')" width="40" x="485.75" y="276" click="mostrarFormAcred()"/>
+		<mx:Button id="btnEliminarAcred" icon="@Embed(source='assets/delete-icon.png')" width="40" x="485.75" y="308" click="confirmarElimAcred()" />
+		<mx:DataGrid id="dgAcred" x="97" y="276" height="138" width="380.75">
+			<mx:columns>
+				<mx:DataGridColumn headerText="NOMBRE" editable="false" dataField="nombre" width="100"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Label id="lblAcred" x="19" y="279" text="Acreditantes:"/>
 	</mx:Canvas>
-	<mx:Button id="btnCancelar" x="493.35" y="346" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
-	<mx:Button id="btnAceptar" x="445.35" y="346" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="533.35" y="496" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:Button id="btnAceptar" x="485.35" y="496" width="40" icon="@Embed(source='assets/button_ok.png')" click="enviar()"/>
 </mx:TitleWindow>

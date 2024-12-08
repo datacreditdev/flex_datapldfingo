@@ -368,8 +368,8 @@
 				
 				for (var i:int = 0; i < cont; i++){
 					oItem = new Object();
-					oItem.codigo = _xmlEntFed.Table[i].CODIGO;
-					oItem.nombre = _xmlEntFed.Table[i].NOMBRE;
+					oItem.codigo = _xmlFig.Table[i].CODIGO;
+					oItem.nombre = _xmlFig.Table[i].NOMBRE;
 					item.push(oItem);
 				}
 				figObj = new ArrayCollection(item);
@@ -620,7 +620,7 @@
 							}
 						});
 						//CONSULTA LOS REGIMENES DE CAPITAL
-						wsCat.getCatalogoGral.send(42);
+						wsCat.getCatalogoGral.send(43);
 					});
 					//MUESTRA LAS ENTIDADES FEDERATIVAS DISPONIBLES
 					wsCat.getCatalogoGral.send(2);	

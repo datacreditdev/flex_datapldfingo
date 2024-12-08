@@ -191,7 +191,7 @@
 			}
 			control = cantMarc;
 			lblCtrlReg.text = cont.toString() + " Registro(s) seleccionado(s)"; 
-			lblCtrlMonto.text = "Monto Marcado: " + global.formatoMoneda(control.toString());
+			lblCtrlMonto.text = "Monto Marcado: " + global.formatearMoneda(control.toString());
 		}
 		
 		public function cargaCoord():void{
@@ -362,7 +362,7 @@
 									cont = _xmlRes.elements().length() - 1;
 									var monto:Number = _xmlRes.Table[cont].SALDO;  
 									mensaje = "Se han encontrado " + cont.toString() + " crédito(s) cuyo monto asciende a " 
-											  + global.formatoMoneda(monto.toString()) 
+											  + global.formatearMoneda(monto.toString()) 
 											  + ".\n\n¿Desea iniciar el proceso de Asignación de Fondeo?";
 									Alert.show(mensaje,titulo,Alert.YES|Alert.NO,null,manejaAsignaFondeo,global.iQuest);
 								}
@@ -430,7 +430,7 @@
 			
 			entObj.addItem(agregaInicial("0", "--Todas--"))
 				
-			for (var i:int = 0; i < cont; i++){
+			for(var i:int = 0; i < cont; i++){
 				var oItem:Object = new Object();
 				oItem.nombre = _xmlEntFed.Table[i].NOMBRE;
 				oItem.codigo = _xmlEntFed.Table[i].CODIGO;
@@ -449,7 +449,7 @@
 			oItem.desc = "--Seleccionar--";
 			lineaObj.addItem(oItem);	
 				
-			for (var i:int = 0; i < cont; i++){
+			for(var i:int = 0; i < cont; i++){
 				var oItem:Object = new Object();
 				oItem.codigo = _xmlLC.Table[i].CODIGO;
 				oItem.desc = _xmlLC.Table[i].DESCRIPCION;
@@ -465,7 +465,7 @@
 			
 			locObj.addItem(agregaInicial("0", "--Todas--"))
 				
-			for (var i:int = 0; i < cont; i++){
+			for(var i:int = 0; i < cont; i++){
 				var oItem:Object = new Object();
 				oItem.nombre = _xmlLoc.Table[i].NOMBRE;
 				oItem.codigo = _xmlLoc.Table[i].CODIGO;
@@ -481,7 +481,7 @@
 			
 			munObj.addItem(agregaInicial("0", "--Todas--"))
 				
-			for (var i:int = 0; i < cont; i++){
+			for(var i:int = 0; i < cont; i++){
 				var oItem:Object = new Object();
 				oItem.nombre = _xmlMunic.Table[i].NOMBRE;
 				oItem.codigo = _xmlMunic.Table[i].CODIGO;
@@ -500,7 +500,7 @@
 			oItem.nombre = "--Seleccionar--";
 			orgObj.addItem(oItem);	
 				
-			for (var i:int = 0; i < cont; i++){
+			for(var i:int = 0; i < cont; i++){
 				var oItem:Object = new Object();
 				oItem.nombre = _xmlOF.Table[i].NOMBRE;
 				oItem.codigo = _xmlOF.Table[i].CODIGO;
@@ -533,7 +533,7 @@
 			var listaAcred:ArrayCollection = dgReg.dataProvider as ArrayCollection;
 			var registro:String = "";
 			
-			for (var i:int = 0; i < listaAcred.length; i++){
+			for(var i:int = 0; i < listaAcred.length; i++){
 				if(listaAcred[i].REG == true)
 					registro += (registro != "" ? ",":"") + "'" + listaAcred[i].CDGNS + listaAcred[i].CICLO + listaAcred[i].CDGCL + "'";
 			}
@@ -626,9 +626,9 @@
 		}
 		
 		public function llenaRegistros():void{
-			lblImpDisp.text = global.formatoMoneda(Number(_xmlInfo.Table[0].CANTIDAD).toString());
-			lblImpMarc.text =  global.formatoMoneda(Number(_xmlInfo.Table[0].MARCADO).toString());
-			lblSaldo.text =  global.formatoMoneda(Number(_xmlInfo.Table[0].SALDO).toString());
+			lblImpDisp.text = global.formatearMoneda(Number(_xmlInfo.Table[0].CANTIDAD).toString());
+			lblImpMarc.text =  global.formatearMoneda(Number(_xmlInfo.Table[0].MARCADO).toString());
+			lblSaldo.text =  global.formatearMoneda(Number(_xmlInfo.Table[0].SALDO).toString());
 			txtImporte.text = _xmlInfo.Table[0].SALDO;
 			txtMontoMax.text = _xmlInfo.Table[0].MONTOMAX;
 			dtfFecIni.selectedDate = global.convCadenaFecha(_xmlInfo.Table[0].FINICIO.toString());
@@ -636,7 +636,7 @@
 		}
 		
 		private function manejaAsignaFondeo(event:CloseEvent):void{
-			if(event.detail==Alert.YES){
+			if(event.detail == Alert.YES){
 				asignaFondeo();
 			}
 		}
@@ -741,7 +741,7 @@
 				if(tipoAccion == 1){
 					var cont:int = _xmlRes.elements().length() - 1;
 					var monto:Number = _xmlRes.Table[cont].SALDO;
-					if(monto < Number(global.formatoNumerico(lblSaldo.text)))
+					if(monto < Number(global.formatearNumerico(lblSaldo.text)))
 						Alert.show("¿Desea completar el proceso realizando la Asignación Individual de Fondeo?",titulo,Alert.YES|Alert.NO,null,asignaFondeoAcred,global.iQuest);
 					else{
 						Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
@@ -766,7 +766,7 @@
 				Alert.show("Debe capturar el importe que debe asignarse.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
-			if(Number(txtImporte.text) > Number(global.formatoNumerico(lblSaldo.text))){
+			if(Number(txtImporte.text) > Number(global.formatearNumerico(lblSaldo.text))){
 				Alert.show("El importe capturado no puede ser mayor que el saldo disponible.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
@@ -778,7 +778,7 @@
 		}
 		
 		public function validaFecha():void{
-			dtfFecIni.selectedDate = global.validaFecha(dtfFecIni.selectedDate, dtfFecFin.selectedDate,titulo);
+			dtfFecIni.selectedDate = global.validarFecha(dtfFecIni.selectedDate, dtfFecFin.selectedDate,titulo);
 		}
 		
 		public function validaMonto(event:Event):void{
@@ -790,7 +790,7 @@
 		}
 		
 		public function validaRegAcred():Boolean{
-			if(control > Number(global.formatoNumerico(lblImpDisp.text))){
+			if(control > Number(global.formatearNumerico(lblImpDisp.text))){
 				Alert.show("El importe marcado no puede ser mayor que el importe de la disposición.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
 				return false;
 			}

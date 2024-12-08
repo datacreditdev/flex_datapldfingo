@@ -33,7 +33,7 @@
 			private function generar():void{
 				if(valida() == true){			
 					var fecAux:Date = dtfFecha.selectedDate;		
-					fecIni = global.formatoFecha(new Date(fecAux.fullYear,fecAux.month,fecAux.date - 6));
+					fecIni = global.formatearFecha(new Date(fecAux.fullYear,fecAux.month,fecAux.date - 6));
 					fecFin = dtfFecha.text; 
 					global.bloquear();
 					initConexion();
@@ -84,7 +84,7 @@
 			private function limpiar():void{
 				var fec:Date;
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 			}
 				
 			private function valida():Boolean{

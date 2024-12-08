@@ -176,9 +176,9 @@
 			}
 			
 			public function validaEntrega():void{
-				var fecAct:String = global.formatoFechaYYYYMMDD(global.obtenerFechaSistema());
-				var fecIni:String = global.formatoFechaYYYYMMDD(dtfInicio.selectedDate);
-				var fecSol:String = global.formatoFechaYYYYMMDD(dtfSolicitud.selectedDate);
+				var fecAct:String = global.formatearFechaYYYYMMDD(global.obtenerFechaSistema());
+				var fecIni:String = global.formatearFechaYYYYMMDD(dtfInicio.selectedDate);
+				var fecSol:String = global.formatearFechaYYYYMMDD(dtfSolicitud.selectedDate);
 				if (fecIni < fecAct){
 					Alert.show("La fecha de entrega debe ser igual o posterior a la fecha actual","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 					if(fecAct > fecSol)

@@ -25,9 +25,9 @@
 			private var _xmlRep:XML =  new XML();
 			
 			public var wsRep:WebService;
-			public var du:Utils;
 			public var titulo:String;
 			public var fecha:String;
+			private var du:Utils;
 			private var global:Globales;
 						
 			private function exportar():void{
@@ -35,8 +35,8 @@
 				dgE.loadDGInExcel(dgReporte,null,titulo + " del " + fecha);		
 			}			
 						
-			public function generar(event:Event):void{
-				if(comFiltroFecha.valida() == true){
+			private function generar(event:Event):void{
+				if(comFiltroFecha.valida()){
 					fecha = comFiltroFecha.dtfFecha.text;
 					initConexion();
 					du.sCursor();
@@ -71,7 +71,7 @@
 				global = new Globales();
 				du = new Utils();
 				titulo = "Saldos al Cierre";
-				comFiltroFecha.init("0", titulo.toUpperCase(), "01/08/2009", global.formatoFecha(global.obtenerFechaSistema()));
+				comFiltroFecha.init("0", titulo.toUpperCase(), "01/08/2009", global.formatearFecha(global.obtenerFechaSistema()));
 				comFiltroFecha.addEventListener("enviar",generar);
 				comFiltroFecha.addEventListener("limpiar",limpiar);
 			}		

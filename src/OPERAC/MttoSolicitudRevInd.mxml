@@ -96,7 +96,7 @@
 			}
 			
 			public function actualizaFecSolic(event:CalendarLayoutChangeEvent):void{
-				var fecSolic:String = global.formatoFecha(DateField(event.currentTarget).selectedDate);
+				var fecSolic:String = global.formatearFecha(DateField(event.currentTarget).selectedDate);
 			}
 			
 			public function actualizaListaProd(event:CollectionEvent):void{
@@ -508,7 +508,7 @@
 				var estatus:String;
 				if (currentState != null)
 					estatus = currentState.toString();
-				var fecSolic:String = global.formatoFecha(global.obtenerFechaSistema());
+				var fecSolic:String = global.formatearFecha(global.obtenerFechaSistema());
 				this.coord = coord;
 				//ASIGNACION DE CODIGO DE ACREDITADO
 				this.cdgAcred = cdgAcred; 

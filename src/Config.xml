@@ -4,11 +4,14 @@
 	<wsdlAdmin>http://localhost/administracion/seguridad_datalatam1/Admin_Sistema/Service.asmx?wsdl</wsdlAdmin>
 	
 	<wsdlCat>http://localhost/ws_catalogos_datalatam1/service.asmx?wsdl</wsdlCat>
+	<wsdlCatPLD>http://localhost/ws_catalogos_datalatam1/ServicePLD.asmx?wsdl</wsdlCatPLD>
 	<wsdlPdf>http://localhost/RptGenerado_datalatam1/default.aspx?</wsdlPdf>
-	<wsdlRep>http://datacredit.webredirect.org/ws_reportes_datalatam1/service.asmx?wsdl</wsdlRep>
+	<wsdlRep>http://localhost/ws_reportes_datalatam1/service.asmx?wsdl</wsdlRep>
+	<wsdlRepPLD>http://localhost/ws_reportes_datalatam1/ServicePLD.asmx?wsdl</wsdlRepPLD>
 	<wsdlServ>http://localhost/ws_servicios_datalatam1/Service.asmx?wsdl</wsdlServ>
+	<wsdlServPLD>http://localhost/ws_servicios_datalatam1/ServicePLD.asmx?wsdl</wsdlServPLD>
 	<wsdlMail>http://datacredit.webredirect.org/ws_servicios_datalatam1/ServiceMail.asmx?wsdl</wsdlMail>
-	<wsdlExpXls>http://datacredit.webredirect.org/ExpExcelJson/ExcelLib.aspx</wsdlExpXls>
+	<wsdlExpXls>http://localhost/ExpExcelJson/ExcelLib.aspx</wsdlExpXls>
 	<wsdlCC>http://150.150.23.11/ws_consCirc_datalatam1/service.asmx?wsdl</wsdlCC>
 	
 	<urlDocs>http://localhost/DOCS_LATAM1/</urlDocs>

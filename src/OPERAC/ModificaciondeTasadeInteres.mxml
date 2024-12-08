@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="390" height="234" backgroundAlpha="1.0" 
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="200" backgroundAlpha="1.0" 
 	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
 	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
 	
@@ -7,96 +7,38 @@
 		<![CDATA[
 			import Data.Globales;
 			import Data.Utils;
-			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.core.Application;
 			import mx.effects.easing.Elastic;	
+			import mx.events.ValidationResultEvent;
 			import mx.managers.PopUpManager;
-			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
 			import mx.rpc.soap.WebService;
 			import mx.utils.ObjectUtil;
+			import mx.validators.Validator;
 			
 			public var wsMS:WebService;
 			public var titulo:String;
 			private var du:Utils;
 			private var global:Globales;
 			
-			public var _xmlTasa:XML = new XML();
-			public var _xmlTdp:XML = new XML();
-			
-			private var tasaObj:ArrayCollection = new ArrayCollection();
-			private var tipoProd:ArrayCollection = new ArrayCollection();
-
-			private function cargaTasaInteres():void{
-				var wsCat:WebService = new WebService;
-				var params:Array = new Array;
-				
-				du.initWsCat(wsCat);
-				du.sCursor();
-				
-				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-					_xmlTasa = new XML(evt.result.toString());
-						
-					du.rCursor();
-					du.closeWs(wsCat);	
-						
-					formateaTasa();	
-					cboTasa.dataProvider = tasaObj;	
-				});
-				if(cboTdp.selectedItem == null){
-					params[0] = '0';
-				} else {
-					params[0] = cboTdp.selectedItem.codigo;
-				}
-				
-				params[1] = global.obtenerUsuario(); 
-				//Obtiene Informacion de Tasas de Usuario
-				wsCat.getListado.send(63, params);
-			}
-			
-			private function cargaTipoProducto():void{
-				var wsCat:WebService = new WebService;
-				var params:Array = new Array;
-				
-				du.initWsCat(wsCat);
-				du.sCursor();
-				
-				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-					_xmlTdp = new XML(evt.result.toString());
-						
-					du.rCursor();
-					du.closeWs(wsCat);						
-					formateaTipoProd();	
-					cboTdp.dataProvider = tipoProd;	
-					cargaTasaInteres();
-				});
-			    params[0] = "G";
-			    params[1] = global.obtenerUsuario();
-			    params[2] = "";
-			    wsCat.getCatalogoGral.send(11, params);
-			}
-			
 			//funcion que ejecuta el proceso de modificacion de tasa de interes
 			public function ejecuta():void{
 				if(valida()){
 					initConexion();
 					du.sCursor();
-					
-					var grupo:String = txtGrupo.text;
-					var ciclo:String = txtCiclo.text;
-					var tipoProd:String = cboTdp.selectedItem.codigo;
-					var prodCred:String = cboTasa.selectedItem.prodCred;
-					var tasa:Number = cboTasa.selectedItem.tasa;
-					
 					global.bloquear();
-						
+					
+					var codigo:String = txtCodigo.text;
+					var ciclo:String = txtCiclo.text;
+					var tasa:String = txtTasa.text;
+					
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 						var res:String = evt.result.toString();
 						
 						du.rCursor();
 						du.closeWs(wsMS);
-						
 						global.desbloquear();
 						
 						if(res.substr(0,1) == "1"){
@@ -106,62 +48,15 @@
 						else
 							Alert.show(res.substr(2, res.length),titulo,4,null,null,global.iAlert);		
 					});
-					wsMS.setAccionModTasa.send(grupo, ciclo, "G", tipoProd, prodCred, tasa, global.obtenerUsuario());
+					wsMS.setAccionModTasaInt.send(codigo, ciclo, "I", tasa, global.obtenerUsuario());
 				}
 			}
-			
-			private function formateaTipoProd():void{
-				var cont:int = _xmlTdp.elements().length();
-				var oItem:Object;
-				var item:Array = new Array();
-				
-				tipoProd.removeAll();
-				tipoProd.refresh();
-				
-				oItem = new Object();
-				oItem.codigo = "0";
-				oItem.nombre = "--Seleccionar--";				
-				item.push(oItem);
-				
-				for(var i:int = 0; i < cont; i++){
-					oItem = new Object();
-					oItem.codigo = _xmlTdp.Table[i].CODIGO;
-					oItem.nombre = _xmlTdp.Table[i].NOMBRE;
-					item.push(oItem);
-				}
-				tipoProd = new ArrayCollection(item);
-			}	
-			
-			private function formateaTasa():void{
-				var cont:int = _xmlTasa.elements().length();
-				var oItem:Object;
-				var item:Array = new Array();
-				
-				tasaObj.removeAll();
-				tasaObj.refresh();
-				oItem = new Object();
-				oItem.codigo = "0";
-				oItem.nombre = "--Seleccionar--";
-				oItem.tipoProd = "0";
-				oItem.prodCred = "0";
-				item.push(oItem);
-				
-				for(var i:int = 0; i < cont; i++){
-					oItem = new Object();
-					oItem.prodCred = _xmlTasa.Table[i].CDGPCR;
-					oItem.nombre = _xmlTasa.Table[i].NOMBRE;
-					oItem.tasa = _xmlTasa.Table[i].TASA;
-					item.push(oItem);
-				}
-				tasaObj = new ArrayCollection(item);
-			}			
 						
 			public function initApp():void{
 				global = new Globales();
 				du = new Utils();
 				titulo = "Modificación de Tasa de Interés";
 				lblTitulo.text = titulo.toUpperCase();
-				cargaTipoProducto();
 				limpiar();
 			}		
 			
@@ -172,16 +67,14 @@
 			}	
 		
 			private function limpiar():void{
-				cboTdp.selectedIndex = 0; 			   	
-			   	cargaTasaInteres();
-				cboTasa.selectedIndex = 0; 
-				txtGrupo.text = "";
+				txtCodigo.text = "";
 				txtCiclo.text = "";
-				txtGrupo.setFocus();
+				txtTasa.text = "";
+				txtCodigo.setFocus();
 			}
 				
 			private function valida():Boolean{
-				if(txtGrupo.text == ""){
+				if(txtCodigo.text == ""){
 					Alert.show("Capture el código de grupo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
@@ -189,28 +82,39 @@
 					Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
-				if(cboTasa.selectedIndex == 0){
-					Alert.show("Debe seleccionar la nueva Tasa de Interés.",titulo,4,null,null,global.iAlert);
+				if(txtTasa.text == ""){
+					Alert.show("Debe capturar la nueva tasa de interés.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;
 			}
+			
+			private function validarMonto(event:Event):void{
+				var vResult:ValidationResultEvent;
+				
+				numVal.source = TextInput(event.currentTarget);
+				vResult = numVal.validate();
+
+				if (vResult.type!=ValidationResultEvent.VALID)
+               		TextInput(event.currentTarget).text = "";
+			}
 		]]>
 	</mx:Script>
+	<mx:NumberValidator id="numVal" property="text" precision="8" required="false"
+        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
+	
 	<mx:Label id="lblTitulo" x="16.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-	<mx:Label x="71.25" y="39" text="Parámetros" width="100.25" id="lblParam"/>
-	<mx:Canvas x="71.25" y="58.5" width="247.54999" height="45.5" styleName="canvasMod" id="cnvPrestamo">
-		<mx:Label id="lblCiclo" x="145.6" y="11" text="Ciclo:" height="20" textAlign="right"/>
-		<mx:Label id="lblGrupo" x="12.85" y="11" text="Código:" height="20" textAlign="right"/>
-		<mx:TextInput id="txtGrupo" x="61.85" y="10" maxChars="6" restrict="0-9" enter="ejecuta()"/>
-		<mx:TextInput id="txtCiclo" x="184.6" y="10" width="45" maxChars="2" restrict="0-9" enter="ejecuta()"/>
+	<mx:Label x="16.55" y="39" text="Parámetros" id="lblParam"/>
+	<mx:Canvas x="16.55" y="58.5" width="247.54999" height="45.5" styleName="canvasMod" id="cnvPrestamo">
+		<mx:Label id="lblCiclo" x="145.25" y="11" text="Ciclo:" height="20" textAlign="right"/>
+		<mx:Label id="lblGrupo" x="16.25" y="11" text="Código:" height="20" textAlign="right"/>
+		<mx:TextInput id="txtCodigo" x="65.25" y="10" maxChars="6" restrict="0-9" width="60"/>
+		<mx:TextInput id="txtCiclo" x="184.25" y="10" width="45" maxChars="2" restrict="0-9"/>
 	</mx:Canvas>
-	<mx:Canvas x="19.55" y="112" width="350.9" height="77" styleName="canvasMod" id="cnvFecha">
-		<mx:Label x="9.85" y="13" text="Tipo de Producto:" id="lblTipoProd"/>
-		<mx:ComboBox id="cboTdp" x="106.85" y="10" width="232.05" labelField="nombre" change="cargaTasaInteres()"/>
-		<mx:Label x="15.85" y="44" text="Tasa de Interés:" id="lblTasa"/>
-		<mx:ComboBox id="cboTasa" x="106.85" y="41" width="232.05" labelField="nombre"/>
+	<mx:Canvas x="16.5" y="112" width="247.54999" height="45" styleName="canvasMod" id="cnvFecha">
+		<mx:Label x="42.25" y="11" text="Tasa de Interés:" id="lblTasa"/>
+		<mx:TextInput id="txtTasa" x="133.25" y="10" change="validarMonto(event)" width="80"/>
 	</mx:Canvas>
-	<mx:Button x="120" y="197" label="Aceptar" click="ejecuta()" id="btnAceptar"/>
-	<mx:Button x="199" y="197" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	<mx:Button x="65.3" y="165" label="Aceptar" click="ejecuta()" id="btnAceptar"/>
+	<mx:Button x="144.3" y="165" label="Limpiar" click="limpiar()" id="btnLimpiar"/>
 </mx:Canvas>

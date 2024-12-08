@@ -14,7 +14,7 @@ package Data
 	 	private var urlExcelExport:String;
 	    private var titulo:String;
 	 	private var disp:ExcelExportJsonDispatcher;
-	 	public var isXls:Boolean = true;
+	 	public var isXls:Boolean = false;
 	 	public var header:Boolean = false;
 			
 		public function ExcelExportXls():void{
@@ -38,7 +38,7 @@ package Data
 			variables.infoEnc = disp.strEnc; //Llenado de archivo JSON de encabezado	       
 			variables.info = disp.str; //Llenado de archivo XML en un Obj string 
 			variables.titulo = this.titulo;
-			variables.xls = getIsXls() == true? "1":"0";	//1= xls, 0 = xlsx	
+			variables.xls = getIsXls() == true ? "1": "0";	//1= xls, 0 = xlsx	
 			variables.hideHeader = this.header;	
 			u.data = variables;
 			u.method = URLRequestMethod.POST;

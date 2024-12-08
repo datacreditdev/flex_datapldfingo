@@ -17,7 +17,6 @@
 		import mx.managers.PopUpManager;
 		import mx.rpc.events.ResultEvent;
 		import mx.rpc.soap.WebService;
-		import mx.rpc.xml.SimpleXMLDecoder;
 		import mx.utils.ArrayUtil;  
 		import mx.validators.Validator;	
 		
@@ -26,21 +25,20 @@
 		public var estObj:ArrayCollection = new ArrayCollection();
 		public var infoObj:ArrayCollection = new ArrayCollection();
 		
-		private var global:Globales;
-		private var du:Utils;
 		public var wsMS:WebService;	
 		public var tipoAccion:int;
 		public var titulo:String;
 		public var texto:String;
 		public var control:Number;
-		private var vResult:ValidationResultEvent;
+		private var du:Utils;
+		private var global:Globales;
 		
 		private function actualizarAlertas(event:Event):void{
 			consultar();
 		}
 	
 		private function consultar():void{
-			var wsCat:WebService = new WebService;
+			var wsCatPLD:WebService = new WebService;
 			var params:Array = new Array;
 			if(cboEstatus.selectedIndex != 0){
 				var cont:int;
@@ -48,16 +46,16 @@
 				var fecIni:String = dtfFecIni.text;
 				var fecFin:String = dtfFecFin.text;
 				
-				du.initWsCat(wsCat);
+				du.initWsCatPLD(wsCatPLD);
 				du.sCursor();
 				global.bloquear();
 				
 				dgReg.dataProvider = null;
 				
-				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCatPLD,function(evt:ResultEvent):void {											
 					_xmlInfo = new XML(evt.result.toString());
 						
-					du.closeWs(wsCat);
+					du.closeWs(wsCatPLD);
 					du.rCursor();
 					global.desbloquear();
 						
@@ -75,7 +73,7 @@
 				params[0] = estatus;
 				params[1] = fecIni;
 				params[2] = fecFin;
-				wsCat.getListado.send(33, params);
+				wsCatPLD.getListadoPLD.send(1, params);
 			}
 			else
 				Alert.show("Debe seleccionar el estatus de la Alerta.",titulo,4,null,null,global.iAlert);	
@@ -144,13 +142,7 @@
 			formateaEstatus();
 			cboEstatus.dataProvider = estObj;
 		}		
-	
-		private function initConexionRep():void{				
-			wsMS = new WebService();			
-			wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
-			wsMS.loadWSDL();
-		}
-		
+
 		private function limpiar():void{
 			cboEstatus.selectedIndex = 0;
 			dtfFecIni.selectedDate = null;
@@ -171,13 +163,10 @@
 		 
 		]]>
 	</mx:Script>
-	<mx:NumberValidator id="numVal" property="text" precision="2" required="false"
-        allowNegative="true" domain="real" decimalSeparator="." thousandsSeparator=","/>
-	
 	<mx:Canvas width="800" height="460" backgroundColor="#ffffff" backgroundAlpha="1.0" id="canvas1">
 		<mx:Canvas id="cnvFondeo" x="21" y="55" width="460" height="80" styleName="canvasMod">
 			<mx:Label id="lblOF" x="55.05" y="16" text="Estatus:"/>
-			<mx:ComboBox id="cboEstatus" x="107.05" y="13" width="140" labelField="nombre"></mx:ComboBox>
+			<mx:ComboBox id="cboEstatus" x="107.05" y="13" width="140" labelField="nombre"/>
 			<mx:Button id="btnBusqDisp" x="378.9" y="43" icon="@Embed(source='assets/ico_lupa.png')" toolTip="Buscar Info Disposición" width="40" visible="false"/>
 			<mx:Label id="lblFecIni" x="32.05" y="46" text="Fecha Inicial:"/>
 			<mx:DateField id="dtfFecIni" width="110" x="107.05" y="44"/>

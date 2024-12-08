@@ -152,7 +152,7 @@
 							dgSolic.validateNow();
 							dgSolic.verticalScrollPosition = vScroll;
 							dgSolic.selectedIndex = indSolic;
-							this.accionSolic = 0;
+							accionSolic = 0;
 						}
 						activarContGarantia(true);
 					}
@@ -172,6 +172,12 @@
 				}
 				else
 					Alert.show("No es posible eliminar la solicitud.\n\nVerifique la situación que presenta la misma", "Mantenimiento de Solicitud", 4,null,null,global.iInfo);
+			}
+			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
 			}
 			
 			public function iniVar():void{
@@ -369,6 +375,8 @@
 			
 		]]>
 	</mx:Script>
+	<mx:CurrencyFormatter id="curForm" precision="2" decimalSeparatorTo="." thousandsSeparatorTo="," currencySymbol="$"/>
+	
 	<mx:Canvas width="800" height="550" backgroundColor="#FFFFFF" backgroundAlpha="1.0" verticalScrollPolicy="off">
 		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="763.5" height="194" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="741.5" height="172" sortableColumns="true" resizableColumns="false" 
@@ -405,8 +413,8 @@
 					<mx:DataGridColumn headerText="SOLICITUD" dataField="FECSOLIC" width="90"/>
 					<mx:DataGridColumn headerText="FECHA DE ENTREGA" dataField="FECENTRE" width="140"/>
 					<mx:DataGridColumn headerText="DURACION" dataField="DURACION" width="80"/>
-					<mx:DataGridColumn headerText="MONTO SOLICITADO" dataField="CANTSOLIC" width="140"/>
-					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="140"/>
+					<mx:DataGridColumn headerText="MONTO SOLICITADO" dataField="CANTSOLIC" width="140" labelFunction="formatearMontoGrid"/>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="140" labelFunction="formatearMontoGrid"/>
 					<mx:DataGridColumn headerText="SITUACION" dataField="NSOLICITUD" width="100"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>
@@ -431,8 +439,8 @@
 					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="180"/>
 					<mx:DataGridColumn headerText="PROYECTO DE INVERSION" dataField="NOMBRE" width="120"/>
 					<mx:DataGridColumn headerText="FECHA SOL." dataField="FECSOL" width="65"/>
-					<mx:DataGridColumn headerText="MONTO SOL." dataField="CANTSOLIC" width="65"/>
-					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="100"/>
+					<mx:DataGridColumn headerText="MONTO SOL." dataField="CANTSOLIC" width="65" labelFunction="formatearMontoGrid"/>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="100" labelFunction="formatearMontoGrid"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>

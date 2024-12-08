@@ -70,7 +70,7 @@
 				global = new Globales();
 				du = new Utils();
 				titulo = "Conciliación de Garantía Líquida";
-				comFiltroFecha.init("0", titulo.toUpperCase(), "01/08/2009", global.formatoFecha(global.obtenerFechaSistema()));
+				comFiltroFecha.init("0", titulo.toUpperCase(), "01/08/2009", global.formatearFecha(global.obtenerFechaSistema()));
 				comFiltroFecha.lblFecha.text = "Fecha Operación:";
 				comFiltroFecha.addEventListener("enviar",generar);
 				comFiltroFecha.addEventListener("limpiar",limpiar);

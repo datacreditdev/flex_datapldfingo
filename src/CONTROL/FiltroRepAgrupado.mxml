@@ -140,7 +140,7 @@
 				if (valida()){					
 					var consulta:String;
 					var id:String = "&id=" + rep;
-					var fecha:String = "&fecha=" + global.formatoFechaSep(dtfFecha.selectedDate, "-");
+					var fecha:String = "&fecha=" + global.formatearFechaSep(dtfFecha.selectedDate, "-");
 					var niv:String = "&nivel=" + nivel.selectedValue.toString();
 					var usuario:String = "&usuario=" + global.obtenerUsuario();
 					var nomUsuario:String = "&nomUsuario=" + Application.application.NOM_U_ID;
@@ -193,7 +193,7 @@
 				//asesorObj.addItem(agregaInicial("000000", "--Todos--"));
 				fec = global.obtenerFechaSistema();
 				if(currentState == null)
-					dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+					dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				nivel.selectedValue = 2;
 			}
 				

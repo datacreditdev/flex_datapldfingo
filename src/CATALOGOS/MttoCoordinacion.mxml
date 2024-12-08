@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="460" height="510" creationPolicy="all" xmlns:Forms="CATALOGOS.Forms.*">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" 
+	width="460" height="510" creationPolicy="all" xmlns:Forms="CATALOGOS.Forms.*">
 	
 	<mx:Validator id="codigoV" source="{txtCodigo}" property="text" 
 	invalid="{txtCodigo.setFocus()}" triggerEvent="" requiredFieldError="Código de Gerencia Requerido"/>
@@ -96,7 +97,7 @@
 				
 			oItem = new Object();
 			oItem.CODIGO = "";
-			oItem.NOMBREC = "--Seleccionar--";
+			oItem.NOMBRE = "--Seleccionar--";
 				
 			var xml:XMLDocument = new XMLDocument( datos ); 
      		var decoder:SimpleXMLDecoder = new SimpleXMLDecoder();  
@@ -123,7 +124,7 @@
 			tipoAccion = tipo;
 			global = new Globales();
 			du = new Utils(); 
-			titulo = "Mantenimiento de Sucursal";
+			titulo = "Mantenimiento de Oficina";
 			//Codigo que permite ejecutar el efecto de apertura
 			openEffect.duration = 1000;
 			openEffect.play([this]);
@@ -233,8 +234,8 @@
 		<mx:TextInput id="txtCodigo" editable="false" x="111.5" y="8" width="45" maxChars="3"/>
 		<mx:Label id="lblNombre" x="58.5" y="38" text="Nombre:"/>
 		<mx:TextInput id="txtNombre" editable="false" x="111.5" y="36" width="250" height="24" maxChars="50"/>
-		<mx:Label id="lblGerente" x="36.5" y="68" text="Coordinador:"/>
-		<mx:ComboBox id="cboGerente" x="111.5" y="65" width="290" height="24" labelField="NOMBREC"/>
+		<mx:Label id="lblGerente" x="43.5" y="68" text="Encargado:"/>
+		<mx:ComboBox id="cboGerente" x="111.5" y="65" width="290" height="24" labelField="NOMBRE"/>
 	</mx:Canvas>
 	<mx:Canvas x="15" y="170" width="430" height="260" styleName="canvasMod">
 		<Forms:FormDatosCoord id="formDatosCoord" x="14" height="248"/>

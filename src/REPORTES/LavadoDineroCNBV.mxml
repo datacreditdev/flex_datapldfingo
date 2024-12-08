@@ -294,11 +294,11 @@
 						return;
 					}
 					else if(cboOperac.selectedItem.codigo == "I" || cboOperac.selectedItem.codigo == "P"){ 
-						var fecOp:String = global.formatoFechaYYYYMMDD(fecRep);
-					    var fecNac:String = global.formatoFechaYYYYMMDD(dtfNac.selectedDate);
+						var fecOp:String = global.formatearFechaYYYYMMDD(fecRep);
+					    var fecNac:String = global.formatearFechaYYYYMMDD(dtfNac.selectedDate);
 						var rfc:String = txtCURP.text.substr(0,10);
 						var diaRep:String = (fecRep.date).toString();
-						var cadFec:String = fecRep.fullYear.toString().substring(2,4) + global.insertaCaracter(mesRep,'0',2 - mesRep.length,1) + global.insertaCaracter(diaRep,'0',2 - diaRep.length,1) + ".002";
+						var cadFec:String = fecRep.fullYear.toString().substring(2,4) + global.insertarCaracter(mesRep,'0',2 - mesRep.length,1) + global.insertarCaracter(diaRep,'0',2 - diaRep.length,1) + ".002";
 						
 						if(cboOperac.selectedItem.codigo == "I")
 							tipo = "2";
@@ -307,7 +307,7 @@
 						
 						cadInfo = tipo; 
 						cadInfo += ";" + fecOp;
-						cadInfo += ";" + global.insertaCaracter("1","0",4,1);
+						cadInfo += ";" + global.insertarCaracter("1","0",4,1);
 						cadInfo += ";001002";
 						cadInfo += ";0692819";
 						cadInfo += ";01001002";

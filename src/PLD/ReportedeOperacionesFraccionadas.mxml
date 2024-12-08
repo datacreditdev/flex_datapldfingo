@@ -80,8 +80,8 @@
 				du = new Utils();
 				titulo = "Reporte de Operaciones Fraccionadas";
 				lblTitulo.text = titulo.toUpperCase(); 
-				cbxAnio.dataProvider = global.formateaAnio();
-				cbxMes.dataProvider = global.formateaMes();
+				cbxAnio.dataProvider = global.formatearAnio();
+				cbxMes.dataProvider = global.formatearMes();
 			}		
 			
 			public function initConexion():void{				
@@ -94,8 +94,8 @@
 				dgReporte.dataProvider = null;
 				lblTotal.text = "";
 				btnExportar.enabled = false;
-				cbxAnio.dataProvider = global.formateaAnio();
-				cbxMes.dataProvider = global.formateaMes();
+				cbxAnio.dataProvider = global.formatearAnio();
+				cbxMes.dataProvider = global.formatearMes();
 				tipo.selectedValue = null;
 			}
 			

@@ -49,9 +49,9 @@
 					du.rCursor();
 						
 					if (_xmlEnc.elements().length() > 0){
-						lblPagoComp.text = global.formatoMoneda(_xmlEnc.Table[0].DEUDAVENCIDA);
-						lblPagoEfec.text = global.formatoMoneda(_xmlEnc.Table[0].CANTIDAD);
-						lblMora.text = global.formatoMoneda(_xmlEnc.Table[0].SALDO);
+						lblPagoComp.text = global.formatearMoneda(_xmlEnc.Table[0].DEUDAVENCIDA);
+						lblPagoEfec.text = global.formatearMoneda(_xmlEnc.Table[0].CANTIDAD);
+						lblMora.text = global.formatearMoneda(_xmlEnc.Table[0].SALDO);
 						lblPeriTran.text = _xmlEnc.Table[0].PERITRAN;
 						lblPeriPag.text = _xmlEnc.Table[0].PERIPAG;
 					}	
@@ -94,8 +94,8 @@
 					var oItem:Object = new Object();
 					oItem.NUMERO = _xmlCuenta.Table[i].NOPAGO;
 					oItem.FECHA = _xmlCuenta.Table[i].FFECHA;
-					oItem.CARGO = global.formatoDecimal(_xmlCuenta.Table[i].CARGO);
-					oItem.ABONO = global.formatoDecimal(_xmlCuenta.Table[i].ABONO);
+					oItem.CARGO = global.formatearDecimal(_xmlCuenta.Table[i].CARGO);
+					oItem.ABONO = global.formatearDecimal(_xmlCuenta.Table[i].ABONO);
 					ArrPagos.addItem(oItem);
 				}
 				dgPagos.dataProvider = ArrPagos;
@@ -119,8 +119,8 @@
 				var sumCargo:Number = 0;
 				
 				for(var i:int = 0; i <= indice; i++){
-					sumCargo += Number(global.formatoNumerico(Pagos[i].CARGO.toString()));
-					sumAbono += Number(global.formatoNumerico(Pagos[i].ABONO.toString()));
+					sumCargo += Number(global.formatearNumerico(Pagos[i].CARGO.toString()));
+					sumAbono += Number(global.formatearNumerico(Pagos[i].ABONO.toString()));
 				}
 				if(sumCargo > sumAbono)
 					return true;

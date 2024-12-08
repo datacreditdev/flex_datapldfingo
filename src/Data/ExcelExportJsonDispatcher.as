@@ -72,7 +72,7 @@ package Data
 				 	if(dg.dataProvider.getItemAt(j) != undefined && dg.dataProvider.getItemAt(j) != null && dg.columns[k].visible == true) {
 	    				if(dg.columns[k].labelFunction != undefined && dg.columns[k].labelFunction != null && dg.columns[k].visible == true) {
 	    					texto = dg.columns[k].labelFunction(dg.dataProvider[j],dg.columns[k]).toString();
-	    					texto = global.modificaTextoFecha(texto);
+	    					texto = global.modificarTextoFecha(texto);
 	    					if(texto.substr(0,1) == "0" && texto.length > 1 && texto.substr(1,1) != "." && (texto.substr(2,1) != "/" && texto.substr(5,1) != "/"))
 	    						strCol += (strCol != "" ? "," : "") + "\"col"+k.toString()+"\":\"'"+texto+"\"";
 	    					else if(texto.substr(0,1) == "'")
@@ -83,7 +83,7 @@ package Data
     					else{
 	    					if(dg.dataProvider.getItemAt(j)[dg.columns[k].dataField] != undefined){
 	    						texto = dg.dataProvider.getItemAt(j)[dg.columns[k].dataField].toString();
-	    						texto = global.modificaTextoFecha(texto); 
+	    						texto = global.modificarTextoFecha(texto); 
 	    						if(texto.substr(0,1) == "0" && texto.length > 1 && texto.substr(1,1) != "." && (texto.substr(2,1) != "/" && texto.substr(5,1) != "/"))
 	    							strCol += (strCol != "" ? "," : "") + "\"col"+k.toString()+"\":\"'"+texto+"\"";
 	    						else if(texto.substr(0,1) == "'")

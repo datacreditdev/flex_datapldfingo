@@ -75,8 +75,8 @@
 					btnEditar.enabled = band;
 			}
 			
-			public function actualizarAcred(event:Event):void{
-				//buscarListaAcred(1);
+			private function actualizarAcred(event:Event):void{
+				buscarAcred(2);
 			}
 			
 			public function agregarAcred(event:MouseEvent):void{
@@ -94,7 +94,7 @@
 			
 			//FUNCION QUE SE ENCARGA DE BUSCAR LOS REGISTROS QUE COINCIDEN CON LOS CRITERIOS 
 			//DE BUSQUEDA SELECCIONADOS
-			public function buscarAcred():void{
+			public function buscarAcred(tipo:int):void{
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
 				
@@ -104,7 +104,11 @@
 					
 					du.initWsCat(wsCat);
 					du.sCursor();
-					global.bloquear();
+					
+					if(tipo == 1){
+						global.bloquear();
+						iniVar();
+					}
 					
 					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 						_xmlAcred = new XML(evt.result);
@@ -115,6 +119,12 @@
 						
 						if (_xmlAcred.elements().length() > 0){
 							dgAcred.dataProvider = _xmlAcred.Table;
+							if (accionAcred == 2){
+								dgAcred.validateNow();
+								dgAcred.verticalScrollPosition = vScroll;
+								dgAcred.selectedIndex = indAcred;
+								accionAcred = 0;
+							}
 						}
 						seleccionaAcred(); 	
 					});
@@ -322,7 +332,7 @@
 		</mx:Canvas>
 		<mx:Label x="18" y="10" text="ACREDITADOS" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Canvas x="684" y="39" width="155" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarAcred()" toolTip="Buscar Acreditado" width="40"/>
+			<mx:Button id="btnBuscar" x="10" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarAcred(1)" toolTip="Buscar Acreditado" width="40"/>
 			<mx:Button id="btnAgregar" x="105" y="3" icon="@Embed(source='assets/add.png')" click="mostrarFormAcred(1)" toolTip="Registrar Acreditado" width="40"/>
 			<mx:Button id="btnEditar" x="57" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormAcred(2)" toolTip="Editar Acreditado" width="40"/>
 		</mx:Canvas>
@@ -330,9 +340,9 @@
 			<mx:Label id="lblCodAcred" x="13" y="7" text="Código:" textAlign="right"/>
 			<mx:Label id="lblPaterno" x="443" y="7" text="Apellido Paterno:" textAlign="right"/>
 			<mx:Label id="lblNombre" x="144" y="7" text="Nombre/Razón Social:" textAlign="right"/>
-			<mx:TextInput id="txtCodAcred" x="62" y="6" width="56" enter="buscarAcred()" maxChars="6" restrict="0-9"/>
-			<mx:TextInput id="txtNombre" x="263" y="6" width="170" enter="buscarAcred()" maxChars="50"/>
-			<mx:TextInput id="txtPaterno" x="537" y="6" width="110" enter="buscarAcred()" maxChars="50"/>
+			<mx:TextInput id="txtCodAcred" x="62" y="6" width="56" enter="buscarAcred(1)" maxChars="6" restrict="0-9"/>
+			<mx:TextInput id="txtNombre" x="263" y="6" width="170" enter="buscarAcred(1)" maxChars="50"/>
+			<mx:TextInput id="txtPaterno" x="537" y="6" width="110" enter="buscarAcred(1)" maxChars="50"/>
 		</mx:Canvas>
 	</mx:Canvas>
 </mx:Canvas>

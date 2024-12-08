@@ -142,13 +142,19 @@
 							dgSolic.validateNow();
 							dgSolic.verticalScrollPosition = vScroll;
 							dgSolic.selectedIndex = indSolic;
-							this.accionSolic = 0;
+							accionSolic = 0;
 						}
 					}
 					seleccionaSolic();
 			 	});
 			 	params[0] = acred;
 			 	wsCat.getListado.send(36 ,params);
+			}
+			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
 			}
 			
 			public function iniVar():void{
@@ -289,6 +295,8 @@
 			
 		]]>
 	</mx:Script>
+	<mx:CurrencyFormatter id="curForm" precision="2" decimalSeparatorTo="." thousandsSeparatorTo="," currencySymbol="$"/>
+	
 	<mx:Canvas width="800" height="509" backgroundColor="#FFFFFF" backgroundAlpha="1.0">
 		<mx:Canvas id="cnvDetalle" x="18.5" y="84" width="763.5" height="194" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<Data:RowColorDataGrid id="dgAcred" x="10" y="10" width="741.5" height="172" sortableColumns="false" verticalScrollPolicy="auto" 
@@ -315,8 +323,8 @@
 					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
 					<mx:DataGridColumn headerText="SOLICITUD" dataField="FSOLICITUD" width="90"/>
 					<mx:DataGridColumn headerText="FECHA DE ENTREGA" dataField="INICIO" width="140"/>
-					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="140"/>
-					<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="CANTENTRE" width="140"/>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="140" labelFunction="formatearMontoGrid"/>
+					<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="CANTENTRE" width="140" labelFunction="formatearMontoGrid"/>
 					<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION" width="100"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>

@@ -77,7 +77,7 @@
 								etiqueta = " Depósitos Identificados de Transferencia de GL a Cartera $";
 							else if(tipo == 5)
 								etiqueta = " Depósitos Identificados de Transferencia de Cartera a GL $";					
-							lblTotal.text = registro + etiqueta + global.formatoEntero(cantidad.toString());
+							lblTotal.text = registro + etiqueta + global.formatearEntero(cantidad.toString());
 							//delete _xmlRep.dtPagos[cont-1];
 							dgReporte.dataProvider = _xmlRep.dtPagos;
 							fecIni = dtfFecha.text;
@@ -117,8 +117,8 @@
 				btnExportar.enabled = false;
 				lblTotal.text = "";
 				fec = global.obtenerFechaSistema();
-				dtfFecha.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
-				dtfFechaFinal.selectedDate = global.seleccionaDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFecha.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
+				dtfFechaFinal.selectedDate = global.seleccionarDiaHabil(new Date(fec.fullYear,fec.month,fec.date - 1));
 				cboFecha.selectedIndex = 0;
 				tipoPago.selection = null;
 			}
@@ -155,7 +155,7 @@
 			
 			public function validaFecha():void{
 				//validacion de diferencia de fechas
-				dtfFecha.selectedDate = global.validaFecha(dtfFecha.selectedDate, dtfFechaFinal.selectedDate,titulo);
+				dtfFecha.selectedDate = global.validarFecha(dtfFecha.selectedDate, dtfFechaFinal.selectedDate,titulo);
 			}
 		]]>
 	</mx:Script>

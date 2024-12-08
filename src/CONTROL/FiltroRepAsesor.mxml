@@ -194,7 +194,7 @@
 					var coord:String = "&coord=" + cboCoord.selectedItem.codigo;
 					var asesor:String = "&asesor=" + cboAsesor.selectedItem.codigo;
 					var fec:Date = global.obtenerFechaSistema();
-					fecha = "&fecha=" + global.formatoFechaSep(fec, "-");
+					fecha = "&fecha=" + global.formatearFechaSep(fec, "-");
 					
 					if(currentState == null)
 						consulta = global.urlPdf + id + fecha + usuario + nomUsuario + coord + asesor;
@@ -210,8 +210,8 @@
 							diaSem = 7;
 						fecIni = new Date(fec.getFullYear(),fec.getMonth(),fec.getDate() - (diaSem - 1));
 						fecFin = new Date(fecIni.getFullYear(),fecIni.getMonth(),fecIni.getDate() + 4);
-						fecha = "&fecha=" + global.formatoFechaSep(fecIni, "-");
-						fechaFin = "&fechaFin=" + global.formatoFechaSep(fecFin, "-"); 
+						fecha = "&fecha=" + global.formatearFechaSep(fecIni, "-");
+						fechaFin = "&fechaFin=" + global.formatearFechaSep(fecFin, "-"); 
 						consulta = global.urlPdf + id + fecha + fechaFin + usuario + nomUsuario + coord + asesor;
 					}
 					Application.application.muestraPdf(consulta);

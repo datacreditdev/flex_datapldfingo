@@ -139,7 +139,7 @@
 							dgSolic.validateNow();
 							dgSolic.verticalScrollPosition = vScroll;
 							dgSolic.selectedIndex = indSolic;
-							this.accionSolic = 0;
+							accionSolic = 0;
 						}
 					}
 					seleccionaSolic();
@@ -148,9 +148,15 @@
 			 	wsCat.getListado.send(42 ,params);
 			}
 			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
+			}
+			
 			public function iniVar():void{
 				this.indSolic = -1;
-				this.vScroll = -1;
+				this.vScroll = undefined;
 			}
 			
 			public function initApp():void{
@@ -317,8 +323,8 @@
 					<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
 					<mx:DataGridColumn headerText="SOLICITUD" dataField="FSOLICITUD" width="90"/>
 					<mx:DataGridColumn headerText="FECHA DE ENTREGA" dataField="INICIO" width="140"/>
-					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="140"/>
-					<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="CANTENTRE" width="140"/>
+					<mx:DataGridColumn headerText="MONTO AUTORIZADO" dataField="CANTAUTOR" width="140" labelFunction="formatearMontoGrid"/>
+					<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="CANTENTRE" width="140" labelFunction="formatearMontoGrid"/>
 					<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION" width="100"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>
