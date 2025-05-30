@@ -93,7 +93,7 @@
 								Application.application.muestraPdf(consulta);
 							}
 							else
-								Alert.show("No es posible generar el documento del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+								du.mostrarMensaje("No es posible generar el documento del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 						}	
 					});
 					params[0] = global.obtenerUsuario();
@@ -148,11 +148,11 @@
 				
 			public function valida():Boolean{
 				if(txtGrupo.text == ""){
-					Alert.show("Capture el número de grupo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el número de grupo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtCiclo.text == ""){
-					Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

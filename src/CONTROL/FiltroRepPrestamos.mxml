@@ -235,7 +235,7 @@
 			
 			public function validaFechaIni():void{
 				if(dtfIniDesde.selectedDate > dtfIniHasta.selectedDate){
-					Alert.show("La fecha inicial debe ser menor o igual a la fecha final.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("La fecha inicial debe ser menor o igual a la fecha final.",titulo,4,null,null,global.iAlert);
 					dtfIniDesde.selectedDate = dtfIniHasta.selectedDate;
 				}
 			}
@@ -246,7 +246,7 @@
 				if(dtfFinHasta.selectedDate == null)
 					dtfFinHasta.selectedDate = dtfFinDesde.selectedDate;
 				if(dtfFinDesde.selectedDate > dtfFinHasta.selectedDate){
-					Alert.show("La fecha inicial debe ser menor o igual a la fecha final.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("La fecha inicial debe ser menor o igual a la fecha final.",titulo,4,null,null,global.iAlert);
 					dtfFinDesde.selectedDate = dtfFinHasta.selectedDate;
 				}
 			}
@@ -256,7 +256,7 @@
 				   chkSitLiq.selected == false && chkSitDev.selected == false){
 					var obj:CheckBox = event.target as CheckBox;
 					obj.selected = true;
-					Alert.show("Debe seleccionar al menos una Situación.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar al menos una Situación.",titulo,4,null,null,global.iAlert);
 				}
 				if(chkSitDev.selected == true)
 					rdbUltCiclo.enabled = false;

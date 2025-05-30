@@ -274,7 +274,7 @@
 						sec = dgReg.selectedItem.SECUENCIA;
 					}
 					else{
-						Alert.show("Debe seleccionar el registro de Control de Pagos.",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("Debe seleccionar el registro de Control de Pagos.",titulo,4,null,null,global.iAlert);
 						return;
 					}
 						
@@ -310,15 +310,15 @@
 								comEdoCuentaFijo.init();
 								comEdoCuentaFijo.cargaEdoCuenta(grupo, ciclo);	
 								if(activo == "N")
-									Alert.show("No es posible modificar el registro, debido a que la vigencia de dicha acción ha concluido.",titulo,4,null,null,global.iAlert);	
+									du.mostrarMensaje("No es posible modificar el registro, debido a que la vigencia de dicha acción ha concluido.",titulo,4,null,null,global.iAlert);	
 							}
 							else
-								Alert.show("No se encontraron registros de acreditados que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+								du.mostrarMensaje("No se encontraron registros de acreditados que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 						});
 						wsMS.getInfoControlPagosAcred.send(tipoAccion, grupo, ciclo, fecha, sec, global.obtenerUsuario());	
 					}
 					else 
-						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 				});
 				wsMS.getInfoControlPagos.send(tipoAccion, grupo, ciclo, fecha, sec, global.obtenerUsuario());
 			}
@@ -365,10 +365,10 @@
 										activarContPagos(false);
 									}
 									else
-										Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+										du.mostrarMensaje("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 								}
 								else
-									Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+									du.mostrarMensaje("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 							});
 							params[0] = grupo;
 							params[1] = ciclo;
@@ -740,11 +740,11 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionControlPagos);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){
-					Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+					du.mostrarMensaje("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
 					limpiar();
 				}	
 				else
-					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+					du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 			}
 			
 			public function valida():Boolean{
@@ -754,17 +754,17 @@
 				
 				//valida que el registro se encuentre activo para su modificacion
 				if(activo == "N"){
-					Alert.show("No es posible modificar el registro, debido a que la vigencia de dicha acción ha concluido.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No es posible modificar el registro, debido a que la vigencia de dicha acción ha concluido.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				//valida que la fecha no sea nula 
 				if(dtfFecha.selectedDate == null){
-					Alert.show("Debe seleccionar la fecha de Registro del Pago.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar la fecha de Registro del Pago.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				//valida que se haya seleccionado el tipo de registro
 				if(cboTipo.selectedIndex <= 0){
-					Alert.show("Debe seleccionar el tipo de registro.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar el tipo de registro.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				
@@ -777,7 +777,7 @@
 				for(var i:int = 0; i < cont; i++)
 				{
 					if(tipo == "S" && (listaAcred[i].asistencia == null || listaAcred[i].asistencia.toString() == "")){
-						Alert.show("La asistencia del acreditado " + listaAcred[i].nombre + " no fue registrada.\n\nCapture los datos requeridos.",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("La asistencia del acreditado " + listaAcred[i].nombre + " no fue registrada.\n\nCapture los datos requeridos.",titulo,4,null,null,global.iAlert);
 						return false;
 					}
 				}
@@ -786,11 +786,11 @@
 			
 			public function validaBusqueda():Boolean{
 				if(txtBusqGrupo.text == ""){
-					Alert.show("Capture el código de grupo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el código de grupo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtBusqCiclo.text == ""){
-					Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

@@ -31,12 +31,14 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import Data.Utils;
 			import Data.Globales;
 			import Data.DatosGarantia;
 			import Data.EventGarantia;
 			import mx.controls.Alert;
 			import mx.validators.Validator;
 			
+			private var du:Utils = new Utils();
 			private var global:Globales = new Globales();
 			
 			private function enviarGarantia(formData:DatosGarantia):void{
@@ -60,7 +62,7 @@
 				}
 				else{
 					//formData.guardar = false;
-					Alert.show("Debe capturar los datos requeridos","Administración de Garantías",4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar los datos requeridos","Administración de Garantías",4,null,null,global.iAlert);
 				}
 				var event:EventGarantia = new EventGarantia("enviarGtias", formData);
 					dispatchEvent(event);
@@ -105,7 +107,6 @@
 			}
 	]]>
 	</mx:Script>
-	
 	
 	<mx:FormItem label="Tipo:" height="51" borderStyle="none" width="234">
 		<mx:RadioButtonGroup id="gpoTipo" change="muestraContDep()"/>

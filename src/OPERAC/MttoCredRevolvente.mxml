@@ -79,7 +79,7 @@
 				guardaCredRevolvente();	
 			}
 			else
-				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
 		}
 				
 		public function guardaCredRevolvente():void{
@@ -152,7 +152,7 @@
 				cerrar();
 			}	
 			else
-				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+				du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 		}
 		
 		public function terminarEfecto(event:EffectEvent):void{
@@ -175,7 +175,7 @@
 		
 		private function validaFechaIni():void{
 			if(dtfAutorizado.text != "" && dtfDesde.selectedDate < dtfAutorizado.selectedDate){
-				Alert.show("La fecha inicial debe ser igual o superior a la fecha de autorización",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("La fecha inicial debe ser igual o superior a la fecha de autorización",titulo,4,null,null,global.iAlert);
 				dtfDesde.selectedDate = dtfAutorizado.selectedDate;
 			}	
 			if(dtfHasta.text != "")
@@ -184,7 +184,7 @@
 		
 		private function validaFechaFin():void{
 			if(dtfDesde.text != "" && dtfHasta.selectedDate < dtfDesde.selectedDate){
-				Alert.show("La fecha fin debe ser igual o superior a la fecha inicial",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("La fecha fin debe ser igual o superior a la fecha inicial",titulo,4,null,null,global.iAlert);
 				dtfHasta.selectedDate = dtfDesde.selectedDate;
 			}	
 			if(dtfFecLim.text != "")
@@ -193,7 +193,7 @@
 		
 		private function validaFechaFinCred():void{
 			if(dtfFecLim.text != "" && dtfFecLim.selectedDate < dtfHasta.selectedDate){
-				Alert.show("La fecha fin del crédito debe ser igual o superior a la fecha fin de vigencia",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("La fecha fin del crédito debe ser igual o superior a la fecha fin de vigencia",titulo,4,null,null,global.iAlert);
 				dtfFecLim.selectedDate = dtfHasta.selectedDate;
 			}	
 		}

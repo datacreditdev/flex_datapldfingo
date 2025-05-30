@@ -105,10 +105,10 @@
 						
 						if(res.substr(0,1) == "1"){
 							limpiar();
-							Alert.show("Modificación realizada exitosamente.",titulo,4,null,null,global.iInfo);
+							du.mostrarMensaje("Modificación realizada exitosamente.",titulo,4,null,null,global.iInfo);
 						}
 						else
-							Alert.show(res.substr(2, res.length),titulo,4,null,null,global.iAlert);		
+							du.mostrarMensaje(res.substr(2, res.length),titulo,4,null,null,global.iAlert);		
 					});
 					wsMS.setAccionModPrn.send(tipo, grupo, ciclo, "G", fecha, global.obtenerUsuario());
 				}
@@ -116,7 +116,7 @@
 			
 			public function formateaTipoMov():void{
 				var oItem:Object
-				var perfil:String = Application.application.cadPerfil;
+				var perfil:String = global.obtenerCadPerfil();
 				
 				oItem = new Object();
 				oItem.tipo = 0;
@@ -173,15 +173,15 @@
 				
 			public function valida():Boolean{
 				if(txtGrupo.text == ""){
-					Alert.show("Capture el número de grupo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el número de grupo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtCiclo.text == ""){
-					Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(this.currentState == "desembolso" && dtfFecha.selectedDate == null){
-					Alert.show("Capture la nueva fecha de desembolso.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture la nueva fecha de desembolso.",titulo,4,null,null,global.iAlert);
 					return false;
 				} 
 				return true;

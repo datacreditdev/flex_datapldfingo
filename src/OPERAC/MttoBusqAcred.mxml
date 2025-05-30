@@ -76,7 +76,7 @@
 					destGrid.dataProvider = dataInfo;
 				}
 				else
-					Alert.show("Debe seleccionar un registro de Acreditado", "Alta Acreditados", 4,null,null,global.iAlert);		
+					du.mostrarMensaje("Debe seleccionar un registro de Acreditado", "Alta Acreditados", 4,null,null,global.iAlert);		
 			}
 			
 			private function getAcred(event:ResultEvent):void{
@@ -121,10 +121,10 @@
 					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
 					var res:String = new String(evt.result.toString());
 						if(res.substr(0,1) == "1"){
-							Alert.show("Cliente(s) incorporado(s) exitosamente","Alta Acreditados",Alert.OK,null,manejadorCerrar,global.iAlert);
+							du.mostrarMensaje("Cliente(s) incorporado(s) exitosamente","Alta Acreditados",Alert.OK,null,manejadorCerrar,global.iAlert);
 						}	
 						else
-							Alert.show(res.substr(2,res.length-1),"Alta Acreditados",4,null,null,global.iAlert);
+							du.mostrarMensaje(res.substr(2,res.length-1),"Alta Acreditados",4,null,null,global.iAlert);
 							
 						global.desbloquear();
 						du.rCursor();
@@ -133,7 +133,7 @@
 					wsMS.setAgregaAcred.send(registro);
 				 }
 				 else if (dataInfo.length == 0)
-					Alert.show("Debe seleccionar un registro de Acreditado","Alta Acreditados",4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar un registro de Acreditado","Alta Acreditados",4,null,null,global.iAlert);
 			}
 			
 			private function setDragInitator(event:MouseEvent, id:String):void{

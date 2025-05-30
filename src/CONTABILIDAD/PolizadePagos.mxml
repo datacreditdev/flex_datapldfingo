@@ -87,7 +87,7 @@
 							exportarXls();
 						}
 						else{
-							Alert.show("No se pudo generar la póliza requerida.",titulo,4,null,null,global.iAlert);	
+							du.mostrarMensaje("No se pudo generar la póliza requerida.",titulo,4,null,null,global.iAlert);	
 						}
 					});
 					wsMS.getPolizaDesembolsos.send(fecha, "1", global.obtenerUsuario()); 
@@ -116,7 +116,7 @@
 				
 			private function validar():Boolean{
 				if(dtfFecha.text == ""){
-					Alert.show("Seleccione la fecha de la póliza.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la fecha de la póliza.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

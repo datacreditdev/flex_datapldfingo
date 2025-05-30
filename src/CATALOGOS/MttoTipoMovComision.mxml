@@ -105,7 +105,7 @@
 			
 			private function validar():Boolean{
 				if(dgTipo.selectedIndex < 0){
-					Alert.show("No se ha seleccionado el Tipo de Movimiento.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No se ha seleccionado el Tipo de Movimiento.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

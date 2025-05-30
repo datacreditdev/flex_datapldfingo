@@ -205,15 +205,15 @@
 								comMttoGtia.init(acred, nomAcred, tipo);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de Solicitud","Mantenimiento de Solicitud",4,null,null,global.iAlert); 
+								du.mostrarMensaje("Debe seleccionar el registro de Solicitud","Mantenimiento de Solicitud",4,null,null,global.iAlert); 
 							break;
 					}
 				}
 			}
 			
 			public function permisos():void{
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var Params:Array;
 				var i:int;
 				var cont:int;

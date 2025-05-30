@@ -147,7 +147,7 @@
 					//if(currentState == null)
 					consulta = global.urlPdf + id + fecha + niv + cartera + usuario + nomUsuario + coord + asesor + supervisor;					
 					Application.application.muestraPdf(consulta);
-					//Alert.show(consulta);
+					//du.mostrarMensaje(consulta);
 				}			
 			}
 						
@@ -207,11 +207,11 @@
 				
 			public function valida():Boolean{
 				if(nivel.selection == null){
-					Alert.show("Seleccione el nivel de detalle del reporte.","Reporte",4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione el nivel de detalle del reporte.","Reporte",4,null,null,global.iAlert);
 					return false;
 				}
 				if(tipoCart.selection == null){
-					Alert.show("Seleccione el tipo de cartera del reporte.","Reporte",4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione el tipo de cartera del reporte.","Reporte",4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

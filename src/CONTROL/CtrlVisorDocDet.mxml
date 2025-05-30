@@ -118,7 +118,7 @@
 						}
 					}
 					else
-						Alert.show("No se encontraron documentos relacionados con el acreditado.",titulo,4,null,null,global.iAlert);		
+						du.mostrarMensaje("No se encontraron documentos relacionados con el acreditado.",titulo,4,null,null,global.iAlert);		
 				});
 				params[0] = codigo;
 				params[1] = repo;
@@ -143,7 +143,7 @@
 				var carpeta:String = Image(event.currentTarget).id;
 				var archivo:String = Image(event.currentTarget).name;
 				var urlPdf:String = global.urlDocs + carpeta + "/" + archivo + ".pdf"
-				//Alert.show(urlPdf);
+				//du.mostrarMensaje(urlPdf);
 				imagen.visible = false;
 				comFormPdf.visible = true;
 				comFormPdf.muestraPdf(urlPdf);

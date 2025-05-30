@@ -216,7 +216,7 @@
 						//SI LA SOLICITUD FUE RECHAZADA NO PERMITE MODIFICAR EL REGISTRO
 						if(_xmlSolic.Table[0].SITUACION == 'R'){
 							bandMod = false;
-							Alert.show("No es posible modificar la información. La solicitud ya fue Rechazada.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No es posible modificar la información. La solicitud ya fue Rechazada.",titulo,4,null,null,global.iAlert);
 						}
 						
 						//SI LA SOLICITUD FUE AUTORIZADA NO ES POSIBLE EDITARLA
@@ -235,7 +235,7 @@
 								
 								if(_xmlPres.elements().length() == 0){
 									bandMod = false;
-									Alert.show("No es posible modificar la información. La solicitud ya fue Autorizada.",titulo,4,null,null,global.iAlert);
+									du.mostrarMensaje("No es posible modificar la información. La solicitud ya fue Autorizada.",titulo,4,null,null,global.iAlert);
 								}
 								du.rCursor();
 								du.closeWs(wsCat);
@@ -250,7 +250,7 @@
 						llenaRegistros();
 					}
 					else
-						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
 				});
 				params[0] = cdgAcred;
 				params[1] = ciclo;
@@ -325,7 +325,7 @@
 						pdfE.cargaPdf(consulta);
 					}
 					else{
-						Alert.show(res,titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje(res,titulo,4,null,null,global.iAlert);
 					}
 				});
 				wsCC.getEjecutaConsulta.send("C", acred, "I", global.obtenerUsuario());
@@ -348,7 +348,7 @@
 						validaFinal();
 				}
 				else
-					Alert.show("No es posible modificar el registro de la solicitud.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No es posible modificar el registro de la solicitud.",titulo,4,null,null,global.iAlert);
 			}
 			
 			//funcion que da formato a la informacion que sera almacenada
@@ -375,9 +375,9 @@
 					montos[i] = cantSolic;
 				else{
 					if(cantSolic < montoMin)
-						Alert.show("El acreditado no alcanza el monto mínimo permitido",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("El acreditado no alcanza el monto mínimo permitido",titulo,4,null,null,global.iAlert);
 					else if(cantSolic > montoMax)
-						Alert.show("El acreditado supera el monto máximo permitido",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("El acreditado supera el monto máximo permitido",titulo,4,null,null,global.iAlert);
 					return false;					
 				} 
 				//Asignaciones en la etapa de registro de la solicitud
@@ -394,9 +394,9 @@
 						cantAutorAcred[i] = cantAutor;
 					else{
 						if(cantAutor < montoMin)
-							Alert.show("El acreditado no alcanza el monto mínimo permitido",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("El acreditado no alcanza el monto mínimo permitido",titulo,4,null,null,global.iAlert);
 						else if(cantAutor > montoMax)
-							Alert.show("El acreditado supera el monto máximo permitido",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("El acreditado supera el monto máximo permitido",titulo,4,null,null,global.iAlert);
 						return false;
 					} 
 					//Asigna la situacion de la solicitud a cada cliente
@@ -544,7 +544,7 @@
 				if(formDatosGralSolic.situacion.selectedValue == 'S')
 					enviar();
 				else
-					Alert.show("No es posible guardar los cambios realizados en la solicitud.\n\nModifique la situación seleccionada actualmente.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No es posible guardar los cambios realizados en la solicitud.\n\nModifique la situación seleccionada actualmente.",titulo,4,null,null,global.iAlert);
 			}
 			
 			private function muestraTablaAmort(editable:Boolean = false):void{
@@ -627,7 +627,7 @@
 							wsMail.setEnviaEmailEvaluacion.send(emailDest,"Evaluación de Crédito",resultado);
 						}
 						else
-							Alert.show("No se ha encontrado la Evaluación del Área de Crédito",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No se ha encontrado la Evaluación del Área de Crédito",titulo,4,null,null,global.iAlert);
 					});
 					params[0] = this.cdgAcred;
 					params[1] = this.ciclo;
@@ -635,7 +635,7 @@
 					wsCat.getInfoGeneral.send(8, params);*/
 				}
 				else
-					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+					du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 			}
 			
 			private function setAccionSolic(event:ResultEvent):void{
@@ -647,13 +647,13 @@
 				if (res.substr(0,1) == "1")
 					cerrar();
 				else
-					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+					du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 			}
 			
 			//Funcion que valida que los registros autorizados tengan una cantidad mayor a 0
 			public function validaAutorizado():Boolean{
 				if(info.situacion == 'A' && info.autorizado == 0){
-					Alert.show("El préstamo del acreditado fue autorizado sin monto.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("El préstamo del acreditado fue autorizado sin monto.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;
@@ -668,7 +668,7 @@
 					info.guardaRecargos == true && info.guardaEntre == true)
 					guardaSolic();
 				else
-					Alert.show("Debe capturar los datos requeridos.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar los datos requeridos.",titulo,4,null,null,global.iAlert);
 			}
 			
 			public function validaMonto(event:Event):void{	
@@ -682,7 +682,7 @@
 			//Funcion que valida que los registros solicitados tengan una cantidad mayor a 0
 			public function validaSolicitado():Boolean{
 				if(info.situacion == 'S' && info.solicitado == 0){
-					Alert.show("La solicitud del acreditado fue registrada sin monto.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("La solicitud del acreditado fue registrada sin monto.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

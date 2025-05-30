@@ -323,26 +323,26 @@
 			wsMS = null;
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1")				 
-				Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);				 		  
+				du.mostrarMensaje("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);				 		  
 			else
- 				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iError);	
+ 				du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iError);	
 		}
 		
 		private function valida():Boolean{
 			if(cboFactor.selectedIndex == 0){
-				Alert.show("Debe seleccionar el Factor de Riesgo.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe seleccionar el Factor de Riesgo.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(cboTipoCrit.selectedIndex == 0){
-				Alert.show("Debe seleccionar el Tipo de Criterio.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe seleccionar el Tipo de Criterio.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(cboCriterio.selectedIndex == 0){
-				Alert.show("Debe seleccionar el Criterio de Riesgo.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe seleccionar el Criterio de Riesgo.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(cboNivel.selectedIndex == 0){
-				Alert.show("Debe seleccionar el Nivel de Riesgo.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe seleccionar el Nivel de Riesgo.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			return true;
@@ -350,11 +350,11 @@
 		
 		private function validaExp():Boolean{
 			if(cboFactor.selectedIndex == 0){
-				Alert.show("Debe seleccionar el Factor de Riesgo.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe seleccionar el Factor de Riesgo.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(cboTipoCrit.selectedIndex == 0){
-				Alert.show("Debe seleccionar el Tipo de Criterio.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe seleccionar el Tipo de Criterio.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			return true;

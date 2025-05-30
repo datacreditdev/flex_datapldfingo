@@ -278,64 +278,64 @@
 			private function confirmarElimApodLegal():void{
 				var titulo:String = "Apoderado Legal";
 				if(lstApodLegal.selectedIndex < 0){
-					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					du.mostrarMensaje("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
 					return;
 				}				
-				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarApodLegal,du.iQuest,4);
+				du.mostrarMensaje("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarApodLegal,du.iQuest,4);
 			}
 			
 			private function confirmarElimDelegado():void{
 				var titulo:String = "Delegado";
 				if(lstDelegado.selectedIndex < 0){
-					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					du.mostrarMensaje("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
 					return;
 				}				
-				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarDelegado,du.iQuest,4);
+				du.mostrarMensaje("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarDelegado,du.iQuest,4);
 			}
 			
 			private function confirmarElimFideicomis():void{
 				var titulo:String = "Fideicomisario";
 				if(lstFideicomis.selectedIndex < 0){
-					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					du.mostrarMensaje("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
 					return;
 				}				
-				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarFideicomis,du.iQuest,4);
+				du.mostrarMensaje("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarFideicomis,du.iQuest,4);
 			}
 			
 			private function confirmarElimFideicomit():void{
 				var titulo:String = "Fideicomitente";
 				if(lstFideicomit.selectedIndex < 0){
-					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					du.mostrarMensaje("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
 					return;
 				}				
-				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarFideicomit,du.iQuest,4);
+				du.mostrarMensaje("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarFideicomit,du.iQuest,4);
 			}
 			
 			private function confirmarElimOrgGob():void{
 				var titulo:String = "Organo de Gobierno";
 				if(dgOrgGob.selectedIndex < 0){
-					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					du.mostrarMensaje("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
 					return;
 				}				
-				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarOrgGob,du.iQuest,4);
+				du.mostrarMensaje("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarOrgGob,du.iQuest,4);
 			}
 			
 			private function confirmarElimPropReal():void{
 				var titulo:String = "Propietario Real";
 				if(lstPropReal.selectedIndex < 0){
-					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					du.mostrarMensaje("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
 					return;
 				}				
-				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarPropReal,du.iQuest,4);
+				du.mostrarMensaje("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarPropReal,du.iQuest,4);
 			}
 			
 			private function confirmarElimProvRec():void{
 				var titulo:String = "Proveedor de Recursos";
 				if(lstProvRec.selectedIndex < 0){
-					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					du.mostrarMensaje("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
 					return;
 				}				
-				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarProvRec,du.iQuest,4);
+				du.mostrarMensaje("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarProvRec,du.iQuest,4);
 			}
 			
 			private function eliminarApodLegal(evt:CloseEvent):void{
@@ -939,7 +939,7 @@
 			}
 			
 			private function permisos():void{
-				var perfil_id:String = Application.application.cadPerfil;
+				var perfil_id:String = global.obtenerCadPerfil();
 				var cont:int;
 			}
 		

@@ -193,10 +193,10 @@
 			var ind:int = dgDelFid.selectedIndex;
 				
 			if(ind < 0){
-				Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+				du.mostrarMensaje("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
 				return;
 			}				
-			Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,function(ev:CloseEvent):void{
+			du.mostrarMensaje("¿Desea eliminar el registro seleccionado?",titulo,3,null,function(ev:CloseEvent):void{
 																					if(ev.detail == Alert.YES){
 																						delFidObj.removeItemAt(ind);
 																						delFidObj.refresh();
@@ -215,10 +215,10 @@
 				ind = lstMiemCT.selectedIndex;
 				
 			if(ind < 0){
-				Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+				du.mostrarMensaje("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
 				return;
 			}				
-			Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,function(ev:CloseEvent):void{
+			du.mostrarMensaje("¿Desea eliminar el registro seleccionado?",titulo,3,null,function(ev:CloseEvent):void{
 																					if(ev.detail == Alert.YES){
 																						if(opcion == 1){
 																							miemCMObj.removeItemAt(ind);
@@ -239,10 +239,10 @@
 			var ind:int = dgPartes.selectedIndex;
 				
 			if(ind < 0){
-				Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+				du.mostrarMensaje("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
 				return;
 			}				
-			Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,function(ev:CloseEvent):void{
+			du.mostrarMensaje("¿Desea eliminar el registro seleccionado?",titulo,3,null,function(ev:CloseEvent):void{
 																					if(ev.detail == Alert.YES){
 																						partFidObj.removeItemAt(ind);
 																						partFidObj.refresh();
@@ -518,7 +518,7 @@
 			if (res.substr(0,1) == "1")
 				cerrar();	
 			else
-				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+				du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 		}
 		
 		private function terminarEfecto(event:EffectEvent):void{
@@ -530,7 +530,7 @@
 			if (info.guarda == true)
 				guardarFideicomiso();
 			else
-				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
 		}
 		
 		]]>

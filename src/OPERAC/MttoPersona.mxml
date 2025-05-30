@@ -75,7 +75,7 @@
 					if (_xmlPers.elements().length() > 0)
 						llenaRegistros();
 					else
-						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
 				});
 				params[0] = pers;
 				wsCat.getInfoRegistro.send(31, params);
@@ -273,7 +273,7 @@
 			}
 			
 			private function permisos():void{
-				var perfil_id:String = Application.application.cadPerfil;	
+				var perfil_id:String = global.obtenerCadPerfil();	
 			}
 			
 			public function registraInfoPersona():void{
@@ -300,14 +300,14 @@
 					if(tipoAccion == 1){
 						var rSplit:Array = res.toString().split('|');
 						codigo = rSplit[1].toString();
-						Alert.show("Registro de persona almacenado con el código - " + codigo,titulo,4,null,null,global.iInfo);
+						du.mostrarMensaje("Registro de persona almacenado con el código - " + codigo,titulo,4,null,null,global.iInfo);
 					}	
 					else
-						Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+						du.mostrarMensaje("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
 					cerrar();
 				}	
 				else
-					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+					du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 			}
 			
 			private function validaDatosPersona(event:EventPersona):void{
@@ -316,7 +316,7 @@
 			
 			private function validarInfo():Boolean{
 				if(cboTipoPers.selectedIndex == 0){
-					Alert.show("Debe seleccionar el Tipo de Persona.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar el Tipo de Persona.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;
@@ -327,7 +327,7 @@
 					guardaPersona();
 				}
 				else
-					Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
 			}
 
 		]]>

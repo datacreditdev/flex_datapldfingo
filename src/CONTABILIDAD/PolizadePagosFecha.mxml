@@ -90,7 +90,7 @@
 							exportarXls();
 						}
 						else{
-							Alert.show("No se pudo generar la póliza requerida.",titulo,4,null,null,global.iAlert);	
+							du.mostrarMensaje("No se pudo generar la póliza requerida.",titulo,4,null,null,global.iAlert);	
 						}
 					});
 					wsMS.getPolizaDesembolsosFecha.send(fecIni, fecFin, "1", global.obtenerUsuario()); 
@@ -120,11 +120,11 @@
 				
 			private function validar():Boolean{
 				if(dtfFecIni.text == ""){
-					Alert.show("Seleccione la fecha inicial.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la fecha inicial.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(dtfFecIni.text == ""){
-					Alert.show("Seleccione la fecha final.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la fecha final.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

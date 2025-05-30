@@ -223,15 +223,15 @@
 			}
 
 			public function eliminarCB():void{
-				Alert.show("¿Desea eliminar la Cuenta Bancaria seleccionada?", tituloCB, Alert.YES|Alert.NO,null, manejadorEliminarCB,global.iQuest);
+				du.mostrarMensaje("¿Desea eliminar la Cuenta Bancaria seleccionada?", tituloCB, Alert.YES|Alert.NO,null, manejadorEliminarCB,global.iQuest);
 			}
 			
 			public function eliminarSB():void{
-				Alert.show("¿Desea eliminar la Sucursal Bancaria seleccionada?", tituloSB, Alert.YES|Alert.NO,null, manejadorEliminarSB,global.iQuest);
+				du.mostrarMensaje("¿Desea eliminar la Sucursal Bancaria seleccionada?", tituloSB, Alert.YES|Alert.NO,null, manejadorEliminarSB,global.iQuest);
 			}
 			
 			public function eliminarIB():void{
-				Alert.show("¿Desea eliminar la Institución Bancaria seleccionada?", tituloIB, Alert.YES|Alert.NO,null, manejadorEliminarIB,global.iQuest);
+				du.mostrarMensaje("¿Desea eliminar la Institución Bancaria seleccionada?", tituloIB, Alert.YES|Alert.NO,null, manejadorEliminarIB,global.iQuest);
 			}
 			
 			public function iniVar():void{
@@ -330,7 +330,7 @@
 								PopUpManager.centerPopUp(comMttoCtaBancaria);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de la Cuenta Bancaria",tituloCB,4,null,null,global.iAlert);
+								du.mostrarMensaje("Debe seleccionar el registro de la Cuenta Bancaria",tituloCB,4,null,null,global.iAlert);
 						break;
 					}
 				}
@@ -365,7 +365,7 @@
 								PopUpManager.centerPopUp(comMttoSB);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de la Sucursal Bancaria",tituloSB,4,null,null,global.iAlert);
+								du.mostrarMensaje("Debe seleccionar el registro de la Sucursal Bancaria",tituloSB,4,null,null,global.iAlert);
 						break;
 					}
 				}
@@ -399,15 +399,15 @@
 								PopUpManager.centerPopUp(comMttoIB);	
 							}
 							else
-								Alert.show("Debe seleccionar el registro de la Institución Bancaria",tituloIB,4,null,null,global.iAlert); 
+								du.mostrarMensaje("Debe seleccionar el registro de la Institución Bancaria",tituloIB,4,null,null,global.iAlert); 
 							break;
 					}
 				}
 			}
 			
 			public function permisos():void{
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var ws:WebService = new WebService;
 				var Params:Array;
 				var cont:int;
@@ -492,7 +492,7 @@
 				if (res.substr(0,1) == "1")
 					buscarListaCB(2);
 				else
-					Alert.show(res.substr(2,res.length-1),tituloCB,4,null,null,global.iAlert);
+					du.mostrarMensaje(res.substr(2,res.length-1),tituloCB,4,null,null,global.iAlert);
 			}
 			
 			private function setAccionSucBancaria(event:ResultEvent):void{
@@ -504,7 +504,7 @@
 				if (res.substr(0,1) == "1")
 					buscarListaSB(2);
 				else
-					Alert.show(res.substr(2,res.length-1), tituloSB,4,null,null,global.iAlert);
+					du.mostrarMensaje(res.substr(2,res.length-1), tituloSB,4,null,null,global.iAlert);
 			}
 
 			private function setAccionInstBancaria(event:ResultEvent):void{
@@ -516,7 +516,7 @@
 				if (res.substr(0,1) == "1")
 					buscarIB(2);
 				else
-					Alert.show(res.substr(2,res.length-1), tituloIB,4,null,null,global.iAlert);
+					du.mostrarMensaje(res.substr(2,res.length-1), tituloIB,4,null,null,global.iAlert);
 			}
 		]]>
 	</mx:Script>

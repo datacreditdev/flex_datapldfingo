@@ -111,8 +111,7 @@
 					try{
 						callback(e);
 					}catch(err:Error){
-						Alert.okLabel = "Aceptar";
-						Alert.show(err.toString());
+						du.mostrarMensaje(err.toString(), "Error", 4, null, null, global.iError);
 					}	
 					this.removeEventListener(listener);	
 				};

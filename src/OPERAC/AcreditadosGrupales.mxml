@@ -210,7 +210,7 @@
 			}
 			
 			public function eliminarGrupo():void{
-				Alert.show("¿Desea eliminar el grupo seleccionado?", "Acreditados -Grupo solidario-", Alert.YES|Alert.NO,null, manejadorEliminarGrupo,global.iQuest);
+				du.mostrarMensaje("¿Desea eliminar el grupo seleccionado?", "Acreditados -Grupo solidario-", Alert.YES|Alert.NO,null, manejadorEliminarGrupo,global.iQuest);
 			}
 			
 			private function getAcred(event:ResultEvent):void{
@@ -303,7 +303,7 @@
 					PopUpManager.centerPopUp(comMttoFecha);	
 				}
 				else
-					Alert.show("El cliente ya está dado de baja", "Acreditados", 4,null,null,global.iInfo);
+					du.mostrarMensaje("El cliente ya está dado de baja", "Acreditados", 4,null,null,global.iInfo);
 			}
 			
 			public function mostrarBusqAcred():void{
@@ -345,7 +345,7 @@
 								comMttoAcred.cargaInfoAcred(codGrupo, nomGrupo, acred);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de Acreditado","Mantenimiento de Acreditado",4,null,null,global.iAlert);
+								du.mostrarMensaje("Debe seleccionar el registro de Acreditado","Mantenimiento de Acreditado",4,null,null,global.iAlert);
 						break;
 					}
 				}
@@ -371,15 +371,15 @@
 								comMttoGrupo.cargaInfoGrupo(grupo);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de Grupo","Mantenimiento de Grupo",4,null,null,global.iAlert); 
+								du.mostrarMensaje("Debe seleccionar el registro de Grupo","Mantenimiento de Grupo",4,null,null,global.iAlert); 
 							break;
 					}
 				}
 			}
 			
 			public function permisos():void{
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var Params:Array;
 				var cont:int;
 				
@@ -455,7 +455,7 @@
 				if (res.substr(0,1) == "1")
 					buscarListaAcred(1);
 				else
-					Alert.show(res.substr(2,res.length-1), "Mantenimiento de Acreditado",4,null,null,global.iAlert);
+					du.mostrarMensaje(res.substr(2,res.length-1), "Mantenimiento de Acreditado",4,null,null,global.iAlert);
 			}
 			
 			private function setEliminaGrupo(event:ResultEvent):void{
@@ -465,10 +465,10 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setEliminaGrupo);
 				var res:String = new String(event.result);
 				if (res.substr(0,1) == "1")
-					//Alert.show("Grupo Eliminado","Mantenimiento de Grupo",4,null,null,global.iInfo);
+					//du.mostrarMensaje("Grupo Eliminado","Mantenimiento de Grupo",4,null,null,global.iInfo);
 					buscarGrupo();
 				else
-					Alert.show("Error en el proceso: " + res, "Mantenimiento de Grupo",4,null,null,global.iAlert);
+					du.mostrarMensaje("Error en el proceso: " + res, "Mantenimiento de Grupo",4,null,null,global.iAlert);
 			}
 			
 		]]>

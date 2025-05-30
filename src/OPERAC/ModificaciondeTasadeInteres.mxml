@@ -43,10 +43,10 @@
 						
 						if(res.substr(0,1) == "1"){
 							limpiar();
-							Alert.show("Modificación realizada exitosamente.",titulo,4,null,null,global.iInfo);
+							du.mostrarMensaje("Modificación realizada exitosamente.",titulo,4,null,null,global.iInfo);
 						}
 						else
-							Alert.show(res.substr(2, res.length),titulo,4,null,null,global.iAlert);		
+							du.mostrarMensaje(res.substr(2, res.length),titulo,4,null,null,global.iAlert);		
 					});
 					wsMS.setAccionModTasaInt.send(codigo, ciclo, "I", tasa, global.obtenerUsuario());
 				}
@@ -75,15 +75,15 @@
 				
 			private function valida():Boolean{
 				if(txtCodigo.text == ""){
-					Alert.show("Capture el código de grupo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el código de grupo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtCiclo.text == ""){
-					Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtTasa.text == ""){
-					Alert.show("Debe capturar la nueva tasa de interés.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar la nueva tasa de interés.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

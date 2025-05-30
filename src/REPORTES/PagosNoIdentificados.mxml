@@ -62,7 +62,7 @@
 							fecFin = dtfFechaFinal.text;
 						}
 						else{
-							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 							lblTotal.text = "";
 						}
 					});
@@ -97,15 +97,15 @@
 				
 			private function valida():Boolean{
 				if(dtfFecha.text == ""){
-					Alert.show("Seleccione la fecha inicial del reporte.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la fecha inicial del reporte.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(dtfFechaFinal.text == ""){
-					Alert.show("Seleccione la fecha final del reporte.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la fecha final del reporte.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(chkNoIden.selected == false && chkIden.selected == false){
-					Alert.show("Debe seleccionar al menos un tipo de pago.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar al menos un tipo de pago.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

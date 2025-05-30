@@ -87,7 +87,7 @@
 			
 			public function validar():Boolean{
 				if(dgAcred.selectedIndex < 0){
-					Alert.show("No se ha seleccionado .",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No se ha seleccionado .",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

@@ -153,7 +153,7 @@
 							}   
 						}
 						else{
-							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 							limpiar();
 						}
 					});
@@ -289,7 +289,7 @@
 				
 			public function valida():Boolean{
 				if(txtGrupo.text == "" || txtGrupo.text.length < 6){
-					Alert.show("Capture el código de grupo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el código de grupo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;
@@ -313,7 +313,7 @@
 						n++;
 				}
 				if(n == 0){
-					Alert.show("Debe seleccionar al menos un registro para iniciar el proceso.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar al menos un registro para iniciar el proceso.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

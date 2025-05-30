@@ -160,11 +160,11 @@
 			}
 
 			private function eliminarSup():void{
-				Alert.show("¿Desea eliminar el Suplemento seleccionado?", tituloSuplemento, Alert.YES|Alert.NO,null, manejadorEliminarSup,global.iQuest);
+				du.mostrarMensaje("¿Desea eliminar el Suplemento seleccionado?", tituloSuplemento, Alert.YES|Alert.NO,null, manejadorEliminarSup,global.iQuest);
 			}
 			
 			private function eliminarFid():void{
-				Alert.show("¿Desea eliminar el Fideicomiso seleccionado?", tituloFideicomiso, Alert.YES|Alert.NO,null, manejadorEliminarFid,global.iQuest);
+				du.mostrarMensaje("¿Desea eliminar el Fideicomiso seleccionado?", tituloFideicomiso, Alert.YES|Alert.NO,null, manejadorEliminarFid,global.iQuest);
 			}
 			
 			public function iniVar():void{
@@ -247,7 +247,7 @@
 								
 							}
 							else
-								Alert.show("Debe seleccionar el registro del Suplemento",tituloSuplemento,4,null,null,global.iAlert);
+								du.mostrarMensaje("Debe seleccionar el registro del Suplemento",tituloSuplemento,4,null,null,global.iAlert);
 						break;
 					}
 				}
@@ -279,15 +279,15 @@
 								PopUpManager.centerPopUp(comMttoFid);	
 							}
 							else
-								Alert.show("Debe seleccionar el registro del Fideicomiso",tituloFideicomiso,4,null,null,global.iAlert); 
+								du.mostrarMensaje("Debe seleccionar el registro del Fideicomiso",tituloFideicomiso,4,null,null,global.iAlert); 
 							break;
 					}
 				}
 			}
 			
 			private function permisos():void{
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var ws:WebService = new WebService;
 				var Params:Array = new Array;
 				var cont:int;
@@ -358,7 +358,7 @@
 				if (res.substr(0,1) == "1")
 					buscarListaSup(2);
 				else
-					Alert.show(res.substr(2,res.length-1), tituloSuplemento,4,null,null,global.iAlert);
+					du.mostrarMensaje(res.substr(2,res.length-1), tituloSuplemento,4,null,null,global.iAlert);
 			}
 
 			private function setAccionFid(event:ResultEvent):void{
@@ -370,7 +370,7 @@
 				if (res.substr(0,1) == "1")
 					buscarFid(1);
 				else
-					Alert.show(res.substr(2,res.length-1), tituloFideicomiso,4,null,null,global.iAlert);
+					du.mostrarMensaje(res.substr(2,res.length-1), tituloFideicomiso,4,null,null,global.iAlert);
 			}
 		]]>
 	</mx:Script>

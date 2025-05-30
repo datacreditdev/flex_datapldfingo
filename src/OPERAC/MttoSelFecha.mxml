@@ -3,22 +3,22 @@
 	
 	<mx:Script>
 		<![CDATA[
-			import mx.managers.PopUpManager;
-			import mx.controls.Alert;
+			import Data.Utils;
 			import Data.Globales;
+			import mx.managers.PopUpManager;
 			
-			[Bindable]
 			public var fechaMin:Date;
-			[Bindable]
 			public var fechaMax:Date;
-			[Bindable]
 			public var edita:Boolean;
 			
-			public var global:Globales;
 			public var tipo:int;
+			
+			private var du:Utils;
+			private var global:Globales;
 			//public var fecAnt:Date = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDay() - 1);
 			
 			public function init(tipo:int):void{
+				du = new Utils();
 				global = new Globales();
 				this.tipo = tipo;
 				//ESTABLECE EL TIPO DE CUADRO DE DIALOGO QUE DEBE MOSTRARSE EN PANTALLA
@@ -39,7 +39,6 @@
 					txtFecha.visible = true;
 					txtFecha.text = global.formatearFecha(fechaMax);
 				}
-				
 			}
 			
 			public function cerrar():void{
@@ -48,13 +47,10 @@
 			
 			public function validar():void{
 				if (dtfFecha.text == "")
-					Alert.show("Debe seleccionar la fecha solicitada", this.title, 4,null,null,global.iAlert);
-
+					du.mostrarMensaje("Debe seleccionar la fecha solicitada", this.title, 4,null,null,global.iAlert);
 			}
-			
 		]]>
 	</mx:Script>
-	
 	<mx:Button id="btnCerrar" x="208" y="106" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
 	<mx:Button id="btnAceptar" x="160" y="106" icon="@Embed(source='assets/button_ok.png')" click="validar()" width="40"/>
 	<mx:Canvas id="cnvFecha" x="17" y="10" width="224" height="83" styleName="canvasMod">

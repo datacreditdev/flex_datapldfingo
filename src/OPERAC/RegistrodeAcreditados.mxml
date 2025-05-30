@@ -178,7 +178,7 @@
 			}
 			
 			public function manejadorEliminarAcred(e:CloseEvent):void{
-				if(e.detail==Alert.YES){
+				if(e.detail == Alert.YES){
 					var acred:String = dgAcred.selectedItem.CODIGO;
 			    	initConexion();
 			    	du.sCursor();
@@ -214,7 +214,7 @@
 					PopUpManager.centerPopUp(comMttoFecha);	
 				}
 				else
-					Alert.show("El cliente ya está dado de baja",titulo, 4,null,null,global.iInfo);
+					du.mostrarMensaje("El cliente ya está dado de baja",titulo, 4,null,null,global.iInfo);
 			}
 			
 			public function mostrarFormAcred(tipo:int):void{
@@ -243,7 +243,7 @@
 								comMttoAcredInd.cargaInfoAcred(acred);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de Acreditado",titulo,4,null,null,global.iAlert);
+								du.mostrarMensaje("Debe seleccionar el registro de Acreditado",titulo,4,null,null,global.iAlert);
 						break;
 					}
 				}
@@ -251,8 +251,8 @@
 			
 			public function permisos():void{
 				var ws:WebService = new WebService;
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var Params:Array;
 				var cont:int;
 
@@ -325,8 +325,6 @@
 					<mx:DataGridColumn headerText="OFICINA" dataField="COORD" width="90"/>
 					<mx:DataGridColumn headerText="NOMBRE OFICINA" dataField="NOMCO" width="200"/>
 					<mx:DataGridColumn headerText="TIPO" dataField="TIPOPREST" width="90"/>
-					<!--<mx:DataGridColumn headerText="GRUPO" dataField="CDGNS" width="70"/>
-					<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="GRUPO" width="170"/>-->
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>

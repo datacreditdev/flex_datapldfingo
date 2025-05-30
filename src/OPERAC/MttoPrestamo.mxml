@@ -201,7 +201,7 @@
 					du.closeWs(wsMS);
 					
 					if (res.substr(0,1) != "1"){
-						Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
 						desactivaControles();
 					}
 					
@@ -219,7 +219,7 @@
 							llenaRegistros();
 						}
 						else{
-							Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
 						}
 					});
 					params[0] = cdgGrupo;
@@ -254,7 +254,7 @@
 					validaFinal();
 				}
 				else{
-					Alert.show("No es posible modificar el registro del préstamo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No es posible modificar el registro del préstamo.",titulo,4,null,null,global.iAlert);
 				}
 			}
 			
@@ -439,7 +439,7 @@
 				/*if(formDatosGralPrn.situacion.selectedValue == 'S')
 					enviar();
 				else
-					Alert.show("No es posible guardar los cambios realizados en la solicitud.\n\nModifique la situación seleccionada actualmente.","Mantenimiento de Solicitud",4,null,null,global.iAlert);*/
+					du.mostrarMensaje("No es posible guardar los cambios realizados en la solicitud.\n\nModifique la situación seleccionada actualmente.","Mantenimiento de Solicitud",4,null,null,global.iAlert);*/
 			} 
 			
 			private function registraCausaRechazo(event:ListEvent):void{
@@ -515,7 +515,7 @@
 					cerrar();
 				}	
 				else
-					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+					du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 			}
 			
 			public function validaSituacion():Boolean{
@@ -524,7 +524,7 @@
 				if(info.situacion != 'S'){
 					for(i = 0; i < Arr.length; i++){
 						if(Arr[i].sitAcred == 'S'){
-							Alert.show("El acreditado " + Arr[i].nombre + " se encuentra en situación " + Arr[i].situacion + ".\n\nModifique la condición del cliente",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("El acreditado " + Arr[i].nombre + " se encuentra en situación " + Arr[i].situacion + ".\n\nModifique la condición del cliente",titulo,4,null,null,global.iAlert);
 							return false;
 						}
 					}
@@ -532,7 +532,7 @@
 				if(info.situacion == 'S'){
 					for(i = 0; i < Arr.length; i++){
 						if(Arr[i].sitAcred != 'S'){
-							Alert.show("El acreditado " + Arr[i].nombre + " se encuentra en situación " + Arr[i].situacion + ".\n\nModifique la condición del cliente",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("El acreditado " + Arr[i].nombre + " se encuentra en situación " + Arr[i].situacion + ".\n\nModifique la condición del cliente",titulo,4,null,null,global.iAlert);
 							return false;
 						}
 					}
@@ -586,7 +586,7 @@
 					du.closeWs(wsMS);
 					
 					if (res.substr(0,1) != "1"){
-						Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
 						desactivaControles();
 					}	
 					
@@ -602,7 +602,7 @@
 				if (info.guardaDatos == true)
 					guardaPrn();
 				else
-					Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
 			}
 			
 			public function validaMonto(event:Event):void{	

@@ -63,7 +63,7 @@
 					if (this._xmlAcred.elements().length() > 0)
 						llenaRegistros();
 					else
-						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
 				});
 				params[0] = this.acred;
 				wsCat.getInfoAcred.send(1, params);	
@@ -101,7 +101,7 @@
 						pdfE.cargaPdf(consulta);
 					}
 					else{
-						Alert.show(res,titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje(res,titulo,4,null,null,global.iAlert);
 					}
 				});
 				wsMS.setAccionBuro.send(acred);	
@@ -188,7 +188,7 @@
 			}
 			
 			public function permisos():void{
-				var perfil_id:String = Application.application.cadPerfil;
+				var perfil_id:String = global.obtenerCadPerfil();
 				var cont:int;
 				
 				if (permiso.permisosConsBuro(Application.application.PERFIL_ID)){
@@ -218,7 +218,7 @@
 					cerrar();
 				}	
 				else
-					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+					du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 			}
 			
 			public function validaDatosAcred(event:EventAcred):void{
@@ -234,7 +234,7 @@
 					//}
 				}
 				else
-					Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
 			}
 			
 			//Funcion que verifica que el usuario no se encuentre 
@@ -254,7 +254,7 @@
 						if(res.substr(0,1) == "1")
 							guardaAcred();
 						else{
-							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
 						}
 					});
 					wsMS.getValidaSituacionAcred.send(acred, global.obtenerUsuario());

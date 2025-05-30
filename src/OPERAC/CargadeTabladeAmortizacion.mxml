@@ -50,7 +50,7 @@
 	            fileReference.browse([fileFilter]);
 	    	}
          	catch (error:Error){
-         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 du.mostrarMensaje(error.message,titulo,4,null,null,global.iAlert);
          		 return;
          	} 
         }
@@ -74,7 +74,7 @@
 					btnBuscarAcred.enabled = false;
 				}		
 				else
-					Alert.show("Código de acreditado no registrado.",titulo,4,null,null,global.iAlert);	
+					du.mostrarMensaje("Código de acreditado no registrado.",titulo,4,null,null,global.iAlert);	
 					
 			});
 			params[0] = txtCodigo.text;
@@ -184,7 +184,7 @@
 	            btnCargar.enabled = true;
             }
             catch(error:Error){
-  				Alert.show(error.message,titulo,4,null,null,global.iAlert);
+  				du.mostrarMensaje(error.message,titulo,4,null,null,global.iAlert);
          		return;
          	}       		        		        
         }  
@@ -261,26 +261,26 @@
 			wsMS = null;
 			res = event.result.toString();		
 			if (res.substr(0,1) == "1"){
-				Alert.show("Datos cargados exitosamente.",titulo,4,null,null,global.iInfo);
+				du.mostrarMensaje("Datos cargados exitosamente.",titulo,4,null,null,global.iInfo);
 				limpiar();
 			}						
 			else
-				Alert.show(res.substr(2, res.length - 1),titulo,4,null,null,global.iError);
+				du.mostrarMensaje(res.substr(2, res.length - 1),titulo,4,null,null,global.iError);
 		}
 		
 		private function valida():Boolean{
 			var info:ArrayCollection = dgInfo.dataProvider as ArrayCollection;
 			
 			if(lblNombre.text == ""){
-				Alert.show("Debe consultar el dato de acreditado.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe consultar el dato de acreditado.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(txtCiclo.text == ""){
-				Alert.show("Debe capturar el ciclo del crédito.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar el ciclo del crédito.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(info.length == 0){
-				Alert.show("Debe cargar el archivo correspondiente.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe cargar el archivo correspondiente.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			return true;

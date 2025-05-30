@@ -67,7 +67,7 @@
 							btnExportar.enabled = true; 
 						}
 						else{
-							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 							lblTotal.text = "";
 						}
 					});
@@ -101,15 +101,15 @@
 			
 			private function validar():Boolean{
 				if(cbxMes.selectedIndex <= 0){
-					Alert.show("Seleccione el mes de consulta.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione el mes de consulta.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(cbxAnio.selectedIndex <= 0){
-					Alert.show("Seleccione el año de consulta.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione el año de consulta.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(tipo.selectedValue == null){
-					Alert.show("Seleccione el modo de presentación.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione el modo de presentación.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

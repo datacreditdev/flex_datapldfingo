@@ -316,6 +316,14 @@ package Data
 			return texto; 	
 		}
 		
+		public function obtenerArrayPerfil():Array{
+ 	 		return Application.application.PERFIL_ID;
+ 	 	}
+		
+		public function obtenerCadPerfil():String{
+ 	 		return Application.application.cadPerfil;
+ 	 	}
+		
 		public function obtenerFechaSistema():Date{
 			return Application.application._Current_Fecha;
 		}
@@ -328,6 +336,10 @@ package Data
                     return i;
             }
             return -1;
+ 	 	}
+ 	 	
+ 	 	public function obtenerModulo():String{
+ 	 		return Application.application._Current_Mod_Id;
  	 	}
  	 	
  	 	public function obtenerNombreUsuario():String{

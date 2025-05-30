@@ -90,7 +90,7 @@
 				if (cboRechazo.selectedIndex > 0)
 					PopUpManager.removePopUp(this);
 				else
-					Alert.show("Debe seleccionar el motivo de rechazo del acreditado","Registro de Rechazo",4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar el motivo de rechazo del acreditado","Registro de Rechazo",4,null,null,global.iAlert);
 			}
 						
 		]]>

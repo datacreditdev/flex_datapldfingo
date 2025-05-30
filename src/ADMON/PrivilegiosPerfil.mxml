@@ -55,7 +55,7 @@
 			
 		private function confirmaEnvio():void{
 			if(band)
-				Alert.show("¿Desea guardar las modificaciones realizadas?",titulo, 3, null, guardaPermisos, du.iQuest, 4);
+				du.mostrarMensaje("¿Desea guardar las modificaciones realizadas?",titulo, 3, null, guardaPermisos, du.iQuest, 4);
 			else
 				cerrar();
 		}
@@ -89,11 +89,11 @@
 					du.closeWs(ws);
 					
 					if(res.substr(0,1) == "1"){
-						Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+						du.mostrarMensaje("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
 						cerrar();
 					}
 					else
-						Alert.show(res,titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje(res,titulo,4,null,null,global.iAlert);
 				});
 				var Params:Array = new Array();
 				Params[0] = codPerfil;

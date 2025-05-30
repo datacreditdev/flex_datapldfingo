@@ -196,7 +196,7 @@
 				var fecEnt:String = global.formatearFechaYYYYMMDD(dtfEntrega.selectedDate);
 				var fecSol:String = global.formatearFechaYYYYMMDD(dtfSolicitud.selectedDate);
 				/*if (fecEnt < fecAct){
-					Alert.show("La fecha de entrega debe ser igual o posterior a la fecha actual","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+					du.mostrarMensaje("La fecha de entrega debe ser igual o posterior a la fecha actual","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 					if(fecAct > fecSol)
 						dtfEntrega.selectedDate = global.obtenerFechaSistema();
 					else
@@ -204,7 +204,7 @@
 				}
 				else{*/
 					if(fecEnt < fecSol){	
-						Alert.show("La fecha de entrega debe ser igual o posterior a la fecha de solicitud","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+						du.mostrarMensaje("La fecha de entrega debe ser igual o posterior a la fecha de solicitud","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 						dtfEntrega.selectedDate = dtfSolicitud.selectedDate;
 					}
 				//}
@@ -228,7 +228,7 @@
 			
 			public function validaSolicitud():void{
 				if(global.formatearFechaYYYYMMDD(dtfEntrega.selectedDate) < global.formatearFechaYYYYMMDD(dtfSolicitud.selectedDate)){	
-					Alert.show("La fecha de solicitud debe ser inferior o igual a la fecha de entrega","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+					du.mostrarMensaje("La fecha de solicitud debe ser inferior o igual a la fecha de entrega","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 					dtfSolicitud.selectedDate = dtfEntrega.selectedDate;
 				}
 			}

@@ -75,7 +75,7 @@
 						}
 						else{
 							txtCuenta.text = "";
-							Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 						}
 					});
 					params[0] = 5;
@@ -112,11 +112,11 @@
 						du.closeWs(wsMS);	
 							
 						if(res.substr(0,1) == "1"){
-							Alert.show("Proceso finalizado exitosamente.","Privilegios por Perfil",4,null,null,global.iInfo);
+							du.mostrarMensaje("Proceso finalizado exitosamente.","Privilegios por Perfil",4,null,null,global.iInfo);
 							limpiar();
 						}
 						else	
-							Alert.show(res.substr(2,res.length),titulo,4,null,null,global.iAlert);	
+							du.mostrarMensaje(res.substr(2,res.length),titulo,4,null,null,global.iAlert);	
 					});
 					wsMS.setAccionCancCheque.send(2, coord, cuenta, "", "", "", cheque, "", global.obtenerUsuario());
 				}
@@ -210,23 +210,23 @@
 			
 			public function valida():Boolean{
 				if(cboCoordinacion.selectedIndex <= 0){	
-					Alert.show("Seleccione la sucursal de la cuenta.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la sucursal de la cuenta.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtCodCuenta.text == "" || txtCuenta.text == ""){
-					Alert.show("Debe seleccionar la cuenta bancaria.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar la cuenta bancaria.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtChqIni.text == ""){
-					Alert.show("Debe capturar el número del cheque inicial.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar el número del cheque inicial.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtChqFin.text == ""){
-					Alert.show("Debe capturar el número del cheque final.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar el número del cheque final.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(validaRango() == false){
-					Alert.show("El número de cheque final debe ser mayor o igual al número de cheque inicial.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("El número de cheque final debe ser mayor o igual al número de cheque inicial.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

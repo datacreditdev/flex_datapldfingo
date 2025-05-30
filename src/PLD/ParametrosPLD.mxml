@@ -175,36 +175,36 @@
 			wsMS = null;
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1"){				 
-				Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);				 		  
+				du.mostrarMensaje("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);				 		  
 			}	
 			else{
- 				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iError);	
+ 				du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iError);	
 			 }	
 		}
 		
 		private function validaForm():Boolean{
 			if(txtNumParcial.text == ""){
-				Alert.show("El Número de Parcialidades no debe estar vacio.",titulo,4,null,null,global.iAlert);	
+				du.mostrarMensaje("El Número de Parcialidades no debe estar vacio.",titulo,4,null,null,global.iAlert);	
 				return false;
 			}
 			else if(txtMontoDivi.text == ""){
-				Alert.show("El Monto Divisa no debe estar vacio.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("El Monto Divisa no debe estar vacio.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			else if(cboMoneda.selectedIndex == 0 ){
-				Alert.show("Seleccione un tipo de Moneda.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Seleccione un tipo de Moneda.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			else if(cboMonedaExt.selectedIndex == 0){
-				Alert.show("Seleccione un tipo de Moneda Extranjera.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Seleccione un tipo de Moneda Extranjera.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			else if(txtNumTransac.text == ""){
-				Alert.show("El Número de Transacciones no debe estar vacio.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("El Número de Transacciones no debe estar vacio.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 		 	else if(txtEmailCump.text == ""){
-				Alert.show("El Correo Oficial de Cumplimiento no debe estar vacio.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("El Correo Oficial de Cumplimiento no debe estar vacio.",titulo,4,null,null,global.iAlert);
 				return false;
 			} 	
 		 	return true;

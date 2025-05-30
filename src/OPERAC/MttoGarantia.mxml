@@ -107,7 +107,7 @@
 			if (info.guarda == true)
 				guardaGarantia();
 			else
-				Alert.show("Debe capturar los datos requeridos.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar los datos requeridos.",titulo,4,null,null,global.iAlert);
 		}
 		
 		private function setAccionGarantia(event:ResultEvent):void{
@@ -117,9 +117,9 @@
 			wsMS.removeEventListener(ResultEvent.RESULT, setAccionGarantia);
 			var res:String = event.result.toString();
 			if (res.substr(0,1) == "1")
-				Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Proceso finalizado exitosamente.",titulo,4,null,null,global.iAlert);
 			else
-				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+				du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 		}
 	]]>
 	</mx:Script>

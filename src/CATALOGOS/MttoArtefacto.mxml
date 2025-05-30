@@ -104,7 +104,7 @@
 			
 			private function validar():Boolean{
 				if(dgArtefacto.selectedIndex < 0){
-					Alert.show("No se ha seleccionado el Artefacto de Crédito.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No se ha seleccionado el Artefacto de Crédito.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

@@ -163,7 +163,7 @@
 							}
 						}
 						else
-							Alert.show("Código de cliente incorrecto.\n\nVerifique el dato capturado.",titulo,4,null,null,global.iAlert);					
+							du.mostrarMensaje("Código de cliente incorrecto.\n\nVerifique el dato capturado.",titulo,4,null,null,global.iAlert);					
 					});
 					//metodo que consulta que el cliente pertenezca al grupo
 					params[0] = grupo;
@@ -172,7 +172,7 @@
 					wsCat.getInfoAcred.send(3, params);
 				}
 				else
-					Alert.show("Capture el código de acreditado.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el código de acreditado.",titulo,4,null,null,global.iAlert);
 			}
 			
 			//funcion que consulta la mesa directiva del grupo
@@ -209,7 +209,7 @@
 						txtSecretario.text = _xmlGrupo.Table[0].NOMSEC;
 					}
 					else
-						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);	
+						du.mostrarMensaje("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);	
 				});
 				params[0] = grupo;
 				params[1] = ciclo;
@@ -235,16 +235,16 @@
 								
 						if (res.substr(0,1) == "1"){
 							limpiar();
-							Alert.show("Modificación realizada exitosamente.",titulo,4,null,null,global.iInfo);
+							du.mostrarMensaje("Modificación realizada exitosamente.",titulo,4,null,null,global.iInfo);
 						}	
 						else
-							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);							
+							du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);							
 					});
 					//metodo que envia los datos de la modificacion
 					wsMS.setAccionModMesaDir.send(grupo, ciclo, presidente, tesorero, secretario, global.obtenerUsuario());
 				}
 				else
-					Alert.show("No es posible realizar el proceso de modificación.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No es posible realizar el proceso de modificación.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 			}
 			
 			public function initApp():void{

@@ -50,10 +50,10 @@ package Data
 			myCircle.graphics.endFill();
 	
 			image.addChild(myCircle);
-			Alert.show("Dibujo");
+			du.mostrarMensaje("Dibujo");
 			}
 			catch(error:Error){
-				Alert.show("Error Clase");
+				du.mostrarMensaje("Error Clase");
 			}
 		}
 		
@@ -73,10 +73,10 @@ package Data
 			loader = new Loader();
 			loader.load(new URLRequest(url));
 			loader.contentLoaderInfo.addEventListener(Event.COMPLETE, startApp);
-			Alert.show("Continua");
+			du.mostrarMensaje("Continua");
 			}
 			catch(error:Error){
-				Alert.show("Error Clase");
+				du.mostrarMensaje("Error Clase");
 			}
 		}
 		
@@ -103,7 +103,7 @@ package Data
 			image.addChild(zoom);
 			}
 			catch(error:Error){
-				Alert.show("StarApp");
+				du.mostrarMensaje("StarApp");
 			}
 		}
 	

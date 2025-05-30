@@ -85,7 +85,7 @@
 					cboRepo.dataProvider = repoObj;
 				}
 				else
-					Alert.show("No se encontraron expedientes relacionados con el acreditado.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No se encontraron expedientes relacionados con el acreditado.",titulo,4,null,null,global.iAlert);
 			}
 			
 			private function muestraDocumentos():void{

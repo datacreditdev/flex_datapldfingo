@@ -161,25 +161,25 @@
 			
 		private function valida():Boolean{
 			if(txtMov.text == ""){
-				Alert.show("Debe seleccionar el tipo de Movimiento de la Comisión.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe seleccionar el tipo de Movimiento de la Comisión.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(cboTipoCargo.selectedIndex == 0){
-				Alert.show("Debe seleccionar la Forma de Afectación de la Comisión.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe seleccionar la Forma de Afectación de la Comisión.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(txtMonto.text == "" && txtPorcentaje.text == ""){
-				Alert.show("Debe registrar el monto o el porcentaje de la comisión.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe registrar el monto o el porcentaje de la comisión.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			else{
 				if(txtMonto.text != "" && txtPorcentaje.text != ""){
-					Alert.show("Debe registrar el monto o el porcentaje de la comisión.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe registrar el monto o el porcentaje de la comisión.",titulo,4,null,null,global.iAlert);
 					return false;
 				}	
 			}
 			if(opcional.selectedValue == null){
-				Alert.show("Debe seleccionar el tipo de Comisión.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe seleccionar el tipo de Comisión.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			return true;

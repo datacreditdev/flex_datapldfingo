@@ -126,7 +126,7 @@
 							exportarExcel(cargaTitulo());
 						}
 						else
-							Alert.show("No se encontro información relacionada con los datos de consulta.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No se encontro información relacionada con los datos de consulta.",titulo,4,null,null,global.iAlert);
 							
 						global.desbloquear();
 					
@@ -298,16 +298,16 @@
 				
 			private function valida():Boolean{
 				if(dtfFecha.text == "" && currentState == null){
-					Alert.show("Seleccione la fecha límite del reporte.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la fecha límite del reporte.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(nivel.selection == null){
-					Alert.show("Seleccione el nivel de detalle del reporte.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione el nivel de detalle del reporte.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(chkCartVig.selected == false && chkCartVenc.selected == false && 
 				   chkCartRest.selected == false && chkCartCast.selected == false){
-					Alert.show("Debe seleccionar al menos un Tipo de Cartera.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar al menos un Tipo de Cartera.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

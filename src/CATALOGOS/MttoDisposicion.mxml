@@ -252,7 +252,7 @@
 				cerrar();
 			}	
 			else
-				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+				du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 		}
 		
 		public function terminarEfecto(event:EffectEvent):void{
@@ -268,7 +268,7 @@
 			if (info.guarda == true)
 				guardaDisposicion();
 			else 
-				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
 		}
 		
 		public function validaMonto(event:Event):void{

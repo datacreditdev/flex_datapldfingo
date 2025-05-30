@@ -78,7 +78,7 @@
 			
 			private function validar():Boolean{
 				if(dgPers.selectedIndex < 0){
-					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar un registro.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

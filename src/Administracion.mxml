@@ -199,11 +199,11 @@
         
         public var Last_Mod_Id:String;
 		public var ws:WebService;
-		public var wsCat:WebService;
-		public var wsMS:WebService;
+		public var tituloUsuario:String;
+		public var tituloAcceso:String;
+		
 		private var du:Utils;
 		private var global:Globales
-          
         private var dp:XML;
         private var modulo:Modulo;
         private var loading:pLoading;
@@ -225,10 +225,10 @@
 						txtUsr.text = "";
 						txtPwd.text = "";
 						txtUsr.setFocus();
-						Alert.show("Proceso finalizado exitosamente.","Mantenimiento de Usuario",4,null,null,global.iInfo);
+						du.mostrarMensaje("Proceso finalizado exitosamente.","Mantenimiento de Usuario",4,null,null,global.iInfo);
 					}
 					else
-						Alert.show(res.substr(2, res.length - 1),"Mantenimiento de Usuario",4,null,null,global.iAlert);
+						du.mostrarMensaje(res.substr(2, res.length - 1),"Mantenimiento de Usuario",4,null,null,global.iAlert);
 																			
 					du.rCursor();
 					du.closeWs(ws);												
@@ -251,19 +251,16 @@
 		}
 		
 		private function initApp():void{				
-			httpService.url = "Config.xml";
-            httpService.send();
-            txtUsr.setFocus();
+			txtUsr.setFocus();
             global = new Globales();
             ws = new WebService();
-            wsMS = new WebService();
+            
+            httpService.url = "Config.xml";
+            httpService.send();
+            
+            tituloAcceso = "Acceso al Sistema";
+            tituloUsuario = "Mantenimiento de Usuario";
 		}
-		
-		public function initConexion():void{				
-			wsMS = new WebService();
-			wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-			wsMS.loadWSDL();
-		}	
 		
 		//----------------------ARCHIVO DE CONFIGURACIÓN---------------------------
 		private function httpService_fault(evt:FaultEvent):void {
@@ -281,12 +278,12 @@
 			
 			btnLogin.setFocus();								
 			if (txtUsr.text == ''){
-				du.showMsg("Se requiere el nombre de usuario");
+				du.mostrarMensaje("Se requiere el nombre de usuario.", tituloAcceso, 4, null, null, global.iError);
 				btnLogin.setFocus();									
 				return;
 			}
 			if (txtPwd.text == ''){
-				du.showMsg("Se requiere el password");
+				du.mostrarMensaje("Se requiere el password.", tituloAcceso, 4, null, null, global.iError);
 				btnLogin.setFocus();
 				return;
 			}	
@@ -301,8 +298,7 @@
 				du.closeWs(ws);				
 				if (dp.elements().length() == 0){
 					desbloquear();
-					Alert.okLabel = "Aceptar";
-					Alert.show("Usuario y/o contraseña incorrectos.","Acceso al Sistema",4,null,null,global.iAlert);
+					du.mostrarMensaje("Usuario y/o contraseña incorrectos.", tituloAcceso, 4, null, null, global.iAlert);
 					return;													
 				}else{							
 					try{							
@@ -315,8 +311,7 @@
 						}													
 					}catch(err:Error){
 						desbloquear();
-						Alert.okLabel = "Aceptar";
-						Alert.show(err.toString(),"Acceso al Sistema",4,null,null,global.iAlert);
+						du.mostrarMensaje(err.toString(), tituloAcceso, 4, null, null, global.iAlert);
 					}
 					
 					U_ID = usrInfo.Table[0].CODIGO;
@@ -331,7 +326,7 @@
 						txtPwdAnt.setFocus();
 						var ingreso:String = _Ult_Acceso_Fecha != null? "\n\nÚltimo acceso al sistema " + global.formatearFecha(_Ult_Acceso_Fecha)+ "." : "";
 						var est:String = "\n\nIntroduzca una contraseña de 8 a 12 caracteres, que como mínimo tenga una letra y un número. Dicha contraseña no debe iniciar con un valor numérico";
-						Alert.show("Es necesario modificar la contraseña debido a que ha superado el periodo de vigencia." + ingreso + est,"Mantenimiento de Usuario",4,null,null,global.iAlert);								
+						du.mostrarMensaje("Es necesario modificar la contraseña debido a que ha superado el periodo de vigencia." + ingreso + est, tituloUsuario, 4, null, null, global.iAlert);								
 						return;	
 					}
 					
@@ -374,7 +369,8 @@
 					
 						mainMenu.dispatchEvent(new MouseEvent(MouseEvent.CLICK, true, false));
 					
-						wsCat = new WebService;
+						var wsCat:WebService = new WebService;
+						
 						du.initWsCat(wsCat);
 						du.sCursor();
 						
@@ -543,7 +539,7 @@
 					if(this.currentState == 'LogedIn'){
 						ocultaPdf();
 						systemManager.removeEventListener(FlexEvent.IDLE, userIdle);
-						Alert.show("Tiempo de sesión expirado.","Sesión",4,null,finSesion,global.iInfo);
+						du.mostrarMensaje("Tiempo de sesión expirado.","Sesión",4,null,finSesion,global.iInfo);
 					}
 				}
 			}
@@ -555,28 +551,28 @@
 		
 		private function validaMod():Boolean{
 			if(txtPwdAnt.text == ""){
-				Alert.show("Debe capturar la contraseña anterior.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar la contraseña anterior.", tituloUsuario, 4, null, null, global.iAlert);
 				return false;
 			}
 			if(txtPwdNuevo.text == ""){
-				Alert.show("Debe capturar la nueva contraseña.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar la nueva contraseña.", tituloUsuario, 4, null, null, global.iAlert);
 				return false;
 			}
 			if(txtConfPwd.text == ""){
-				Alert.show("Debe capturar la confirmación de contraseña.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar la confirmación de contraseña.", tituloUsuario, 4, null, null, global.iAlert);
 				return false;
 			}
 			if(txtPwdNuevo.text != txtConfPwd.text){
-				Alert.show("La nueva contraseña no coincide con su confirmación.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				du.mostrarMensaje("La nueva contraseña no coincide con su confirmación.", tituloUsuario, 4, null, null, global.iAlert);
 				return false;
 			}
 			if(txtPwdNuevo.text == txtPwdAnt.text){
-				Alert.show("Debe capturar una nueva contraseña diferente de la anterior.","Mantenimiento de Usuario",4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar una nueva contraseña diferente de la anterior.", tituloUsuario, 4, null, null, global.iAlert);
 				return false;
 			}
 			var arrayResult:Array = Validator.validateAll([vPass]);
             if(arrayResult.length > 0){
-                Alert.show("Formato de la nueva contraseña incorrecto.\n\nIntroduzca una contraseña de 8 a 12 caracteres, que como mínimo tenga una letra y un número. Dicha contraseña no debe iniciar con un valor numérico","Mantenimiento de Usuario",4,null,null,global.iAlert);
+                du.mostrarMensaje("Formato de la nueva contraseña incorrecto.\n\nIntroduzca una contraseña de 8 a 12 caracteres, que como mínimo tenga una letra y un número. Dicha contraseña no debe iniciar con un valor numérico", tituloUsuario, 4, null, null, global.iAlert);
                 return false;
             }
 			return true;

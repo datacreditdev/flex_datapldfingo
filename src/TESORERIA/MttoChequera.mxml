@@ -51,7 +51,7 @@
 						llenaRegistros();
 					}
 					else{
-						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
 					}
 					global.desbloquear();
 				});
@@ -171,36 +171,36 @@
 					cerrar();
 				}	
 				else
-					Alert.show(res.substr(2,res.length - 1),titulo,4,null,null,global.iAlert);		
+					du.mostrarMensaje(res.substr(2,res.length - 1),titulo,4,null,null,global.iAlert);		
 			}
 			
 			public function valida():Boolean{
 				if(cboCoordinacion.selectedIndex == 0){
-					Alert.show("Debe seleccionar la sucursal de la chequera.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar la sucursal de la chequera.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtCodigo.text == ""){
-					Alert.show("Debe capturar el código de la chequera.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar el código de la chequera.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtChqIni.text == ""){
-					Alert.show("Debe capturar el número del cheque inicial",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar el número del cheque inicial",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtChqIni.text.length < 7){
-					Alert.show("El número de cheque inicial debe estar compuesto por 7 dígitos.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("El número de cheque inicial debe estar compuesto por 7 dígitos.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtChqFin.text == ""){
-					Alert.show("Debe capturar el número del cheque final",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar el número del cheque final",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtChqFin.text.length < 7){
-					Alert.show("El número de cheque final debe estar compuesto por 7 dígitos.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("El número de cheque final debe estar compuesto por 7 dígitos.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(validaRango() == false){
-					Alert.show("El número de cheque final debe ser mayor o igual al número de cheque inicial.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("El número de cheque final debe ser mayor o igual al número de cheque inicial.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

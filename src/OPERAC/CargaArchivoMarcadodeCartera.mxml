@@ -48,7 +48,7 @@
 	            fileReference.browse([fileFilter]);
 	    	}
          	catch (error:Error){
-         		 Alert.show(error.message,titulo,4,null,null,global.iAlert);
+         		 du.mostrarMensaje(error.message,titulo,4,null,null,global.iAlert);
          		 return;
          	} 
         }
@@ -167,7 +167,7 @@
 	            btnLimpiar.enabled = true;
             }
             catch (error:Error){
-  				Alert.show(error.message,titulo,4,null,null,global.iAlert);
+  				du.mostrarMensaje(error.message,titulo,4,null,null,global.iAlert);
          		return;
          	}       		        		        
         }  
@@ -250,17 +250,17 @@
 				}
 				checaNoMarcados();					
 				dgInfo.dataProvider = infoObj;	
-				Alert.show("Datos cargados exitosamente.",titulo,4,null,null,global.iInfo);		
+				du.mostrarMensaje("Datos cargados exitosamente.",titulo,4,null,null,global.iInfo);		
 				du.rCursor();	
 			}				
 			else{
 				var res:String = event.result.toString();
 				if(res.indexOf("(SICEM.PRN_LEGAL_PK) violada") >= 0){
-					Alert.show("Existen grupos que ya han sido marcados.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Existen grupos que ya han sido marcados.",titulo,4,null,null,global.iAlert);
 					lblResultado.text = "";
 				} 
 				else{
-					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iError);
+					du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iError);
 					limpiar();
 				}					 			
 				du.rCursor();				 

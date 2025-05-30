@@ -94,7 +94,7 @@
 			if (info.guardaDatos == true && info.guardaEmp == true)
 				guardaProy();
 			else
-				Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
 		}
 		
 		private function setAccionProy(event:ResultEvent):void{
@@ -108,7 +108,7 @@
 				cerrar();
 			}	
 			else
-				Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+				du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 		}
 	]]>
 	</mx:Script>

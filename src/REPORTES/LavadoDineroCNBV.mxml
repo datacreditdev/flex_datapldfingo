@@ -290,7 +290,7 @@
 								
 						});
 						wsMS.getActividadCNVB.send();*/
-						Alert.show("No se ha encontrado informacion del periodo indicado.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("No se ha encontrado informacion del periodo indicado.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 						return;
 					}
 					else if(cboOperac.selectedItem.codigo == "I" || cboOperac.selectedItem.codigo == "P"){ 
@@ -341,7 +341,7 @@
 						exp.cargaCadena(res, tituloRep);	
 					}
 					else{
-						Alert.show("No es posible generar el documento solicitado.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("No es posible generar el documento solicitado.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 						return;
 					}
 				}
@@ -555,43 +555,43 @@
 				var invalidArray:Array = Validator.validateAll([operacV]);
 			
 				if(invalidArray.length > 0){	
-					Alert.show("Seleccione el tipo de Operación.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione el tipo de Operación.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtNombre.text == ""){	
-					Alert.show("Debe capturar el nombre.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar el nombre.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtAPaterno.text == ""){	
-					Alert.show("Debe capturar el Apellido Paterno.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar el Apellido Paterno.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtAMaterno.text == ""){	
-					Alert.show("Debe capturar el Apellido Materno.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar el Apellido Materno.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtMonto.text == ""){	
-					Alert.show("Debe capturar el Monto de la Operación.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar el Monto de la Operación.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(dtfNac.text == ""){
-					Alert.show("Debe capturar la Fecha de Nacimiento.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar la Fecha de Nacimiento.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtCURP.text == ""){
-					Alert.show("Debe capturar la CURP.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar la CURP.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtDesc.text == ""){
-					Alert.show("Debe capturar la Descripción de la Operación.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar la Descripción de la Operación.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtCalle.text == ""){
-					Alert.show("Debe capturar la Calle.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar la Calle.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtTelefono.text == ""){
-					Alert.show("Debe capturar el número telefónico.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar el número telefónico.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

@@ -54,7 +54,7 @@
 					Application.application.muestraPdf(consulta);
 				}
 				else
-					Alert.show("No es posible generar el documento del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No es posible generar el documento del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 			}			
 						
 			public function init(rep:String, titulo:String, fechaMin:String, fechaMax:String):void{
@@ -82,7 +82,7 @@
 				
 			public function valida():Boolean{
 				if(dtfFecha.text == ""){
-					Alert.show("Seleccione la fecha del reporte.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la fecha del reporte.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

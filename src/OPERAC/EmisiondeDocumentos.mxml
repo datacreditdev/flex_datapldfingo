@@ -118,7 +118,7 @@
 						callLater(iniciar);
 					} 	
 					else
-						Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);	
+						du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);	
 				});
 				wsMS.setEmisionDocumentosInd.send(acred, ciclo, "I", anexo, pagos, garantia, contrato, pagare, 
 											      global.obtenerUsuario());
@@ -127,18 +127,18 @@
 		
 		public function valida():Boolean{
 			if(txtAcred.text == ""){
-				Alert.show("Capture el número de acreditado.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Capture el número de acreditado.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(txtCiclo.text == ""){
-				Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(chkAnexo.selected == false && chkPagos.selected == false && 
 			   chkGarantia.selected == false && chkContrato.selected == false &&
 			   chkPagare.selected == false)
 			{
-				Alert.show("Debe seleccionar al menos un tipo de documento.",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe seleccionar al menos un tipo de documento.",titulo,4,null,null,global.iAlert);
 				return false;	
 			}
 			return true;

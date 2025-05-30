@@ -53,7 +53,7 @@
 						llenaRegistros();
 					}
 					else{
-						Alert.show("Error en la carga de Datos","Mantenimiento de Grupo",4,null,null,global.iAlert);
+						du.mostrarMensaje("Error en la carga de Datos","Mantenimiento de Grupo",4,null,null,global.iAlert);
 					}
 					global.desbloquear();
 				});
@@ -157,11 +157,11 @@
 				wsMS.removeEventListener(ResultEvent.RESULT, setAccionGrupo);
 				var res:String = event.result.toString();
 				if (res.substr(0,1) == "1"){
-					Alert.show("Proceso finalizado exitosamente.","Mantenimiento de Grupo",4,null,null,global.iInfo);
+					du.mostrarMensaje("Proceso finalizado exitosamente.","Mantenimiento de Grupo",4,null,null,global.iInfo);
 					cerrar();
 				}	
 				else
-					Alert.show("Error en el Proceso.","Mantenimiento de Grupo",4,null,null,global.iAlert);		
+					du.mostrarMensaje("Error en el Proceso.","Mantenimiento de Grupo",4,null,null,global.iAlert);		
 			}
 			
 			
@@ -177,7 +177,7 @@
 				if (info.guardaDatos == true && info.guardaOficial == true)
 					guardaGrupo();
 				else
-					Alert.show("Debe capturar los datos requeridos","Mantenimiento de Grupo",4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar los datos requeridos","Mantenimiento de Grupo",4,null,null,global.iAlert);
 			}
 		]]>
 	</mx:Script>

@@ -227,15 +227,15 @@
 								comMttoPrn.cargaInfoPrn(grupo, nomGrupo, ciclo, munic, coord, promotor);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de Préstamo","Mantenimiento de Préstamo",4,null,null,global.iAlert); 
+								du.mostrarMensaje("Debe seleccionar el registro de Préstamo","Mantenimiento de Préstamo",4,null,null,global.iAlert); 
 							break;
 					}
 				}
 			}
 			
 			public function permisos():void{
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var Params:Array;
 				var cont:int;
 				
@@ -356,13 +356,13 @@
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Canvas x="621" y="244" width="110" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
+		<mx:Canvas x="671" y="244" width="110" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
 			<mx:Button id="btnEditarPrn" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormPrn(2)" toolTip="Editar Préstamo" width="40"/>
 			<mx:Button id="btnDatosPrn" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaPrn(1)" enabled="false" toolTip="Préstamos del Grupo" width="40"/>
 		</mx:Canvas>
 		<mx:Label x="18.5" y="260" text="CICLO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Label x="18.5" y="465" text="PRÉSTAMO AL ACREDITADO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-		<mx:Canvas x="671" y="449" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:Canvas x="722" y="449" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Button id="btnDatosAcred" x="9" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaAcredPrn(1)" enabled="false" toolTip="Acreditados del Grupo" width="40"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvDetalle2" x="18.5" y="494" width="763.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
@@ -379,8 +379,5 @@
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Image x="725" y="19" width="57" height="57" source="assets/users.png"/>
-		<mx:Image x="739" y="238" width="43" height="43" source="assets/notepad.png"/>
-		<mx:Image x="739" y="443" width="43" height="43" source="images/user.png"/>
 	</mx:Canvas>
 </mx:Canvas>

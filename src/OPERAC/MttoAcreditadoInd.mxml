@@ -113,7 +113,7 @@
 					if (_xmlAcred.elements().length() > 0)
 						llenaRegistros();
 					else
-						Alert.show("Error en la carga de datos.",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("Error en la carga de datos.",titulo,4,null,null,global.iAlert);
 				});
 				params[0] = acred;
 				wsCat.getInfoAcred.send(1, params);	
@@ -369,14 +369,14 @@
 						PopUpManager.centerPopUp(comVisor);
 					}
 					else
-						Alert.show("No se encontraron expedientes relacionados con el acreditado.",titulo,4,null,null,global.iAlert);				
+						du.mostrarMensaje("No se encontraron expedientes relacionados con el acreditado.",titulo,4,null,null,global.iAlert);				
 				});
 				params[0] = info.codigo;
 				wsCat.getInfoRegistro.send(40, params);
 			}
 			
 			public function permisos():void{
-				/*var perfil_id:String = Application.application.cadPerfil;
+				/*var perfil_id:String = global.obtenerCadPerfil();
 				
 				if (permiso.permisosConsBuro(Application.application.PERFIL_ID)){
 					consBuro = true;	
@@ -411,7 +411,7 @@
 						pdfE.cargaPdf(consulta);
 					}
 					else
-						Alert.show(res,titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje(res,titulo,4,null,null,global.iAlert);
 					this.removeEventListener("consultar", procesarConsulta);
 				});
 				wsCC.getEjecutaConsulta.send("C", acred, "I", global.obtenerUsuario());
@@ -450,17 +450,17 @@
 						if(tipoAccion == 1){
 							var rSplit:Array = res.toString().split('|');
 							codigo = rSplit[1].toString();
-							Alert.show("Registro de acreditado almacenado con el código - " + codigo,titulo,4,null,null,global.iInfo);
+							du.mostrarMensaje("Registro de acreditado almacenado con el código - " + codigo,titulo,4,null,null,global.iInfo);
 						}	
 						else
-							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+							du.mostrarMensaje("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
 						cerrar();
 					}
 					else
 						dispatchEvent(new Event("consultar"));
 				}	
 				else
-					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+					du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 			}
 			
 			public function validaDatosAcred(event:EventAcred):void{
@@ -469,7 +469,7 @@
 			
 			private function validaInfo():Boolean{
 				if(cboTipoPers.selectedIndex == 0){
-					Alert.show("Debe seleccionar el Tipo de Persona.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar el Tipo de Persona.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;
@@ -481,7 +481,7 @@
 					validaSituacionAcred();
 				}
 				else
-					Alert.show("Debe capturar los datos requeridos.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar los datos requeridos.",titulo,4,null,null,global.iAlert);
 			}
 			
 			//Funcion que verifica que el usuario no se encuentre 
@@ -501,7 +501,7 @@
 						if(res.substr(0,1) == "1")
 							guardaAcred();
 						else
-							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
 					});
 					wsMS.getValidaSituacionAcred.send(acred, global.obtenerUsuario());
 				}

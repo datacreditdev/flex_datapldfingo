@@ -135,7 +135,7 @@
 									txtCuenta.text = "";
 									txtChqIni.text = "";
 									txtChqFin.text = "";
-									Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+									du.mostrarMensaje("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 								}
 							});
 							params[0] = 5;
@@ -146,7 +146,7 @@
 							wsCat.getInfoRegistro.send(3, params);
 						}
 						else
-							Alert.show("No es posible cargar la información de la cuenta. Es necesario seleccionar al menos un registro de acreditado.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No es posible cargar la información de la cuenta. Es necesario seleccionar al menos un registro de acreditado.",titulo,4,null,null,global.iAlert);
 					}					
 				}	
 			}
@@ -238,13 +238,13 @@
 								if (res.substr(0,1) == "1")
 									Application.application.muestraPdf(consulta);
 								else if(res.substr(0,1) == "2"){
-									Alert.show(res.substr(2,res.length -1), titulo, 4, null, 
+									du.mostrarMensaje(res.substr(2,res.length -1), titulo, 4, null, 
 										function(e:Event):void{
 											Application.application.muestraPdf(consulta);
 										}, global.iAlert);
 								}
 								else
-									Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+									du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 							});
 							wsMS.setAccionImpCheque.send(cdgAcred, null, cdgAcred, ciclo, "I", acred, chqAcred, fecha, global.obtenerUsuario(), cuenta);
 						}	
@@ -252,7 +252,7 @@
 							du.rCursor();
 							du.closeWs(wsMS);	
 							
-							Alert.show(resp.substr(2,resp.length -1),titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje(resp.substr(2,resp.length -1),titulo,4,null,null,global.iAlert);
 						}	
 					});
 					wsMS.getValidaRangoCheques.send(coord, cuenta, chqFin);
@@ -354,7 +354,7 @@
 			}
 			
 			public function permisos():void{
-				var perfil_id:String = Application.application.cadPerfil;
+				var perfil_id:String = global.obtenerCadPerfil();
 				var cont:int;
 				
 				if (permiso.permisosSelecCuenta(Application.application.PERFIL_ID)){
@@ -374,7 +374,7 @@
 					dgAcred.validateNow();
 					dgAcred.verticalScrollPosition = vScroll;
 					dgAcred.selectedIndex = ind;
-					Alert.show("Debe seleccionar al menos un registro para realizar proceso de impresión.",titulo,4,null,null,global.iAlert);	
+					du.mostrarMensaje("Debe seleccionar al menos un registro para realizar proceso de impresión.",titulo,4,null,null,global.iAlert);	
 				}
 				else if(calculaRegSel() > 1){
 					acredObj[ind].REGISTRO = !CheckBox(event.currentTarget).selected;
@@ -382,7 +382,7 @@
 					dgAcred.validateNow();
 					dgAcred.verticalScrollPosition = vScroll;
 					dgAcred.selectedIndex = ind;
-					Alert.show("Debe seleccionar solamente un registro para realizar proceso de impresión.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar solamente un registro para realizar proceso de impresión.",titulo,4,null,null,global.iAlert);
 				}
 				actualizaRangoCheque();
 				lblControl.text = calculaRegSel().toString() + " Registro(s) seleccionado(s)";
@@ -390,11 +390,11 @@
 			
 			public function valida():Boolean{
 				if(txtCodCuenta.text == "" || txtCuenta.text == ""){
-					Alert.show("Debe seleccionar la cuenta bancaria.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar la cuenta bancaria.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtChqIni.text == "" || txtChqFin.text == ""){
-					Alert.show("No ha sido desplegado el rango de cheques.\n\nVerifique la información de la cuenta",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No ha sido desplegado el rango de cheques.\n\nVerifique la información de la cuenta",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

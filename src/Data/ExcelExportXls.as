@@ -20,7 +20,7 @@ package Data
 		public function ExcelExportXls():void{
 	    }
 	    
-		//Envia el contenido XML al servidor
+		//Envia el contenido JSON
 		public function loadDGInExcel(dg:*, dgTot:* = null, titulo:String = null):void {
 	        this.titulo = titulo;
 	        du = new Utils();

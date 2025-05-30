@@ -91,33 +91,31 @@
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
 				
-				if (txtCodAcred.text != "" || txtPaterno.text != "" || txtNombre.text != ""){
-					btnBuscar.setFocus();
-					dgAcred.dataProvider = null;
+				btnBuscar.setFocus();
+				dgAcred.dataProvider = null;
+				
+				du.initWsCat(wsCat);
+				du.sCursor();
+				global.bloquear();
+				
+				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+					_xmlAcred = new XML(evt.result);
 					
-					du.initWsCat(wsCat);
-					du.sCursor();
-					global.bloquear();
+					du.rCursor();
+					du.closeWs(wsCat);	
+					global.desbloquear();
 					
-					du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-						_xmlAcred = new XML(evt.result);
-						
-						du.rCursor();
-						du.closeWs(wsCat);	
-						global.desbloquear();
-						
-						if (_xmlAcred.elements().length() > 0){
-							dgAcred.dataProvider = _xmlAcred.Table;
-						}
-						seleccionaAcred();
-					});
-					params[0] = global.obtenerUsuario();
-					params[1] = txtCodAcred.text;
-					params[2] = txtNombre.text;
-					params[3] = txtPaterno.text;
-					//Informacion de Acreditados sin grupo asignado
-					wsCat.getInfoAcred.send(9, params);
-				}	
+					if (_xmlAcred.elements().length() > 0){
+						dgAcred.dataProvider = _xmlAcred.Table;
+					}
+					seleccionaAcred();
+				});
+				params[0] = global.obtenerUsuario();
+				params[1] = txtCodAcred.text;
+				params[2] = txtNombre.text;
+				params[3] = txtPaterno.text;
+				//Informacion de Acreditados sin grupo asignado
+				wsCat.getInfoAcred.send(9, params);
 			}
 			
 			public function buscarListaSolic(tipo:int):void{
@@ -220,15 +218,15 @@
 								comMttoSolic.cargaInfoSolic(acred, nomAcred, ciclo, sec, autorizado, munic, coord, nomCoord, promotor);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de Solicitud","Mantenimiento de Solicitud",4,null,null,global.iAlert); 
+								du.mostrarMensaje("Debe seleccionar el registro de Solicitud","Mantenimiento de Solicitud",4,null,null,global.iAlert); 
 							break;
 					}
 				}
 			}
 			
 			public function permisos():void{
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var Params:Array;
 				var cont:int;
 				
@@ -313,7 +311,7 @@
 					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="250"/>
 					<mx:DataGridColumn headerText="SUCURSAL" dataField="COORD" width="80"/>
 					<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOMCO" width="170"/>
-					<mx:DataGridColumn headerText="NOMBRE EJECUTIVO" dataField="NOMASESOR" width="200"/>
+					<mx:DataGridColumn headerText="EJECUTIVO" dataField="NOMASESOR" width="200"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
@@ -337,12 +335,11 @@
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Canvas x="621" y="292" width="110" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
+		<mx:Canvas x="672" y="292" width="110" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
 			<mx:Button id="btnEditarSolic" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormSolic(2)" toolTip="Editar Solicitud" width="40"/>
 			<mx:Button id="btnDatosSolic" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaSolic(1)" enabled="false" toolTip="Solicitudes del Acreditado" width="40"/>
 		</mx:Canvas>
 		<mx:Label x="18.5" y="308" text="SOLICITUD PARA EL CICLO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-		<mx:Image x="739" y="286" width="43" height="43" source="assets/notepad.png"/>
 	</mx:Canvas>
 	<mx:Canvas x="18" y="39" width="695" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 		<mx:Label id="lblCodAcred" x="15" y="7" text="Código:" textAlign="right"/>

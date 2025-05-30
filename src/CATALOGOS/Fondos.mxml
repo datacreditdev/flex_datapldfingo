@@ -223,15 +223,15 @@
 			}
 
 			public function eliminarDisp():void{
-				Alert.show("¿Desea eliminar la Serie seleccionada?", tituloDisp, Alert.YES|Alert.NO,null, manejadorEliminarDisp,global.iQuest);
+				du.mostrarMensaje("¿Desea eliminar la Serie seleccionada?", tituloDisp, Alert.YES|Alert.NO,null, manejadorEliminarDisp,global.iQuest);
 			}
 			
 			public function eliminarLC():void{
-				Alert.show("¿Desea eliminar el Certificado seleccionado?", tituloLC, Alert.YES|Alert.NO,null, manejadorEliminarLC,global.iQuest);
+				du.mostrarMensaje("¿Desea eliminar el Certificado seleccionado?", tituloLC, Alert.YES|Alert.NO,null, manejadorEliminarLC,global.iQuest);
 			}
 			
 			public function eliminarOF():void{
-				Alert.show("¿Desea eliminar el Fondo seleccionado?", tituloOF, Alert.YES|Alert.NO,null, manejadorEliminarOF,global.iQuest);
+				du.mostrarMensaje("¿Desea eliminar el Fondo seleccionado?", tituloOF, Alert.YES|Alert.NO,null, manejadorEliminarOF,global.iQuest);
 			}
 			
 			public function iniVar():void{
@@ -330,7 +330,7 @@
 								PopUpManager.centerPopUp(comMttoDisp);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de la Serie",tituloDisp,4,null,null,global.iAlert);
+								du.mostrarMensaje("Debe seleccionar el registro de la Serie",tituloDisp,4,null,null,global.iAlert);
 						break;
 					}
 				}
@@ -366,7 +366,7 @@
 								
 							}
 							else
-								Alert.show("Debe seleccionar el registro del Certificado",tituloLC,4,null,null,global.iAlert);
+								du.mostrarMensaje("Debe seleccionar el registro del Certificado",tituloLC,4,null,null,global.iAlert);
 						break;
 					}
 				}
@@ -398,15 +398,15 @@
 								PopUpManager.centerPopUp(comMttoOF);	
 							}
 							else
-								Alert.show("Debe seleccionar el registro del Fondo",tituloOF,4,null,null,global.iAlert); 
+								du.mostrarMensaje("Debe seleccionar el registro del Fondo",tituloOF,4,null,null,global.iAlert); 
 							break;
 					}
 				}
 			}
 			
 			public function permisos():void{
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var ws:WebService = new WebService;
 				var Params:Array = new Array;
 				var cont:int;
@@ -492,7 +492,7 @@
 				if (res.substr(0,1) == "1")
 					buscarListaDisp(2);
 				else
-					Alert.show(res.substr(2,res.length-1),tituloDisp,4,null,null,global.iAlert);
+					du.mostrarMensaje(res.substr(2,res.length-1),tituloDisp,4,null,null,global.iAlert);
 			}
 			
 			private function setAccionLineaCred(event:ResultEvent):void{
@@ -504,7 +504,7 @@
 				if (res.substr(0,1) == "1")
 					buscarListaLC(2);
 				else
-					Alert.show(res.substr(2,res.length-1), tituloLC,4,null,null,global.iAlert);
+					du.mostrarMensaje(res.substr(2,res.length-1), tituloLC,4,null,null,global.iAlert);
 			}
 
 			private function setAccionOrgFond(event:ResultEvent):void{
@@ -516,7 +516,7 @@
 				if (res.substr(0,1) == "1")
 					buscarOF(2);
 				else
-					Alert.show(res.substr(2,res.length-1), tituloOF,4,null,null,global.iAlert);
+					du.mostrarMensaje(res.substr(2,res.length-1), tituloOF,4,null,null,global.iAlert);
 			}
 		]]>
 	</mx:Script>

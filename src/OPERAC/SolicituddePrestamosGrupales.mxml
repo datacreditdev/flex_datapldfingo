@@ -196,10 +196,10 @@
 			public function eliminarSolic():void{
 				var indSolic:int = dgSolic.selectedIndex;
 				if(_xmlSolic.Table[indSolic].SITUACION == 'S'){
-					Alert.show("¿Desea eliminar la solicitud seleccionada?", "Mantenimiento de Solicitud", Alert.YES|Alert.NO,null, manejadorEliminarSolic,global.iQuest);
+					du.mostrarMensaje("¿Desea eliminar la solicitud seleccionada?", "Mantenimiento de Solicitud", Alert.YES|Alert.NO,null, manejadorEliminarSolic,global.iQuest);
 				}
 				else
-					Alert.show("No es posible eliminar la solicitud.\n\nVerifique la situación que presenta la misma", "Mantenimiento de Solicitud", 4,null,null,global.iInfo);
+					du.mostrarMensaje("No es posible eliminar la solicitud.\n\nVerifique la situación que presenta la misma", "Mantenimiento de Solicitud", 4,null,null,global.iInfo);
 				
 			}
 			
@@ -278,7 +278,7 @@
 									comMttoSolic.registraInfoSolic(grupo, nomGrupo, munic, coord, promotor);
 								}
 								else
-									Alert.show(res.substr(2,res.length -1),"Mantenimiento de Solicitud",4,null,null,global.iAlert);
+									du.mostrarMensaje(res.substr(2,res.length -1),"Mantenimiento de Solicitud",4,null,null,global.iAlert);
 							});
 							wsMS.getSituacionSolic.send(grupo);	//Método que valida que no exista mas de una solicitud en proceso							
 							break;
@@ -297,15 +297,15 @@
 								comMttoSolic.cargaInfoSolic(grupo, nomGrupo, ciclo, munic, coord, promotor);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de Solicitud","Mantenimiento de Solicitud",4,null,null,global.iAlert); 
+								du.mostrarMensaje("Debe seleccionar el registro de Solicitud","Mantenimiento de Solicitud",4,null,null,global.iAlert); 
 							break;
 					}
 				}
 			}
 			
 			public function permisos():void{
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var Params:Array;
 				var cont:int;
 				
@@ -390,7 +390,7 @@
 				if (res.substr(0,1) == "1")
 					buscarListaSolic(1);
 				else
-					Alert.show(res.substr(2,res.length-1), "Mantenimiento de Solicitud",4,null,null,global.iAlert);
+					du.mostrarMensaje(res.substr(2,res.length-1), "Mantenimiento de Solicitud",4,null,null,global.iAlert);
 			}
 			
 			public function validaSituacionSolic(grupo:String):void{
@@ -451,7 +451,7 @@
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Canvas x="528" y="244" width="203" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
+		<mx:Canvas x="579" y="244" width="203" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
 			<mx:Button id="btnAgregarSolic" x="103" y="3" icon="@Embed(source='assets/add.png')" enabled="false" click="mostrarFormSolic(1)" toolTip="Agregar Solicitud" width="40"/>
 			<mx:Button id="btnEliminarSolic" x="151" y="3" icon="@Embed(source='assets/delete-icon.png')" enabled="false" click="eliminarSolic()" toolTip="Eliminar Solicitud" width="40"/>
 			<mx:Button id="btnEditarSolic" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormSolic(2)" toolTip="Editar Solicitud" width="40"/>
@@ -459,7 +459,7 @@
 		</mx:Canvas>
 		<mx:Label x="18.5" y="260" text="SOLICITUD PARA EL CICLO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<mx:Label x="18.5" y="465" text="ACREDITADO" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-		<mx:Canvas x="671" y="449" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:Canvas x="722" y="449" width="60" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Button id="btnDatosAcred" x="9" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaAcredSolic(1)" enabled="false" toolTip="Acreditados del Grupo" width="40"/>
 		</mx:Canvas>
 		<mx:Canvas id="cnvDetalle2" x="18.5" y="494" width="763.5" height="146" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" verticalScrollPolicy="off">
@@ -477,8 +477,5 @@
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Image x="725" y="19" width="57" height="57" source="assets/users.png"/>
-		<mx:Image x="739" y="238" width="43" height="43" source="assets/notepad.png"/>
-		<mx:Image x="739" y="443" width="43" height="43" source="images/user.png"/>
 	</mx:Canvas>
 </mx:Canvas>

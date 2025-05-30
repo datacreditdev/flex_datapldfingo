@@ -326,7 +326,7 @@
 						if(_xmlSolic.Table[0].SITUACION == 'R'){
 							desactivaControles();
 							bandMod = false;
-							Alert.show("No es posible modificar la información. La solicitud ya fue Rechazada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+							du.mostrarMensaje("No es posible modificar la información. La solicitud ya fue Rechazada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 						}
 						
 						//SI LA SOLICITUD FUE AUTORIZADA NO ES POSIBLE EDITARLA
@@ -335,8 +335,8 @@
 							bandMod = false;
 							//ACTIVA EL BOTON QUE PERMITE MODIFICAR EL HORARIO Y DIA DE JUNTA
 							btnGuardarHor.visible = true;
-							//Alert.show("No es posible modificar la información. La solicitud ya fue Autorizada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
-							Alert.show("Unicamente es posible modificar el día de junta y horario de reunión, debido a que la solicitud ya fue Autorizada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+							//du.mostrarMensaje("No es posible modificar la información. La solicitud ya fue Autorizada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+							du.mostrarMensaje("Unicamente es posible modificar el día de junta y horario de reunión, debido a que la solicitud ya fue Autorizada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 						}
 						
 						//SI LA SOLICITUD FUE AUTORIZADA PUEDE SER MODIFICADA POR MESA DE CONTROL
@@ -351,7 +351,7 @@
 								if(_xmlPres.elements().length() == 0){
 									desactivaControles();
 									bandMod = false;
-									Alert.show("No es posible modificar la información. La solicitud ya fue Autorizada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+									du.mostrarMensaje("No es posible modificar la información. La solicitud ya fue Autorizada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 								}
 								du.rCursor();
 								du.closeWs(wsCat);
@@ -365,7 +365,7 @@
 						llenaRegistros();
 					}
 					else{
-						Alert.show("Error en la carga de Datos","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+						du.mostrarMensaje("Error en la carga de Datos","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 					}	
 				});
 				params[0] = cdgGrupo;
@@ -416,7 +416,7 @@
 						validaFinal();
 				}
 				else{
-					Alert.show("No es posible modificar el registro de la solicitud.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+					du.mostrarMensaje("No es posible modificar el registro de la solicitud.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 				}
 			}
 			
@@ -528,9 +528,9 @@
 							montos[i] = cantSolic;
 						else{
 							if(cantSolic < montoMin)
-								Alert.show("El acreditado " + listaAcred[i].nombre +  " no alcanza el monto mínimo permitido",titulo,4,null,null,global.iAlert);
+								du.mostrarMensaje("El acreditado " + listaAcred[i].nombre +  " no alcanza el monto mínimo permitido",titulo,4,null,null,global.iAlert);
 							else if(cantSolic > montoMax)
-								Alert.show("El acreditado " + listaAcred[i].nombre +  " supera el monto máximo permitido",titulo,4,null,null,global.iAlert);
+								du.mostrarMensaje("El acreditado " + listaAcred[i].nombre +  " supera el monto máximo permitido",titulo,4,null,null,global.iAlert);
 							return false;
 						} 
 						//Asignaciones en la etapa de registro de la solicitud
@@ -547,9 +547,9 @@
 								cantAutorAcred[i] = cantAutor;
 							else{
 								if(cantAutor < montoMin)
-									Alert.show("El acreditado " + listaAcred[i].nombre +  " no alcanza el monto mínimo permitido",titulo,4,null,null,global.iAlert);
+									du.mostrarMensaje("El acreditado " + listaAcred[i].nombre +  " no alcanza el monto mínimo permitido",titulo,4,null,null,global.iAlert);
 								else if(cantAutor > montoMax)
-									Alert.show("El acreditado " + listaAcred[i].nombre +  " supera el monto máximo permitido",titulo,4,null,null,global.iAlert);
+									du.mostrarMensaje("El acreditado " + listaAcred[i].nombre +  " supera el monto máximo permitido",titulo,4,null,null,global.iAlert);
 								return false;
 							} 
 							//Asigna la situacion de la solicitud a cada cliente
@@ -717,7 +717,7 @@
 				if(formDatosGralSolic.situacion.selectedValue == 'S')
 					enviar();
 				else
-					Alert.show("No es posible guardar los cambios realizados en la solicitud.\n\nModifique la situación seleccionada actualmente.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+					du.mostrarMensaje("No es posible guardar los cambios realizados en la solicitud.\n\nModifique la situación seleccionada actualmente.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 			} 
 			
 			public function muestraDatosSolic():void{
@@ -855,7 +855,7 @@
 					cerrar();
 				}	
 				else
-					Alert.show(res.substr(2,res.length -1),"Mantenimiento de Solicitud",4,null,null,global.iAlert);		
+					du.mostrarMensaje(res.substr(2,res.length -1),"Mantenimiento de Solicitud",4,null,null,global.iAlert);		
 			}
 			
 			private function setAccionSolicESIA(event:ResultEvent):void{
@@ -869,7 +869,7 @@
 					//guardaHorario();
 				}	
 				else
-					Alert.show(res.substr(2,res.length -1),"Mantenimiento de Solicitud",4,null,null,global.iAlert);		
+					du.mostrarMensaje(res.substr(2,res.length -1),"Mantenimiento de Solicitud",4,null,null,global.iAlert);		
 			}
 			
 			private function setModHorario(event:ResultEvent):void{
@@ -882,14 +882,14 @@
 					cerrar();
 				}	
 				else
-					Alert.show(res.substr(2,res.length -1),"Mantenimiento de Solicitud",4,null,null,global.iAlert);		
+					du.mostrarMensaje(res.substr(2,res.length -1),"Mantenimiento de Solicitud",4,null,null,global.iAlert);		
 			}
 			
 			//Funcion que valida que los registros autorizados tengan una cantidad mayor a 0
 			public function validaAutorizado():Boolean{
 				for(var i:int = 0; i < Arr.length; i++){
 					if(Arr[i].sitAcred == 'A' && Arr[i].cantAutor == 0){
-						Alert.show("El préstamo del acreditado " + Arr[i].nombre + " fue autorizado sin monto.\n\nVerifique la información capturada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+						du.mostrarMensaje("El préstamo del acreditado " + Arr[i].nombre + " fue autorizado sin monto.\n\nVerifique la información capturada.","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 						return false;
 					}
 				}
@@ -905,14 +905,14 @@
 					info.guardaRecargos == true && info.guardaProc == true && info.guardaEntre == true && info.guardaLugar == true)
 					guardaSolic();
 				else
-					Alert.show("Debe capturar los datos requeridos","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar los datos requeridos","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 			}
 			
 			public function validaHorario():void{
 				if (info.guardaCalendario == true)
 					guardaHorario();
 				else
-					Alert.show("Debe capturar los datos requeridos","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar los datos requeridos","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 			}
 			
 			public function validaMonto(event:Event):void{	
@@ -926,7 +926,7 @@
 			public function validaProyecto():Boolean{
 				for(var i:int = 0; i < Arr.length; i++){
 					if(Arr[i].cantSolic > 0 && Arr[i].datos != "OK"){
-						Alert.show("El acreditado " + Arr[i].nombre + " no cuenta con un proyecto de inversión registrado.\n\nModifique la información del cliente","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+						du.mostrarMensaje("El acreditado " + Arr[i].nombre + " no cuenta con un proyecto de inversión registrado.\n\nModifique la información del cliente","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 						return false;
 					}
 				}
@@ -940,7 +940,7 @@
 				if(info.situacion != 'S'){
 					for(i = 0; i < Arr.length; i++){
 						if(Arr[i].sitAcred == 'S'){
-							Alert.show("El acreditado " + Arr[i].nombre + " se encuentra en situación " + Arr[i].situacion + ".\n\nModifique la condición del cliente","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+							du.mostrarMensaje("El acreditado " + Arr[i].nombre + " se encuentra en situación " + Arr[i].situacion + ".\n\nModifique la condición del cliente","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 							return false;
 						}
 					}
@@ -948,7 +948,7 @@
 				if(info.situacion == 'S'){
 					for(i = 0; i < Arr.length; i++){
 						if(Arr[i].sitAcred != 'S'){
-							Alert.show("El acreditado " + Arr[i].nombre + " se encuentra en situación " + Arr[i].situacion + ".\n\nModifique la condición del cliente","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+							du.mostrarMensaje("El acreditado " + Arr[i].nombre + " se encuentra en situación " + Arr[i].situacion + ".\n\nModifique la condición del cliente","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 							return false;
 						}
 					}

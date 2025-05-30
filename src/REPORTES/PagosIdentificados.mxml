@@ -85,7 +85,7 @@
 							cambiarColorFila(evt);	
 						}
 						else{
-							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 						}
 					});
 					wsRep.getRepPagosIdentFecha.send(tipo, dtfFecha.text, dtfFechaFinal.text, tipoFecha);	
@@ -135,19 +135,19 @@
 				
 			public function valida():Boolean{
 				if(dtfFecha.text == ""){
-					Alert.show("Seleccione la Fecha Inicial del Reporte.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la Fecha Inicial del Reporte.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(dtfFechaFinal.text == ""){
-					Alert.show("Seleccione la Fecha Final del Reporte.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la Fecha Final del Reporte.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(tipoPago.selection == null){
-					Alert.show("Seleccione el tipo de Depósito Identificado.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione el tipo de Depósito Identificado.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(cboFecha.selectedIndex == 0){
-					Alert.show("Seleccione el tipo de Fecha del Reporte.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione el tipo de Fecha del Reporte.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

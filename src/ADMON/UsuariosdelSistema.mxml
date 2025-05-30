@@ -91,7 +91,7 @@
 					du.showMsg("Debe seleccionar un usuario");
 					return;
 				}				
-				Alert.show("¿Confirma eliminar el usuario seleccionado?","Eliminar usuario",3,null,eliminaUsuario,du.iQuest,4);				
+				du.mostrarMensaje("¿Confirma eliminar el usuario seleccionado?","Eliminar usuario",3,null,eliminaUsuario,du.iQuest,4);				
 			}
 			
 			private function eliminaUsuario(evt:CloseEvent):void{
@@ -116,7 +116,7 @@
 							cargaUsuario();	
 						}
 						else
-							Alert.show(res.substr(2,res.length - 1),"Mantenimiento de Usuarios",4,null,eliminaUsuario,du.iAlert,4);
+							du.mostrarMensaje(res.substr(2,res.length - 1),"Mantenimiento de Usuarios",4,null,eliminaUsuario,du.iAlert,4);
 					});
 					Params[0] = codigo;
 					ws.ES_Admin_Usuarios.send(3,Params);

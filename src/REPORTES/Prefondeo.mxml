@@ -66,7 +66,7 @@
 						fecIni = dtfFecha.text;
 					}
 					else{
-						Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 						lblTotal.text = "";
 					}
 				});
@@ -98,7 +98,7 @@
 				
 			private function valida():Boolean{
 				if(dtfFecha.text == ""){
-					Alert.show("Seleccione la fecha de inicio.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la fecha de inicio.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

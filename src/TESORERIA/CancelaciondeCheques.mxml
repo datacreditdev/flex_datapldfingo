@@ -106,7 +106,7 @@
 							lblControl.text = calculaRegSel().toString() + " Registro(s) seleccionado(s)";
 						}
 						else
-							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 					});
 					params[0] = tipo;
 					params[1] = coord;
@@ -145,7 +145,7 @@
 								txtCuenta.text = _xmlCta.Table[0].BANCO;
 							else{
 								txtCuenta.text = "";
-								Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+								du.mostrarMensaje("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 							}
 						});
 						params[0] = 5;
@@ -156,7 +156,7 @@
 						wsCat.getInfoRegistro.send(3, params);
 					}
 					else
-						Alert.show("Seleccione una Sucursal.",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("Seleccione una Sucursal.",titulo,4,null,null,global.iAlert);
 				}						
 			}
 			
@@ -202,11 +202,11 @@
 						du.closeWs(wsMS);	
 							
 						if(res.substr(0,1) == "1"){
-							Alert.show("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
+							du.mostrarMensaje("Proceso finalizado exitosamente.",titulo,4,null,null,global.iInfo);
 							limpiar();
 						}
 						else	
-							Alert.show("No es posible realizar el proceso de cancelación.",titulo,4,null,null,global.iAlert);	
+							du.mostrarMensaje("No es posible realizar el proceso de cancelación.",titulo,4,null,null,global.iAlert);	
 					});
 					wsMS.setAccionCancCheque.send(tipo, coord, cuenta, codigo, ciclo, tipoCred, acred, cheque, chequera, global.obtenerUsuario());
 				}
@@ -362,7 +362,7 @@
 			
 			public function valida():Boolean{
 				if(calculaRegSel() == 0){	
-					Alert.show("Seleccione al menos un registro para realizar el proceso de cancelación.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione al menos un registro para realizar el proceso de cancelación.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;
@@ -370,16 +370,16 @@
 			
 			public function validaConsCheques():Boolean{
 				if(cboCoordinacion.selectedIndex <= 0){	
-					Alert.show("Seleccione la sucursal de la cuenta.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la sucursal de la cuenta.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtCodCuenta.text == "" || txtCuenta.text == ""){
-					Alert.show("Debe seleccionar la cuenta bancaria.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar la cuenta bancaria.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(currentState == null){
 					if((txtGrupo.text != "" && txtCiclo.text == "") || (txtCiclo.text != "" && txtGrupo.text == "")){
-						Alert.show("Debe capturar el código y ciclo.",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("Debe capturar el código y ciclo.",titulo,4,null,null,global.iAlert);
 						return false;
 					}
 				}

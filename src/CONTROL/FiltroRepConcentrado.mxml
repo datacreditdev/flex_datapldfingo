@@ -189,7 +189,7 @@
 					 	consulta = global.urlPdf + id + fecha + fechaFin + usuario + nomUsuario + coord;
 					
 					Application.application.muestraPdf(consulta);
-					//Alert.show(consulta);
+					//du.mostrarMensaje(consulta);
 				}			
 			}
 						

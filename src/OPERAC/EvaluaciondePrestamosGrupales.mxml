@@ -239,15 +239,15 @@
 								comMttoSolic.cargaInfoSolic(grupo, nomGrupo, ciclo, munic, coord, promotor);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de Solicitud","Mantenimiento de Grupo",4,null,null,global.iAlert); 
+								du.mostrarMensaje("Debe seleccionar el registro de Solicitud","Mantenimiento de Grupo",4,null,null,global.iAlert); 
 							break;
 					}
 				}
 			}
 			
 			public function permisos():void{
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var Params:Array;
 				var cont:int;
 				
@@ -369,7 +369,7 @@
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Canvas x="621" y="244" width="110" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
+		<mx:Canvas x="671" y="244" width="110" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true" id="canvas1">
 			<mx:Button id="btnEditarSolic" x="58" y="3" icon="@Embed(source='assets/edit.png')" enabled="false" click="mostrarFormSolic(2)" toolTip="Editar Solicitud" width="40"/>
 			<mx:Button id="btnDatosSolic" x="10" y="3" icon="@Embed(source='assets/folder.png')" click="buscarListaSolic(1)" enabled="false" toolTip="Solicitudes del Grupo" width="40"/>
 		</mx:Canvas>
@@ -393,8 +393,6 @@
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
-		<mx:Image x="725" y="19" width="57" height="57" source="assets/users.png"/>
-		<mx:Image x="739" y="238" width="43" height="43" source="assets/notepad.png"/>
 		<mx:Image x="739" y="443" width="43" height="43" source="images/user.png"/>
 	</mx:Canvas>
 </mx:Canvas>

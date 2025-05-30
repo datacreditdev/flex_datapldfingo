@@ -132,7 +132,7 @@
 									txtCuenta.text = "";
 									txtChqIni.text = "";
 									txtChqFin.text = "";
-									Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+									du.mostrarMensaje("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 								}
 							});
 							params[0] = 5;
@@ -143,7 +143,7 @@
 							wsCat.getInfoRegistro.send(3, params);
 						}
 						else
-							Alert.show("No es posible cargar la información de la cuenta. Es necesario desplegar la lista de acreditados del grupo.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No es posible cargar la información de la cuenta. Es necesario desplegar la lista de acreditados del grupo.",titulo,4,null,null,global.iAlert);
 					}					
 				}	
 			}
@@ -259,13 +259,13 @@
 								if (res.substr(0,1) == "1")
 									Application.application.muestraPdf(consulta);
 								else if(res.substr(0,1) == "2"){
-									Alert.show(res.substr(2,res.length -1), titulo, 4, null, 
+									du.mostrarMensaje(res.substr(2,res.length -1), titulo, 4, null, 
 										function(e:Event):void{
 											Application.application.muestraPdf(consulta);
 										}, global.iAlert);
 								}
 								else
-									Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+									du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 							});
 							wsMS.setAccionImpCheque.send(grupo, ciclo, acred, chqAcred, fecha, global.obtenerUsuario(), cuenta);
 						}	
@@ -273,7 +273,7 @@
 							du.rCursor();
 							du.closeWs(wsMS);	
 							
-							Alert.show(resp.substr(2,resp.length -1),titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje(resp.substr(2,resp.length -1),titulo,4,null,null,global.iAlert);
 						}	
 					});
 					wsMS.getValidaRangoCheques.send(coord, cuenta, chqFin);
@@ -380,7 +380,7 @@
 					dgAcred.validateNow();
 					dgAcred.verticalScrollPosition = vScroll;
 					dgAcred.selectedIndex = ind;
-					Alert.show("Debe seleccionar al menos un registro para realizar proceso de impresión.",titulo,4,null,null,global.iAlert);	
+					du.mostrarMensaje("Debe seleccionar al menos un registro para realizar proceso de impresión.",titulo,4,null,null,global.iAlert);	
 				}
 				actualizaRangoCheque();
 				lblControl.text = calculaRegSel().toString() + " Registro(s) seleccionado(s)";
@@ -403,19 +403,19 @@
 			
 			public function valida():Boolean{
 				if(dgGrupos.selectedIndex < 0){
-					Alert.show("No se ha seleccionado ningún grupo para imprimir los cheques.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No se ha seleccionado ningún grupo para imprimir los cheques.",titulo,4,null,null,global.iAlert);
 					return false;
 				}	
 				if(acredObj.length == 0){
-					Alert.show("No han sido desplegados los acreditados del grupo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No han sido desplegados los acreditados del grupo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtCodCuenta.text == "" || txtCuenta.text == ""){
-					Alert.show("Debe seleccionar la cuenta bancaria.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar la cuenta bancaria.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtChqIni.text == "" || txtChqFin.text == ""){
-					Alert.show("No ha sido desplegado el rango de cheques.\n\nVerifique la información de la cuenta",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No ha sido desplegado el rango de cheques.\n\nVerifique la información de la cuenta",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

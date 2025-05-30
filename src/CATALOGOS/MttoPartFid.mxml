@@ -109,11 +109,11 @@
 		
 		private function validar():Boolean{
 			if (txtNombre.text == ""){
-				Alert.show("Debe capturar el Nombre/Denominación o Razón Social",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar el Nombre/Denominación o Razón Social",titulo,4,null,null,global.iAlert);
 				return false;
 			}	
 			if(cboFigura.selectedIndex == 0){
-				Alert.show("Debe seleccionar la Figura del Fideicomiso",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe seleccionar la Figura del Fideicomiso",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			return true;

@@ -190,7 +190,7 @@
 					du.closeWs(wsMS);
 					
 					if (res.substr(0,1) != "1"){
-						Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);
 						desactivaControles();
 					}
 					
@@ -208,7 +208,7 @@
 							llenaRegistros();
 						}
 						else{
-							Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
 						}
 					});
 					params[0] = cdgAcred;
@@ -237,7 +237,7 @@
 						validaFinal();
 				}
 				else{
-					Alert.show("No es posible modificar el registro del préstamo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("No es posible modificar el registro del préstamo.",titulo,4,null,null,global.iAlert);
 				}
 			}
 			
@@ -417,12 +417,12 @@
 					cerrar();
 				}	
 				else
-					Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
+					du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);		
 			}
 			
 			public function validaEntregado():Boolean{
 				if(info.situacion == "E" && info.entregado == 0){
-					Alert.show("La préstamo del acreditado fue entregado sin monto.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("La préstamo del acreditado fue entregado sin monto.\n\nVerifique la información capturada.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;	
@@ -432,7 +432,7 @@
 				if (info.guardaDatos == true)
 					guardaPrn();
 				else
-					Alert.show("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar los datos requeridos",titulo,4,null,null,global.iAlert);
 			}
 			
 			public function validaMonto(event:Event):void{	

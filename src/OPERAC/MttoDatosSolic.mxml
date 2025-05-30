@@ -199,7 +199,7 @@
 		
 		public function validar():void{
 			//if (dtfFecha.text == "" && rdbExistente.selected == true)
-			//	Alert.show("Debe seleccionar la fecha de Alta", "Alta Acreditados", 4,null,null,global.iAlert);
+			//	du.mostrarMensaje("Debe seleccionar la fecha de Alta", "Alta Acreditados", 4,null,null,global.iAlert);
 		}
 	]]>
 	</mx:Script>

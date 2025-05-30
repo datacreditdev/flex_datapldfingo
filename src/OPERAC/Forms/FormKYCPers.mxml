@@ -95,19 +95,19 @@
 			private function confirmarElimPropReal():void{
 				var titulo:String = "Propietario Real";
 				if(lstPropReal.selectedIndex < 0){
-					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					du.mostrarMensaje("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
 					return;
 				}				
-				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarPropReal,du.iQuest,4);
+				du.mostrarMensaje("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarPropReal,du.iQuest,4);
 			}
 			
 			private function confirmarElimProvRec():void{
 				var titulo:String = "Proveedor de Recursos";
 				if(lstProvRec.selectedIndex < 0){
-					Alert.show("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
+					du.mostrarMensaje("Debe seleccionar un registro.",titulo,4,null,null,du.iAlert);
 					return;
 				}				
-				Alert.show("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarProvRec,du.iQuest,4);
+				du.mostrarMensaje("¿Desea eliminar el registro seleccionado?",titulo,3,null,eliminarProvRec,du.iQuest,4);
 			}
 			
 			private function eliminarPropReal(evt:CloseEvent):void{
@@ -394,7 +394,7 @@
 			}
 			
 			private function permisos():void{
-				var perfil_id:String = Application.application.cadPerfil;
+				var perfil_id:String = global.obtenerCadPerfil();
 				var cont:int;
 			}
 		

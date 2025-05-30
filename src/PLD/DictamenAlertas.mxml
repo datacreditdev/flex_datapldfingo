@@ -77,7 +77,7 @@
 							cerrar();
 						}
 						else
-							Alert.show(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);	
+							du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);	
 					});
 					wsMS.setProcesaAlerta.send(alta, sec, tipo, codFunc, reportado, justifica, global.obtenerUsuario());
 				}
@@ -135,14 +135,14 @@
 							if(_xmlInfo.elements().length() > 0)
 								llenaRegistros();
 							else
-								Alert.show("No se encontró información del registro consultado.",titulo,4,null,null,global.iAlert);
+								du.mostrarMensaje("No se encontró información del registro consultado.",titulo,4,null,null,global.iAlert);
 						});
 						params[0] = alta;
 						params[1] = sec;
 						wsCatPLD.getInfoRegistroPLD.send(2, params);
 					}
 					else{
-						Alert.show("Error de Carga de Datos.",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("Error de Carga de Datos.",titulo,4,null,null,global.iAlert);
 					}
 				});
 				//Obtiene informacion de los tipos de Alertas de PLD
@@ -180,11 +180,11 @@
 			
 			private function valida():Boolean{
 				if(dictamen.selectedValue == null){
-					Alert.show("Debe seleccionar la determinación del dictamen.",titulo,4,null,null,global.iAlert);	
+					du.mostrarMensaje("Debe seleccionar la determinación del dictamen.",titulo,4,null,null,global.iAlert);	
 					return false;
 				}
 				if(txtJustDict.text == ""){
-					Alert.show("Debe capturar la justificación del dictamen.",titulo,4,null,null,global.iAlert);	
+					du.mostrarMensaje("Debe capturar la justificación del dictamen.",titulo,4,null,null,global.iAlert);	
 					return false;
 				}
 				return true;

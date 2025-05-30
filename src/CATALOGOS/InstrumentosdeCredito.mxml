@@ -161,11 +161,11 @@
 			}
 			
 			public function eliminarTasa():void{
-				Alert.show("¿Desea eliminar la Tasa de Interes?", "Mantenimiento de Tasa", Alert.YES|Alert.NO,null, manejadorEliminarTasa,global.iQuest);
+				du.mostrarMensaje("¿Desea eliminar la Tasa de Interes?", "Mantenimiento de Tasa", Alert.YES|Alert.NO,null, manejadorEliminarTasa,global.iQuest);
 			}
 			
 			public function eliminarInst():void{
-				Alert.show("¿Desea eliminar el Instrumento de Crédito?", "Mantenimiento de Instrumento de Crédito", Alert.YES|Alert.NO,null, manejadorEliminarInst,global.iQuest);
+				du.mostrarMensaje("¿Desea eliminar el Instrumento de Crédito?", "Mantenimiento de Instrumento de Crédito", Alert.YES|Alert.NO,null, manejadorEliminarInst,global.iQuest);
 			}
 			
 			public function iniVar():void{
@@ -246,7 +246,7 @@
 								comMttoTasa.cargaInfoTasa(codInst, instrumento, tasa, valDesde);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de Tasa","Mantenimiento de Tasa",4,null,null,global.iAlert);
+								du.mostrarMensaje("Debe seleccionar el registro de Tasa","Mantenimiento de Tasa",4,null,null,global.iAlert);
 						break;
 					}
 				}
@@ -281,15 +281,15 @@
 								PopUpManager.centerPopUp(comMttoInst);
 							}
 							else
-								Alert.show("Debe seleccionar el registro del Instrumento de Crédito","Mantenimiento de Instrumento de Crédito",4,null,null,global.iAlert); 
+								du.mostrarMensaje("Debe seleccionar el registro del Instrumento de Crédito","Mantenimiento de Instrumento de Crédito",4,null,null,global.iAlert); 
 							break;
 					}
 				}
 			}
 			
 			public function permisos():void{
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var Params:Array;
 				var cont:int;
 				
@@ -363,7 +363,7 @@
 				if (res.substr(0,1) == "1")
 					buscarListaTasa(2);
 				else
-					Alert.show(res.substr(2,res.length-1), "Mantenimiento de Tasa",4,null,null,global.iAlert);
+					du.mostrarMensaje(res.substr(2,res.length-1), "Mantenimiento de Tasa",4,null,null,global.iAlert);
 			}
 
 			private function setAccionInst(event:ResultEvent):void{
@@ -375,7 +375,7 @@
 				if (res.substr(0,1) == "1")
 					buscarInst(2);
 				else
-					Alert.show("Error en el proceso: " + res, "Mantenimiento de Instrumentos de Crédito",4,null,null,global.iAlert);
+					du.mostrarMensaje("Error en el proceso: " + res, "Mantenimiento de Instrumentos de Crédito",4,null,null,global.iAlert);
 			}
 			
 		]]>

@@ -66,7 +66,7 @@
 		
 		private function validar():Boolean{
 			if (txtNombre.text == ""){
-				Alert.show("Debe capturar el nombre del acreditante",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar el nombre del acreditante",titulo,4,null,null,global.iAlert);
 				return false;
 			}	
 			return true;

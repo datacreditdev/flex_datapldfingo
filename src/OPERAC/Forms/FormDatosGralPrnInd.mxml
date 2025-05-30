@@ -184,7 +184,7 @@
 				var fecIni:String = global.formatearFechaYYYYMMDD(dtfInicio.selectedDate);
 				var fecSol:String = global.formatearFechaYYYYMMDD(dtfSolicitud.selectedDate);
 				if (fecIni < fecAct){
-					Alert.show("La fecha de entrega debe ser igual o posterior a la fecha actual","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+					du.mostrarMensaje("La fecha de entrega debe ser igual o posterior a la fecha actual","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 					if(fecAct > fecSol)
 						dtfInicio.selectedDate = global.obtenerFechaSistema();
 					else
@@ -192,7 +192,7 @@
 				}
 				else{
 					if(fecIni < fecSol){	
-						Alert.show("La fecha de entrega debe ser igual o posterior a la fecha de solicitud","Mantenimiento de Solicitud",4,null,null,global.iAlert);
+						du.mostrarMensaje("La fecha de entrega debe ser igual o posterior a la fecha de solicitud","Mantenimiento de Solicitud",4,null,null,global.iAlert);
 						dtfInicio.selectedDate = dtfSolicitud.selectedDate;
 					}
 				}
@@ -217,12 +217,12 @@
 	<mx:Canvas id="cnvMoneda" x="508" y="29" width="200" height="71" styleName="canvasMod">
 		<mx:ComboBox id="cboMoneda" x="19" y="24" labelField="nombre"/>
 	</mx:Canvas>
-	<mx:Canvas id="cnvMonto" x="44" y="138" width="340" height="40" styleName="canvasMod">
-		<mx:FormItem id="entregado" label="Entregado:" x="173" y="6" width="156">
-			<mx:TextInput id="txtEntregado" width="80" restrict="0-9;,;." maxChars="18" focusOut="{global.formatearMonto(event)}"/>
+	<mx:Canvas id="cnvMonto" x="44" y="138" width="362" height="40" styleName="canvasMod">
+		<mx:FormItem id="entregado" label="Entregado:" x="183" y="6" width="167">
+			<mx:TextInput id="txtEntregado" width="90" restrict="0-9;,;." maxChars="18" focusOut="{global.formatearMonto(event)}"/>
 		</mx:FormItem>
-		<mx:FormItem id="autorizado" label="Autorizado:" x="10" y="6" width="157">
-			<mx:TextInput id="txtAutorizado" width="80" restrict="0-9;,;." maxChars="18" focusOut="{global.formatearMonto(event)}" editable="false"/>
+		<mx:FormItem id="autorizado" label="Autorizado:" x="10" y="6" width="160">
+			<mx:TextInput id="txtAutorizado" width="90" restrict="0-9;,;." maxChars="18" focusOut="{global.formatearMonto(event)}" editable="false"/>
 		</mx:FormItem>
 	</mx:Canvas>
 	<mx:Label x="320" y="10" text="Situación"/>

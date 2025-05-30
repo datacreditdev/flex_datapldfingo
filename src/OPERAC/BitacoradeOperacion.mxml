@@ -160,11 +160,11 @@
 						global.desbloquear();
 							
 						if(res.substr(0,1) == "1"){
-							Alert.show("Actividad registrada exitosamente.",titulo,4,null,null,global.iInfo);
+							du.mostrarMensaje("Actividad registrada exitosamente.",titulo,4,null,null,global.iInfo);
 							limpiar();			
 						}
 						else
-							Alert.show(res.substring(2,res.length - 1),titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje(res.substring(2,res.length - 1),titulo,4,null,null,global.iAlert);
 					});
 					wsMS.setAccionBitacoraOp.send(grupo, ciclo, coord, act, global.obtenerUsuario(), acred);
 				}
@@ -241,23 +241,23 @@
 			
 			public function valida():Boolean{
 				if(cboCoord.selectedIndex <= 0){	
-					Alert.show("Seleccione la sucursal para la que se realizó la actividad.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la sucursal para la que se realizó la actividad.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(cboActividad.selectedIndex <= 0){	
-					Alert.show("Seleccione la actividad realizada.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la actividad realizada.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(currentState == "grupo" && txtGrupo.text == ""){
-					Alert.show("Capture el código del grupo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el código del grupo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(currentState == "grupo" && txtCiclo.text == ""){
-					Alert.show("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(currentState == "acred" && txtAcred.text == ""){
-					Alert.show("Capture el código del acreditado.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el código del acreditado.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

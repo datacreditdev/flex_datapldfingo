@@ -87,7 +87,7 @@
 							exportarXls();
 						}
 						else{
-							Alert.show("No se pudo generar la póliza requerida.",titulo,4,null,null,global.iAlert);	
+							du.mostrarMensaje("No se pudo generar la póliza requerida.",titulo,4,null,null,global.iAlert);	
 						}
 					});
 					wsMS.getPolizaDesembolsosMensual.send(fecha, "1", global.obtenerUsuario()); 
@@ -117,11 +117,11 @@
 				
 			private function validar():Boolean{
 				if(cboMes.selectedIndex == 0){
-					Alert.show("Seleccione el mes de la póliza.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione el mes de la póliza.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(cboAnio.selectedIndex == 0){
-					Alert.show("Seleccione el año de la póliza.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione el año de la póliza.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

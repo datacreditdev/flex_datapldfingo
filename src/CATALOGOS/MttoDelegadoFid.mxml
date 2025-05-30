@@ -74,19 +74,19 @@
 		
 		private function validar():Boolean{
 			if (txtNomDF.text == ""){
-				Alert.show("Debe capturar el nombre del delegado",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar el nombre del delegado",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(txtCargoDF.text == ""){
-				Alert.show("Debe capturar el cargo del delegado",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar el cargo del delegado",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(txtTelDF.text == ""){
-				Alert.show("Debe capturar el teléfono del delegado",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar el teléfono del delegado",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			if(txtEmailDF.text == ""){
-				Alert.show("Debe capturar el email del delegado",titulo,4,null,null,global.iAlert);
+				du.mostrarMensaje("Debe capturar el email del delegado",titulo,4,null,null,global.iAlert);
 				return false;
 			}
 			return true;

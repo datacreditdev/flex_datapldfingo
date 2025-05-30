@@ -55,7 +55,7 @@
 					Application.application.muestraPdf(consulta);
 				}
 				else
-					Alert.show("No es posible generar el documento del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);	
+					du.mostrarMensaje("No es posible generar el documento del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);	
 			}			
 						
 			public function init(rep:String, titulo:String):void{
@@ -82,7 +82,7 @@
 				
 			public function valida():Boolean{
 				if(txtAcred.text == ""){
-					Alert.show("Capture el código de Acreditado.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el código de Acreditado.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

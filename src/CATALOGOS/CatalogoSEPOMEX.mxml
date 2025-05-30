@@ -248,7 +248,7 @@
 			}
 
 			public function eliminarColonia():void{
-				Alert.show("¿Desea eliminar la colonia seleccionada?", "Mantenimiento de Colonias", Alert.YES|Alert.NO,null, manejadorEliminarCol,global.iQuest);
+				du.mostrarMensaje("¿Desea eliminar la colonia seleccionada?", "Mantenimiento de Colonias", Alert.YES|Alert.NO,null, manejadorEliminarCol,global.iQuest);
 			}
 			
 			public function formateaEntFed():void{
@@ -371,7 +371,7 @@
 						if (res.substr(0,1) == "1")
 							buscarListaCol(1);
 						else
-							Alert.show(res.substr(2,res.length-1), "Mantenimiento de Colonias",4,null,null,global.iAlert);
+							du.mostrarMensaje(res.substr(2,res.length-1), "Mantenimiento de Colonias",4,null,null,global.iAlert);
 					});
 					wsMS.setAccionCol.send(3, cdgEntFed, cdgMunic, cdgLoc, cdgCol);
 				} 
@@ -409,7 +409,7 @@
 								PopUpManager.centerPopUp(comMttoLoc);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de la Localidad","Mantenimiento de Localidades",4,null,null,global.iAlert); 
+								du.mostrarMensaje("Debe seleccionar el registro de la Localidad","Mantenimiento de Localidades",4,null,null,global.iAlert); 
 							break;
 					}
 				}
@@ -455,7 +455,7 @@
 								PopUpManager.centerPopUp(comMttoCol);
 							}
 							else
-								Alert.show("Debe seleccionar el registro de la Colonia","Mantenimiento de Colonias",4,null,null,global.iAlert); 
+								du.mostrarMensaje("Debe seleccionar el registro de la Colonia","Mantenimiento de Colonias",4,null,null,global.iAlert); 
 							break;
 					}
 				}
@@ -463,8 +463,8 @@
 			
 			public function permisos():void{
 				var ws:WebService = new WebService;
-				var mod_id:String = Application.application._Current_Mod_Id;
-				var perfil_id:String = Application.application.cadPerfil;
+				var mod_id:String = global.obtenerModulo();
+				var perfil_id:String = global.obtenerCadPerfil();
 				var Params:Array;
 				var cont:int;
 				

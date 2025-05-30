@@ -112,7 +112,7 @@
 							txtAcred.text = _xmlAcred.Table[0].NOMBRE_CL;							
 						}
 						else{
-							Alert.show("Código de cliente incorrecto.\n\nVerifique el dato capturado.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("Código de cliente incorrecto.\n\nVerifique el dato capturado.",titulo,4,null,null,global.iAlert);
 							txtAcred.text = "";
 						}					
 					});
@@ -123,7 +123,7 @@
 					wsCat.getInfoAcred.send(3, params);
 				}
 				else{
-					Alert.show("Capture el código de acreditado.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Capture el código de acreditado.",titulo,4,null,null,global.iAlert);
 					txtAcred.text = "";
 				}
 			}
@@ -152,7 +152,7 @@
 						}
 						else{
 							txtCuenta.text = "";
-							Alert.show("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No se ha encontrado información de la cuenta.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 						}
 					});
 					params[0] = 4;
@@ -213,7 +213,7 @@
 									txtAcred.text = _xmlMesa.Table[0].NOMTESO;
 								}
 								else
-									Alert.show("No se encontró el registro del tesorero del grupo.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+									du.mostrarMensaje("No se encontró el registro del tesorero del grupo.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 								
 								du.initWsCat(wsCat);
 								
@@ -241,7 +241,7 @@
 							global.desbloquear();
 							txtGrupo.text = "";
 							lblInfoGL.text = "";
-							Alert.show("No se ha encontrado información del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No se ha encontrado información del grupo.\n\nVerifique los datos capturados.",titulo,4,null,null,global.iAlert);
 						}
 					});
 					params[0] = txtCodGrupo.text;
@@ -311,7 +311,7 @@
 									Application.application.muestraPdf(consulta);
 								}
 								else{
-									Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+									du.mostrarMensaje(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
 								}
 							});
 							//Se sustituyo la variable ciclo por la secuencia de pago para hacer mas precisa
@@ -320,7 +320,7 @@
 													 codAcred, acred, global.obtenerUsuario());
 						}
 						else{
-							Alert.show(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje(res.substr(2,res.length-1),titulo,4,null,null,global.iAlert);
 							du.rCursor();
 							du.closeWs(wsMS);
 						}
@@ -392,7 +392,7 @@
 						cboDevolucion.dataProvider = movsObj;
 					}
 					else{
-						Alert.show("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
+						du.mostrarMensaje("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
 					}
 				});
 				wsCat.getCatalogoGral.send();*/
@@ -433,23 +433,23 @@
 			
 			public function valida():Boolean{
 				if(txtCodGrupo.text == "" || txtGrupo.text == ""){
-					Alert.show("Debe capturar la información del grupo.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar la información del grupo.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				/*if(cboDevolucion.selectedIndex == 0){
-					Alert.show("Debe seleccionar la causa de devolución.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar la causa de devolución.",titulo,4,null,null,global.iAlert);
 					return false;
 				}*/
 				if(txtMonto.text == "" || Number(txtMonto.text) <= 0){
-					Alert.show("Debe capturar el monto de la devolución.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar el monto de la devolución.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtCuenta.text == ""){
-					Alert.show("Debe seleccionar la Cuenta Bancaria.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe seleccionar la Cuenta Bancaria.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(txtCheque.text == ""){
-					Alert.show("Debe capturar el número de cheque.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Debe capturar el número de cheque.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

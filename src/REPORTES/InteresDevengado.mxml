@@ -122,7 +122,7 @@
 							fecFin = dtfFechaFinal.text;
 						}
 						else{
-							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 							if(currentState == null)
 								dgReporte.dataProvider = null;
 							else if(currentState == "liquidacion")
@@ -174,11 +174,11 @@
 				
 			private function valida():Boolean{
 				if(dtfFecha.text == ""){
-					Alert.show("Seleccione la fecha inicial del reporte.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la fecha inicial del reporte.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				if(dtfFechaFinal.text == ""){
-					Alert.show("Seleccione la fecha final del reporte.",titulo,4,null,null,global.iAlert);
+					du.mostrarMensaje("Seleccione la fecha final del reporte.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;

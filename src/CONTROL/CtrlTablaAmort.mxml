@@ -25,8 +25,8 @@
 			
 			private var pagos:ArrayCollection;
 
-			private var global:Globales;
 			private var du:Utils;
+			private var global:Globales;
 			private var titulo:String;
 			private var codigo:String;
 			private var nombre:String;

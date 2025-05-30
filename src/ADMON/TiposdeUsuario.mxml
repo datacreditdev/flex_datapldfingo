@@ -18,7 +18,7 @@
     width="300" mouseEnabled="false" verticalScrollPolicy="auto" x="10" y="295"/>
 	<mx:Script>
 		<![CDATA[
-		
+		import Data.Globales;
 		import Data.Utils;
 		import mx.controls.Alert;
 		import mx.core.Application;
@@ -34,6 +34,7 @@
 		private var dpAsignados:XML = new XML();
 		
 		private var du:Utils;
+		private var global:Globales;
 		private var indPerfil:int;
 		private var ws:WebService;
 		private var vScroll:Number;
@@ -51,8 +52,8 @@
 				ws = du.closeWs(ws);	
 				CargarPerfiles();									
 			});
-			Params[0] = Application.application.PERFIL_ID;
-			Params[1] = Application.application._Current_Mod_Id; 
+			Params[0] = global.obtenerArrayPerfil();
+			Params[1] = global.obtenerModulo(); 
 			ws.ESLoginMethods.send(6,Params);
 		}
 		
@@ -133,6 +134,7 @@
 		
 		private function init():void{
 			du = new Utils();
+			global = new Globales();
 			ws = new WebService();
 			CargarPerfiles();
 			//ActivarAcciones();
@@ -155,9 +157,9 @@
 		
 		private function ConfirmarBorrar():void{
 			if(dgPerfil.selectedIndex >= 0)
-				Alert.show("¿Desea realmente eliminar el perfil seleccionado?","Eliminar perfil",3,null,BorrarPerfil,du.iQuest,4);
+				du.mostrarMensaje("¿Desea realmente eliminar el perfil seleccionado?","Eliminar perfil",3,null,BorrarPerfil,du.iQuest,4);
 			else
-				Alert.show("Debe seleccionar un perfil","Eliminar perfil",4,null,null,du.iAlert,4);
+				du.mostrarMensaje("Debe seleccionar un perfil","Eliminar perfil",4,null,null,du.iAlert,4);
 		}
 		
 		private function BorrarPerfil(evt:CloseEvent):void{
@@ -173,7 +175,7 @@
 					var res:String = evt2.result.toString();
 					
 					if(res.substr(0,1) != '1')
-						Alert.show(res.substr(0,res.length),"Eliminar perfil",4,null,null,du.iAlert,4);
+						du.mostrarMensaje(res.substr(0,res.length),"Eliminar perfil",4,null,null,du.iAlert,4);
 						
 					du.rCursor();
 					du.closeWs(wsAdmin);
@@ -201,7 +203,7 @@
 		}
 		
 		private function Confirmar_Quitar():void{
-			Alert.show("¿Confirma eliminar privilegios del perfil seleccionado?","Quitar privilegios de perfil",3,null,QuitarPrivilegios,du.iQuest,4);
+			du.mostrarMensaje("¿Confirma eliminar privilegios del perfil seleccionado?","Quitar privilegios de perfil",3,null,QuitarPrivilegios,du.iQuest,4);
 		}
 		
 		private function QuitarPrivilegios(evt:CloseEvent):void{

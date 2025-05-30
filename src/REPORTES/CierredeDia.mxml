@@ -27,9 +27,9 @@
 			private var _xmlRep:XML =  new XML();
 			
 			public var wsRep:WebService;
-			public var du:Utils;
 			public var titulo:String;
 			public var fecha:String;
+			private var du:Utils;
 			private var global:Globales;
 						
 			private function exportar():void{
@@ -62,7 +62,7 @@
 							lblTotal.text = cont.toString() + " Registro(s)"; 
 						}
 						else{
-							Alert.show("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
+							du.mostrarMensaje("No se encontraron registros que coincidan con los criterios de consulta.\n\nVerifique los datos seleccionados.",titulo,4,null,null,global.iAlert);
 							lblTotal.text = "";
 						}
 					});
