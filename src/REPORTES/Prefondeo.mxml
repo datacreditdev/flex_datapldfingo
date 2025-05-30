@@ -21,17 +21,23 @@
 			import mx.rpc.soap.WebService;
 			import mx.utils.ObjectUtil;
 			
-			private var _xmlRep:XML =  new XML();
+			private var _xmlRep:XML = new XML();
 			
 			public var wsRep:WebService;
-			public var du:Utils;
 			public var fecIni:String;
 			public var titulo:String;
+			private var du:Utils;
 			private var global:Globales;
 		
 			private function exportar():void{
 				var dgE:ExcelExportXls = new ExcelExportXls(); 
 				dgE.loadDGInExcel(dgReporte,null,titulo + " del " + fecIni);		
+			}
+			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
 			}
 		
 			public function generar():void{
@@ -126,8 +132,8 @@
 			<mx:DataGridColumn headerText="BANCO" dataField="BANCO" width="100"/>
 			<mx:DataGridColumn headerText="DESEMBOLSO" dataField="DESEMBOLSO" width="110"/>
 			<mx:DataGridColumn headerText="SITUACION" dataField="SITUA" width="100"/>
-			<mx:DataGridColumn headerText="CANT SOLICITADA" dataField="CANTSOLIC" width="120"/>
-			<mx:DataGridColumn headerText="CANT AUTORIZADA" dataField="CANTAUTORDESC" width="125"/>			
+			<mx:DataGridColumn headerText="CANT SOLICITADA" dataField="CANTSOLIC" width="120" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="CANT AUTORIZADA" dataField="CANTAUTORDESC" width="125" labelFunction="formatearMontoGrid"/>			
 			<!--<mx:DataGridColumn headerText="SUCURSAL" dataField="CDGCO" width="100"/>-->
 			<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="COORD" width="150"/>
 		</mx:columns>

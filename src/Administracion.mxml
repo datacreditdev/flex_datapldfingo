@@ -300,7 +300,8 @@
 					desbloquear();
 					du.mostrarMensaje("Usuario y/o contraseña incorrectos.", tituloAcceso, 4, null, null, global.iAlert);
 					return;													
-				}else{							
+				}
+				else{							
 					try{							
 						usrInfo =  new XML(event.result.toString());	
 						var rSplit:Array = event.result.toString().split('|');

@@ -39,12 +39,10 @@
 				dgE.loadDGInExcel(dgReporte,null,titulo);		
 			}		
 			
-			public function initApp():void{
-				global = new Globales();
-				du = new Utils();
-				titulo = "Reporte de Préstamos";
-				comFiltroRepPrestamos.init("-1", titulo, "");
-				comFiltroRepPrestamos.addEventListener("enviar",generar);	
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
 			}
 					
 			public function generar(event:Event):void{
@@ -77,6 +75,14 @@
 				}
 			}
 			
+			public function initApp():void{
+				global = new Globales();
+				du = new Utils();
+				titulo = "Reporte de Préstamos";
+				comFiltroRepPrestamos.init("-1", titulo, "");
+				comFiltroRepPrestamos.addEventListener("enviar",generar);	
+			}
+			
 			public function initConexion():void{				
 				wsRep = new WebService();			
 				wsRep.wsdl = Application.application.wsStr.wsdlRep.toString();
@@ -96,19 +102,19 @@
 				<mx:DataGridColumn headerText="TASA" dataField="TASA"/>
 				<mx:DataGridColumn headerText="MONEDA" dataField="MONEDA"/>
 				<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION"/>
-				<mx:DataGridColumn headerText="CANT AUTORIZADA" dataField="CANT_AUTOR"/>
-				<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANT_ENTRE"/>
-				<mx:DataGridColumn headerText="CANT A PAGAR" dataField="CANT_TOTAL"/>
-				<mx:DataGridColumn headerText="PAGOS COMPROMETIDOS" dataField="PAGOS_COMP"/>
-				<mx:DataGridColumn headerText="CARGOS" dataField="CARGOS"/>
-				<mx:DataGridColumn headerText="ABONOS" dataField="ABONOS"/>
-				<mx:DataGridColumn headerText="PAGADO CAPITAL" dataField="PAGADO_CAPITAL"/>
-				<mx:DataGridColumn headerText="PAGADO INTERES" dataField="PAGADO_INTERES"/>
-				<mx:DataGridColumn headerText="PAGADO RECARGOS" dataField="PAGADO_RECARGOS"/>
-				<mx:DataGridColumn headerText="SALDO CAPITAL" dataField="SDO_CAPITAL"/>
+				<mx:DataGridColumn headerText="CANT AUTORIZADA" dataField="CANT_AUTOR" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANT_ENTRE" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="CANT A PAGAR" dataField="CANT_TOTAL" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="PAGOS COMPROMETIDOS" dataField="PAGOS_COMP" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="CARGOS" dataField="CARGOS" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="ABONOS" dataField="ABONOS" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="PAGADO CAPITAL" dataField="PAGADO_CAPITAL" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="PAGADO INTERES" dataField="PAGADO_INTERES" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="PAGADO RECARGOS" dataField="PAGADO_RECARGOS" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="SALDO CAPITAL" dataField="SDO_CAPITAL" labelFunction="formatearMontoGrid"/>
 				<mx:DataGridColumn headerText="ULTIMO PAGO" dataField="FEC_ULT_PAGO"/>
-				<mx:DataGridColumn headerText="CANT ULTIMO PAGO" dataField="ULT_PAGO"/>
-				<mx:DataGridColumn headerText="SALDO TOTAL" dataField="SDO_TOTAL"/>
+				<mx:DataGridColumn headerText="CANT ULTIMO PAGO" dataField="ULT_PAGO" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="SALDO TOTAL" dataField="SDO_TOTAL" labelFunction="formatearMontoGrid"/>
 				<mx:DataGridColumn headerText="COD ASESOR" dataField="COD_ASESOR"/>
 				<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="ASESOR"/>
 				<mx:DataGridColumn headerText="COD REGION" dataField="COD_REGION"/>
@@ -121,12 +127,12 @@
 				<mx:DataGridColumn headerText="HOMBRES CON PRESTAMO" dataField="HOMBRES"/>
 				<mx:DataGridColumn headerText="REFERENCIA" dataField="REFERENCIA"/>
 				<mx:DataGridColumn headerText="REFERENCIA GL" dataField="REFERENCIAGL"/>
-				<mx:DataGridColumn headerText="SALDO GL" dataField="SDO_GL"/>
-				<mx:DataGridColumn headerText="MORA TOTAL" dataField="MORA_TOTAL"/>
-				<mx:DataGridColumn headerText="MORA CAPITAL" dataField="MORA_CAPITAL"/>
-				<mx:DataGridColumn headerText="MORA INTERES" dataField="MORA_INTERES"/>
+				<mx:DataGridColumn headerText="SALDO GL" dataField="SDO_GL" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="MORA TOTAL" dataField="MORA_TOTAL" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="MORA CAPITAL" dataField="MORA_CAPITAL" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="MORA INTERES" dataField="MORA_INTERES" labelFunction="formatearMontoGrid"/>
 				<mx:DataGridColumn headerText="DIAS MORA" dataField="DIAS_MORA"/>
-				<mx:DataGridColumn headerText="RECARGOS" dataField="RECARGOS"/>	
+				<mx:DataGridColumn headerText="RECARGOS" dataField="RECARGOS" labelFunction="formatearMontoGrid"/>	
 				<mx:DataGridColumn headerText="TIPO PRODUCTO" dataField="NOMTPC"/>
 				<mx:DataGridColumn headerText="PRODUCTO CREDITO" dataField="NOMPCR"/>		
 			</mx:columns>

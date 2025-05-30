@@ -19,18 +19,24 @@
 			import mx.rpc.events.FaultEvent;
 			import mx.utils.ObjectUtil;
 			
-			private var _xmlRep:XML =  new XML();
+			private var _xmlRep:XML = new XML();
 			
 			public var wsRep:WebService;
-			public var du:Utils;
 			public var fecIni:String;
 			public var fecFin:String;
 			public var titulo:String;
+			private var du:Utils;
 			private var global:Globales;
 		
 			private function exportar():void{
 				var dgE:ExcelExportXls = new ExcelExportXls(); 
 				dgE.loadDGInExcel(dgReporte,null,titulo + " del " + fecIni + " al " + fecFin);		
+			}
+			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
 			}
 		
 			public function generar():void{
@@ -138,7 +144,7 @@
 			<mx:columns>
 				<mx:DataGridColumn headerText="FECHA" dataField="FECHA" width="90"/>
 				<mx:DataGridColumn headerText="REFERENCIA" dataField="REFERENCIA"/>
-				<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="70"/>
+				<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="70" labelFunction="formatearMontoGrid"/>
 				<mx:DataGridColumn headerText="BANCO" dataField="BANCO"/>
 				<mx:DataGridColumn headerText="COD CUENTA" dataField="CDGCB" width="90"/>
 				<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA" width="80"/>

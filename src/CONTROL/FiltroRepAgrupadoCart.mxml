@@ -193,6 +193,12 @@
 				tipoProdObj = new ArrayCollection(item);			
 			}
 			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
+			}
+			
 			public function generar():void{
 				if (valida()){	
 					if (rep == "-1")
@@ -360,18 +366,18 @@
 			<mx:DataGridColumn headerText="INICIO" dataField="INICIO"/>
 			<mx:DataGridColumn headerText="FIN" dataField="FEC_FIN"/>
 			<mx:DataGridColumn headerText="TASA" dataField="TASA"/>
-			<mx:DataGridColumn headerText="CANT_ENTREGADA" dataField="CANT_ENTRE"/>
-			<mx:DataGridColumn headerText="INTERES" dataField="TOTAL_PAGAR"/>
-			<mx:DataGridColumn headerText="SALDO_CAPITAL" dataField="SALDO_CAP"/>
-			<mx:DataGridColumn headerText="SALDO_TOTAL" dataField="SALDO_TOTAL"/>
-			<mx:DataGridColumn headerText="PARCIALIDAD" dataField="PARCIALIDAD"/>
+			<mx:DataGridColumn headerText="CANT_ENTREGADA" dataField="CANT_ENTRE" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="INTERES" dataField="TOTAL_PAGAR" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="SALDO_CAPITAL" dataField="SALDO_CAP" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="SALDO_TOTAL" dataField="SALDO_TOTAL" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="PARCIALIDAD" dataField="PARCIALIDAD" labelFunction="formatearMontoGrid"/>
 			<mx:DataGridColumn headerText="PERIODOS" dataField="PERIO_TRANS"/>
 			<mx:DataGridColumn headerText="FEC_ULT_PAGO" dataField="FEC_ULT_PAGO"/>
-			<mx:DataGridColumn headerText="MONTO_ULT_PAGO" dataField="MONTO_ULT_PAGO"/>
-			<mx:DataGridColumn headerText="MORA_CAPITAL" dataField="MORA_CAP"/>
-			<mx:DataGridColumn headerText="MORA_TOTAL" dataField="MORA_TOTAL"/>
+			<mx:DataGridColumn headerText="MONTO_ULT_PAGO" dataField="MONTO_ULT_PAGO" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="MORA_CAPITAL" dataField="MORA_CAP" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="MORA_TOTAL" dataField="MORA_TOTAL" labelFunction="formatearMontoGrid"/>
 			<mx:DataGridColumn headerText="DIAS_MORA" dataField="DIAS_MORA"/>
-			<mx:DataGridColumn headerText="SALDO_GARANTIA" dataField="SALDO_GL"/>
+			<mx:DataGridColumn headerText="SALDO_GARANTIA" dataField="SALDO_GL" labelFunction="formatearMontoGrid"/>
 			<mx:DataGridColumn headerText="INTEGRANTES" dataField="NUM_INTEG"/>
 			<mx:DataGridColumn headerText="TIPO CARTERA" dataField="TIPO_CART"/>
 			<mx:DataGridColumn headerText="CODIGO DESPACHO" dataField="CODIGO_DESPACHO"/>
@@ -393,17 +399,17 @@
 			<mx:DataGridColumn headerText="NOMBRE_GRUPO" dataField="GRUPO"/>
 			<mx:DataGridColumn headerText="CICLO" dataField="CICLO"/>
 			<mx:DataGridColumn headerText="INICIO" dataField="INICIO"/>
-			<mx:DataGridColumn headerText="SALDO_TOTAL" dataField="SALDO_TOTAL"/>
-			<mx:DataGridColumn headerText="MORA_TOTAL" dataField="MORA_TOTAL"/>
-			<mx:DataGridColumn headerText="7" dataField="MORA_7"/>
-			<mx:DataGridColumn headerText="15" dataField="MORA_15"/>
-			<mx:DataGridColumn headerText="30" dataField="MORA_30"/>
-			<mx:DataGridColumn headerText="60" dataField="MORA_60"/>
-			<mx:DataGridColumn headerText="90" dataField="MORA_90"/>
-			<mx:DataGridColumn headerText="120" dataField="MORA_120"/>
-			<mx:DataGridColumn headerText=">120" dataField="MORA_SUP_120"/>
-			<mx:DataGridColumn headerText="MORATORIOS" dataField="MORATORIOS"/>
-			<mx:DataGridColumn headerText="SALDO_GARANTIA" dataField="SALDO_GL"/>
+			<mx:DataGridColumn headerText="SALDO_TOTAL" dataField="SALDO_TOTAL" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="MORA_TOTAL" dataField="MORA_TOTAL" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="7" dataField="MORA_7" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="15" dataField="MORA_15" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="30" dataField="MORA_30" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="60" dataField="MORA_60" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="90" dataField="MORA_90" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="120" dataField="MORA_120" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText=">120" dataField="MORA_SUP_120" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="MORATORIOS" dataField="MORATORIOS" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="SALDO_GARANTIA" dataField="SALDO_GL" labelFunction="formatearMontoGrid"/>
 		</mx:columns>
 	</mx:DataGrid>
 	<mx:Label x="299" y="213" text="Tipo de Producto" id="lblProducto"/>

@@ -36,6 +36,12 @@
 				var dgE:ExcelExportXls = new ExcelExportXls();
 				dgE.loadDGInExcel(dgReporte, null, titulo + " del " + fecha);		
 			}			
+			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
+			}
 						
 			public function generar(event:Event):void{
 				if(comFiltroFecha.valida()){
@@ -97,16 +103,16 @@
 	<Data:RowColorDataGrid id="dgReporte" sortableColumns="true" x="18.45" y="155" width="740.05" 
 		visible="true" height="186" horizontalScrollPolicy="auto" verticalScrollPolicy="auto">
 		<Data:columns>
-			<mx:DataGridColumn headerText="CODIGO" dataField="CDGCLNS" width="100"/>
+			<mx:DataGridColumn headerText="CODIGO" dataField="CDGCLNS" width="80"/>
 			<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="180"/>
 			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="60"/>
-			<mx:DataGridColumn headerText="SALDO CAPITAL" dataField="SDO_CAPITAL" width="110"/>
-			<mx:DataGridColumn headerText="SALDO INTERES" dataField="SDO_INTERES" width="110"/>
-			<mx:DataGridColumn headerText="SALDO RECARGOS" dataField="SDO_RECARGOS" width="120"/>
-			<mx:DataGridColumn headerText="SALDO TOTAL" dataField="SDO_TOTAL" width="110"/>
-			<mx:DataGridColumn headerText="MORA CAPITAL" dataField="MORA_CAPITAL" width="110"/>
-			<mx:DataGridColumn headerText="MORA INTERES" dataField="MORA_INTERES" width="110"/>
-			<mx:DataGridColumn headerText="MORA TOTAL" dataField="MORA_TOTAL" width="100"/>
+			<mx:DataGridColumn headerText="SALDO CAPITAL" dataField="SDO_CAPITAL" width="110" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="SALDO INTERES" dataField="SDO_INTERES" width="110" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="SALDO RECARGOS" dataField="SDO_RECARGOS" width="120" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="SALDO TOTAL" dataField="SDO_TOTAL" width="110" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="MORA CAPITAL" dataField="MORA_CAPITAL" width="110" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="MORA INTERES" dataField="MORA_INTERES" width="110" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="MORA TOTAL" dataField="MORA_TOTAL" width="100" labelFunction="formatearMontoGrid"/>
 			<mx:DataGridColumn headerText="DIAS MORA" dataField="DIAS_MORA" width="80"/>
 			<mx:DataGridColumn headerText="% MORA" dataField="PORCENT_MORA" width="80"/>
 			<mx:DataGridColumn headerText="NUM CLIENTES" dataField="NO_CLIENTES" width="100"/>
@@ -115,24 +121,24 @@
 			<mx:DataGridColumn headerText="NOMBRE SUCURSAL" dataField="NOM_SUCURSAL" width="150"/>
 			<mx:DataGridColumn headerText="ASESOR" dataField="COD_ASESOR" width="80"/>
 			<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="NOM_ASESOR" width="180"/>
-			<mx:DataGridColumn headerText="PAGOS COMPROMETIDOS" dataField="PAGOS_COMP" width="170"/>
-			<mx:DataGridColumn headerText="PAGOS REALIZADOS" dataField="PAGOS_REAL" width="140"/>
+			<mx:DataGridColumn headerText="PAGOS COMPROMETIDOS" dataField="PAGOS_COMP" width="170" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="PAGOS REALIZADOS" dataField="PAGOS_REAL" width="140" labelFunction="formatearMontoGrid"/>
 			<mx:DataGridColumn headerText="TIPO CARTERA" dataField="TIPO_CARTERA" width="100"/>
 			<mx:DataGridColumn headerText="FECHA LIQUIDACION" dataField="FFECHA_LIQUIDA" width="130"/>
 			<mx:DataGridColumn headerText="NUM NOMINA" dataField="NO_NOMINA" width="110"/>
-			<mx:DataGridColumn headerText="REGION" dataField="REGION" width="80"/>
+			<mx:DataGridColumn headerText="REGION" dataField="REGION" width="120"/>
 			<mx:DataGridColumn headerText="INICIO" dataField="FINICIO" width="70"/>
 			<mx:DataGridColumn headerText="FIN" dataField="FFIN" width="70"/>
 			<mx:DataGridColumn headerText="PLAZO" dataField="PLAZO" width="70"/>
 			<mx:DataGridColumn headerText="TASA" dataField="TASA" width="60"/>
-			<mx:DataGridColumn headerText="INTERES GLOBAL" dataField="INTERES_GLOBAL" width="110"/>
-			<mx:DataGridColumn headerText="MONTO COUTA" dataField="MONTO_CUOTA" width="100"/>
-			<mx:DataGridColumn headerText="TOTAL A PAGAR" dataField="TOTAL_PAGAR" width="120"/>
-			<mx:DataGridColumn headerText="CAPITAL PAGADO" dataField="CAPITAL_PAGADO" width="120"/>
-			<mx:DataGridColumn headerText="INTERES PAGADO" dataField="INTERES_PAGADO" width="120"/>
+			<mx:DataGridColumn headerText="INTERES GLOBAL" dataField="INTERES_GLOBAL" width="110" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="MONTO COUTA" dataField="MONTO_CUOTA" width="100" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="TOTAL A PAGAR" dataField="TOTAL_PAGAR" width="120" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="CAPITAL PAGADO" dataField="CAPITAL_PAGADO" width="120" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="INTERES PAGADO" dataField="INTERES_PAGADO" width="120" labelFunction="formatearMontoGrid"/>
 			<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION" width="100"/>
-			<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="MONTO_ENTREGADO" width="130"/>
-			<mx:DataGridColumn headerText="SALDO GARANTIA" dataField="SALDO_GL" width="120"/>
+			<mx:DataGridColumn headerText="MONTO ENTREGADO" dataField="MONTO_ENTREGADO" width="130" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="SALDO GARANTIA" dataField="SALDO_GL" width="120" labelFunction="formatearMontoGrid"/>
 		</Data:columns>
 	</Data:RowColorDataGrid>
 	<mx:Button id="btnExportar" x="655.5" y="123" label="Exportar Excel" click="exportar()" enabled="false"/>

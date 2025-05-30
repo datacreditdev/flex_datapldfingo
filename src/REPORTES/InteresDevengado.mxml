@@ -11,19 +11,19 @@
 						<mx:DataGridColumn headerText="NOMBRE" dataField="NOMBRE" width="150"/>
 						<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="60"/>
 						<mx:DataGridColumn headerText="INICIO" dataField="FINICIO" width="80"/>
-						<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANTIDAD_ENTREGADA" width="120"/>
-						<mx:DataGridColumn headerText="TOTAL" dataField="TOTAL_A_PAGAR" width="80"/>
-						<mx:DataGridColumn headerText="DEVENGO ACUMULADO" dataField="DEV_ACUMULADO" width="150"/>
-						<mx:DataGridColumn headerText="DEVENGO ACUMULADO SIN IVA" dataField="DEV_ACUMULADO_SIN_IVA" width="190"/>
-						<mx:DataGridColumn headerText="IVA INTERES ACUMULADO" dataField="IVA_INT_ACUMULADO" width="160"/>
+						<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANTIDAD_ENTREGADA" width="120" labelFunction="formatearMontoGrid"/>
+						<mx:DataGridColumn headerText="TOTAL" dataField="TOTAL_A_PAGAR" width="140" labelFunction="formatearMontoGrid"/>
+						<mx:DataGridColumn headerText="DEVENGO ACUMULADO" dataField="DEV_ACUMULADO" width="150" labelFunction="formatearMontoGrid"/>
+						<mx:DataGridColumn headerText="DEVENGO ACUMULADO SIN IVA" dataField="DEV_ACUMULADO_SIN_IVA" width="190" labelFunction="formatearMontoGrid"/>
+						<mx:DataGridColumn headerText="IVA INTERES ACUMULADO" dataField="IVA_INT_ACUMULADO" width="160" labelFunction="formatearMontoGrid"/>
 						<mx:DataGridColumn headerText="PORCENTAJE IVA" dataField="IVA" width="110"/>
 						<mx:DataGridColumn headerText="DIAS DEVENGADOS" dataField="DIAS_DEV" width="120"/>
-						<mx:DataGridColumn headerText="INTERES PAGADO ACUMULADO" dataField="INT_PAGADO_ACUM" width="190"/>
+						<mx:DataGridColumn headerText="INTERES PAGADO ACUMULADO" dataField="INT_PAGADO_ACUM" width="190" labelFunction="formatearMontoGrid"/>
 						<mx:DataGridColumn headerText="FIN REAL" dataField="FFIN_REAL" width="80"/>
 						<mx:DataGridColumn headerText="FIN TEORICO" dataField="FIN_TEO" width="90"/>
-						<mx:DataGridColumn headerText="INTERES NO DEVENGADO PAGADO" dataField="INT_NO_DEV_PAG_ANT" width="220"/>
-						<mx:DataGridColumn headerText="INTERES NO DEVENGADO_SIN_IVA" dataField="INT_NO_DEV_SIN_IVA" width="220"/>
-						<mx:DataGridColumn headerText="IVA INTERES NO DEVENGADO" dataField="IVA_INT_NO_DEV" width="180"/>
+						<mx:DataGridColumn headerText="INTERES NO DEVENGADO PAGADO" dataField="INT_NO_DEV_PAG_ANT" width="220" labelFunction="formatearMontoGrid"/>
+						<mx:DataGridColumn headerText="INTERES NO DEVENGADO_SIN_IVA" dataField="INT_NO_DEV_SIN_IVA" width="220" labelFunction="formatearMontoGrid"/>
+						<mx:DataGridColumn headerText="IVA INTERES NO DEVENGADO" dataField="IVA_INT_NO_DEV" width="180" labelFunction="formatearMontoGrid"/>
 						<mx:DataGridColumn headerText="ASESOR" dataField="COD_ASESOR" width="80"/>
 						<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="NOM_ASESOR" width="180"/>
 					</mx:columns>
@@ -51,13 +51,13 @@
 			import mx.rpc.events.FaultEvent;
 			import mx.utils.ObjectUtil;
 			
-			private var _xmlRep:XML =  new XML();
+			private var _xmlRep:XML = new XML();
 			
 			public var wsRep:WebService;
-			public var du:Utils;
 			public var fecIni:String;
 			public var fecFin:String;
 			public var titulo:String;
+			private var du:Utils;
 			private var global:Globales;
 		
 			private function exportar():void{
@@ -66,6 +66,12 @@
 					dgE.loadDGInExcel(dgReporte,null,titulo + " del " + fecIni + " al " + fecFin);
 				else if(currentState == "liquidacion")
 					dgE.loadDGInExcel(dgRepLiq,null,titulo + " del " + fecIni + " al " + fecFin);	
+			}
+			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
 			}
 		
 			public function generar():void{
@@ -214,11 +220,11 @@
 				<mx:DataGridColumn headerText="ASESOR" dataField="COD_ASESOR" width="80"/>
 				<mx:DataGridColumn headerText="NOMBRE ASESOR" dataField="ASESOR" width="180"/>
 				<mx:DataGridColumn headerText="INICIO" dataField="FINICIO" width="80"/>
-				<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANTIDAD_ENTREGADA" width="120"/>
-				<mx:DataGridColumn headerText="TOTAL" dataField="TOTAL_A_PAGAR" width="80"/>
-				<mx:DataGridColumn headerText="DEVENGO DEL PERIODO" dataField="DEV_DEL_MES" width="150"/>
-				<mx:DataGridColumn headerText="DEVENGO PERIODO SIN IVA" dataField="DEV_MES_SIN_IVA" width="170"/>
-				<mx:DataGridColumn headerText="IVA INTERES" dataField="IVA_INT_MES" width="90"/>
+				<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANTIDAD_ENTREGADA" width="120" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="TOTAL" dataField="TOTAL_A_PAGAR" width="140" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="DEVENGO DEL PERIODO" dataField="DEV_DEL_MES" width="150" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="DEVENGO PERIODO SIN IVA" dataField="DEV_MES_SIN_IVA" width="170" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="IVA INTERES" dataField="IVA_INT_MES" width="90" labelFunction="formatearMontoGrid"/>
 				<mx:DataGridColumn headerText="PORCENTAJE IVA" dataField="IVA" width="110"/>
 				<mx:DataGridColumn headerText="DIAS DEVENGADOS" dataField="DIAS_DEV" width="110"/>
 			</mx:columns>

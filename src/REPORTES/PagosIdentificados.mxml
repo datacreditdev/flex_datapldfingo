@@ -24,10 +24,10 @@
 			private var _xmlRep:XML = new XML();
 			
 			public var wsRep:WebService;
-			public var du:Utils;
 			public var fecIni:String;
 			public var fecFin:String;
 			public var titulo:String;
+			private var du:Utils;
 			private var global:Globales;
 		
 			private function cambiarColorFila(event:Event):void{
@@ -38,9 +38,15 @@
 				var dgE:ExcelExportXls = new ExcelExportXls();
 				dgE.loadDGInExcel(dgReporte,null,titulo + " del " + fecIni + " al " + fecFin);		
 			}
+			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
+			}
 		
 			public function generar():void{
-				if(valida() == true){
+				if(valida()){
 					var tipo:int;
 					var tipoFecha:int;
 					initConexion();
@@ -194,10 +200,10 @@
 			<mx:DataGridColumn headerText="GRUPO" dataField="GRUPO"/>
 			<mx:DataGridColumn headerText="CICLO" dataField="CICLO"/>
 			<mx:DataGridColumn headerText="REFERENCIA" dataField="REFERENCIA"/>
-			<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD"/>
-			<mx:DataGridColumn headerText="CAPITAL" dataField="CAPITAL"/>
-			<mx:DataGridColumn headerText="INTERES" dataField="INTERES"/>
-			<mx:DataGridColumn headerText="RECARGOS" dataField="RECARGOS"/>
+			<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="CAPITAL" dataField="CAPITAL" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="INTERES" dataField="INTERES" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="RECARGOS" dataField="RECARGOS" labelFunction="formatearMontoGrid"/>
 			<mx:DataGridColumn headerText="BANCO" dataField="BANCO"/>
 			<!--<mx:DataGridColumn headerText="CDGCB" dataField="CDGCB"/>-->
 			<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA"/>
