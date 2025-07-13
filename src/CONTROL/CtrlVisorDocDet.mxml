@@ -78,7 +78,7 @@
 								var etiq:Label = new Label();
 								imgPdf.x = xpos;
 								imgPdf.y = ypos;
-								imgPdf.id = _xmlDocs.Table[i].REPO;
+								imgPdf.id = _xmlDocs.Table[i].CODIGO + "/" + _xmlDocs.Table[i].REPO;
 								imgPdf.name = _xmlDocs.Table[i].ARCHIVO;
 								imgPdf.width = 105;
 								imgPdf.height = 135;
@@ -102,7 +102,7 @@
 								img.width = 105;
 								img.height = 135;
 								img.scaleContent = true;
-								urlDoc = global.urlDocs + _xmlDocs.Table[i].REPO + "/" + _xmlDocs.Table[i].ARCHIVO + ".png";
+								urlDoc = global.urlDocs + _xmlDocs.Table[i].CODIGO + "/" + _xmlDocs.Table[i].REPO + "/" + _xmlDocs.Table[i].ARCHIVO + ".png";
 								
 								try{
 									img.load(urlDoc);

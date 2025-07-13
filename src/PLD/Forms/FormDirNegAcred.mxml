@@ -13,15 +13,15 @@
 			
 			public function init(info:DatosAcred):void{
 				if (info != null){
-					txtCalle.text = info.calle;
-					txtNumExt.text = info.noExt;
-					txtNumInt.text = info.noInt;
-					txtEntreCalles.text = info.entreCalles;
-					txtCodPostal.text = info.codPostal;
-					txtEntFed.text = info.entFed;
-					txtMunicipio.text = info.municipio;
-					txtLocalidad.text = info.localidad;
-					txtColonia.text = info.colonia;						
+					txtCalle.text = info.calleNeg;
+					txtNumExt.text = info.noExtNeg;
+					txtNumInt.text = info.noIntNeg;
+					txtEntreCalles.text = info.entreCallesNeg;
+					txtCodPostal.text = info.codPostalNeg;
+					txtEntFed.text = info.entFedNeg;
+					txtMunicipio.text = info.municipioNeg;
+					txtLocalidad.text = info.localidadNeg;
+					txtColonia.text = info.coloniaNeg;						
 				}
 			}
 	]]>

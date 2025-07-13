@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" width="450" height="300" creationComplete="initApp()"
+	layout="absolute" showCloseButton="true" close="cerrar()">
+	<mx:Script>    
+    <![CDATA[
+    	import Data.Globales;
+    	import Data.Utils;
+  		import flash.net.URLRequest;
+  		import mx.controls.Alert;
+  		import mx.core.Application;
+  		import mx.events.CloseEvent;	
+  		import mx.events.ListEvent;
+  		import mx.managers.PopUpManager;
+  		import mx.rpc.Fault;
+  		import mx.rpc.events.FaultEvent;
+  		import mx.rpc.events.ResultEvent;
+  		import mx.rpc.soap.WebService;
+  		import mx.utils.ArrayUtil;
+
+		private var xmlResult:XML;
+         
+		private var archivo:FileReference;
+  
+  		private var tipoArchivo:FileFilter = new FileFilter("Archivo PDF", "*.pdf");  
+  	
+  		public var titulo:String;
+  		private var du:Utils;
+  		private var global:Globales;
+		private var repo:String;
+  
+  		[Bindable]
+  		public var nombreArchivo:String = "";
+  		
+  		private function cerrar():void{
+			PopUpManager.removePopUp(this);
+		}
+     
+     	public function init(codigo:String, nombre:String):void{
+     		txtCodigo.text = codigo;
+     		txtNombre.text = nombre;
+     	}
+     
+		private function initApp():void{ 
+			du = new Utils();
+			global = new Globales();
+			titulo = "Carga de Expediente";
+			this.title = titulo;
+		}
+   
+		private function __onBrowse():void{       
+	        archivo = new FileReference();
+			
+			archivo.addEventListener(Event.SELECT, __fileSelectionHandler); 
+			archivo.addEventListener(Event.COMPLETE, __completeHandler);
+			archivo.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, __uploadDataHandler);
+	        
+	        try{    
+	          	var success:Boolean = archivo.browse();   
+	        }  
+	        catch (error:Error){
+	        	textStatus.text = "Estatus: No es posible abrir el cuadro de selección de archivos";             
+	        }
+  		}
+  
+	  	private function __onUpload():void{
+	    	var myRequest:URLRequest = new URLRequest(global.urlExp);
+	    	var variables:URLVariables = new URLVariables();
+	    	//this.repo = txtDirectorio.text != ""? txtCodigo.text + "\\" + txtDirectorio.text: txtCodigo.text;
+	    	this.repo = txtDirectorio.text != ""? "/" + txtDirectorio.text: "/";
+	    	variables.codigo = txtCodigo.text;
+	    	variables.directorio = this.repo;
+	    	myRequest.data = variables;
+	    	myRequest.method = URLRequestMethod.POST;
+	     
+	    	try{       
+	      		archivo.upload(myRequest);         
+	      		textStatus.text = "Estatus: Cargando " + archivo.name + " ... ";         
+	    	}  
+	    	catch (error:Error){         
+      			textStatus.text = "Estatus: Error de carga " + archivo.name;
+	    	}
+	  	}
+  
+  		private function __fileSelectionHandler(_e:Event):void{  
+    		btnUpload.enabled = true;   
+              
+    		txtUploadFile.text = archivo.name;             
+    		textStatus.text = "Estatus:  Haga click en el botón 'Cargar Archivo' para iniciar el proceso";
+  		}
+       
+  		private function __completeHandler(_e:Event):void {         
+    		// nothing currently done in this handler - experiment and have fun :)            
+  		}
+  
+  		private function __uploadDataHandler(evt:DataEvent):void{
+    		var myResult:XML = new XML(evt.data);
+    		
+    		if(myResult.status.toString() == "Success"){
+    			var wsMS:WebService = new WebService;
+    			var lenArchivo:int = archivo.name.length; 
+    			var formato:String = archivo.name.substr(lenArchivo - 3, 3);
+    			var nomArchivo:String = archivo.name.substr(0, lenArchivo - 4);
+    			
+    			du.initWsMS(wsMS);
+    			du.sCursor();
+											
+				du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void{						
+					var res:String = evt.result.toString();
+						
+					du.rCursor();
+					du.closeWs(wsMS);
+													
+					if(res.substr(0,1) == "1"){
+						txtDirectorio.text = "";
+			    		txtUploadFile.text = "";
+			    		archivo = null;
+			    		btnUpload.enabled = false;
+			    		textStatus.text = "Estatus: Carga de archivo completa";
+					}
+					else
+						du.mostrarMensaje(res.substr(2, res.length - 2), titulo, 4, null, null, global.iAlert);
+				});
+				wsMS.setRegistroDoc.send(txtCodigo.text, this.repo, nomArchivo, formato, global.obtenerUsuario());
+	    	}
+	    	else
+	    		textStatus.text = "Estatus: Error en el proceso de carga";
+	    	//this.nombreArchivo = myResult.toString();
+    	}
+    	
+	]]>
+	</mx:Script>
+	<mx:Canvas id="cnvEncabezado" width="399" height="39" styleName="canvasMod" visible="true" x="23.5" y="10">
+		<mx:TextInput id="txtCodigo" x="10" y="7" width="80" editable="false"/>
+		<mx:TextInput id="txtNombre" x="98" y="7" width="289" editable="false"/>
+  	</mx:Canvas>
+  	<mx:Canvas id="cnvCarga" width="423" height="190" styleName="canvasMod" visible="true" x="13" y="57">
+		<mx:TextArea width="350" height="60" id="textStatus" wordWrap="true" editable="false" enabled="true" text="Estatus: Seleccione el archivo que desea cargar" x="46.5" y="82"/>
+	  	<mx:Button id="btnUpload" label="Cargar Archivo" enabled="false" click="__onUpload()" x="156" y="152"/>
+	  	<mx:TextInput id="txtUploadFile" editable="false" enabled="true" x="116.5" y="48" width="207"/>
+	  	<mx:Button id="btnBrowser" label="Buscar" enabled="true" click="__onBrowse()" x="331.5" y="46"/>
+	  	<mx:Label id="lblArchivo" x="62.5" y="49" text="Archivo:"/>
+	  	<mx:Label id="lblDirectorio" x="46.5" y="20" text="Repositorio:"/>
+	  	<mx:TextInput id="txtDirectorio" x="116.5" y="19" width="207"/>
+  	</mx:Canvas>
+</mx:TitleWindow>

@@ -53,13 +53,11 @@
 			
 			private var _xmlFiltro:XMLList;
 			
-			public var coord:Array = new Array();
-			
 			public var datos:DatosAcred = new DatosAcred();
 			
+			public var texto:String;
 			private var du:Utils;
 			private var global:Globales;
-			public var texto:String;
 			
 			//Realiza la busqueda de direccion del acreditado utilizando el codigo postal
 			public function buscaCodPostal():void{ 
@@ -134,6 +132,7 @@
 			
 			public function enviarDatosAcred(formData:DatosAcred):void{
 				var invalidArray:Array = Validator.validateAll([calleV, entFedV, municipioV, localidadV, coloniaV]);
+				
 				if(invalidArray.length == 0){	
 					formData.calle = StringUtil.trim(txtCalle.text);
 					formData.noExt = StringUtil.trim(txtNumExt.text);
@@ -159,8 +158,8 @@
 				var wsCat:WebService = new WebService;
 				var params:Array = new Array;
 				
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
 							
 				du.initWsCat(wsCat);
 				du.sCursor();
@@ -242,13 +241,15 @@
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlColonia = new XML(evt.result.toString());
 					
-					comColGrid.init(_xmlColonia, 90);
-					if(_xmlColonia.elements().length() > 0){
-						comColGrid.addEventListener("seleccionar",selecColonia);
-					}
 					du.rCursor();
 					du.closeWs(wsCat);
 					wsCat = null;	
+					
+					comColGrid.init(_xmlColonia, 90);
+					
+					if(_xmlColonia.elements().length() > 0){
+						comColGrid.addEventListener("seleccionar",selecColonia);
+					}
 				});
 				params[0] = datos.cdgEntFed;
 				params[1] = datos.cdgMun;
@@ -267,14 +268,16 @@
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlLocalidad = new XML(evt.result.toString());
 					
+					du.rCursor();
+					du.closeWs(wsCat);
+					wsCat = null;
+					
 					comLocGrid.init(_xmlLocalidad, 90);
+					
 					if(_xmlLocalidad.elements().length() > 0){
 						comLocGrid.addEventListener("seleccionar",selecLocalidad);
 						comLocGrid.addEventListener("verificar",verifLocalidad);
 					}
-					du.rCursor();
-					du.closeWs(wsCat);
-					wsCat = null;
 				});
 				params[0] = datos.cdgEntFed;
 				params[1] = datos.cdgMun;
@@ -292,14 +295,16 @@
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlMunicipio = new XML(evt.result.toString());
 					
+					du.rCursor();
+					du.closeWs(wsCat);
+					wsCat = null;
+					
 					comMunGrid.init(_xmlMunicipio, 130);
+					
 					if(_xmlMunicipio.elements().length() > 0){
 						comMunGrid.addEventListener("seleccionar",selecMunic);
 						comMunGrid.addEventListener("verificar",verifMunic);
 					}
-					du.rCursor();
-					du.closeWs(wsCat);
-					wsCat = null;
 				});
 				params[0] = datos.cdgEntFed;
 				params[1] = txtCodPostal.text;

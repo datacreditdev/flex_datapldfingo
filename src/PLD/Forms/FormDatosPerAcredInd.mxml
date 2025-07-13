@@ -1,27 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Form xmlns:mx="http://www.adobe.com/2006/mxml" width="420" height="420" creationPolicy="all">
+	<mx:states>
+		<mx:State name="moral">
+			<mx:RemoveChild target="{rfc}"/>
+			<mx:AddChild relativeTo="{AP}" position="before" target="{rfc}"/>
+			<mx:RemoveChild target="{txtSegNombre}"/>
+			<mx:RemoveChild target="{AP}"/>
+			<mx:RemoveChild target="{AM}"/>
+			<mx:RemoveChild target="{sexo}"/>
+			<mx:RemoveChild target="{curp}"/>
+			<mx:RemoveChild target="{ife}"/>
+			<mx:RemoveChild target="{pais}"/>
+			<mx:RemoveChild target="{entidad}"/>
+			<mx:RemoveChild target="{nacionalidad}"/>
+			<mx:SetProperty target="{fecha}" name="label" value="Fecha Constitución:"/>
+			<mx:RemoveChild target="{nombre}"/>
+			<mx:AddChild relativeTo="{fecha}" position="before">
+				<mx:FormItem label="Razón Social:" id="razSoc" visible="true" width="400">
+					<mx:TextInput id="txtRazSoc" editable="false" width="275"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{fecha}" position="before">
+				<mx:FormItem label="Regimen Capital:" id="regCap" visible="true" width="400">
+					<mx:TextInput id="txtRegCap" editable="false" width="275"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:AddChild relativeTo="{fecha}" position="before">
+				<mx:FormItem label="Nombre Comercial:" id="nomCom" visible="true" width="400">
+					<mx:TextInput id="txtNomCom" editable="false" width="275"/>
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:SetProperty target="{txtFecha}" name="width" value="100"/>
+			<mx:SetProperty target="{fecha}" name="width" value="225"/>
+			<mx:AddChild position="lastChild">
+				<mx:FormItem label="Representante Legal:" id="repLegal" visible="true" width="390" height="70">
+					<mx:Canvas>
+						<mx:List id="lstRepLegal" width="260" height="70" labelField="nombre"/>
+					</mx:Canvas>	
+				</mx:FormItem>
+			</mx:AddChild>
+			<mx:SetProperty target="{txtCodigo}" name="width" value="160"/>
+			<mx:SetProperty target="{codigo}" name="width" value="285"/>
+			<mx:SetProperty target="{rfc}" name="width" value="285"/>
+		</mx:State>
+	</mx:states>
 	 
-
 	<mx:Script>
 		<![CDATA[
 			import Data.DatosAcred;
 			import Data.EventAcred;
 			import Data.Globales;
 			import Data.Utils;
-			import mx.collections.ArrayCollection;
 			import flash.external.ExternalInterface;
+			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.core.Application;			
 			import mx.effects.easing.Elastic;
 			import mx.managers.PopUpManager;
-			import mx.rpc.soap.WebService;
-			import mx.rpc.events.ResultEvent;
 			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.soap.WebService;
 			import mx.rpc.xml.SimpleXMLDecoder;
 			import mx.utils.ArrayUtil;
 			import mx.utils.StringUtil;
 			import mx.validators.Validator; 
-			
 			
 			private var _xmlCoord:XML =  new XML();
 			private var _xmlEntFed:XML =  new XML();
@@ -30,8 +72,10 @@
 			public var coordObj:ArrayCollection = new ArrayCollection();
 			public var paisObj:ArrayCollection = new ArrayCollection();
 			public var entFedObj:ArrayCollection = new ArrayCollection();
-			public var du:Utils;
+			
 			public var wsMS:WebService;
+			private var du:Utils;
+			private var global:Globales;
 			
 			public function initConexion():void{				
 				wsMS = new WebService();			
@@ -39,32 +83,33 @@
 				wsMS.loadWSDL();
 			}
 			
-			public function formateaCoord(co:String):void{
+			/*public function formateaCoord(co:String):void{
 				_xmlCoord = Application.application._xmlSuc;
-				var i:int;
 				var cont:int = _xmlCoord.elements().length();
-				for (i = 0; i < cont; i++){					
+				
+				for(var i:int = 0; i < cont; i++){					
 					ExternalInterface.call("console.log", "_xmlCoord.Table[i].CODIGO =" + _xmlCoord.Table[i].CODIGO );
 					if(co == _xmlCoord.Table[i].CODIGO) {	
 						var str:String = _xmlCoord.Table[i].NOMBRE;									
 						txtCo.text = str.toUpperCase();
 					}			
 				}		
-			}
-			
+			}*/
 			
 			public function buscarPais(paisId:String):void{
 				var wsCat:WebService = new WebService;
-				du = new Utils();				
+				
 				du.initWsCat(wsCat);
 				du.sCursor();				
+				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlPais = new XML(evt.result.toString());
-					var i:int;
 					var cont:int = _xmlPais.elements().length();
+					
 					du.rCursor();
 					du.closeWs(wsCat);
-					for (i = 0; i < cont; i++){
+					
+					for(var i:int = 0; i < cont; i++){
 						ExternalInterface.call("console.log", "_xmlCoord.Table[i].CODIGO =" + _xmlPais.Table[i].CODIGO );
 						if(paisId == _xmlPais.Table[i].CODIGO) {
 							var pais:String = _xmlPais.Table[i].NOMBRE;
@@ -80,17 +125,18 @@
 		
 			public function buscarEntidadNacim(paisId:String):void{
 				var wsCat:WebService = new WebService;
-				du = new Utils();
+				
 				du.initWsCat(wsCat);
 				du.sCursor();
 				
 				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
 					_xmlPais = new XML(evt.result.toString());
-					var i:int;
 					var cont:int = _xmlPais.elements().length();
+					
 					du.rCursor();
 					du.closeWs(wsCat);
-					for (i = 0; i < cont; i++){						 
+					
+					for(var i:int = 0; i < cont; i++){						 
 						ExternalInterface.call("console.log", "_xmlCoord.Table[i].CODIGO =" + _xmlPais.Table[i].CODIGO );
 						if(paisId == _xmlPais.Table[i].CODIGO) {				 
 							txtEntFed.text = _xmlPais.Table[i].NOMBRE;		
@@ -100,74 +146,105 @@
 				//CONSULTA LOS PAISES DISPONIBLES
 				wsCat.getCatalogoGral.send(2);
 			}
+			
 			public function init(info:DatosAcred):void{
-				var wsCat:WebService = new WebService;
-				var params:Array = new Array;				
+				var wsCatPLD:WebService = new WebService;
+				var params:Array = new Array;
+				
 				du = new Utils();
+				global = new Globales();
 														
-				if (info != null){	
-					formateaCoord(info.cdgco);
-					ExternalInterface.call("console.log", "info.cdgco=" + info.cdgco );				
+				if (info != null){
 					txtCodigo.text = info.codigo;
-					txtNombre.text = info.nombre;
-					txtSegNombre.text = info.segNombre;
-					txtAP.text = info.aPaterno;
-					txtAM.text = info.aMaterno;
-					txtSexo.text = info.sexo == "H"? "MASCULINO": "FEMENINO";
-					txtFecha.text = info.fecha;
-					buscarPais(info.cdgNacPais)
-					buscarEntidadNacim(info.cdgNacEntFed);																
 					txtRfc.text = info.rfc;
-					txtCurp.text = info.curp;
-					txtIfe.text = info.ife;
+					txtFecha.text = info.fecha;
+					
+					if(info.tipoPers == "F"){
+						currentState = "";
+						//formateaCoord(info.cdgco);
+						ExternalInterface.call("console.log", "info.cdgco=" + info.cdgco);				
+						txtNombre.text = info.nombre;
+						txtSegNombre.text = info.segNombre;
+						txtAP.text = info.aPaterno;
+						txtAM.text = info.aMaterno;
+						txtSexo.text = info.sexo == "H"? "MASCULINO": "FEMENINO";
+						buscarPais(info.cdgNacPais)
+						buscarEntidadNacim(info.cdgNacEntFed);																
+						txtCurp.text = info.curp;
+						txtIfe.text = info.ife;
+					}
+					else if(info.tipoPers == "M"){
+						currentState = "moral";
+						txtRazSoc.text = info.razSoc;
+						txtRegCap.text = info.regCap;
+						txtNomCom.text = info.nomCom;
+						
+						du.initWsCatPLD(wsCatPLD);
+						du.sCursor();
+						global.bloquear();
+						
+						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+							_xmlRepLegal = new XML(evt.result.toString());
+							
+							du.rCursor();
+							du.closeWs(wsCatPLD);
+						
+							//carga info de los representantes legales
+							formateaRepLegal();
+							lstRepLegal.dataProvider = persObj; 
+						});
+						//CONSULTA EL LISTADO DE REP LEGALES
+						params[0] = info.codigo;
+						params[1] = "RL"
+						wsCat.getListadoPLD.send(3, params);
+					}
 				}		
 			}
 		 
 	]]>
 	</mx:Script>
-	
 	<mx:FormItem label="Código:" id="codigo" visible="true">
 		<mx:TextInput id="txtCodigo" maxChars="12" editable="false" width="161"/>
 	</mx:FormItem>
 	<mx:FormItem label="Nombres:" id="nombre" visible="true" width="393">
 		<mx:Canvas>
-			<mx:TextInput id="txtNombre" width="136"  editable="false"/>
-			<mx:TextInput id="txtSegNombre" x="135" width="137"   editable="false"/>	
+			<mx:TextInput id="txtNombre" width="136" editable="false"/>
+			<mx:TextInput id="txtSegNombre" x="135" width="137" editable="false"/>	
 		</mx:Canvas>
 	</mx:FormItem>
 	<mx:FormItem label="Apellido Paterno:" id="AP" visible="true">
-		<mx:TextInput id="txtAP"  editable="false"/>
+		<mx:TextInput id="txtAP" editable="false"/>
 	</mx:FormItem>
 	<mx:FormItem label="Apellido Materno:" id="AM" visible="true" width="298">
-		<mx:TextInput id="txtAM"  editable="false"/>
+		<mx:TextInput id="txtAM" editable="false"/>
 	</mx:FormItem>
 	<mx:FormItem label="Sexo:" id="sexo" visible="true" width="297">
-		<mx:TextInput id="txtSexo"  editable="false"/>
+		<mx:TextInput id="txtSexo" editable="false"/>
 	</mx:FormItem>
-	<mx:FormItem label="Coordinacion:" id="coord" visible="true" width="296">
+	<!--<mx:FormItem label="Coordinacion:" id="coord" visible="true" width="296">
 		<mx:Canvas>
 			<mx:TextInput id="txtCo"  editable="false"/>
 		</mx:Canvas>	
-	</mx:FormItem>
+	</mx:FormItem>-->
 	<mx:FormItem label="Fecha Nacimiento:" id="fecha" visible="true" width="295">
-		<mx:TextInput id="txtFecha"  editable="false"/>
+		<mx:TextInput id="txtFecha" editable="false"/>
 	</mx:FormItem>
 	<mx:FormItem label="País Nacimiento:" id="pais" visible="true" width="295">
-		<mx:TextInput id="txtPais"  editable="false"/>
+		<mx:TextInput id="txtPais" editable="false"/>
 	</mx:FormItem>
 	<mx:FormItem label="Entidad Nacimiento:" id="entidad" visible="true" width="293">
-		<mx:TextInput id="txtEntFed"  editable="false"/>
+		<mx:TextInput id="txtEntFed" editable="false"/>
 	</mx:FormItem>
 	<mx:FormItem label="Nacionalidad:" id="nacionalidad" visible="true" width="292">
-		<mx:TextInput id="txtNacion"  editable="false"/>
+		<mx:TextInput id="txtNacion" editable="false"/>
 	</mx:FormItem>
 	<mx:FormItem label="RFC:" id="rfc" visible="true" width="294">
-		<mx:TextInput id="txtRfc"   editable="false"/>
+		<mx:TextInput id="txtRfc" editable="false"/>
 	</mx:FormItem>
 	<mx:FormItem label="CURP:" id="curp" visible="true" width="294">
-		<mx:TextInput id="txtCurp"    editable="false"/>
+		<mx:TextInput id="txtCurp" editable="false"/>
 	</mx:FormItem>
 	<mx:FormItem label="IFE:" id="ife" visible="true" width="294">
-		<mx:TextInput id="txtIfe" restrict="0-9" maxChars="15"   editable="false"/>
+		<mx:TextInput id="txtIfe" restrict="0-9" maxChars="15" editable="false"/>
 	</mx:FormItem>
 </mx:Form>

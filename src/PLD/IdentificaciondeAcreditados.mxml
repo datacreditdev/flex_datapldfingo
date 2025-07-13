@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" width="100%" height="100%" xmlns:forms="forms.*" 
-	xmlns:Data="Data.*" horizontalScrollPolicy="off" creationPolicy="all" xmlns:Administracion="Administracion.*">
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="initApp()" 
+	width="100%" height="100%" xmlns:forms="forms.*" xmlns:Data="Data.*" 
+	horizontalScrollPolicy="off" creationPolicy="all" xmlns:Administracion="Administracion.*">
 	
-	<!--Componente que permite observar el listado de clientes individuales-->
+	<!--Componente que permite observar el listado de acreditados-->
 	<mx:Script>
 		<![CDATA[
 			import Data.Globales;
@@ -52,31 +53,30 @@
 			public function buscarAcred():void{
 				var wsCatPLD:WebService = new WebService;
 				var params:Array = new Array;
-				if (txtCodAcred.text != "" || txtNombre.text != "" || txtPaterno.text != ""){
-					btnBuscar.setFocus();
-					dgAcred.dataProvider = null;
+				
+				btnBuscar.setFocus();
+				dgAcred.dataProvider = null;
+				
+				du.initWsCatPLD(wsCatPLD);
+				du.sCursor();
+				global.bloquear();
+				
+				du.ejecutaWsMethod(wsCatPLD,function(evt:ResultEvent):void {											
+					_xmlAcred = new XML(evt.result);
 					
-					du.initWsCatPLD(wsCatPLD);
-					du.sCursor();
-					global.bloquear();
+					du.closeWs(wsCatPLD);
+					du.rCursor();
+					global.desbloquear();
 					
-					du.ejecutaWsMethod(wsCatPLD,function(evt:ResultEvent):void {											
-						_xmlAcred = new XML(evt.result);
-						
-						du.closeWs(wsCatPLD);
-						du.rCursor();
-						global.desbloquear();
-						
-						if(_xmlAcred.elements().length() > 0){
-							dgAcred.dataProvider = _xmlAcred.Table;
-						}
-					});
-					params[0] = global.obtenerUsuario();
-					params[1] = txtCodAcred.text; 
-					params[2] = txtNombre.text;
-					params[3] = txtPaterno.text;
-					wsCatPLD.getInfoAcredPLD.send(1, params);
-				}
+					if(_xmlAcred.elements().length() > 0){
+						dgAcred.dataProvider = _xmlAcred.Table;
+					}
+				});
+				params[0] = global.obtenerUsuario();
+				params[1] = txtCodAcred.text; 
+				params[2] = txtNombre.text;
+				params[3] = txtPaterno.text;
+				wsCatPLD.getListadoPLD.send(1, params);
 			}
 
 			public function iniVar():void{
@@ -125,11 +125,10 @@
 				sortableColumns="false" draggableColumns="false" verticalScrollPolicy="on" 
 				doubleClickEnabled="true" doubleClick="mostrarFormAcred(2)" horizontalScrollPolicy="auto"> 
 				<Data:columns>
-					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="60"/>
-					<mx:DataGridColumn headerText="ACREDITADO" dataField="NOMBRE_CL" width="300"/>
-					<mx:DataGridColumn headerText="OFICINA" dataField="COORD" width="90"/>
-					<mx:DataGridColumn headerText="NOMBRE OFICINA" dataField="NOMCO" width="200"/>
-					<mx:DataGridColumn headerText="TIPO" dataField="TIPOPREST" width="90"/>
+					<mx:DataGridColumn headerText="CODIGO" dataField="CODIGO" width="80"/>
+					<mx:DataGridColumn headerText="NOMBRE / RAZON SOCIAL" dataField="NOMBRE" width="320"/>
+					<mx:DataGridColumn headerText="TIPO PERSONA" dataField="TIPO_PERS" width="130"/>
+					<mx:DataGridColumn headerText="RFC" dataField="RFC" width="90"/>
 				</Data:columns>
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
@@ -138,12 +137,12 @@
 			<mx:Button id="btnBuscar" x="12" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarAcred()" toolTip="Buscar Acreditado" width="40"/>
 		</mx:Canvas>
 		<mx:Canvas x="82.75" y="39" width="607.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
-			<mx:Label id="lblCodAcred" x="8" y="8" text="Código:"/>
-			<mx:Label id="lblNombre" x="128" y="8" text="Nombre/Razón Social:"/>
+			<mx:Label id="lblCodAcred" x="13" y="6" text="Código:"/>
+			<mx:Label id="lblNombre" x="126" y="6" text="Nombre/Razón Social:"/>
 			<mx:TextInput id="txtNombre" x="245" y="5" width="135" enter="buscarAcred()" maxChars="50"/>
 			<mx:TextInput id="txtPaterno" x="482" y="5" width="110" enter="buscarAcred()" maxChars="50"/>
 			<mx:TextInput id="txtCodAcred" x="62" y="5" width="56" enter="buscarAcred()" maxChars="6" restrict="0-9"/>
-			<mx:Label id="lblMaterno" x="390" y="8" text="Apellido Paterno:"/>
+			<mx:Label id="lblMaterno" x="388" y="6" text="Apellido Paterno:"/>
 		</mx:Canvas>
 	</mx:Canvas>
 </mx:Canvas>

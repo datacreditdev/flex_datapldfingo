@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Configuration>
-	<wsdl>http://localhost/administracion/seguridad_datalatam1/Process_Service/Process_Service.asmx?wsdl</wsdl>
-	<wsdlAdmin>http://localhost/administracion/seguridad_datalatam1/Admin_Sistema/Service.asmx?wsdl</wsdlAdmin>
+	<wsdl>http://localhost/administracion/seguridad_datapld_fingo/Process_Service/Process_Service.asmx?wsdl</wsdl>
+	<wsdlAdmin>http://localhost/administracion/seguridad_datapld_fingo/Admin_Sistema/Service.asmx?wsdl</wsdlAdmin>
 	
-	<wsdlCat>http://localhost/ws_catalogos_datalatam1/service.asmx?wsdl</wsdlCat>
-	<wsdlCatPLD>http://localhost/ws_catalogos_datalatam1/ServicePLD.asmx?wsdl</wsdlCatPLD>
-	<wsdlPdf>http://localhost/RptGenerado_datalatam1/default.aspx?</wsdlPdf>
-	<wsdlRep>http://localhost/ws_reportes_datalatam1/service.asmx?wsdl</wsdlRep>
-	<wsdlRepPLD>http://localhost/ws_reportes_datalatam1/ServicePLD.asmx?wsdl</wsdlRepPLD>
-	<wsdlServ>http://localhost/ws_servicios_datalatam1/Service.asmx?wsdl</wsdlServ>
-	<wsdlServPLD>http://localhost/ws_servicios_datalatam1/ServicePLD.asmx?wsdl</wsdlServPLD>
-	<wsdlMail>http://datacredit.webredirect.org/ws_servicios_datalatam1/ServiceMail.asmx?wsdl</wsdlMail>
+	<wsdlCat>http://localhost/ws_catalogos_datapld_fingo/service.asmx?wsdl</wsdlCat>
+	<wsdlCatPLD>http://localhost/ws_catalogos_datapld_fingo/ServicePLD.asmx?wsdl</wsdlCatPLD>
+	<wsdlPdf>http://localhost/RptGenerado_datapld_fingo/default.aspx?</wsdlPdf>
+	<wsdlRep>http://localhost/ws_reportes_datapld_fingo/service.asmx?wsdl</wsdlRep>
+	<wsdlRepPLD>http://localhost/ws_reportes_datapld_fingo/ServicePLD.asmx?wsdl</wsdlRepPLD>
+	<wsdlServ>http://localhost/ws_servicios_datapld_fingo/Service.asmx?wsdl</wsdlServ>
+	<wsdlServPLD>http://localhost/ws_servicios_datapld_fingo/ServicePLD.asmx?wsdl</wsdlServPLD>
+	<wsdlMail>http://datacredit.webredirect.org/ws_servicios_datapld_fingo/ServiceMail.asmx?wsdl</wsdlMail>
+	<wsdlExp>http://localhost/ws_servicios_datapld_fingo/Uploader.ashx</wsdlExp>
 	<wsdlExpXls>http://localhost/ExpExcelJson/ExcelLib.aspx</wsdlExpXls>
-	<wsdlCC>http://150.150.23.11/ws_consCirc_datalatam1/service.asmx?wsdl</wsdlCC>
+	<wsdlCC>http://150.150.23.11/ws_consCirc_datapld_fingo/service.asmx?wsdl</wsdlCC>
 	
-	<urlDocs>http://localhost/DOCS_LATAM1/</urlDocs>
+	<urlDocs>http://localhost/DOCS_DATAPLD/</urlDocs>
 </Configuration>

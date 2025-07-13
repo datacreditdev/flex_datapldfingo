@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:FormsPLD="PLD.Forms.*" layout="absolute" width="540" height="590" 
-	showCloseButton="true" close="cerrar()" xmlns:Forms="PLD.Forms.*" creationComplete="initApp()" 
-	creationPolicy="all">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:FormsPLD="PLD.Forms.*" layout="absolute" 
+	width="540" height="590" showCloseButton="true" close="cerrar()" xmlns:Forms="PLD.Forms.*" 
+	creationComplete="initApp()" creationPolicy="all">
 	
 	<mx:Script>
 		<![CDATA[
@@ -22,12 +22,15 @@
 			private var info:DatosAcred;
 			private var _xmlAcred:XML = new XML();
 			
+			private var tipoObj:ArrayCollection;
+			
 			public var wsMS:WebService;	
 			public var tipoAccion:int;
 			public var band:Boolean;
 			public var grupo:String;
 			public var acred:String;
 			public var titulo:String;
+			
 			private var du:Utils;
 			private var global:Globales;
 			private var estado:Boolean;
@@ -37,19 +40,19 @@
 			}
 			
 			public function cargaInfoAcred(acred:String):void{
-				var wsCat:WebService = new WebService;
+				var wsCatPLD:WebService = new WebService;
 				var params:Array = new Array;
 				this.acred = acred;
 				
-				du.initWsCat(wsCat);
+				du.initWsCatPLD(wsCatPLD);
 				du.sCursor();
 				global.bloquear();
 				
-				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+				du.ejecutaWsMethod(wsCatPLD,function(evt:ResultEvent):void {											
 					_xmlAcred = new XML(evt.result);
 						
 					du.rCursor();
-					du.closeWs(wsCat);
+					du.closeWs(wsCatPLD);
 					global.desbloquear();
 												
 					if (_xmlAcred.elements().length() > 0){
@@ -59,7 +62,7 @@
 						du.mostrarMensaje("Error en la carga de Datos",titulo,4,null,null,global.iAlert);
 				});
 				params[0] = this.acred;
-				wsCat.getInfoAcred.send(1, params);
+				wsCatPLD.getInfoAcredPLD.send(1, params);
 			}
 			
 			
@@ -67,11 +70,35 @@
 				PopUpManager.removePopUp(this);
 			}
 			
+			private function formateaTipoPers():void{
+				var oItem:Object;
+				var item:Array = new Array;
+				
+				oItem = new Object();
+				oItem.nombre = "--Seleccionar--";
+				oItem.id = "0";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.nombre = "Persona Física";
+				oItem.id = "F";
+				item.push(oItem);
+				
+				oItem = new Object();
+				oItem.nombre = "Persona Moral";
+				oItem.id = "M";
+				item.push(oItem);
+				
+				tipoObj = new ArrayCollection(item);
+			}
+			
 			public function initApp():void{
 				global = new Globales();
 				du = new Utils();
 				titulo = "Ficha de Identificación de Acreditado";
 				this.title = titulo;
+				formateaTipoPers();
+				cboTipoPers.dataProvider = tipoObj;
 			}
 			
 			public function initConexion():void{				
@@ -84,33 +111,50 @@
 				info = new DatosAcred();
 				//Datos personales del Acreditado
 				info.codigo = _xmlAcred.Table[0].CODIGO;
-				info.nombre = _xmlAcred.Table[0].NOMBRE1;
-				info.segNombre = _xmlAcred.Table[0].NOMBRE2;
-				info.aPaterno = _xmlAcred.Table[0].PRIMAPE;
-				info.aMaterno = _xmlAcred.Table[0].SEGAPE;
-				info.cdgco = _xmlAcred.Table[0].COORD;
-				info.sexo = _xmlAcred.Table[0].SEXO;
-				info.fecha = _xmlAcred.Table[0].NACIMIENTO;
-				info.cdgNacPais = _xmlAcred.Table[0].NACIOPAI;
-				info.cdgNacEntFed = _xmlAcred.Table[0].NACIOEF;
-				info.cdgNac = _xmlAcred.Table[0].NACIONALIDAD;
-				info.rfc = _xmlAcred.Table[0].RFC;	
-				info.curp = _xmlAcred.Table[0].CURP;
-				info.ife = _xmlAcred.Table[0].IFE;
+				info.rfc = _xmlAcred.Table[0].RFC;
+				info.tipoPers = _xmlAcred.Table[0].TIPO_PERS;
 				
-				//Direccion del Acreditado
+				if(info.tipoPers == "F"){
+					info.nombre = _xmlAcred.Table[0].PRI_NOM;
+					info.segNombre = _xmlAcred.Table[0].SEG_NOM;
+					info.aPaterno = _xmlAcred.Table[0].PRI_APE;
+					info.aMaterno = _xmlAcred.Table[0].SEG_APE;
+					info.sexo = _xmlAcred.Table[0].SEXO;
+					info.fecha = _xmlAcred.Table[0].FEC_NAC;
+					info.cdgNacPais = _xmlAcred.Table[0].NACIOPAI;
+					info.cdgNacEntFed = _xmlAcred.Table[0].NACIOEF;
+					info.cdgNac = _xmlAcred.Table[0].NACIONALIDAD;
+					info.curp = _xmlAcred.Table[0].CURP;
+					info.ife = _xmlAcred.Table[0].IFE;
+				}
+				else if(info.tipoPers == "M"){
+					info.razSoc = _xmlAcred.Table[0].RAZ_SOC;
+					info.regCap = _xmlAcred.Table[0].REG_CAP;
+					info.nomCom = _xmlAcred.Table[0].NOM_COM;
+					info.fecha = _xmlAcred.Table[0].FEC_CONS;
+				}
+				
+				//Domicilio del Acreditado
 				info.calle = _xmlAcred.Table[0].CALLE;
-				info.entreCalles = _xmlAcred.Table[0].ENTRECALLES;
-				info.telefono = _xmlAcred.Table[0].TELEFONO;
-				info.codPostal = _xmlAcred.Table[0].CDGPOSTAL;
-				info.cdgEntFed = _xmlAcred.Table[0].CDGEF;
-				info.entFed = _xmlAcred.Table[0].ENTFED;
-				info.cdgMun = _xmlAcred.Table[0].CDGMU;
-				info.municipio = _xmlAcred.Table[0].MUNIC;
- 				info.cdgLoc = _xmlAcred.Table[0].CDGLO; 
-				info.localidad = _xmlAcred.Table[0].LOC;
-				info.cdgCol = _xmlAcred.Table[0].CDGCOL;
-				info.colonia = _xmlAcred.Table[0].COL;
+				info.noExt = _xmlAcred.Table[0].NUM_EXT;
+				info.noInt = _xmlAcred.Table[0].NUM_INT;
+				info.entreCalles = _xmlAcred.Table[0].ENTRE_CALLES;
+				info.codPostal = _xmlAcred.Table[0].COD_POSTAL;
+				info.entFed = _xmlAcred.Table[0].ENT_FED;
+				info.municipio = _xmlAcred.Table[0].MUNICIPIO;
+ 				info.localidad = _xmlAcred.Table[0].LOCALIDAD;
+				info.colonia = _xmlAcred.Table[0].COLONIA;
+				
+				//Domicilio Fiscal del Acreditado
+				info.calleNeg = _xmlAcred.Table[0].CALLE_DF;
+				info.noExtNeg = _xmlAcred.Table[0].NUM_EXT_DF;
+				info.noIntNeg = _xmlAcred.Table[0].NUM_INT_DF;
+				info.entreCallesNeg = _xmlAcred.Table[0].ENTRE_CALLES_DF;
+				info.codPostalNeg = _xmlAcred.Table[0].COD_POSTAL_DF;
+				info.entFedNeg = _xmlAcred.Table[0].ENT_FED_DF;
+				info.municipioNeg = _xmlAcred.Table[0].MUNICIPIO_DF;
+ 				info.localidadNeg = _xmlAcred.Table[0].LOCALIDAD_DF;
+				info.coloniaNeg = _xmlAcred.Table[0].COLONIA_DF;
 				
 				//Otra información del Acreditado
 				info.edoCivil = _xmlAcred.Table[0].EDOCIVIL;
@@ -128,34 +172,46 @@
 				info.recuperador = _xmlAcred.Table[0].RECUPERADOR;
 				
 				//Informacion de PLD
-				info.tipoPers = _xmlAcred.Table[0].CDGTIPOPERS;
 				info.origen = _xmlAcred.Table[0].CDGORIREC;
 				info.destino = _xmlAcred.Table[0].CDGDESREC;
+				
+				for(var i:int = 0; i < tipoObj.length; i++){
+					if(info.tipoPers == tipoObj[i].id.toString()){
+						cboTipoPers.selectedIndex = i;
+						break;
+					}
+				}
 			
 				formDPAcred.init(info);
-				formDirAcred.init(info);
+				formDomAcred.init(info);
+				formDomFiscalAcred.init(info);
 				formOtroAcred.init(info);
 				formPLDAcred.init(info);
-				formEvAcred.init(info);
+				//formEvAcred.init(info);
 			}
 		]]>
 	</mx:Script>
-	<mx:TabNavigator id="tabNav" width="520" height="503" x="10" y="10" creationPolicy="all">
-		<mx:Canvas label="Datos Personales" width="100%" height="100%">
-			<Forms:FormDatosPerAcredInd id="formDPAcred" x="39" height="404" width="440" y="28"/>
+	<mx:TabNavigator id="tabNav" width="520" height="457" x="8" y="48" creationPolicy="all">
+		<mx:Canvas label="Datos Generales" width="100%" height="100%">
+			<Forms:FormDatosPerAcredInd id="formDPAcred" x="39" height="404" width="440" y="10"/>
 		</mx:Canvas>
-		<mx:Canvas label="Dirección" width="100%" height="100%">	
-			<Forms:FormDirAcred id="formDirAcred" x="49" height="370" width="420" y="31"/>
+		<mx:Canvas label="Domicilio" width="100%" height="100%">	
+			<Forms:FormDirAcred id="formDomAcred" x="49" height="370" width="420" y="10"/>
+		</mx:Canvas>
+		<mx:Canvas label="Dom. Fiscal" width="100%" height="100%">	
+			<Forms:FormDirNegAcred id="formDomFiscalAcred" x="49" height="370" width="420" y="10"/>
 		</mx:Canvas>
 		<mx:Canvas label="Otros Datos" width="100%" height="100%">	
-			<FormsPLD:FormOtroAcred id="formOtroAcred" x="59" y="31"/> 
+			<FormsPLD:FormOtroAcred id="formOtroAcred" x="59" y="10"/> 
 		</mx:Canvas>
 		<mx:Canvas label="Inf. Adicional" width="100%" height="100%">
-			<Forms:FormPLDAcred id="formPLDAcred" x="31.5" width="455" y="44"/>
+			<Forms:FormPLDAcred id="formPLDAcred" x="31.5" width="455" y="10"/>
 		</mx:Canvas>
-		<mx:Canvas label="Evaluación" width="100%" height="100%">
+		<!--<mx:Canvas label="Evaluación" width="100%" height="100%">
 			<FormsPLD:FormNivelRiesgo id="formEvAcred" x="1" width="516" y="0" height="470"/>
-		</mx:Canvas>
+		</mx:Canvas>-->
 	</mx:TabNavigator>
 	<mx:Button id="btnCancelar" x="490" y="518" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
+	<mx:Label x="138" y="13" text="Tipo Persona:"/>
+	<mx:ComboBox id="cboTipoPers" labelField="nombre" x="217" y="10"/>
 </mx:TitleWindow>

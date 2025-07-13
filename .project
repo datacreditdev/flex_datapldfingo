@@ -19,7 +19,12 @@
 		<link>
 			<name>bin-debug</name>
 			<type>2</type>
-			<location>C:/inetpub/wwwroot/admin_datalatam1</location>
+			<location>C:/inetpub/wwwroot/datapld_fingo</location>
+		</link>
+		<link>
+			<name>bin-release1</name>
+			<type>2</type>
+			<location>C:/Deploy/FlexDataPLD</location>
 		</link>
 		<link>
 			<name>bin-release</name>

@@ -5,9 +5,13 @@ package Data
 		/*variables que hacen referencia a los datos personales*/
 		public var codigo:String;
 		public var nombre:String;
+		public var nomComp:String;
 		public var segNombre:String;
 		public var aPaterno:String;
 		public var aMaterno:String;
+		public var razSoc:String;
+		public var regCap:String;
+		public var nomCom:String;
 		public var tipoPers:String;
 		public var arrRepLegal:Array;
 	    public var nomRepLegal:String;
@@ -21,7 +25,6 @@ package Data
 		public var curp:String;
 		public var ife:String;
 		public var figura:String;
-		public var nomCom:String;
 		public var fiel:String;
 		public var telefono2:String;
 		public var email1:String;

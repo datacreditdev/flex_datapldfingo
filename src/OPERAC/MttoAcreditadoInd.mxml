@@ -22,7 +22,8 @@
 			<mx:SetProperty target="{formDPAcred}" name="y" value="0"/>
 			<mx:SetProperty name="height" value="630"/>
 			<mx:SetProperty target="{btnConsBuro}" name="y" value="555"/>
-			<mx:SetProperty target="{btnDoc}" name="y" value="555"/>
+			<mx:SetProperty target="{btnCargarDocs}" name="y" value="555"/>
+			<mx:SetProperty target="{btnVerDocs}" name="y" value="555"/>
 			<mx:SetProperty target="{btnAceptar}" name="y" value="555"/>
 			<mx:SetProperty target="{btnCancelar}" name="y" value="555"/>
 			<mx:SetProperty target="{tabNav}" name="height" value="496"/>
@@ -49,6 +50,7 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import CONTROL.CtrlCargadorDoc;
 			import mx.controls.CheckBox;
 			import CONTROL.CtrlVisorDoc;
 			import Data.DatosAcred;
@@ -99,6 +101,9 @@
 				this.acred = acred;
 				this.title = "Edición";
 				cboTipoPers.enabled = false;
+				btnCargarDocs.visible = true;
+				btnVerDocs.visible = true;
+				
 				permisos();
 				
 				du.initWsCat(wsCat);
@@ -117,6 +122,16 @@
 				});
 				params[0] = acred;
 				wsCat.getInfoAcred.send(1, params);	
+			}
+			
+			private function cargarDocumentos():void{
+				var obj:DisplayObject = this.parent;
+				
+				var comCargador:CtrlCargadorDoc = new CtrlCargadorDoc();
+						
+				comCargador = CtrlCargadorDoc(PopUpManager.createPopUp(obj, CtrlCargadorDoc, false));
+				comCargador.init(info.codigo, info.nomComp);
+				PopUpManager.centerPopUp(comCargador);
 			}
 			
 			private function copiaDomicilio(evt:MouseEvent):void{
@@ -224,6 +239,7 @@
 				info = new DatosAcred();
 				//Datos personales del Acreditado
 				info.codigo = _xmlAcred.Table[0].CODIGO;
+				info.nomComp = _xmlAcred.Table[0].NOMCOMP;
 				info.nombre = _xmlAcred.Table[0].NOMBRE1;
 				info.segNombre = _xmlAcred.Table[0].NOMBRE2;
 				info.aPaterno = _xmlAcred.Table[0].PRIMAPE;
@@ -532,8 +548,9 @@
 	</mx:TabNavigator>
 	<mx:Button id="btnCancelar" x="560" y="508" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" width="40"/>
 	<mx:Button id="btnAceptar" x="512" y="508" icon="@Embed(source='assets/button_ok.png')" click="enviar()" width="40"/>
-	<mx:Button id="btnConsBuro" x="10" y="508" click="consultaBuro()" label="Consulta Rep. Crédito" visible="true"/>
-	<mx:Button id="btnDoc" x="166" y="508" click="mostrarDocumentos()" label="Ver Documentación" visible="true"/>
+	<mx:Button id="btnConsBuro" x="10" y="508" click="consultaBuro()" label="Consulta Rep. Crédito" visible="false"/>
+	<mx:Button id="btnCargarDocs" x="10" y="508" click="cargarDocumentos()" label="Cargar Documentación" visible="true"/>
+	<mx:Button id="btnVerDocs" x="172" y="508" click="mostrarDocumentos()" label="Ver Documentación" visible="true"/>
 	<mx:Label x="144" y="18" text="Tipo Persona:"/>
 	<mx:ComboBox id="cboTipoPers" labelField="nombre" x="235" y="16" change="modificaEstatus()"/>
 </mx:TitleWindow>
