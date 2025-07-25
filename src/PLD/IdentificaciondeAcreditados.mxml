@@ -133,16 +133,16 @@
 			</Data:RowColorDataGrid>
 		</mx:Canvas>
 		<mx:Label id="lblTitulo" x="18" y="10" width="300" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-		<mx:Canvas x="712.25" y="39" width="65" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:Canvas x="726.75" y="39" width="65" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Button id="btnBuscar" x="12" y="3" icon="@Embed(source='assets/ico_lupa.png')" click="buscarAcred()" toolTip="Buscar Acreditado" width="40"/>
 		</mx:Canvas>
-		<mx:Canvas x="82.75" y="39" width="607.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
+		<mx:Canvas x="68.25" y="39" width="650.5" height="37" cornerRadius="10" borderStyle="solid" borderColor="#7B8B93" visible="true">
 			<mx:Label id="lblCodAcred" x="13" y="6" text="Código:"/>
-			<mx:Label id="lblNombre" x="126" y="6" text="Nombre/Razón Social:"/>
-			<mx:TextInput id="txtNombre" x="245" y="5" width="135" enter="buscarAcred()" maxChars="50"/>
-			<mx:TextInput id="txtPaterno" x="482" y="5" width="110" enter="buscarAcred()" maxChars="50"/>
-			<mx:TextInput id="txtCodAcred" x="62" y="5" width="56" enter="buscarAcred()" maxChars="6" restrict="0-9"/>
-			<mx:Label id="lblMaterno" x="388" y="6" text="Apellido Paterno:"/>
+			<mx:Label id="lblNombre" x="174" y="6" text="Nombre/Razón Social:"/>
+			<mx:TextInput id="txtNombre" x="293" y="5" width="135" enter="buscarAcred()" maxChars="50"/>
+			<mx:TextInput id="txtPaterno" x="530" y="5" width="110" enter="buscarAcred()" maxChars="50"/>
+			<mx:TextInput id="txtCodAcred" x="62" y="5" width="100" enter="buscarAcred()" maxChars="20" restrict="0-9"/>
+			<mx:Label id="lblMaterno" x="436" y="6" text="Apellido Paterno:"/>
 		</mx:Canvas>
 	</mx:Canvas>
 </mx:Canvas>

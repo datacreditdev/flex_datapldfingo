@@ -9,7 +9,7 @@
 			<mx:RemoveChild target="{AM}"/>
 			<mx:RemoveChild target="{sexo}"/>
 			<mx:RemoveChild target="{curp}"/>
-			<mx:RemoveChild target="{ife}"/>
+			<!--<mx:RemoveChild target="{ife}"/>-->
 			<mx:RemoveChild target="{pais}"/>
 			<mx:RemoveChild target="{entidad}"/>
 			<mx:RemoveChild target="{nacionalidad}"/>
@@ -30,8 +30,6 @@
 					<mx:TextInput id="txtNomCom" editable="false" width="275"/>
 				</mx:FormItem>
 			</mx:AddChild>
-			<mx:SetProperty target="{txtFecha}" name="width" value="100"/>
-			<mx:SetProperty target="{fecha}" name="width" value="225"/>
 			<mx:AddChild position="lastChild">
 				<mx:FormItem label="Representante Legal:" id="repLegal" visible="true" width="390" height="70">
 					<mx:Canvas>
@@ -65,86 +63,24 @@
 			import mx.utils.StringUtil;
 			import mx.validators.Validator; 
 			
-			private var _xmlCoord:XML =  new XML();
-			private var _xmlEntFed:XML =  new XML();
-			private var _xmlPais:XML =  new XML();			
-			public var coordArr:Array = new Array();			
-			public var coordObj:ArrayCollection = new ArrayCollection();
-			public var paisObj:ArrayCollection = new ArrayCollection();
-			public var entFedObj:ArrayCollection = new ArrayCollection();
+			private var _xmlRepLegal:XML =  new XML();
+			public var persObj:ArrayCollection = new ArrayCollection();
 			
-			public var wsMS:WebService;
 			private var du:Utils;
 			private var global:Globales;
 			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlServ.toString();
-				wsMS.loadWSDL();
-			}
-			
-			/*public function formateaCoord(co:String):void{
-				_xmlCoord = Application.application._xmlSuc;
-				var cont:int = _xmlCoord.elements().length();
+			private function formatearRepLegal():void{
+				var cont:int = _xmlRepLegal.elements().length();
+				var oItem:Object;
+				var item:Array = new Array;
 				
-				for(var i:int = 0; i < cont; i++){					
-					ExternalInterface.call("console.log", "_xmlCoord.Table[i].CODIGO =" + _xmlCoord.Table[i].CODIGO );
-					if(co == _xmlCoord.Table[i].CODIGO) {	
-						var str:String = _xmlCoord.Table[i].NOMBRE;									
-						txtCo.text = str.toUpperCase();
-					}			
-				}		
-			}*/
-			
-			public function buscarPais(paisId:String):void{
-				var wsCat:WebService = new WebService;
-				
-				du.initWsCat(wsCat);
-				du.sCursor();				
-				
-				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-					_xmlPais = new XML(evt.result.toString());
-					var cont:int = _xmlPais.elements().length();
-					
-					du.rCursor();
-					du.closeWs(wsCat);
-					
-					for(var i:int = 0; i < cont; i++){
-						ExternalInterface.call("console.log", "_xmlCoord.Table[i].CODIGO =" + _xmlPais.Table[i].CODIGO );
-						if(paisId == _xmlPais.Table[i].CODIGO) {
-							var pais:String = _xmlPais.Table[i].NOMBRE;
-							var gentilicio:String = _xmlPais.Table[i].GENTILICIO;								 
-							txtPais.text = pais.toUpperCase();	
-							txtNacion.text = gentilicio.toUpperCase()  ;		
-						}			
-					}
-				});
-				//CONSULTA LOS PAISES DISPONIBLES
-				wsCat.getCatalogoGral.send(1);
-			}
-		
-			public function buscarEntidadNacim(paisId:String):void{
-				var wsCat:WebService = new WebService;
-				
-				du.initWsCat(wsCat);
-				du.sCursor();
-				
-				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-					_xmlPais = new XML(evt.result.toString());
-					var cont:int = _xmlPais.elements().length();
-					
-					du.rCursor();
-					du.closeWs(wsCat);
-					
-					for(var i:int = 0; i < cont; i++){						 
-						ExternalInterface.call("console.log", "_xmlCoord.Table[i].CODIGO =" + _xmlPais.Table[i].CODIGO );
-						if(paisId == _xmlPais.Table[i].CODIGO) {				 
-							txtEntFed.text = _xmlPais.Table[i].NOMBRE;		
-						}			
-					}
-				});
-				//CONSULTA LOS PAISES DISPONIBLES
-				wsCat.getCatalogoGral.send(2);
+				for(var i:int = 0; i < cont; i++){
+					oItem = new Object();
+					oItem.codigo = _xmlRepLegal.Table[i].CODIGO;
+					oItem.nombre = _xmlRepLegal.Table[i].NOMBRE;
+					item.push(oItem);
+				}
+				persObj = new ArrayCollection(item);
 			}
 			
 			public function init(info:DatosAcred):void{
@@ -160,18 +96,17 @@
 					txtFecha.text = info.fecha;
 					
 					if(info.tipoPers == "F"){
-						currentState = "";
-						//formateaCoord(info.cdgco);
 						ExternalInterface.call("console.log", "info.cdgco=" + info.cdgco);				
 						txtNombre.text = info.nombre;
 						txtSegNombre.text = info.segNombre;
 						txtAP.text = info.aPaterno;
 						txtAM.text = info.aMaterno;
-						txtSexo.text = info.sexo == "H"? "MASCULINO": "FEMENINO";
-						buscarPais(info.cdgNacPais)
-						buscarEntidadNacim(info.cdgNacEntFed);																
+						txtPais.text = info.nacPais;
+						txtEntFed.text = info.nacEntFed;
+						txtNacion.text = info.nac;
+						txtSexo.text = info.sexo;														
 						txtCurp.text = info.curp;
-						txtIfe.text = info.ife;
+						//txtIfe.text = info.ife;
 					}
 					else if(info.tipoPers == "M"){
 						currentState = "moral";
@@ -181,26 +116,24 @@
 						
 						du.initWsCatPLD(wsCatPLD);
 						du.sCursor();
-						global.bloquear();
-						
-						du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
+
+						du.ejecutaWsMethod(wsCatPLD,function(evt:ResultEvent):void {											
 							_xmlRepLegal = new XML(evt.result.toString());
 							
 							du.rCursor();
 							du.closeWs(wsCatPLD);
-						
+							
 							//carga info de los representantes legales
-							formateaRepLegal();
+							formatearRepLegal();
 							lstRepLegal.dataProvider = persObj; 
 						});
 						//CONSULTA EL LISTADO DE REP LEGALES
 						params[0] = info.codigo;
 						params[1] = "RL"
-						wsCat.getListadoPLD.send(3, params);
+						wsCatPLD.getInfoAcredPLD.send(2, params);
 					}
 				}		
-			}
-		 
+			}	 
 	]]>
 	</mx:Script>
 	<mx:FormItem label="Código:" id="codigo" visible="true">
@@ -218,16 +151,11 @@
 	<mx:FormItem label="Apellido Materno:" id="AM" visible="true" width="298">
 		<mx:TextInput id="txtAM" editable="false"/>
 	</mx:FormItem>
-	<mx:FormItem label="Sexo:" id="sexo" visible="true" width="297">
-		<mx:TextInput id="txtSexo" editable="false"/>
+	<mx:FormItem label="Sexo:" id="sexo" visible="true" width="225">
+		<mx:TextInput id="txtSexo" editable="false" width="100"/>
 	</mx:FormItem>
-	<!--<mx:FormItem label="Coordinacion:" id="coord" visible="true" width="296">
-		<mx:Canvas>
-			<mx:TextInput id="txtCo"  editable="false"/>
-		</mx:Canvas>	
-	</mx:FormItem>-->
-	<mx:FormItem label="Fecha Nacimiento:" id="fecha" visible="true" width="295">
-		<mx:TextInput id="txtFecha" editable="false"/>
+	<mx:FormItem label="Fecha Nacimiento:" id="fecha" visible="true" width="225">
+		<mx:TextInput id="txtFecha" editable="false" width="100"/>
 	</mx:FormItem>
 	<mx:FormItem label="País Nacimiento:" id="pais" visible="true" width="295">
 		<mx:TextInput id="txtPais" editable="false"/>
@@ -244,7 +172,7 @@
 	<mx:FormItem label="CURP:" id="curp" visible="true" width="294">
 		<mx:TextInput id="txtCurp" editable="false"/>
 	</mx:FormItem>
-	<mx:FormItem label="IFE:" id="ife" visible="true" width="294">
+	<!--<mx:FormItem label="IFE:" id="ife" visible="true" width="294">
 		<mx:TextInput id="txtIfe" restrict="0-9" maxChars="15" editable="false"/>
-	</mx:FormItem>
+	</mx:FormItem>-->
 </mx:Form>

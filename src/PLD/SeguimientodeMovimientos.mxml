@@ -18,7 +18,7 @@
 			import mx.rpc.soap.WebService;
 			import mx.utils.ObjectUtil;
 			
-			private var _xmlRep:XML =  new XML();
+			private var _xmlRep:XML = new XML();
 			
 			public var titulo:String;
 			public var rep:String;
@@ -42,6 +42,7 @@
 					var ciclo:String = comFiltroAcredCiclo.obtenerCiclo();
 					var wsRepPLD:WebService = new WebService;
 					
+					global.bloquear();
 					du.initWsRepPLD(wsRepPLD);
 					du.sCursor();
 							
@@ -50,6 +51,7 @@
 						
 						du.rCursor();
 						du.closeWs(wsRepPLD);
+						global.desbloquear();
 						
 						dgReporte.dataProvider = null;
 						btnExportar.enabled = false;
@@ -92,12 +94,16 @@
 	<mx:Label x="18" y="34" text="Criterios de Selección" width="124.25"/>
 	<mx:DataGrid id="dgReporte" x="18.45" y="182" width="600" visible="true" height="187" horizontalScrollPolicy="auto">
 		<mx:columns>
-			<mx:DataGridColumn headerText="FECHA" dataField="FECHA" width="90"/>
-			<mx:DataGridColumn headerText="MONTO" dataField="CANTIDAD" width="90" labelFunction="formatearMontoGrid"/>
-			<mx:DataGridColumn headerText="PAGADO CAPITAL" dataField="PAGADOCAP" width="120" labelFunction="formatearMontoGrid"/>
-			<mx:DataGridColumn headerText="PAGADO INTERES" dataField="PAGADOINT" width="120" labelFunction="formatearMontoGrid"/>
-			<mx:DataGridColumn headerText="PAGADO MORATORIOS" dataField="PAGADOREC" width="140" labelFunction="formatearMontoGrid"/>
-			<mx:DataGridColumn headerText="CUENTA" dataField="CUENTA" width="90"/>							
+			<mx:DataGridColumn headerText="FECHA" dataField="FEC_MOV" width="90"/>
+			<mx:DataGridColumn headerText="TIPO MOVIMIENTO" dataField="TIPO_MOV" width="120"/>
+			<mx:DataGridColumn headerText="NUM MOVIMIENTO" dataField="NO_MOV" width="120"/>
+			<mx:DataGridColumn headerText="MONTO" dataField="CANTIDAD" width="120" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="CAPITAL" dataField="CAPITAL" width="120" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="INTERES" dataField="INTERES" width="120" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="MORATORIOS" dataField="MORATORIOS" width="120" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="COMISION" dataField="COMISION" width="120" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="SEGURO" dataField="SEGURO" width="120" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="TIPO MONEDA" dataField="TIPO_MONEDA" width="110"/>					
 		</mx:columns>
 	</mx:DataGrid>
 	<mx:Button id="btnExportar" x="515.45" y="146" label="Exportar Excel" click="exportar()" enabled="false"/>

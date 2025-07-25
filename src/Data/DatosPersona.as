@@ -19,8 +19,11 @@ package Data
 		public var cdgco:String;
 		public var fecha:String;
 		public var cdgNacPais:String;
+		public var nacPais:String;
 		public var cdgNacEntFed:String;
+		public var nacEntFed:String;
 		public var cdgNac:String;
+		public var nac:String;
 		public var rfc:String;
 		public var curp:String;
 		public var ife:String;

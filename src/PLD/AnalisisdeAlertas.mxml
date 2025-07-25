@@ -25,7 +25,6 @@
 		public var estObj:ArrayCollection = new ArrayCollection();
 		public var infoObj:ArrayCollection = new ArrayCollection();
 		
-		public var wsMS:WebService;	
 		public var tipoAccion:int;
 		public var titulo:String;
 		public var texto:String;
@@ -40,6 +39,7 @@
 		private function consultar():void{
 			var wsCatPLD:WebService = new WebService;
 			var params:Array = new Array;
+			
 			if(cboEstatus.selectedIndex != 0){
 				var cont:int;
 				var estatus:String = cboEstatus.selectedItem.codigo;
@@ -73,11 +73,12 @@
 				params[0] = estatus;
 				params[1] = fecIni;
 				params[2] = fecFin;
-				wsCatPLD.getListadoPLD.send(1, params);
+				wsCatPLD.getListadoPLD.send(2, params);
 			}
 			else
 				du.mostrarMensaje("Debe seleccionar el estatus de la Alerta.",titulo,4,null,null,global.iAlert);	
 		}
+		
 		private function formateaEstatus():void{
 			var oItem:Object;
 			var item:Array = new Array;
@@ -113,22 +114,16 @@
 			
 			for(var i:int = 0; i < cont; i++){
 				oItem = new Object();
-				//oItem.FREG = _xmlInfo.Table[i].FREG;
 				oItem.ALTA = _xmlInfo.Table[i].FALTA;
 				oItem.DESCALERTA = _xmlInfo.Table[i].DESCALERTA;
 				oItem.SECUENCIA = _xmlInfo.Table[i].SECUENCIA;
-				//oItem.DESCRIPCION = _xmlInfo.Table[i].DESCRIPCION;
 				oItem.DESCESTATUS = _xmlInfo.Table[i].DESCESTATUS;
 				oItem.CDGCL = _xmlInfo.Table[i].CDGCL;
-				oItem.NOMCL = _xmlInfo.Table[i].NOMCL;
-				oItem.COD_ASESOR = _xmlInfo.Table[i].COD_ASESOR;
-				oItem.NOM_ASESOR = _xmlInfo.Table[i].NOM_ASESOR;
+				oItem.NOMCL = _xmlInfo.Table[i].NOMBRE;
 				oItem.REP = Boolean(Number(_xmlInfo.Table[i].REP.toString()));
 				oItem.NOREP = Boolean(Number(_xmlInfo.Table[i].NOREP.toString()));
 				oItem.REGISTROPE = _xmlInfo.Table[i].REGISTROPE;
 				oItem.NOMREGPE = _xmlInfo.Table[i].NOMREGPE;
-				//oItem.DESCTIPO = _xmlInfo.Table[i].DESCTIPO;			
-			    //oItem.JUSTIFICA = _xmlInfo.Table[i].JUSTIFICA;
 				item.push(oItem);	
 			}
 			infoObj = new ArrayCollection(item);
@@ -151,7 +146,7 @@
 			lblTotal.text = "";
 		}
 		
-		public function muestraDictamen():void{
+		private function mostrarDictamen():void{
 			var alta:String = dgReg.selectedItem.ALTA;
 			var sec:String = dgReg.selectedItem.SECUENCIA;
 			var comDictamen:DictamenAlertas = new DictamenAlertas();
@@ -178,15 +173,13 @@
 		<mx:Label id="lblFiltro" x="21" y="36" text="Criterios de Selección"/>
 		<mx:Label id="lblTitulo" x="21" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
 		<Data:RowColorDataGrid id="dgReg" x="21" y="179" width="760" height="241" horizontalScrollPolicy="on" sortableColumns="true" 
-			doubleClickEnabled="true" itemDoubleClick="muestraDictamen()">
+			doubleClickEnabled="true" itemDoubleClick="mostrarDictamen()">
 			<Data:columns>
 				<mx:DataGridColumn headerText="FECHA" dataField="ALTA" width="90"/>
 				<mx:DataGridColumn headerText="TIPO" dataField="DESCALERTA" width="290"/>
-				<mx:DataGridColumn headerText="ESTATUS" dataField="DESCESTATUS" width="80"/>
+				<mx:DataGridColumn headerText="ESTATUS" dataField="DESCESTATUS" width="90"/>
 				<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
-				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMCL" width="200"/>
-				<mx:DataGridColumn headerText="FUNCIONARIO" dataField="COD_ASESOR" width="100"/>
-				<mx:DataGridColumn headerText="NOMBRE FUNCIONARIO" dataField="NOM_ASESOR" width="200"/>
+				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMCL" width="320"/>
 				<mx:DataGridColumn headerText="REPORTADO" dataField="REP" textAlign="center" rendererIsEditor="true" width="90" editorDataField="selected">
 					<mx:itemRenderer>
 						<mx:Component>
@@ -201,7 +194,6 @@
 						</mx:Component>
 					</mx:itemRenderer>
 				</mx:DataGridColumn>
-				<mx:DataGridColumn headerText="USUARIO" dataField="REGISTROPE" width="80"/>
 				<mx:DataGridColumn headerText="NOMBRE USUARIO" dataField="NOMREGPE" width="150"/>
 			</Data:columns>
 		</Data:RowColorDataGrid>

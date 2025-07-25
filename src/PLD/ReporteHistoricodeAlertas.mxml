@@ -83,16 +83,10 @@
 				oItem.DESCALERTA = _xmlInfo.Table[i].DESCALERTA;
 				oItem.SECUENCIA = _xmlInfo.Table[i].SECUENCIA;				
 				oItem.CDGCL = _xmlInfo.Table[i].CDGCL;
-				oItem.NOMCL = _xmlInfo.Table[i].NOMCL;
-				oItem.COD_ASESOR = _xmlInfo.Table[i].COD_ASESOR;
-				oItem.NOM_ASESOR = _xmlInfo.Table[i].NOM_ASESOR;
+				oItem.NOMCL = _xmlInfo.Table[i].NOMBRE;
 				oItem.REP = _xmlInfo.Table[i].REP;
 				oItem.NOREP = _xmlInfo.Table[i].NOREP;
-				oItem.REGISTROPE = _xmlInfo.Table[i].REGISTROPE;
-				oItem.NOMREGPE = _xmlInfo.Table[i].NOMREGPE;
-				oItem.GRUPO = _xmlInfo.Table[i].GRUPO;
-				oItem.NOM_GPO = _xmlInfo.Table[i].NOM_GPO;
-				oItem.CICLO = _xmlInfo.Table[i].CICLO;				
+				oItem.NOMREGPE = _xmlInfo.Table[i].NOMREGPE;				
 				item.push(oItem);	
 			}
 			infoObj = new ArrayCollection(item);
@@ -133,17 +127,11 @@
 		<Data:RowColorDataGrid id="dgReg" x="21" y="145" width="760" height="276" horizontalScrollPolicy="on" sortableColumns="true" >
 			<Data:columns>
 				<mx:DataGridColumn headerText="FECHA" dataField="ALTA" width="90"/>
-				<mx:DataGridColumn headerText="TIPO" dataField="DESCALERTA" width="220"/>
+				<mx:DataGridColumn headerText="TIPO" dataField="DESCALERTA" width="290"/>
 				<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
-				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMCL" width="200"/>
-				<mx:DataGridColumn headerText="FUNCIONARIO" dataField="COD_ASESOR" width="100"/>
-				<mx:DataGridColumn headerText="NOMBRE FUNCIONARIO" dataField="NOM_ASESOR" width="200"/>
+				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMCL" width="320"/>
 				<mx:DataGridColumn headerText="REPORTADO" dataField="REP" textAlign="center" />			
 				<mx:DataGridColumn headerText="NO REPORTADO" dataField="NOREP" textAlign="center" width="110" />
-				<mx:DataGridColumn headerText="GRUPO" dataField="GRUPO" width="70"/>
-				<mx:DataGridColumn headerText="NOMBRE GRUPO" dataField="NOM_GPO" width="180"/>
-				<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="70"/>	
-				<mx:DataGridColumn headerText="USUARIO" dataField="REGISTROPE" width="80"/>
 				<mx:DataGridColumn headerText="NOMBRE USUARIO" dataField="NOMREGPE" width="150"/>
 			</Data:columns>
 		</Data:RowColorDataGrid>

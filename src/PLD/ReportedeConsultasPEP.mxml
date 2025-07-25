@@ -125,11 +125,10 @@
 			doubleClickEnabled="true">
 			<Data:columns>			
 				<mx:DataGridColumn headerText="FECHA CONSULTA" dataField="FREGISTRO" width="130"/>
-				<mx:DataGridColumn headerText="CODIGO CLIENTE" dataField="CDGCL" width="130"/>
-				<mx:DataGridColumn headerText="NOMBRE CLIENTE" dataField="NOMBRECL" width="220"/>
+				<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="130"/>
+				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMBRE" width="320"/>
 				<mx:DataGridColumn headerText="NIVEL" dataField="NIVEL" width="90"/>
 				<mx:DataGridColumn headerText="OBSERVACION" dataField="OBSERVACION" width="200"/>
-				<mx:DataGridColumn headerText="USUARIO" dataField="CDGPE" width="100"/>
 				<mx:DataGridColumn headerText="NOMBRE USUARIO" dataField="NOMUSUARIO" width="200"/>				
 			</Data:columns>
 		</Data:RowColorDataGrid>

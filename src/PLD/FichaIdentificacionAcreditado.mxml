@@ -117,15 +117,14 @@
 				if(info.tipoPers == "F"){
 					info.nombre = _xmlAcred.Table[0].PRI_NOM;
 					info.segNombre = _xmlAcred.Table[0].SEG_NOM;
-					info.aPaterno = _xmlAcred.Table[0].PRI_APE;
-					info.aMaterno = _xmlAcred.Table[0].SEG_APE;
+					info.aPaterno = _xmlAcred.Table[0].APE_PAT;
+					info.aMaterno = _xmlAcred.Table[0].APE_MAT;
 					info.sexo = _xmlAcred.Table[0].SEXO;
 					info.fecha = _xmlAcred.Table[0].FEC_NAC;
-					info.cdgNacPais = _xmlAcred.Table[0].NACIOPAI;
-					info.cdgNacEntFed = _xmlAcred.Table[0].NACIOEF;
-					info.cdgNac = _xmlAcred.Table[0].NACIONALIDAD;
+					info.nacPais = _xmlAcred.Table[0].PAI_NAC;
+					info.nacEntFed = _xmlAcred.Table[0].ENT_NAC;
+					info.nac = _xmlAcred.Table[0].NACIONALIDAD;
 					info.curp = _xmlAcred.Table[0].CURP;
-					info.ife = _xmlAcred.Table[0].IFE;
 				}
 				else if(info.tipoPers == "M"){
 					info.razSoc = _xmlAcred.Table[0].RAZ_SOC;
@@ -172,8 +171,10 @@
 				info.recuperador = _xmlAcred.Table[0].RECUPERADOR;
 				
 				//Informacion de PLD
-				info.origen = _xmlAcred.Table[0].CDGORIREC;
-				info.destino = _xmlAcred.Table[0].CDGDESREC;
+				info.giro = _xmlAcred.Table[0].ACT_ECO;
+				info.origen = _xmlAcred.Table[0].ORI_REC;
+				info.destino = _xmlAcred.Table[0].DES_REC;
+				info.otroDesRec = _xmlAcred.Table[0].OTRO_DES;
 				
 				for(var i:int = 0; i < tipoObj.length; i++){
 					if(info.tipoPers == tipoObj[i].id.toString()){
@@ -185,7 +186,7 @@
 				formDPAcred.init(info);
 				formDomAcred.init(info);
 				formDomFiscalAcred.init(info);
-				formOtroAcred.init(info);
+				//formOtroAcred.init(info);
 				formPLDAcred.init(info);
 				//formEvAcred.init(info);
 			}
@@ -201,9 +202,9 @@
 		<mx:Canvas label="Dom. Fiscal" width="100%" height="100%">	
 			<Forms:FormDirNegAcred id="formDomFiscalAcred" x="49" height="370" width="420" y="10"/>
 		</mx:Canvas>
-		<mx:Canvas label="Otros Datos" width="100%" height="100%">	
+		<!--<mx:Canvas label="Otros Datos" width="100%" height="100%">	
 			<FormsPLD:FormOtroAcred id="formOtroAcred" x="59" y="10"/> 
-		</mx:Canvas>
+		</mx:Canvas>-->
 		<mx:Canvas label="Inf. Adicional" width="100%" height="100%">
 			<Forms:FormPLDAcred id="formPLDAcred" x="31.5" width="455" y="10"/>
 		</mx:Canvas>

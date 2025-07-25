@@ -37,8 +37,10 @@
 		
 			private function generar(event:Event):void{	
 				if(comFiltroAcreditado.valida()){
-					var acred:String = comFiltroAcreditado.obtenerCodigo();
 					var wsRepPLD:WebService = new WebService;
+					var acred:String;
+					
+					acred = comFiltroAcreditado.obtenerCodigo();
 					
 					du.initWsRepPLD(wsRepPLD);
 					du.sCursor();
@@ -101,17 +103,18 @@
 			}
 		]]>
 	</mx:Script>
-	<mx:DataGrid id="dgReporte" x="18.45" y="184" width="763.05" visible="true" height="197" horizontalScrollPolicy="on" itemDoubleClick="mostrarEdoCuenta()" 
-		doubleClickEnabled="true">
+	<mx:DataGrid id="dgReporte" x="18.45" y="184" width="763.05" visible="true" height="197" horizontalScrollPolicy="on">
 		<mx:columns>
-			<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
-			<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMBRE_CL" width="200"/>
-			<mx:DataGridColumn headerText="CICLO" dataField="CICLO" width="50"/>
-			<mx:DataGridColumn headerText="INICIO" dataField="INICIO" width="80"/>
-			<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANTENTRE" width="125" labelFunction="formatearMontoGrid"/>
-			<mx:DataGridColumn headerText="SITUACION" dataField="SITUACION" width="150"/>
-			<mx:DataGridColumn headerText="% INCREMENTO" dataField="PORC_INC" width="125"/>	
-			<mx:DataGridColumn headerText="ASESOR" dataField="NOM_ASESOR" width="150"/>
+			<mx:DataGridColumn headerText="ACREDITADO" dataField="CODIGO" width="90"/>
+			<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMBRE" width="320"/>
+			<mx:DataGridColumn headerText="CREDITO" dataField="CRED" width="250"/>
+			<mx:DataGridColumn headerText="FECHA" dataField="INICIO" width="80"/>
+			<mx:DataGridColumn headerText="CANT ENTREGADA" dataField="CANT_ENTRE" width="125" labelFunction="formatearMontoGrid"/>
+			<mx:DataGridColumn headerText="MONEDA" dataField="TIPO_MONEDA" width="80"/>
+			<mx:DataGridColumn headerText="PERIODICIDAD" dataField="PERIODICIDAD" width="100"/>
+			<mx:DataGridColumn headerText="PLAZO" dataField="PLAZO" width="70"/>
+			<mx:DataGridColumn headerText="TASA" dataField="TASA" width="70"/>
+			<mx:DataGridColumn headerText="FORMA DIPERSION" dataField="FORMA_DISP" width="200"/>
 		</mx:columns>
 	</mx:DataGrid>
 	<mx:Button id="btnExportar" x="678.5" y="152" label="Exportar Excel" click="exportar()" enabled="false"/>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="180" backgroundAlpha="1.0" 
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="300" height="180" backgroundAlpha="1.0" 
 	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
 	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
 	
@@ -89,12 +89,12 @@
 			}
 		]]>
 	</mx:Script>
-	<mx:Label id="lblTitulo" x="16.5" y="10" width="247" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-	<mx:Canvas x="17.95" y="53.5" width="247.54999" height="74.5" styleName="canvasMod">
-		<mx:Label id="lblAcred" x="39.5" y="26.5" text="Acreditado:"/>
-		<mx:TextInput id="txtAcred" x="108.5" y="25.5" maxChars="6" restrict="0-9" enter="ejecuta()"/>
+	<mx:Label id="lblTitulo" x="16.5" y="10" width="273.5" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="270" height="74.5" styleName="canvasMod">
+		<mx:Label id="lblAcred" x="19.5" y="26.5" text="Acreditado:"/>
+		<mx:TextInput id="txtAcred" x="88.5" y="25.5" maxChars="20" restrict="0-9" enter="ejecuta()"/>
 	</mx:Canvas>
 	<mx:Label x="16.5" y="34" text="Criterios de Selección" width="124.25"/>
-	<mx:Button x="65" y="146" label="Generar" click="ejecuta()"  id="btnGenerar"/>
-	<mx:Button x="144" y="146" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	<mx:Button x="75" y="145" label="Generar" click="ejecuta()"  id="btnGenerar"/>
+	<mx:Button x="154" y="145" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
 </mx:Canvas>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="280" height="180" backgroundAlpha="1.0" 
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="420" height="180" backgroundAlpha="1.0" 
 	backgroundColor="#FFFFFF" creationPolicy="all" creationComplete="initApp()" 
 	verticalScrollPolicy="off" horizontalScrollPolicy="off" xmlns:Data="Data.*">
 	<mx:states>
@@ -40,12 +40,42 @@
 			
 			[Bindable]
 			public var dpAcred:XMLList = new XMLList();
-			private var _xmlAcred:XML =  new XML();
+			
+			private var _xmlAcred:XML = new XML();
+			private var _xmlCred:XML = new XML();
+			
+			public var credObj:ArrayCollection = new ArrayCollection();
 			
 			public var rep:String;
 			public var titulo:String;
 			private var du:Utils;
 			private var global:Globales;
+			
+			private function buscar():void{
+				if(txtAcred.text != ""){
+					var wsCatPLD:WebService = new WebService;
+					var params:Array = new Array;
+					
+					du.initWsCatPLD(wsCatPLD);
+					du.sCursor();
+					
+					du.ejecutaWsMethod(wsCatPLD,function(evt:ResultEvent):void {											
+						_xmlCred = new XML(evt.result.toString());
+						
+						du.rCursor();
+						du.closeWs(wsCatPLD);
+						
+						if(_xmlCred.elements().length() > 0){
+							formatearCred();
+							cboCiclo.dataProvider = credObj;
+						}	
+					});
+					params[0] = txtAcred.text;
+					wsCatPLD.getListadoPLD.send(3, params);	
+				}
+				else
+					du.mostrarMensaje("Debe capturar el código de Acreditado.", titulo, 4, null, null, global.iAlert);
+			}
 			
 			public function ejecuta():void{
 				btnGenerar.setFocus();
@@ -62,6 +92,28 @@
 			public function enviar():void{
 				dispatchEvent(new Event("enviar"));
 			}
+			
+			private function formatearCred():void{
+			var oItem:Object;
+			var cont:int = _xmlCred.elements().length();
+			var item:Array = new Array;
+			
+			credObj.removeAll();
+			credObj.refresh();
+			
+			oItem = new Object();
+			oItem.codigo = "0";
+			oItem.descripcion = "--Seleccionar--";
+			item.push(oItem);	
+			
+			for(var i:int = 0; i < cont; i++){
+				oItem = new Object();
+				oItem.codigo = _xmlCred.Table[i].CODIGO;
+				oItem.descripcion = _xmlCred.Table[i].CODIGO;
+				item.push(oItem);	
+			}
+			credObj = new ArrayCollection(item);
+		}
 			
 			//funcion que invoca la generacion de reportes en formato PDF
 			public function generar():void{
@@ -83,7 +135,7 @@
 							if(dpAcred.elements().length() > 0){
 								var id:String = "&id=" + rep;
 								var acred:String = "&acred=" + txtAcred.text;
-								var ciclo:String = "&ciclo=" + txtCiclo.text;
+								var ciclo:String = "&ciclo=" + cboCiclo.text;
 								var usuario:String = "&usuario=" + global.obtenerUsuario();
 								var nomUsuario:String = "&nomUsuario=" + Application.application.NOM_U_ID;
 								var consulta:String = global.urlPdf + id + acred + ciclo + usuario + nomUsuario;
@@ -114,7 +166,7 @@
 			public function limpiar():void{
 				var fec:Date;
 				txtAcred.text = "";
-				txtCiclo.text = "";
+				cboCiclo.dataProvider = null;
 				txtAcred.setFocus();
 				fec = global.obtenerFechaSistema();
 				if(currentState == "fecha")
@@ -127,8 +179,8 @@
 					du.mostrarMensaje("Capture el código de acreditado.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
-				if(txtCiclo.text == ""){
-					du.mostrarMensaje("Capture el ciclo del préstamo.",titulo,4,null,null,global.iAlert);
+				if(cboCiclo.selectedIndex == 0){
+					du.mostrarMensaje("Debe seleccionar el identificador del crédito.",titulo,4,null,null,global.iAlert);
 					return false;
 				}
 				return true;
@@ -139,18 +191,19 @@
 			}
 			
 			public function obtenerCiclo():String{
-				return txtCiclo.text;
+				return cboCiclo.text;
 			}
 		]]>
 	</mx:Script>
-	<mx:Label id="lblTitulo" x="16.5" y="10" width="260" fontSize="12" fontWeight="bold" fontStyle="italic"/>
-	<mx:Canvas x="17.95" y="53.5" width="247.54999" height="74.5" styleName="canvasMod" id="canvas1">
-		<mx:Label id="lblCiclo" x="142.5" y="10" text="Ciclo"/>
-		<mx:Label id="lblAcred" x="29.5" y="10" text="Acreditado"/>
-		<mx:TextInput id="txtAcred" x="29.5" y="28.5" maxChars="6" restrict="0-9" enter="ejecuta()"/>
-		<mx:TextInput id="txtCiclo" x="142.5" y="28.5" width="45" maxChars="2" restrict="0-9" enter="ejecuta()"/>
+	<mx:Label id="lblTitulo" x="16.5" y="10" width="276.45" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+	<mx:Canvas x="17.95" y="53.5" width="385" height="75.5" styleName="canvasMod" id="canvas1">
+		<mx:Label id="lblAcred" x="10" y="11" text="Acreditado:"/>
+		<mx:TextInput id="txtAcred" x="79" y="10" maxChars="20" enter="buscar()" width="150"/>
+		<mx:Label id="lblCiclo" x="29" y="40" text="Crédito:"/>
+		<mx:ComboBox id="cboCiclo" x="79" y="39" labelField="descripcion" width="294"/>
+		<mx:Button id="btnBuscar" x="237" y="8" icon="@Embed(source='assets/ico_lupa.png')" click="buscar()" width="40"/>
 	</mx:Canvas>
 	<mx:Label x="16.5" y="34" text="Criterios de Selección" width="124.25"/>
-	<mx:Button x="65" y="146" label="Generar" click="ejecuta()"  id="btnGenerar"/>
-	<mx:Button x="144" y="146" label="Limpiar" width="71" height="24" click="limpiar()" id="btnLimpiar"/>
+	<mx:Button id="btnGenerar" x="135" y="146" label="Generar" click="ejecuta()"/>
+	<mx:Button id="btnLimpiar" x="214" y="146" label="Limpiar" width="71" height="24" click="limpiar()"/>
 </mx:Canvas>

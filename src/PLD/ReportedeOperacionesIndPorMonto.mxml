@@ -26,7 +26,6 @@
 
 			private var _xmlRep:XML =  new XML();
 			
-			private var wsMS:WebService;
 			private var titulo:String;
 			private var du:Utils;
 			private var global:Globales;
@@ -40,18 +39,26 @@
 				var dgE:ExcelExportXls = new ExcelExportXls();
 				dgE.loadDGInExcel(dgReporte,null,titulo + " " + mesDesc + " " + anio);
 			}
+			
+			private function formatearMontoGrid(item:Object, column:DataGridColumn):String{
+				var result:String;
+                result = global.formatearMoneda(item[column.dataField]);
+                return result;
+			}
 						
 			private function generar():void{
 				if(validar()){
+					var wsRepPLD:WebService = new WebService;
+					var monto:Number = 0;
+					
 					anio = cbxAnio.selectedItem.id;
 					mes = cbxMes.selectedItem.id;
 					mesDesc = cbxMes.selectedItem.nombre;
-					var monto:Number = 0;
 					
 					if(txtMonto.text != "")
 						monto = Number(txtMonto.text);
 					
-					initConexion();
+					du.initWsRepPLD(wsRepPLD);
 					du.sCursor();
 					global.bloquear();
 					
@@ -60,11 +67,11 @@
 					btnExportar.enabled = false;
 					lblTotal.text = "";
 					
-					du.ejecutaWsMethod(wsMS,function(evt:ResultEvent):void {											
+					du.ejecutaWsMethod(wsRepPLD,function(evt:ResultEvent):void {											
 						_xmlRep = new XML(evt.result.toString());
 						
 						du.rCursor();
-						du.closeWs(wsMS);
+						du.closeWs(wsRepPLD);
 						global.desbloquear();
 						
 						if(_xmlRep.elements().length() > 0){
@@ -77,24 +84,18 @@
 							lblTotal.text = "";
 						}
 					});
-					wsMS.getRepOperacIndMonto.send(mes, anio, monto, global.obtenerUsuario());
+					wsRepPLD.getRepOperacionesIndMonto.send(mes, anio, monto, global.obtenerUsuario());
 				}
 			}			
 			
 			public function initApp():void{
-				global = new Globales();
 				du = new Utils();
+				global = new Globales();
 				titulo = "Reporte de Operaciones Ind. por Monto";
 				lblTitulo.text = titulo.toUpperCase(); 
 				cbxAnio.dataProvider = global.formatearAnio();
 				cbxMes.dataProvider = global.formatearMes();
 			}		
-			
-			public function initConexion():void{				
-				wsMS = new WebService();			
-				wsMS.wsdl = Application.application.wsStr.wsdlRep.toString();
-				wsMS.loadWSDL();
-			}	
 			
 			private function limpiar():void{				
 				dgReporte.dataProvider = null;
@@ -148,15 +149,14 @@
 		<Data:RowColorDataGrid id="dgReporte" sortableColumns="true" x="10" y="153" width="769" 
 			visible="true" height="218" horizontalScrollPolicy="auto" verticalScrollPolicy="auto">
 			<Data:columns>
-				<mx:DataGridColumn headerText="SUCURSAL" dataField="NOM_SUCURSAL" width="150"/>
-				<mx:DataGridColumn headerText="COD. GRUPO" dataField="COD_GRUPO" width="90"/>
-				<mx:DataGridColumn headerText="NOM. GRUPO" dataField="NOM_GRUPO" width="180"/>
-				<mx:DataGridColumn headerText="CICLO." dataField="CICLO" width="50"/>
-				<mx:DataGridColumn headerText="COD. ACREDITADO" dataField="CDGCL" width="120"/>
-				<mx:DataGridColumn headerText="ACREDITADO" dataField="NOM_CL" width="180"/>
-				<mx:DataGridColumn headerText="FECHA REAL DEPOSITO" dataField="FREALDEP" width="150"/>
-				<mx:DataGridColumn headerText="CANTIDAD" dataField="PRORRATEO" width="80"/>
-				<mx:DataGridColumn headerText="VALOR" dataField="VALOR" width="80"/>
+				<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
+				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMBRE" width="320"/>
+				<mx:DataGridColumn headerText="FECHA" dataField="FECHA" width="80"/>
+				<mx:DataGridColumn headerText="CANTIDAD" dataField="CANTIDAD" width="120" labelFunction="formatearMontoGrid"/>
+				<mx:DataGridColumn headerText="TIPO MONEDA" dataField="TIPO_MONEDA" width="110"/>
+				<!--<mx:DataGridColumn headerText="VALOR" dataField="VALOR" width="150"/>-->
+				<mx:DataGridColumn headerText="VALOR USD" dataField="VALORUSD" width="80"/>
+				<mx:DataGridColumn headerText="CANTIDAD USD" dataField="MONTOUSD" width="120" labelFunction="formatearMontoGrid"/>
 			</Data:columns>
 		</Data:RowColorDataGrid>
 		<mx:Label id="lblTotal" x="10" y="379" width="470.05" fontWeight="bold" fontStyle="italic" fontSize="12"/>

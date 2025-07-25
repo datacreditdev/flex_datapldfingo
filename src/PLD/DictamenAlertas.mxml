@@ -77,9 +77,9 @@
 							cerrar();
 						}
 						else
-							du.mostrarMensaje(res.substr(2,res.length -1),titulo,4,null,null,global.iAlert);	
+							du.mostrarMensaje(res.substr(2,res.length -1), titulo, 4, null, null, global.iAlert);	
 					});
-					wsMS.setProcesaAlerta.send(alta, sec, tipo, codFunc, reportado, justifica, global.obtenerUsuario());
+					wsMS.setProcesaAlerta.send(alta, sec, tipo, reportado, justifica, global.obtenerUsuario());
 				}
 			}
 			
@@ -158,7 +158,7 @@
 			private function llenaRegistros():void{
 				if(_xmlInfo.Table[0].CDGCL.toString() != ""){
 					txtCodAcred.text = _xmlInfo.Table[0].CDGCL;
-					txtNombre.text = _xmlInfo.Table[0].NOMCL;	 
+					txtNombre.text = _xmlInfo.Table[0].NOMBRE;	 
 				}
 				else{
 					currentState = 'datos';
@@ -191,17 +191,17 @@
 			}
 		]]>
 	</mx:Script>
-	<mx:Button id="btnAceptar" x="453" y="496" icon="@Embed(source='assets/button_ok.png')" enabled="true" toolTip="Aceptar" width="80" click="enviar()"/>
-	<mx:Button id="btnCancelar" x="541" y="496" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
+	<mx:Button id="btnAceptar" x="518" y="496" width="40" icon="@Embed(source='assets/button_ok.png')" enabled="true" toolTip="Aceptar" click="enviar()"/>
+	<mx:Button id="btnCancelar" x="566" y="496" width="40" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()"/>
 	<mx:Canvas x="15" y="10" width="590" height="110" styleName="canvasMod" id="canvas2">
-		<mx:Label id="lblEtAcred" x="107.15" y="76" text="Acreditado:" textAlign="right"/>
-		<mx:Label id="lblEtNombre" x="245.25" y="76" text="Nombre:" width="54" textAlign="right"/>
-		<mx:Label id="lblEtFecha" x="130.15" y="11" text="Fecha:" textAlign="right"/>
-		<mx:TextInput id="txtFecha" x="176.15" y="10" width="80.1" editable="false"/>
-		<mx:TextInput id="txtCodAcred" x="176.15" y="74" width="60" editable="false"/>
-		<mx:TextInput id="txtNombre" x="307.25" y="74" width="230.5" editable="false"/>
-		<mx:Label id="lblEtTipo" x="107.15" y="44" text="Tipo Alerta:" textAlign="right"/>
-		<Data:CustomComboBox id="cboTipo" labelField="desc" x="176.15" y="42" width="300.1"/>
+		<mx:Label id="lblEtAcred" x="38.15" y="76" text="Acreditado:" textAlign="right"/>
+		<mx:Label id="lblEtNombre" x="275.25" y="75" text="Nombre:" textAlign="right"/>
+		<mx:Label id="lblEtFecha" x="61.1" y="11" text="Fecha:" textAlign="right"/>
+		<mx:TextInput id="txtFecha" x="107.1" y="10" width="80.1" editable="false"/>
+		<mx:TextInput id="txtCodAcred" x="107.1" y="74" width="150" editable="false"/>
+		<mx:TextInput id="txtNombre" x="328.25" y="74" width="230.5" editable="false"/>
+		<mx:Label id="lblEtTipo" x="38.15" y="44" text="Tipo Alerta:" textAlign="right"/>
+		<Data:CustomComboBox id="cboTipo" labelField="desc" x="107.1" y="42" width="320.1"/>
 	</mx:Canvas>
 	<mx:Canvas id="cnvDetalle" width="590" height="360" styleName="canvasMod" visible="true" enabled="true" x="15" y="128">
 		<mx:Label id="lblJustDict" x="25.5" y="210" text="Justificación de Dictamen" textAlign="right"/>
