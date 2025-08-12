@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="770" height="600" 
-	title="Agregar/Modificar Usuario" close="cerrar()" xmlns:control="CONTROL.*" creationPolicy="all">
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="770" height="475" 
+	title="Mantenimiento de Usuario" close="cerrar()" xmlns:control="CONTROL.*" creationPolicy="all">
 			
 	<mx:Script>
 		<![CDATA[
@@ -18,21 +18,14 @@
 		import mx.utils.StringUtil;
 		
 		public var UsrInfo:XML = new XML();
-		private var _xmlNivelEsc:XML =  new XML();
 		private var _xmlCoord:XML = new XML();
 		private var _xmlLstCoord:XML = new XML();
 		private var _xmlPerfil:XML = new XML();		
 		private var _xmlPerfilUsu:XML = new XML();
 		private var _xmlPuesto:XML = new XML();
-		private var _xmlDir:XML =  new XML();
-		private var _xmlColonia:XML =  new XML();
-		private var _xmlEntidad:XML =  new XML();
-		private var _xmlMunicipio:XML =  new XML();
-		private var _xmlLocalidad:XML =  new XML();
 		
 		private var	_xmlFiltro:XMLList;
 		
-		public var nivelEscObj:ArrayCollection = new ArrayCollection();
 		public var perfilObj:ArrayCollection = new ArrayCollection();
 		public var puestoObj:ArrayCollection = new ArrayCollection();
 		public var coordObj:ArrayCollection = new ArrayCollection();
@@ -44,54 +37,6 @@
 		private var du:Utils;
 		private var global:Globales;
 		private var wsMS:WebService;
-		private var ws:WebService;
-		
-		//Realiza la busqueda de direccion del acreditado utilizando el codigo postal
-		public function buscaCodPostal():void{ 
-			var wsCat:WebService = new WebService;
-			var params:Array = new Array;
-			
-			txtCodPostal.text = StringUtil.trim(txtCodPostal.text);
-			if (txtCodPostal.text != "" && txtCodPostal.length == 5){
-				du.initWsCat(wsCat);
-				du.sCursor();
-					
-				_xmlDir = null;
-				
-				du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-					_xmlDir = new XML(evt.result.toString());
-					
-					limpiaDatosDir();
-						
-					du.rCursor();
-					du.closeWs(wsCat);
-						
-					if(_xmlDir.elements().length() > 0){
-						comEntGrid.asignarTexto(_xmlDir.Table[0].ENTFED);
-						comMunGrid.asignarTexto(_xmlDir.Table[0].MUNIC);
-						comLocGrid.asignarTexto(_xmlDir.Table[0].LOC);
-						comColGrid.asignarTexto(_xmlDir.Table[0].COL);	
-						
-						info.cdgEntFed = _xmlDir.Table[0].CDGEF;		
-						info.cdgMun = _xmlDir.Table[0].CDGMU;
-						info.cdgLoc = _xmlDir.Table[0].CDGLO;
-						info.cdgCol = _xmlDir.Table[0].CDGCOL;	
-							
-						obtieneMunicipio();
-						obtieneLocalidad();
-						obtieneColonia();
-					}
-				});
-				params[0] = txtCodPostal.text;
-				wsCat.getCatalogoGral.send(6, params);
-			}
-			else{
-				txtCodPostal.text = "";
-				obtieneMunicipio();
-				obtieneLocalidad();
-				obtieneColonia();
-			}
-		}
 			
 		public function cargaInfoUsuario():void{
 			tipoAccion = 2;
@@ -99,10 +44,11 @@
 		}
 		
 		public function cargaLstCoord():void{
+			var ws:WebService = new WebService;
 			var p_usuario:Array = new Array();
 			p_usuario[0] = UsrInfo[0].CODIGO;
 
-			ws = du.initWs(ws);
+			du.initWs(ws);
 			du.sCursor();
 						
 			du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
@@ -159,69 +105,6 @@
 			}
 			coordObj = new ArrayCollection(item);
 			coordLstObj = new ArrayCollection(item);
-		}
-		
-		public function formateaNivel():void{
-			var cont:int = _xmlNivelEsc.elements().length();
-			var oItem:Object;
-			var item:Array = new Array;
-			
-			oItem = new Object();
-			oItem.id = "-1";	
-			oItem.nombre = "--Seleccionar--";
-			item.push(oItem);
-			
-			oItem = new Object();
-			oItem.id = "C";	
-			oItem.nombre = "Carrera Corta";
-			item.push(oItem);
-			
-			oItem = new Object();
-			oItem.id = "O";	
-			oItem.nombre = "Doctorado";
-			item.push(oItem);
-			
-			oItem = new Object();
-			oItem.id = "L";	
-			oItem.nombre = "Licenciatura";
-			item.push(oItem);
-			
-			oItem = new Object();
-			oItem.id = "R";	
-			oItem.nombre = "Maestría";
-			item.push(oItem);
-			
-			oItem = new Object();
-			oItem.id = "N";	
-			oItem.nombre = "Ninguna";
-			item.push(oItem);
-			
-			oItem = new Object();
-			oItem.id = "B";	
-			oItem.nombre = "Preparatoria";
-			item.push(oItem);
-			
-			oItem = new Object();
-			oItem.id = "P";	
-			oItem.nombre = "Primaria";
-			item.push(oItem);
-			
-			oItem = new Object();
-			oItem.id = "S";	
-			oItem.nombre = "Secundaria";
-			item.push(oItem);
-			
-			oItem = new Object();
-			oItem.id = "T";	
-			oItem.nombre = "Técnico";
-			item.push(oItem);
-			
-			oItem = new Object();
-			oItem.id = "U";	
-			oItem.nombre = "Técnico Superior";
-			item.push(oItem);
-			
-			nivelEscObj = new ArrayCollection(item);
 		}
 		
 		public function formateaPerfil():void{
@@ -334,15 +217,7 @@
 			info.nombre = txtNombre.text;
 			info.segNombre = txtSegNombre.text;
 			info.usuario = txtUsuario.text;
-			info.pass = txtPwd.text;	
-			info.sexo = sexo.selectedValue != null? sexo.selectedValue.toString(): "";
-			info.cdgNivEsc = cboNivelEsc.selectedItem.id.toString();
-			info.calle = txtCalle.text;	
-			info.telefono = txtTelefono.text;
-			info.cdgEntFed = comEntGrid.obtenerCodigo();
-			info.cdgMun = comMunGrid.obtenerCodigo();
-			info.cdgLoc = comLocGrid.obtenerCodigo();
-			info.cdgCol = comColGrid.obtenerCodigo();		
+			info.pass = txtPwd.text;			
 			info.cdgSuc = cboCoord.selectedIndex > 0 ? cboCoord.selectedItem.id.toString() : "";
 			info.cdgPuesto = cboPuesto.selectedItem.id.toString();
 			info.cdgPerfil = sPerfil;	
@@ -369,18 +244,14 @@
 			});
 			if(tipoAccion == 1)
 				wsAdmin.setAltaUsuario.send(info.aPaterno, info.aMaterno, info.nombre, info.segNombre, info.usuario, info.pass,
-                           		       		info.sexo, info.cdgNivEsc, info.calle, info.telefono, info.cdgEntFed, info.cdgMun, 
-                               		   		info.cdgLoc, info.cdgCol, info.cdgSuc, info.cdgPuesto, info.cdgPerfil, info.lstSuc,
-                               		   		info.activo);
+											info.cdgSuc, info.cdgPuesto, info.cdgPerfil, info.lstSuc, info.activo);
 			else
 				wsAdmin.setCambioUsuario.send(info.aPaterno, info.aMaterno, info.nombre, info.segNombre, info.usuario, info.pass,
-                           		              info.sexo, info.cdgNivEsc, info.calle, info.telefono, info.cdgEntFed, info.cdgMun, 
-                               		     	  info.cdgLoc, info.cdgCol, info.cdgSuc, info.cdgPuesto, info.cdgPerfil, info.lstSuc,
-                               		   	      info.activo);
+											  info.cdgSuc, info.cdgPuesto, info.cdgPerfil, info.lstSuc, info.activo);
 		}
 
 		private function init():void{
-			var wsCat:WebService = new WebService;
+			var ws:WebService = new WebService;
 			var params:Array = new Array;
 			var j:int;
 			
@@ -388,116 +259,89 @@
 			global = new Globales();
 			du = new Utils();
 			
-			formateaNivel();
 			formateaPuesto();
 			
 			cboPuesto.dataProvider = puestoObj;
-			cboNivelEsc.dataProvider = nivelEscObj;
-			
-			du.initWsCat(wsCat);
+								
+			du.initWs(ws);
 			du.sCursor();
 			global.bloquear();
-				
-			_xmlEntidad = null;
 					
-			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-				_xmlEntidad = new XML(evt.result.toString());
-								
-				du.rCursor();
-				du.closeWs(wsCat);	
-									
-				if(_xmlEntidad.elements().length() > 0){
-					comEntGrid.init(_xmlEntidad, 130);
-					comEntGrid.addEventListener("seleccionar",selecEntFed);
-					comEntGrid.addEventListener("verificar",verifEntFed);
+			du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
+				_xmlPerfil = new XML(evt.result.toString());
 					
-					obtieneMunicipio();
-					obtieneLocalidad();
-					obtieneColonia();
+				if (_xmlPerfil.elements().length() > 0){
+					formateaPerfil();
+					dgPerfil.dataProvider = perfilObj;					
 				}
-			
-				ws = new WebService();
-				ws = du.initWs(ws);
-				du.sCursor();
-						
-				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
-					_xmlPerfil = new XML(evt.result.toString());
-						
-					if (_xmlPerfil.elements().length() > 0){
-						formateaPerfil();
-						dgPerfil.dataProvider = perfilObj;					
-					}
-						
-					du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
-						_xmlCoord = new XML(evt.result.toString());
-						
-						if (_xmlCoord.elements().length() > 0){
-							formateaCoord();
-							cboCoord.dataProvider = coordObj;
-							lstSucursales.dataProvider = _xmlCoord.Table;
-						} 
 					
-						if(tipoAccion == 1)
-							global.desbloquear();
-						//carga informacion del registro de usuario
-						else if(tipoAccion == 2){
-							llenaRegistros();					
-						
-							var p_usuario:Array = new Array();
-							p_usuario[0] = UsrInfo[0].CODIGO;
-	
-							du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
-								_xmlPerfilUsu = new XML(evt.result.toString());
-											
-								if(_xmlPerfilUsu.elements().length() > 0){
-									var cont:int = _xmlPerfilUsu.elements().length();
-									var info:String;
-									
-									for(var i:int = 0; i < cont; i++){
-										info = _xmlPerfilUsu.Table[i].CDGTUS	
-										j = _xmlPerfil.Table.(CODIGO.toString() == info).childIndex();
-										perfilObj[j].estatus = true;
-									}	
-									dgPerfil.dataProvider = perfilObj;
-								}
+				du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
+					_xmlCoord = new XML(evt.result.toString());
+					
+					if (_xmlCoord.elements().length() > 0){
+						formateaCoord();
+						cboCoord.dataProvider = coordObj;
+						lstSucursales.dataProvider = _xmlCoord.Table;
+					} 
+				
+					if(tipoAccion == 1)
+						global.desbloquear();
+					//carga informacion del registro de usuario
+					else if(tipoAccion == 2){
+						llenaRegistros();					
+					
+						var p_usuario:Array = new Array();
+						p_usuario[0] = UsrInfo[0].CODIGO;
+
+						du.ejecutaWsMethod(ws,function(evt:ResultEvent):void {											
+							_xmlPerfilUsu = new XML(evt.result.toString());
+										
+							if(_xmlPerfilUsu.elements().length() > 0){
+								var cont:int = _xmlPerfilUsu.elements().length();
+								var info:String;
 								
-								du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{											
-									_xmlLstCoord = new XML(evt.result.toString());
-												
-									du.rCursor();
-									du.closeWs(ws);
-									
-									global.desbloquear();
-												
-									if(_xmlLstCoord.elements().length() > 0){
-										var cont:int = _xmlLstCoord.elements().length();
-										var contAux:int = _xmlCoord.elements().length();
-										var coordLst:Array = new Array();
-												
-						 				for(var i:int = 0; i < cont; i++){
-											for(j = 0; j < contAux; j++){
-												if(_xmlLstCoord.Table[i].CDGCO.toString() == _xmlCoord.Table[j].CODIGO.toString())
-													coordLst[i] = j;  
-											}	
-										}
-										lstSucursales.selectedIndices = coordLst;
+								for(var i:int = 0; i < cont; i++){
+									info = _xmlPerfilUsu.Table[i].CDGTUS	
+									j = _xmlPerfil.Table.(CODIGO.toString() == info).childIndex();
+									perfilObj[j].estatus = true;
+								}	
+								dgPerfil.dataProvider = perfilObj;
+							}
+							
+							du.ejecutaWsMethod(ws,function(evt:ResultEvent):void{											
+								_xmlLstCoord = new XML(evt.result.toString());
+											
+								du.rCursor();
+								du.closeWs(ws);
+								
+								global.desbloquear();
+											
+								if(_xmlLstCoord.elements().length() > 0){
+									var cont:int = _xmlLstCoord.elements().length();
+									var contAux:int = _xmlCoord.elements().length();
+									var coordLst:Array = new Array();
+											
+					 				for(var i:int = 0; i < cont; i++){
+										for(j = 0; j < contAux; j++){
+											if(_xmlLstCoord.Table[i].CDGCO.toString() == _xmlCoord.Table[j].CODIGO.toString())
+												coordLst[i] = j;  
+										}	
 									}
-								});
-								//carga las sucursales adicionales del usuario
-								ws.ES_Admin_Usuarios.send(10, p_usuario);
+									lstSucursales.selectedIndices = coordLst;
+								}
 							});
-							//carga los perfiles del usuario
-							ws.ES_Admin_Usuarios.send(5, p_usuario);
-						}
-					});
-					//carga las sucursales disponibles
-					ws.ES_Admin_Usuarios.send(7,null);
+							//carga las sucursales adicionales del usuario
+							ws.ES_Admin_Usuarios.send(10, p_usuario);
+						});
+						//carga los perfiles del usuario
+						ws.ES_Admin_Usuarios.send(5, p_usuario);
+					}
 				});
-				//carga los perfiles de usuario disponibles
-				ws.ESLoginMethods.send(7,null);
+				//carga las sucursales disponibles
+				ws.ES_Admin_Usuarios.send(7,null);
 			});
-			//Carga la lista de Entidades Federativas
-			wsCat.getCatalogoGral.send(2);	
+			//carga los perfiles de usuario disponibles
+			ws.ESLoginMethods.send(7,null);
 		}		
 		
 		public function initConexion():void{				
@@ -521,27 +365,7 @@
 			txtAMaterno.text = UsrInfo[0].SEGAPE;
 			txtNombre.text = UsrInfo[0].NOMBRE1;
 			txtSegNombre.text = UsrInfo[0].NOMBRE2;
-			sexo.selectedValue = UsrInfo[0].SEXO.toString();
-			txtCalle.text = UsrInfo[0].CALLE; 
-			txtTelefono.text = UsrInfo[0].TELEFONO;
-			comEntGrid.asignarTexto(UsrInfo[0].ENTFED);
-			comMunGrid.asignarTexto(UsrInfo[0].MUNIC);
-			comLocGrid.asignarTexto(UsrInfo[0].LOC);
-			comColGrid.asignarTexto(UsrInfo[0].COL);
-			txtCodPostal.text = UsrInfo[0].CDGPOSTAL;
 			
-			//asignacion de codigos de direccion
-			info.cdgEntFed = UsrInfo[0].CDGEF
-  			info.cdgMun = UsrInfo[0].CDGMU
-  			info.cdgLoc = UsrInfo[0].CDGLO
-  			info.cdgCol = UsrInfo[0].CDGCOL
-			
-			for(i = 0; i < nivelEscObj.length; i++){
-				if(UsrInfo[0].NIVESCOLAR.toString() == nivelEscObj[i].id){
-					cboNivelEsc.selectedIndex = i;
-					break;
-				}
-			}
 			for(i = 0; i < coordObj.length; i++){
 				if(UsrInfo[0].CDGCO == coordObj[i].id.toString()){
 					cboCoord.selectedIndex = i;
@@ -565,136 +389,6 @@
 			tipoAccion = 1;
 			init();
 		} 
-		
-		public function limpiaDatosDir():void{
-			comEntGrid.asignarTexto("");
-			comMunGrid.asignarTexto("");
-			comLocGrid.asignarTexto("");
-			comColGrid.asignarTexto("");	
-						
-			comEntGrid.codigo = "";
-			comMunGrid.codigo = "";
-			comLocGrid.codigo = "";
-			comColGrid.codigo = "";	
-			
-			info.cdgEntFed = "";		
-			info.cdgMun = "";
-			info.cdgLoc = "";
-			info.cdgCol = "";		
-		}
-		
-		private function obtieneColonia():void{
-			var wsCat:WebService = new WebService;
-			var params:Array = new Array;
-			
-			du.initWsCat(wsCat);
-			du.sCursor();
-			
-			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-				_xmlColonia = new XML(evt.result.toString());
-				
-				comColGrid.init(_xmlColonia, 70);
-				if(_xmlColonia.elements().length() > 0){
-					comColGrid.addEventListener("seleccionar",selecColonia);
-				}
-				
-				du.rCursor();
-				du.closeWs(wsCat);
-			});
-			params[0] = info.cdgEntFed;
-			params[1] = info.cdgMun;
-			params[2] = info.cdgLoc;
-			params[3] = txtCodPostal.text;
-			wsCat.getCatalogoGral.send(5, params);
-		}
-		
-		private function obtieneLocalidad():void{
-			var wsCat:WebService = new WebService;
-			var params:Array = new Array;
-			
-			du.initWsCat(wsCat);
-			du.sCursor();
-			
-			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-				_xmlLocalidad = new XML(evt.result.toString());
-				
-				comLocGrid.init(_xmlLocalidad, 90);
-				if(_xmlLocalidad.elements().length() > 0){
-					comLocGrid.addEventListener("seleccionar",selecLocalidad);
-					comLocGrid.addEventListener("verificar",verifLocalidad);
-				}
-				du.rCursor();
-				du.closeWs(wsCat);
-			});
-			params[0] = info.cdgEntFed;
-			params[1] = info.cdgMun;
-			params[2] = txtCodPostal.text;
-			wsCat.getCatalogoGral.send(4, params);
-		}
-		
-		private function obtieneMunicipio():void{
-			var wsCat:WebService = new WebService;
-			var params:Array = new Array;
-			
-			du.initWsCat(wsCat);
-			du.sCursor();
-			
-			du.ejecutaWsMethod(wsCat,function(evt:ResultEvent):void {											
-				_xmlMunicipio = new XML(evt.result.toString());
-				
-				comMunGrid.init(_xmlMunicipio, 130);
-				if(_xmlMunicipio.elements().length() > 0){
-					comMunGrid.addEventListener("seleccionar",selecMunic);
-					comMunGrid.addEventListener("verificar",verifMunic);
-				}
-				du.rCursor();
-				du.closeWs(wsCat);
-			});
-			params[0] = info.cdgEntFed;
-			params[1] = txtCodPostal.text;
-			wsCat.getCatalogoGral.send(3, params);
-		}
-		
-		private function selecColonia(event:Event):void{
-			info.cdgCol = event.currentTarget.codigo;
-			_xmlFiltro = _xmlColonia.Table.(CODIGO.toString() == info.cdgCol)
-			if(txtCodPostal.text != _xmlFiltro.CDGPOSTAL.toString())
-				txtCodPostal.text = _xmlFiltro.CDGPOSTAL.toString();
-			comColGrid.setFocus();
-		}
-		
-		private function selecEntFed(event:Event):void{
-			comMunGrid.limpiar();
-			comLocGrid.limpiar();
-			comColGrid.limpiar();
-			txtCodPostal.text = "";
-			info.cdgEntFed = event.currentTarget.codigo;
-			info.cdgMun = "";
-			info.cdgLoc = "";
-			info.cdgCol = "";
-			obtieneMunicipio();
-			comEntGrid.setFocus();
-		}
-		
-		private function selecLocalidad(event:Event):void{
-			comColGrid.limpiar();
-			txtCodPostal.text = "";
-			info.cdgLoc = event.currentTarget.codigo;
-			info.cdgCol = "";
-			obtieneColonia();
-			comLocGrid.setFocus();
-		}
-		
-		private function selecMunic(event:Event):void{	
-			comLocGrid.limpiar();
-			comColGrid.limpiar();
-			txtCodPostal.text = "";
-			info.cdgMun = event.currentTarget.codigo;
-			info.cdgLoc = "";
-			info.cdgCol = "";
-			obtieneLocalidad();
-			comMunGrid.setFocus();
-		}
 		
 		private function validarForm():Boolean{
 			if(txtAPaterno.text == ''){
@@ -737,39 +431,13 @@
 			return true;
 		}
 		
-		private function verifEntFed(event:Event):void{
-			if(comEntGrid.codigo == ""){	
-				comMunGrid.limpiar();
-				comLocGrid.limpiar();
-				comColGrid.limpiar();
-				info.cdgMun = "";
-				info.cdgLoc = "";
-				info.cdgCol = ""; 
-			}
-		}
-		
-		private function verifLocalidad(event:Event):void{
-			if(comLocGrid.codigo == ""){
-				comColGrid.limpiar();
-				info.cdgCol = ""; 
-			}
-		}
-		
-		private function verifMunic(event:Event):void{
-			if(comMunGrid.codigo == ""){
-				comLocGrid.limpiar();
-				comColGrid.limpiar();
-				info.cdgLoc = "";
-				info.cdgCol = ""; 
-			}
-		}
 		]]>
 	</mx:Script>	
-	<mx:Button id="btnAceptar" icon="@Embed(source='assets/button_ok.png')" click="{guardar()}" x="672" y="528" width="40"/>
-	<mx:Button id="btnCancelar" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" x="720" y="528" width="40"/>
-	<mx:TabNavigator x="10" y="10" width="750" height="507">
+	<mx:Button id="btnAceptar" icon="@Embed(source='assets/button_ok.png')" click="{guardar()}" x="668" y="398" width="40"/>
+	<mx:Button id="btnCancelar" icon="@Embed(source='assets/Icon-Delete.png')" click="cerrar()" x="716" y="398" width="40"/>
+	<mx:TabNavigator x="10" y="10" width="750" height="380">
 		<mx:Canvas label="Datos Generales" width="100%" height="100%">
-			<mx:Canvas x="8" y="10" width="360" height="450" styleName="canvasMod" verticalScrollPolicy="off">	
+			<mx:Canvas x="8" y="10" width="360" height="320" styleName="canvasMod" verticalScrollPolicy="off">	
 				<mx:Label x="30" y="4" id="lblU_ID" visible="false"/>
 				<mx:Label text="Apellido Paterno:" x="32" y="13"/>
 				<mx:TextInput width="200" id="txtAPaterno" x="136" y="11" maxChars="20"/>
@@ -781,31 +449,13 @@
 				<mx:TextInput width="200" id="txtSegNombre" x="136" y="101" maxChars="15"/>
 				<mx:Label text="Usuario:" x="73" y="133"/>
 				<mx:Label text="Contraseña:" x="54" y="163"/>
-				<mx:Label text="Sexo:" x="85" y="195"/>
-				<mx:Label text="Municipio:" x="66" y="292"/>
-				<mx:Label text="Localidad:" x="64" y="324"/>
-				<mx:Label text="Colonia:" x="75" y="356"/>	
-				<mx:Label text="Nivel Escolar:" x="48" y="387"/>
-				<mx:Label text="Entidad Federativa:" x="21" y="260" />
-				<mx:Label x="45" y="228" text="Código Postal:"/>
 				<mx:TextInput width="200" id="txtUsuario" x="136" y="131"/>
 				<mx:TextInput width="200" id="txtPwd" x="136" y="161" displayAsPassword="true"/>
-				<mx:Canvas x="136" y="193" width="200" height="25">
-					<mx:RadioButtonGroup id="sexo"/>
-					<mx:RadioButton id="rdbFemenino" x="0" y="1" label="Femenino" value="F" groupName="sexo"/>
-					<mx:RadioButton id="rdbMasculino" x="79" y="1" label="Masculino" value="M" groupName="sexo"/>	
-				</mx:Canvas>
-				<mx:TextInput id="txtCodPostal" x="136" y="226" width="80" maxChars="5" restrict="0-9" enter="buscaCodPostal()" focusOut="buscaCodPostal()"/>
-				<control:TextGrid id="comEntGrid" x="136" height="24" y="256"/>
-				<control:TextGrid id="comMunGrid" x="136" height="24" y="288"/>
-				<control:TextGrid id="comLocGrid" x="136" height="24" y="320"/>
-				<control:TextGrid id="comColGrid" x="136" height="24" y="352"/>
-				<mx:ComboBox id="cboNivelEsc" labelField="nombre" x="136" y="384"/>
 			</mx:Canvas>
 			<mx:Canvas x="376" y="10" width="362" height="320" styleName="canvasMod">
-				<mx:Label x="26" y="108" text="Sucursal base:"/>
+				<mx:Label x="35" y="108" text="Oficina base:"/>
 				<mx:Label x="63" y="76" text="Puesto:"/>
-				<mx:Label x="14" y="141" text="Otras sucursales:"/>
+				<mx:Label x="28" y="140" text="Otras Oficinas:"/>
 				<mx:Label text="Nómina:" x="61" y="11"/>
 				<mx:Label text="Nómina Jefe:" x="37" y="43"/>
 				<mx:TextInput width="200" id="txtCalle" x="112" y="42"/>
@@ -817,7 +467,7 @@
 			</mx:Canvas>
 		</mx:Canvas>
 		<mx:Canvas label="Perfiles" width="100%" height="100%">
-			<mx:DataGrid id="dgPerfil" x="10" y="10" width="726" height="452" editable="true">
+			<mx:DataGrid id="dgPerfil" x="10" y="10" width="726" height="325" editable="true">
 				<mx:columns>
 					<mx:DataGridColumn headerText="ESTATUS" dataField="estatus" textAlign="center" width="60" rendererIsEditor="true"
 						editorDataField="selected"> 
@@ -827,7 +477,7 @@
 			  				</mx:Component>
 						</mx:itemRenderer>
 					</mx:DataGridColumn>
-					<mx:DataGridColumn headerText="ID" dataField="id" width="60" editable="false"/>
+					<mx:DataGridColumn headerText="CODIGO" dataField="id" width="60" editable="false"/>
 					<mx:DataGridColumn headerText="NOMBRE" dataField="nombre" editable="false"/>
 				</mx:columns>
 			</mx:DataGrid>
