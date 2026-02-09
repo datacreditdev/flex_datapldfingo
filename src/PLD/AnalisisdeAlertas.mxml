@@ -120,6 +120,7 @@
 				oItem.DESCESTATUS = _xmlInfo.Table[i].DESCESTATUS;
 				oItem.CDGCL = _xmlInfo.Table[i].CDGCL;
 				oItem.NOMCL = _xmlInfo.Table[i].NOMBRE;
+				oItem.CDGCLNS = _xmlInfo.Table[i].CDGCLNS;
 				oItem.REP = Boolean(Number(_xmlInfo.Table[i].REP.toString()));
 				oItem.NOREP = Boolean(Number(_xmlInfo.Table[i].NOREP.toString()));
 				oItem.REGISTROPE = _xmlInfo.Table[i].REGISTROPE;
@@ -180,6 +181,7 @@
 				<mx:DataGridColumn headerText="ESTATUS" dataField="DESCESTATUS" width="90"/>
 				<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
 				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMCL" width="320"/>
+				<mx:DataGridColumn headerText="CREDITO" dataField="CDGCLNS" width="280"/>
 				<mx:DataGridColumn headerText="REPORTADO" dataField="REP" textAlign="center" rendererIsEditor="true" width="90" editorDataField="selected">
 					<mx:itemRenderer>
 						<mx:Component>

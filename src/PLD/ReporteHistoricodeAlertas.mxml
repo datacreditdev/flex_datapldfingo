@@ -23,7 +23,6 @@
 		
 		public var infoObj:ArrayCollection = new ArrayCollection();
 		
-		public var wsMS:WebService;	
 		public var tipoAccion:int;
 		public var titulo:String;
 		public var texto:String;
@@ -86,7 +85,8 @@
 				oItem.NOMCL = _xmlInfo.Table[i].NOMBRE;
 				oItem.REP = _xmlInfo.Table[i].REP;
 				oItem.NOREP = _xmlInfo.Table[i].NOREP;
-				oItem.NOMREGPE = _xmlInfo.Table[i].NOMREGPE;				
+				oItem.NOMREGPE = _xmlInfo.Table[i].NOMREGPE;	
+				oItem.CDGCLNS = _xmlInfo.Table[i].CDGCLNS;			
 				item.push(oItem);	
 			}
 			infoObj = new ArrayCollection(item);
@@ -130,6 +130,7 @@
 				<mx:DataGridColumn headerText="TIPO" dataField="DESCALERTA" width="290"/>
 				<mx:DataGridColumn headerText="ACREDITADO" dataField="CDGCL" width="90"/>
 				<mx:DataGridColumn headerText="NOMBRE ACREDITADO" dataField="NOMCL" width="320"/>
+				<mx:DataGridColumn headerText="CREDITO" dataField="CDGCLNS" width="280"/>
 				<mx:DataGridColumn headerText="REPORTADO" dataField="REP" textAlign="center" />			
 				<mx:DataGridColumn headerText="NO REPORTADO" dataField="NOREP" textAlign="center" width="110" />
 				<mx:DataGridColumn headerText="NOMBRE USUARIO" dataField="NOMREGPE" width="150"/>
